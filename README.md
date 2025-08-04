@@ -2,9 +2,9 @@
 
 > **Monorepo unificado** - Backend, Dashboard e Landing Page em um só lugar
 
-[![Deploy Status](https://img.shields.io/badge/deploy-success-green)](https://lais-ia-api.roilabs.com.br)
-[![Dashboard](https://img.shields.io/badge/dashboard-online-blue)](https://sofia-ai-lux-dash.vercel.app)
-[![Landing](https://img.shields.io/badge/landing-online-purple)](https://sofia-ia-landing-premium-80.vercel.app)
+[![Deploy Status](https://img.shields.io/badge/deploy-success-green)](https://sofia-api.roilabs.com.br)
+[![Dashboard](https://img.shields.io/badge/dashboard-online-blue)](https://sofia-dash.roilabs.com.br)
+[![Landing](https://img.shields.io/badge/landing-online-purple)](https://sofia-ia.roilabs.com.br)
 
 ---
 
@@ -78,9 +78,9 @@ npm run build
 
 | Serviço | URL | Status | Plataforma |
 |---------|-----|--------|------------|
-| **Backend API** | https://lais-ia-api.roilabs.com.br | 🟢 Online | EasyPanel |
-| **Dashboard** | https://sofia-ai-lux-dash.vercel.app | 🟢 Online | Vercel |
-| **Landing Page** | https://sofia-ia-landing-premium-80.vercel.app | 🟢 Online | Vercel |
+| **Backend API** | https://sofia-api.roilabs.com.br | 🟢 Online | EasyPanel |
+| **Dashboard** | https://sofia-dash.roilabs.com.br | 🟢 Online | Vercel |
+| **Landing Page** | https://sofia-ia.roilabs.com.br | 🟢 Online | Vercel |
 
 ---
 
@@ -188,19 +188,19 @@ node TESTE-QR-CODES-REAIS.js
 
 ### **Health Checks:**
 ```bash
-curl https://lais-ia-api.roilabs.com.br/health
+curl https://sofia-api.roilabs.com.br/health
 ```
 
 ---
 
 ## 📈 **Roadmap**
 
-### **✅ Concluído (v2.6.0)**
-- Backend MVP completo (25+ arquivos)
+### **✅ Concluído (v3.0.0)**
+- Monorepo unificado completo
+- Backend MVP (25+ arquivos) + QR codes reais
 - Frontend dashboard conectado
-- QR codes reais funcionando
-- Dados dinâmicos (não hardcoded)
-- Deploy produção configurado
+- Dados dinâmicos em tempo real
+- Deploy produção (EasyPanel + Vercel)
 
 ### **🔄 Em Desenvolvimento**
 - Evolution API integration real
