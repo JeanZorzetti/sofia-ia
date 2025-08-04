@@ -1,7 +1,7 @@
 /**
  * 🔗 SOFIA IA - Hook de API com WhatsApp Management (OTIMIZADO)
  * Conecta frontend aos dados reais (local OU produção) + WhatsApp endpoints
- * CORREÇÃO: Auto-refresh inteligente que não interfere em modais
+ * CORREÇÃO: Auto-refresh inteligente que não interfere em modals
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -19,7 +19,7 @@ const getApiBaseUrl = () => {
   }
   
   // Ambiente PRODUÇÃO - usa domínio EasyPanel
-  return 'https://sofiaia.roilabs.com.br';
+  return 'https://sofia-api.roilabs.com.br';
 };
 
 const API_BASE_URL = getApiBaseUrl();
