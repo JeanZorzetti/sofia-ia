@@ -1,0 +1,53 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f8fafc;stop-opacity:0.9" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" stroke="#4f46e5" stroke-width="8"/>
+  
+  <!-- Sofia IA Icon - Brain + Chat -->
+  <!-- Brain Symbol -->
+  <path d="M200 180c-20 0-36 16-36 36v80c0 20 16 36 36 36h112c20 0 36-16 36-36v-80c0-20-16-36-36-36H200z" fill="url(#iconGradient)" fill-opacity="0.2" stroke="url(#iconGradient)" stroke-width="3"/>
+  
+  <!-- Neural Network Lines -->
+  <circle cx="220" cy="200" r="8" fill="url(#iconGradient)"/>
+  <circle cx="280" cy="200" r="8" fill="url(#iconGradient)"/>
+  <circle cx="320" cy="240" r="8" fill="url(#iconGradient)"/>
+  <circle cx="280" cy="280" r="8" fill="url(#iconGradient)"/>
+  <circle cx="220" cy="280" r="8" fill="url(#iconGradient)"/>
+  <circle cx="180" cy="240" r="8" fill="url(#iconGradient)"/>
+  <circle cx="256" cy="240" r="12" fill="url(#iconGradient)"/>
+  
+  <!-- Connection Lines -->
+  <line x1="220" y1="200" x2="256" y2="240" stroke="url(#iconGradient)" stroke-width="2" opacity="0.8"/>
+  <line x1="280" y1="200" x2="256" y2="240" stroke="url(#iconGradient)" stroke-width="2" opacity="0.8"/>
+  <line x1="320" y1="240" x2="256" y2="240" stroke="url(#iconGradient)" stroke-width="2" opacity="0.8"/>
+  <line x1="280" y1="280" x2="256" y2="240" stroke="url(#iconGradient)" stroke-width="2" opacity="0.8"/>
+  <line x1="220" y1="280" x2="256" y2="240" stroke="url(#iconGradient)" stroke-width="2" opacity="0.8"/>
+  <line x1="180" y1="240" x2="256" y2="240" stroke="url(#iconGradient)" stroke-width="2" opacity="0.8"/>
+  
+  <!-- Chat Bubble -->
+  <path d="M320 320c0-11 9-20 20-20h60c11 0 20 9 20 20v40c0 11-9 20-20 20h-40l-20 20v-20c-11 0-20-9-20-20v-40z" fill="url(#iconGradient)" stroke="url(#iconGradient)" stroke-width="2"/>
+  
+  <!-- Chat Dots -->
+  <circle cx="350" cy="340" r="3" fill="#6366f1"/>
+  <circle cx="365" cy="340" r="3" fill="#6366f1"/>
+  <circle cx="380" cy="340" r="3" fill="#6366f1"/>
+  
+  <!-- WhatsApp Symbol -->
+  <circle cx="150" cy="380" r="30" fill="#25d366"/>
+  <path d="M140 370c2-2 5-2 7 0l6 6c2 2 2 5 0 7l-2 2c0 1 1 3 3 5s4 3 5 3l2-2c2-2 5-2 7 0l6 6c2 2 2 5 0 7-1 1-3 2-5 2-8 0-15-3-20-8s-8-12-8-20c0-2 1-4 2-5z" fill="white"/>
+  
+  <!-- Sofia Text -->
+  <text x="256" y="450" text-anchor="middle" fill="url(#iconGradient)" font-family="Arial, sans-serif" font-size="36" font-weight="bold">SOFIA</text>
+  <text x="256" y="480" text-anchor="middle" fill="url(#iconGradient)" font-family="Arial, sans-serif" font-size="20" opacity="0.9">IA</text>
+</svg>
