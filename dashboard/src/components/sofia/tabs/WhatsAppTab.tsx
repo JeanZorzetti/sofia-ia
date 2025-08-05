@@ -1,6 +1,6 @@
 /**
- * 🚨 CORREÇÃO URGENTE: String QR muito longa (13152 chars)
- * Implementar fallback para strings grandes + debug
+ * 🚨 CORREÇÃO URGENTE: QR strings longas + Sistema inteligente
+ * Fix: Renomear qrError local para evitar conflito
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -59,11 +59,11 @@ export const WhatsAppTab = () => {
     refresh 
   } = useWhatsAppInstances();
   
-  // 🔥 Hook para QR codes REAIS
+  // 🔥 Hook para QR codes REAIS (qrError já vem do hook)
   const {
     qrCode: realQRCode,
     loading: qrLoading,
-    error: qrError,
+    error: qrError, // ← Esta vem do hook
     instanceId: qrInstanceId,
     source: qrSource,
     generateRealQRCode,
@@ -83,7 +83,7 @@ export const WhatsAppTab = () => {
   const [qrInstance, setQrInstance] = useState<any>(null);
   const [qrCodeReady, setQrCodeReady] = useState(false);
   const [qrLibraryLoaded, setQrLibraryLoaded] = useState(false);
-  const [qrError, setQrError] = useState<string | null>(null);
+  const [qrGenerationError, setQrGenerationError] = useState<string | null>(null); // ← Renomeado
   const [generationAttempt, setGenerationAttempt] = useState(0);
   const [useImageFallback, setUseImageFallback] = useState(false);
 
@@ -98,7 +98,7 @@ export const WhatsAppTab = () => {
         })
         .catch((error) => {
           console.error('❌ Erro ao carregar QRCode.js:', error);
-          setQrError('Erro ao carregar biblioteca QR');
+          setQrGenerationError('Erro ao carregar biblioteca QR');
         });
     }
   }, [showQR, qrLibraryLoaded]);
@@ -132,7 +132,7 @@ export const WhatsAppTab = () => {
       img.onload = () => {
         console.log('✅ QR Fallback carregado');
         setQrCodeReady(true);
-        setQrError(null);
+        setQrGenerationError(null);
       };
       
       img.onerror = () => {
@@ -141,7 +141,7 @@ export const WhatsAppTab = () => {
           setGenerationAttempt(prev => prev + 1);
           setTimeout(() => generateQRWithFallback(qrText), 1000);
         } else {
-          setQrError('Todas as tentativas falharam');
+          setQrGenerationError('Todas as tentativas falharam');
         }
       };
       
@@ -156,7 +156,7 @@ export const WhatsAppTab = () => {
     // 🔥 TENTAR QRCode.js LOCAL para strings normais
     if (!qrContainerRef.current || !window.QRCode) {
       console.error('❌ Container ou biblioteca não disponível');
-      setQrError('Container não encontrado');
+      setQrGenerationError('Container não encontrado');
       return;
     }
     
@@ -176,7 +176,7 @@ export const WhatsAppTab = () => {
       
       setQrInstance(qr);
       setQrCodeReady(true);
-      setQrError(null);
+      setQrGenerationError(null);
       setUseImageFallback(false);
       console.log('✅ QR Code LOCAL gerado com sucesso');
       
@@ -189,7 +189,7 @@ export const WhatsAppTab = () => {
         setGenerationAttempt(prev => prev + 1);
         setTimeout(() => generateQRWithFallback(qrText), 500);
       } else {
-        setQrError(`Erro ao gerar QR: ${error.message}`);
+        setQrGenerationError(`Erro ao gerar QR: ${error.message}`);
       }
     }
   };
@@ -205,7 +205,7 @@ export const WhatsAppTab = () => {
       });
       
       setQrCodeReady(false);
-      setQrError(null);
+      setQrGenerationError(null);
       setGenerationAttempt(0);
       setUseImageFallback(false);
       
@@ -227,7 +227,7 @@ export const WhatsAppTab = () => {
       clearQRState();
       setQrCodeReady(false);
       setQrInstance(null);
-      setQrError(null);
+      setQrGenerationError(null);
       setGenerationAttempt(0);
       setUseImageFallback(false);
       if (qrContainerRef.current) {
@@ -261,7 +261,7 @@ export const WhatsAppTab = () => {
     try {
       setIsCreating(true);
       setQrCodeReady(false);
-      setQrError(null);
+      setQrGenerationError(null);
       
       console.log('🔥 CRIANDO INSTÂNCIA COM QR REAL:', {
         instanceName: newInstanceName,
@@ -291,7 +291,7 @@ export const WhatsAppTab = () => {
       console.log('🔄 RETRY MANUAL do QR');
       setGenerationAttempt(0);
       setQrCodeReady(false);
-      setQrError(null);
+      setQrGenerationError(null);
       generateQRWithFallback(realQRCode);
     }
   };
@@ -337,7 +337,7 @@ export const WhatsAppTab = () => {
     clearQRState();
     setQrCodeReady(false);
     setQrInstance(null);
-    setQrError(null);
+    setQrGenerationError(null);
     setGenerationAttempt(0);
     if (qrContainerRef.current) {
       qrContainerRef.current.innerHTML = '';
@@ -405,10 +405,10 @@ export const WhatsAppTab = () => {
                 </div>
 
                 {/* Status com debug */}
-                {qrError && (
+                {(qrError || qrGenerationError) && (
                   <div className="bg-red-500/20 text-red-400 p-3 rounded text-xs">
                     <div className="font-medium">❌ Erro QR:</div>
-                    <div>{qrError}</div>
+                    <div>{qrError || qrGenerationError}</div>
                   </div>
                 )}
                 
@@ -420,7 +420,7 @@ export const WhatsAppTab = () => {
                       <div>• Chars: {realQRCode.length}</div>
                       <div>• Método: {useImageFallback ? 'API Fallback' : 'QRCode.js LOCAL'}</div>
                       <div>• Tentativa: {generationAttempt + 1}/4</div>
-                      <div>• Status: {qrCodeReady ? '✅ Pronto' : qrError ? '❌ Erro' : '🔄 Gerando'}</div>
+                      <div>• Status: {qrCodeReady ? '✅ Pronto' : (qrError || qrGenerationError) ? '❌ Erro' : '🔄 Gerando'}</div>
                     </div>
                   </div>
                 )}
@@ -451,10 +451,10 @@ export const WhatsAppTab = () => {
                       <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin mb-2"></div>
                       <span className="text-xs text-gray-500">Aguardando QR...</span>
                     </div>
-                  ) : qrError ? (
+                  ) : (qrError || qrGenerationError) ? (
                     <div className="w-full h-full flex flex-col items-center justify-center p-2">
                       <AlertCircle className="h-8 w-8 text-red-500 mb-2" />
-                      <span className="text-xs text-red-600 text-center mb-2">{qrError}</span>
+                      <span className="text-xs text-red-600 text-center mb-2">{qrError || qrGenerationError}</span>
                       <button 
                         onClick={handleRetryQR}
                         className="text-xs bg-red-500 text-white px-2 py-1 rounded"
@@ -540,7 +540,8 @@ export const WhatsAppTab = () => {
                 <div>QR Length: {realQRCode?.length || 'N/A'}</div>
                 <div>Container: {qrContainerRef.current ? '✅ Ready' : '❌ Not Ready'}</div>
                 <div>Ready: {qrCodeReady ? '✅ Yes' : '❌ No'}</div>
-                <div>Error: {qrError || 'None'}</div>
+                <div>Hook Error: {qrError || 'None'}</div>
+                <div>Gen Error: {qrGenerationError || 'None'}</div>
                 <div>Method: {useImageFallback ? 'API Fallback' : 'QRCode.js'}</div>
                 <div>Attempt: {generationAttempt + 1}</div>
                 <div>QR Preview: {realQRCode ? `${realQRCode.substring(0, 50)}...` : 'N/A'}</div>
