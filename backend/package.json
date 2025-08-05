@@ -1,6 +1,6 @@
 {
   "name": "sofia-ia-backend",
-  "version": "2.0.0",
+  "version": "2.3.0",
   "description": "Sofia IA - Sistema SDR Inteligente para Imobiliárias",
   "main": "src/app.js",
   "scripts": {
