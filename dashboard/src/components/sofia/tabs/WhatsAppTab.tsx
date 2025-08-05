@@ -1,6 +1,6 @@
 /**
- * 🔥 CORREÇÃO URGENTE: QR Code Display com QR Code Library
- * Força geração de QR visual mesmo se API retornar string
+ * 🔧 CORREÇÃO FINAL: Layout Horizontal + QR Visual 100%
+ * Modal largo com layout lado a lado + 3 APIs QR + retry system
  */
 
 import React, { useState, useEffect } from 'react';
@@ -65,6 +65,7 @@ export const WhatsAppTab = () => {
   const [deletingInstance, setDeletingInstance] = useState<string | null>(null);
   const [qrImageError, setQrImageError] = useState(false);
   const [generatedQRImage, setGeneratedQRImage] = useState<string | null>(null);
+  const [qrGenerationAttempts, setQrGenerationAttempts] = useState(0);
 
   // 🛠️ CORREÇÃO: Controlar auto-refresh quando modal abrir/fechar
   useEffect(() => {
@@ -77,29 +78,18 @@ export const WhatsAppTab = () => {
       clearQRState();
       setQrImageError(false);
       setGeneratedQRImage(null);
+      setQrGenerationAttempts(0);
     }
   }, [showQR, pauseAutoRefresh, resumeAutoRefresh, clearQRState]);
 
-  // 🔥 NOVO: Gerar QR visual a partir de string usando QR Code library
+  // 🔥 NOVO: Gerar QR visual a partir de string
   useEffect(() => {
-    if (realQRCode && typeof realQRCode === 'string' && !isQRImage(realQRCode)) {
-      console.log('🔄 Gerando QR visual a partir de string:', realQRCode.substring(0, 50));
-      
-      // Usar QR Code generator browser nativo ou library
+    if (realQRCode && typeof realQRCode === 'string' && !isQRImage(realQRCode) && qrGenerationAttempts === 0) {
+      console.log('🔄 Auto-gerando QR visual:', realQRCode.substring(0, 50));
+      setQrGenerationAttempts(1);
       generateQRImage(realQRCode);
     }
-  }, [realQRCode]);
-
-  // 🔥 LOG de debug para produção
-  useEffect(() => {
-    console.log('🔥 WhatsApp Tab - Debug QR:', {
-      realQRCode: realQRCode ? `${realQRCode.substring(0, 50)}...` : null,
-      qrSource,
-      qrLength: realQRCode?.length,
-      isImage: isQRImage(realQRCode),
-      generatedImage: !!generatedQRImage
-    });
-  }, [realQRCode, qrSource, generatedQRImage]);
+  }, [realQRCode, qrGenerationAttempts]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -119,26 +109,42 @@ export const WhatsAppTab = () => {
     }
   };
 
-  // 🔥 FUNÇÃO: Gerar QR visual usando Canvas API
+  // 🔥 FUNÇÃO: Gerar QR visual com múltiplas tentativas
   const generateQRImage = async (qrText: string) => {
+    console.log('🔄 Tentativa', qrGenerationAttempts + 1, 'de gerar QR visual');
+    
+    const attempts = [
+      // Tentativa 1: QR Server (sem CORS)
+      () => {
+        const url = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrText)}`;
+        console.log('📡 Tentativa 1 - QR Server:', url);
+        return url;
+      },
+      // Tentativa 2: Google Charts (backup)
+      () => {
+        const url = `https://chart.googleapis.com/chart?chs=180x180&cht=qr&chl=${encodeURIComponent(qrText)}`;
+        console.log('📡 Tentativa 2 - Google Charts:', url);
+        return url;
+      },
+      // Tentativa 3: QR Code Generator alternativo
+      () => {
+        const url = `https://quickchart.io/qr?text=${encodeURIComponent(qrText)}&size=180`;
+        console.log('📡 Tentativa 3 - QuickChart:', url);
+        return url;
+      }
+    ];
+
     try {
-      // Usar QR Code generator simples via API pública
-      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrText)}`;
+      setQrImageError(false);
+      const attemptIndex = Math.min(qrGenerationAttempts, attempts.length - 1);
+      const qrUrl = attempts[attemptIndex]();
       
-      console.log('🔄 Gerando QR via API:', qrApiUrl);
-      setGeneratedQRImage(qrApiUrl);
+      setGeneratedQRImage(qrUrl);
+      console.log('✅ QR URL gerada:', qrUrl);
       
     } catch (error) {
       console.error('❌ Erro ao gerar QR visual:', error);
-      
-      // Fallback: Usar serviço alternativo
-      try {
-        const fallbackUrl = `https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=${encodeURIComponent(qrText)}`;
-        console.log('🔄 Fallback QR via Google Charts:', fallbackUrl);
-        setGeneratedQRImage(fallbackUrl);
-      } catch (fallbackError) {
-        console.error('❌ Erro no fallback QR:', fallbackError);
-      }
+      setQrImageError(true);
     }
   };
 
@@ -150,6 +156,7 @@ export const WhatsAppTab = () => {
       setIsCreating(true);
       setQrImageError(false);
       setGeneratedQRImage(null);
+      setQrGenerationAttempts(0);
       
       console.log('🔥 CRIANDO INSTÂNCIA COM QR REAL:', {
         instanceName: newInstanceName,
@@ -209,6 +216,15 @@ export const WhatsAppTab = () => {
     clearQRState();
     setQrImageError(false);
     setGeneratedQRImage(null);
+    setQrGenerationAttempts(0);
+  };
+
+  // 🔄 Tentar próxima API para QR
+  const handleRetryQR = () => {
+    if (realQRCode && qrGenerationAttempts < 3) {
+      setQrGenerationAttempts(prev => prev + 1);
+      generateQRImage(realQRCode);
+    }
   };
 
   // 📊 Calcular estatísticas
@@ -222,13 +238,13 @@ export const WhatsAppTab = () => {
     return qr.startsWith('data:image/') || qr.startsWith('http') || qr.includes('base64');
   };
 
-  // 🔥 FUNÇÃO: Renderizar QR Code com múltiplas estratégias
+  // 🔥 FUNÇÃO: Renderizar QR Code otimizado e compacto (180x180)
   const renderQRCode = () => {
     if (qrLoading) {
       return (
         <div className="w-full h-full flex flex-col items-center justify-center">
           <RefreshCw className="h-8 w-8 animate-spin text-blue-500 mb-2" />
-          <span className="text-xs text-gray-500">Gerando QR Real...</span>
+          <span className="text-xs text-gray-500">Gerando QR...</span>
         </div>
       );
     }
@@ -239,64 +255,59 @@ export const WhatsAppTab = () => {
         <div className="w-full h-full relative">
           <img 
             src={generatedQRImage} 
-            alt="QR Code gerado visualmente" 
+            alt="QR Code Visual" 
             className="w-full h-full object-contain rounded"
             onError={() => {
-              console.error('❌ Erro ao carregar QR gerado:', generatedQRImage);
+              console.error('❌ Erro ao carregar QR:', generatedQRImage);
               setQrImageError(true);
             }}
             onLoad={() => {
-              console.log('✅ QR gerado carregado com sucesso');
+              console.log('✅ QR visual carregado');
               setQrImageError(false);
             }}
           />
-          <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded shadow">
+          <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-1 py-0.5 rounded">
             VISUAL
           </div>
         </div>
       );
     }
 
-    // Estratégia 2: QR já é imagem (data:image/ ou URL)
+    // Estratégia 2: QR já é imagem (raro)
     if (realQRCode && isQRImage(realQRCode)) {
       return (
         <div className="w-full h-full relative">
           <img 
             src={realQRCode} 
-            alt="QR Code Real conectável" 
+            alt="QR Code" 
             className="w-full h-full object-contain rounded"
-            onError={() => {
-              console.error('❌ Erro ao carregar imagem QR:', realQRCode?.substring(0, 100));
-              setQrImageError(true);
-            }}
-            onLoad={() => {
-              console.log('✅ QR Code imagem carregada com sucesso');
-              setQrImageError(false);
-            }}
+            onError={() => setQrImageError(true)}
+            onLoad={() => setQrImageError(false)}
           />
-          <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded shadow">
+          <div className="absolute top-1 right-1 bg-blue-500 text-white text-xs px-1 py-0.5 rounded">
             REAL
           </div>
         </div>
       );
     }
 
-    // Estratégia 3: QR como string - mostrar texto + botão converter
+    // Estratégia 3: QR como string - mostrar preview + botão
     if (realQRCode && !isQRImage(realQRCode)) {
       return (
-        <div className="w-full h-full relative bg-white flex flex-col items-center justify-center p-4">
-          <div className="text-xs text-gray-600 mb-2">QR Code Recebido:</div>
-          <div className="text-[8px] font-mono break-all text-center leading-tight border border-gray-300 p-2 rounded max-h-32 overflow-y-auto">
-            {realQRCode}
+        <div className="w-full h-full relative bg-gray-50 flex flex-col items-center justify-center p-3">
+          <div className="text-xs text-gray-600 mb-2">QR Recebido ({realQRCode.length} chars)</div>
+          <div className="text-[6px] font-mono text-center text-gray-500 mb-3 max-h-16 overflow-hidden">
+            {realQRCode.substring(0, 100)}...
           </div>
-          <div className="absolute top-1 right-1 bg-orange-500 text-white text-xs px-2 py-1 rounded shadow">
+          <div className="absolute top-1 right-1 bg-orange-500 text-white text-xs px-1 py-0.5 rounded">
             TEXTO
           </div>
           <button 
-            onClick={() => generateQRImage(realQRCode)}
-            className="mt-2 text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
+            onClick={() => handleRetryQR()}
+            className="text-xs bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+            disabled={qrGenerationAttempts >= 3}
           >
-            🔄 Converter para Imagem
+            {qrGenerationAttempts >= 3 ? '❌ 3/3' : `🔄 Gerar (${qrGenerationAttempts + 1}/3)`}
           </button>
         </div>
       );
@@ -305,50 +316,41 @@ export const WhatsAppTab = () => {
     // Estratégia 4: Error state
     if (qrImageError && (realQRCode || generatedQRImage)) {
       return (
-        <div className="w-full h-full bg-red-50 flex flex-col items-center justify-center p-4">
-          <Image className="h-8 w-8 text-red-400 mb-2" />
-          <div className="text-xs text-red-600 text-center">
+        <div className="w-full h-full bg-red-50 flex flex-col items-center justify-center p-3">
+          <Image className="h-6 w-6 text-red-400 mb-2" />
+          <div className="text-xs text-red-600 text-center mb-2">
             Erro ao carregar QR
           </div>
-          <div className="text-xs text-gray-500 mt-1 text-center">
-            QR: {(realQRCode || generatedQRImage)?.substring(0, 30)}...
-          </div>
           <button 
-            onClick={() => {
-              if (realQRCode) generateQRImage(realQRCode);
-            }}
-            className="mt-2 text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600"
+            onClick={() => handleRetryQR()}
+            className="text-xs bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+            disabled={qrGenerationAttempts >= 3}
           >
-            🔄 Tentar Novamente
+            🔄 Retry
           </button>
         </div>
       );
     }
 
-    // Estratégia 5: Fallback simulação
+    // Estratégia 5: Aguardando
     return (
-      <div className="w-full h-full bg-black/10 rounded grid grid-cols-10 gap-px">
-        {Array.from({ length: 100 }).map((_, i) => (
-          <div
-            key={i}
-            className={`rounded-sm ${Math.random() > 0.5 ? 'bg-black' : 'bg-white'}`}
-          />
-        ))}
-        <div className="col-span-10 text-center text-xs text-gray-500 mt-2">
-          Aguardando QR real...
+      <div className="w-full h-full bg-gray-100 rounded flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-xs text-gray-500 mb-2">Aguardando QR real...</div>
+          <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin mx-auto"></div>
         </div>
       </div>
     );
   };
 
-  // 🔥 MODAL ATUALIZADO: QR Codes com múltiplas estratégias
+  // 🔥 MODAL CORRIGIDO: SEMPRE horizontal, mais largo, nunca sai da tela
   const QRModal = () => {
     if (!showQR) return null;
 
     return (
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <Card className="glass-card w-full max-w-md">
-          <CardHeader className="relative text-center pb-4">
+        <Card className="glass-card w-full max-w-2xl"> {/* max-w-2xl = bem mais largo */}
+          <CardHeader className="relative text-center pb-3">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -367,7 +369,7 @@ export const WhatsAppTab = () => {
               )}
             </div>
             
-            <CardTitle className="text-foreground font-light tracking-wider-sofia">
+            <CardTitle className="text-foreground font-light tracking-wider-sofia text-lg">
               Nova Instância WhatsApp
               {PRODUCTION_CONFIG.FORCE_REAL_QR && (
                 <span className="block text-xs text-green-400 mt-1">
@@ -381,64 +383,86 @@ export const WhatsAppTab = () => {
           </CardHeader>
           
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-light text-foreground-secondary">
-                Nome da Instância
-              </label>
-              <Input
-                key="instance-name-input"
-                placeholder="Ex: Sofia Principal"
-                value={newInstanceName}
-                onChange={(e) => setNewInstanceName(e.target.value)}
-                className="bg-background-secondary border-glass-border text-foreground"
-                autoFocus
-                disabled={isCreating || qrLoading}
-              />
-            </div>
+            {/* 🔥 LAYOUT SEMPRE HORIZONTAL: 2 colunas lado a lado */}
+            <div className="grid grid-cols-2 gap-6">
+              {/* Coluna ESQUERDA: Input e Status */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-light text-foreground-secondary">
+                    Nome da Instância
+                  </label>
+                  <Input
+                    key="instance-name-input"
+                    placeholder="Ex: Sofia Principal"
+                    value={newInstanceName}
+                    onChange={(e) => setNewInstanceName(e.target.value)}
+                    className="bg-background-secondary border-glass-border text-foreground"
+                    autoFocus
+                    disabled={isCreating || qrLoading}
+                  />
+                </div>
 
-            {/* 🔥 QR CODE COM MÚLTIPLAS ESTRATÉGIAS */}
-            <div className="bg-white rounded-lg p-4 mx-auto" style={{ width: '240px', height: '240px' }}>
-              {renderQRCode()}
-            </div>
+                {/* Status compacto */}
+                {qrError && (
+                  <div className="bg-red-500/20 text-red-400 p-3 rounded text-xs">
+                    <div className="font-medium">❌ Erro:</div>
+                    <div>{qrError}</div>
+                  </div>
+                )}
+                
+                {realQRCode && qrSource && !qrError && (
+                  <div className="bg-green-500/20 text-green-400 p-3 rounded text-xs">
+                    <div className="font-medium">✅ QR Ativo</div>
+                    <div className="space-y-1 mt-2">
+                      <div>• Fonte: {qrSource}</div>
+                      <div>• Tipo: {isQRImage(realQRCode) ? 'Imagem' : 'Texto'}</div>
+                      <div>• Chars: {realQRCode.length}</div>
+                      <div>• Visual: {generatedQRImage ? '✅ Sim' : '❌ Não'}</div>
+                      <div>• Tentativas: {qrGenerationAttempts}/3</div>
+                    </div>
+                  </div>
+                )}
 
-            {/* Status detalhado */}
-            {qrError && (
-              <div className="bg-red-500/20 text-red-400 p-3 rounded text-sm">
-                <div className="font-medium">❌ Erro ao gerar QR:</div>
-                <div className="text-xs mt-1">{qrError}</div>
-              </div>
-            )}
-            
-            {realQRCode && qrSource && !qrError && (
-              <div className="bg-green-500/20 text-green-400 p-3 rounded text-sm">
-                <div className="font-medium">✅ QR Code ativo</div>
-                <div className="text-xs mt-1 space-y-1">
-                  <div>Fonte: {qrSource}</div>
-                  <div>Tipo: {isQRImage(realQRCode) ? 'Imagem' : 'Texto'}</div>
-                  <div>Tamanho: {realQRCode.length} chars</div>
-                  <div>Visual: {generatedQRImage ? 'Sim' : 'Não'}</div>
+                {/* Instruções de uso */}
+                <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded text-xs text-blue-400">
+                  <div className="font-medium mb-2">📱 Como conectar:</div>
+                  <div className="space-y-1">
+                    <div>1. Abra o WhatsApp</div>
+                    <div>2. Vá em ⚙️ Configurações</div>
+                    <div>3. Aparelhos conectados</div>
+                    <div>4. ➕ Conectar aparelho</div>
+                    <div>5. Escaneie o QR ao lado →</div>
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Instruções */}
-            <div className="bg-background-secondary/50 rounded-lg p-3 text-center space-y-2">
-              <p className="text-xs text-foreground-secondary font-medium">
-                📱 Como Conectar:
-              </p>
-              <p className="text-xs text-foreground-secondary">
-                WhatsApp → ⚙️ Configurações → 📱 Aparelhos conectados → 
-                ➕ Conectar aparelho → 📷 Escanear QR
-              </p>
-              {realQRCode && !generatedQRImage && !isQRImage(realQRCode) && (
-                <p className="text-xs text-orange-600">
-                  ⚠️ Clique em "Converter para Imagem" se QR não aparecer
-                </p>
-              )}
+              {/* Coluna DIREITA: QR Code */}
+              <div className="flex flex-col items-center justify-center">
+                <div className="bg-white rounded-lg p-3 mb-3" style={{ width: '180px', height: '180px' }}>
+                  {renderQRCode()}
+                </div>
+                
+                {/* Status QR compacto */}
+                <div className="text-center text-xs text-foreground-secondary">
+                  {qrLoading && <div className="text-blue-400">⏳ Carregando QR...</div>}
+                  {realQRCode && !generatedQRImage && !qrLoading && (
+                    <div className="text-orange-400">📄 QR como texto recebido</div>
+                  )}
+                  {generatedQRImage && !qrImageError && (
+                    <div className="text-green-400">✅ QR visual pronto</div>
+                  )}
+                  {qrImageError && (
+                    <div className="text-red-400">❌ Erro na imagem</div>
+                  )}
+                  {!realQRCode && !qrLoading && (
+                    <div className="text-gray-400">Aguardando instância...</div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Botões */}
-            <div className="flex gap-3 pt-2">
+            {/* Botões inferiores */}
+            <div className="flex gap-3 pt-3 border-t border-glass-border">
               <Button 
                 className="flex-1 button-luxury" 
                 onClick={handleCreateInstanceReal}
@@ -449,8 +473,20 @@ export const WhatsAppTab = () => {
                 ) : (
                   <Plus className="h-4 w-4 mr-2" />
                 )}
-                {isCreating ? 'Criando...' : qrLoading ? 'Gerando QR...' : 'Criar Instância'}
+                {isCreating ? 'Criando...' : qrLoading ? 'Gerando...' : 'Criar Instância'}
               </Button>
+              
+              {/* Botão retry se QR não aparecer */}
+              {realQRCode && qrGenerationAttempts < 3 && (qrImageError || !generatedQRImage) && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleRetryQR}
+                  className="px-4"
+                >
+                  🔄 Retry ({qrGenerationAttempts + 1}/3)
+                </Button>
+              )}
+              
               <Button 
                 variant="outline" 
                 onClick={handleCloseModal}
@@ -461,17 +497,18 @@ export const WhatsAppTab = () => {
               </Button>
             </div>
 
-            {/* Debug info expandido */}
+            {/* Debug compacto - só desenvolvimento */}
             {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded space-y-1">
-                <div>🔍 Debug QR:</div>
-                <div>Real QR: {realQRCode ? `${realQRCode.substring(0, 30)}...` : 'null'}</div>
-                <div>É Imagem: {isQRImage(realQRCode) ? 'Sim' : 'Não'}</div>
-                <div>QR Visual: {generatedQRImage ? `${generatedQRImage.substring(0, 50)}...` : 'null'}</div>
-                <div>Fonte: {qrSource}</div>
-                <div>ID: {qrInstanceId}</div>
-                <div>Error: {qrImageError ? 'Sim' : 'Não'}</div>
-              </div>
+              <details className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                <summary>🔍 Debug (dev only)</summary>
+                <div className="mt-2 space-y-1">
+                  <div>QR: {realQRCode ? `${realQRCode.substring(0, 20)}...` : 'null'}</div>
+                  <div>IMG: {generatedQRImage ? `${generatedQRImage.substring(0, 30)}...` : 'null'}</div>
+                  <div>Tries: {qrGenerationAttempts}/3</div>
+                  <div>Error: {qrImageError ? 'Yes' : 'No'}</div>
+                  <div>Source: {qrSource || 'N/A'}</div>
+                </div>
+              </details>
             )}
           </CardContent>
         </Card>
