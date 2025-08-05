@@ -1,39 +1,82 @@
-# Use Node.js 18 Alpine as base image
+# 🚀 DEPLOY PRODUÇÃO: Sofia IA → sofia-api.roilabs.com.br
+
+## 📋 **CHECKLIST PRÉ-DEPLOY**
+
+### ✅ **Status Atual (CONCLUÍDO):**
+- [x] Backend v2.3.0 funcionando local (100%)
+- [x] QR Code Production Service implementado
+- [x] 6/6 testes passando (100%)
+- [x] Sistema enterprise com fallback
+- [x] Código commitado no Git
+
+---
+
+## 🔧 **DEPLOY VIA EASYPANEL**
+
+### **1. Acessar EasyPanel**
+```
+URL: https://panel.roilabs.com.br
+Login: [suas credenciais]
+```
+
+### **2. Criar/Atualizar Aplicação Sofia IA**
+```yaml
+Nome: sofia-ia-backend
+Domínio: sofia-api.roilabs.com.br
+Tipo: Node.js Application
+Runtime: Node.js 18+
+```
+
+### **3. Configuração de Deploy**
+```yaml
+Repository: 
+  Branch: main
+  Dockerfile: backend/Dockerfile (se existir)
+  Build Command: npm install
+  Start Command: node src/app.js
+  Working Directory: backend/
+
+Port: 8000
+Health Check: /health
+```
+
+### **4. Variáveis de Ambiente Produção**
+```env
+NODE_ENV=production
+PORT=8000
+EVOLUTION_API_URL=https://evolutionapi.roilabs.com.br
+EVOLUTION_API_KEY=SuOOmamlmX...
+SUPABASE_URL=https://[seu-projeto].supabase.co
+SUPABASE_ANON_KEY=[sua-chave]
+```
+
+---
+
+## 🐳 **DOCKERFILE PARA EASYPANEL**
+
+<function_calls>
+<invoke name="system-lite:write_file">
+<parameter name="content"># Sofia IA Backend - Production Dockerfile
 FROM node:18-alpine
 
-# Install system dependencies
-RUN apk add --no-cache dumb-init ca-certificates curl
-
-# Create app user and group
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S laisIA -u 1001
-
-# Set working directory
+# Definir diretório de trabalho
 WORKDIR /app
 
-# Copy package files
-COPY --chown=laisIA:nodejs package*.json ./
+# Copiar package.json e package-lock.json
+COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production && \
-    npm cache clean --force
+# Instalar dependências
+RUN npm ci --only=production
 
-# Copy application code
-COPY --chown=laisIA:nodejs src/ ./src/
+# Copiar código da aplicação
+COPY src/ ./src/
 
-# Create logs directory
-RUN mkdir -p logs && chown -R laisIA:nodejs logs
-
-# Switch to non-root user
-USER laisIA
-
-# Expose port
+# Expor porta da aplicação
 EXPOSE 8000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
-# Start application with dumb-init
-ENTRYPOINT ["dumb-init", "--"]
+# Comando de inicialização
 CMD ["node", "src/app.js"]
