@@ -16,9 +16,12 @@ import {
   X,
   Wifi,
   WifiOff,
-  Trash2
+  Trash2,
+  Zap
 } from 'lucide-react';
 import { useWhatsAppInstances, useRealTimeStats } from '@/hooks/useSofiaApi';
+import { useQRCodesReais } from '@/hooks/useQRCodesReais';
+import { FORCE_QR_REFRESH, PRODUCTION_CONFIG } from '@/force-qr-refresh';
 
 export const WhatsAppTab = () => {
   // 🔗 Hooks para dados reais
@@ -33,6 +36,18 @@ export const WhatsAppTab = () => {
     resumeAutoRefresh, 
     refresh 
   } = useWhatsAppInstances();
+  
+  // 🔥 NOVO: Hook para QR codes REAIS
+  const {
+    qrCode: realQRCode,
+    loading: qrLoading,
+    error: qrError,
+    instanceId: qrInstanceId,
+    source: qrSource,
+    generateRealQRCode,
+    clearQRState,
+    diagnosticoCompleto
+  } = useQRCodesReais();
   
   // 🛠️ CORREÇÃO: Stats com controle de pausa quando modal aberto
   const [modalOpen, setModalOpen] = useState(false);
@@ -52,8 +67,19 @@ export const WhatsAppTab = () => {
     } else {
       setModalOpen(false);
       resumeAutoRefresh?.();
+      clearQRState(); // Limpar QR quando modal fecha
     }
-  }, [showQR, pauseAutoRefresh, resumeAutoRefresh]);
+  }, [showQR, pauseAutoRefresh, resumeAutoRefresh, clearQRState]);
+
+  // 🔥 LOG de debug para produção
+  useEffect(() => {
+    console.log('🔥 WhatsApp Tab - Configuração Produção:', {
+      FORCE_QR_REFRESH,
+      PRODUCTION_CONFIG,
+      realQRCode: !!realQRCode,
+      qrSource
+    });
+  }, [realQRCode, qrSource]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -73,17 +99,33 @@ export const WhatsAppTab = () => {
     }
   };
 
-  // 🆕 Criar nova instância
-  const handleCreateInstance = async () => {
+  // 🔥 NOVO: Criar instância com QR REAL
+  const handleCreateInstanceReal = async () => {
     if (!newInstanceName.trim()) return;
     
     try {
       setIsCreating(true);
-      await createInstance(newInstanceName);
-      setNewInstanceName('');
-      setShowQR(false);
+      
+      console.log('🔥 CRIANDO INSTÂNCIA COM QR REAL:', {
+        instanceName: newInstanceName,
+        production: PRODUCTION_CONFIG
+      });
+
+      // Gerar QR Code REAL (não simulado)
+      const realQR = await generateRealQRCode(newInstanceName);
+      
+      console.log('✅ QR CODE REAL GERADO:', {
+        hasQR: !!realQR,
+        source: qrSource,
+        instanceId: qrInstanceId
+      });
+
+      // Se QR foi gerado com sucesso, manter modal aberto
+      // para usuário escanear
+      
     } catch (err) {
-      console.error('Erro ao criar instância:', err);
+      console.error('❌ ERRO AO CRIAR INSTÂNCIA REAL:', err);
+      alert(`Erro ao criar instância: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
     } finally {
       setIsCreating(false);
     }
@@ -121,6 +163,7 @@ export const WhatsAppTab = () => {
   const handleCloseModal = () => {
     setShowQR(false);
     setNewInstanceName('');
+    clearQRState();
   };
 
   // 📊 Calcular estatísticas
@@ -128,7 +171,7 @@ export const WhatsAppTab = () => {
   const disconnectedCount = instances.filter(i => i.status === 'disconnected').length;
   const totalMessages = instances.reduce((sum, i) => sum + i.messagesCount, 0);
 
-  // 🛠️ MODAL CORRIGIDO: Layout fixo e input sem perda de foco
+  // 🔥 MODAL ATUALIZADO: QR Codes REAIS
   const QRModal = () => {
     if (!showQR) return null;
 
@@ -136,7 +179,6 @@ export const WhatsAppTab = () => {
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <Card className="glass-card w-full max-w-md">
           <CardHeader className="relative text-center pb-4">
-            {/* Botão fechar no canto */}
             <Button 
               variant="ghost" 
               size="sm" 
@@ -146,13 +188,22 @@ export const WhatsAppTab = () => {
               <X className="h-4 w-4" />
             </Button>
             
-            {/* Ícone e título */}
-            <div className="mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-3">
+            <div className="mx-auto w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-3 relative">
               <Smartphone className="h-6 w-6 text-primary-foreground" />
+              {PRODUCTION_CONFIG.FORCE_REAL_QR && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                  <Zap className="h-2 w-2 text-white" />
+                </div>
+              )}
             </div>
             
             <CardTitle className="text-foreground font-light tracking-wider-sofia">
               Nova Instância WhatsApp
+              {PRODUCTION_CONFIG.FORCE_REAL_QR && (
+                <span className="block text-xs text-green-400 mt-1">
+                  🔥 QR Codes REAIS (Produção)
+                </span>
+              )}
             </CardTitle>
             <p className="text-foreground-secondary text-sm">
               Crie uma nova instância e conecte seu WhatsApp
@@ -160,38 +211,64 @@ export const WhatsAppTab = () => {
           </CardHeader>
           
           <CardContent className="space-y-4">
-            {/* 🛠️ CORREÇÃO: Campo nome estático (sem re-render) */}
             <div className="space-y-2">
               <label className="text-sm font-light text-foreground-secondary">
                 Nome da Instância
               </label>
               <Input
-                key="instance-name-input" // Chave fixa para evitar re-mount
+                key="instance-name-input"
                 placeholder="Ex: Sofia Principal"
                 value={newInstanceName}
                 onChange={(e) => setNewInstanceName(e.target.value)}
                 className="bg-background-secondary border-glass-border text-foreground"
                 autoFocus
-                disabled={isCreating}
+                disabled={isCreating || qrLoading}
               />
             </div>
 
-            {/* 🛠️ CORREÇÃO: QR Code com tamanho fixo */}
             <div className="bg-white rounded-lg p-4 mx-auto" style={{ width: '200px', height: '200px' }}>
-              <div className="w-full h-full bg-black/10 rounded grid grid-cols-10 gap-px">
-                {Array.from({ length: 100 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`
-                      rounded-sm
-                      ${Math.random() > 0.5 ? 'bg-black' : 'bg-white'}
-                    `}
+              {qrLoading ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              ) : realQRCode ? (
+                <div className="w-full h-full relative">
+                  <img 
+                    src={realQRCode} 
+                    alt="QR Code Real" 
+                    className="w-full h-full object-contain"
                   />
-                ))}
-              </div>
+                  <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-1 py-0.5 rounded">
+                    REAL
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full h-full bg-black/10 rounded grid grid-cols-10 gap-px">
+                  {Array.from({ length: 100 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`rounded-sm ${Math.random() > 0.5 ? 'bg-black' : 'bg-white'}`}
+                    />
+                  ))}
+                  <div className="col-span-10 text-center text-xs text-gray-500 mt-2">
+                    Simulação
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Instruções compactas */}
+            {qrError && (
+              <div className="bg-red-500/20 text-red-400 p-2 rounded text-sm text-center">
+                ❌ {qrError}
+              </div>
+            )}
+            
+            {realQRCode && qrSource && (
+              <div className="bg-green-500/20 text-green-400 p-2 rounded text-sm text-center">
+                ✅ QR Code ativo (fonte: {qrSource})
+              </div>
+            )}
+
             <div className="bg-background-secondary/50 rounded-lg p-3 text-center space-y-1">
               <p className="text-xs text-foreground-secondary font-medium">
                 📱 Como Conectar:
@@ -201,36 +278,40 @@ export const WhatsAppTab = () => {
               </p>
             </div>
 
-            {/* Botões */}
             <div className="flex gap-3 pt-2">
               <Button 
                 className="flex-1 button-luxury" 
-                onClick={handleCreateInstance}
-                disabled={!newInstanceName.trim() || isCreating}
+                onClick={handleCreateInstanceReal}
+                disabled={!newInstanceName.trim() || isCreating || qrLoading}
               >
-                {isCreating ? (
+                {isCreating || qrLoading ? (
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <Plus className="h-4 w-4 mr-2" />
                 )}
-                {isCreating ? 'Criando...' : 'Criar Instância'}
+                {isCreating ? 'Criando...' : qrLoading ? 'Gerando QR...' : 'Criar Instância'}
               </Button>
               <Button 
                 variant="outline" 
                 onClick={handleCloseModal}
-                disabled={isCreating}
+                disabled={isCreating || qrLoading}
                 className="px-6"
               >
                 Cancelar
               </Button>
             </div>
+
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                Debug: QR={!!realQRCode}, Source={qrSource}, ID={qrInstanceId}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
     );
   };
 
-  // 🔄 Loading state
   if (loading) {
     return (
       <div className="space-y-8 animate-fade-in-up">
@@ -245,15 +326,21 @@ export const WhatsAppTab = () => {
   return (
     <>
       <div className="space-y-8 animate-fade-in-up">
-        {/* Header */}
         <div className="text-center space-y-4">
-          <h2 className="text-foreground">Facilitador WhatsApp</h2>
+          <div className="flex items-center justify-center gap-2">
+            <h2 className="text-foreground">Facilitador WhatsApp</h2>
+            {PRODUCTION_CONFIG.FORCE_REAL_QR && (
+              <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+                <Zap className="h-3 w-3 mr-1" />
+                QR Reais
+              </Badge>
+            )}
+          </div>
           <p className="text-foreground-secondary">
             Conecte e gerencie suas instâncias do WhatsApp
           </p>
         </div>
 
-        {/* Quick Actions */}
         <div className="flex justify-between items-center">
           <Button className="button-luxury" onClick={() => setShowQR(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -279,7 +366,6 @@ export const WhatsAppTab = () => {
           </div>
         </div>
 
-        {/* Stats Cards com Dados Reais */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="glass-card">
             <CardContent className="p-6">
@@ -324,7 +410,6 @@ export const WhatsAppTab = () => {
           </Card>
         </div>
 
-        {/* WhatsApp Instances */}
         <div className="space-y-6">
           <h3 className="text-xl font-light text-foreground tracking-wider-sofia">
             Instâncias Conectadas
@@ -385,12 +470,11 @@ export const WhatsAppTab = () => {
                     <div>
                       <p className="text-sm text-foreground-secondary">Última atividade</p>
                       <p className="text-lg font-light text-foreground">
-                        {instance.lastActivity}
+                        {instance.last_activity}
                       </p>
                     </div>
                   </div>
 
-                  {/* Botões com layout melhorado */}
                   <div className="flex justify-between items-center pt-4 border-t border-glass-border">
                     <div className="flex gap-2">
                       <Button variant="ghost" size="sm" onClick={() => setShowQR(true)}>
@@ -422,7 +506,6 @@ export const WhatsAppTab = () => {
                       </Button>
                     </div>
 
-                    {/* Botão de deletar */}
                     <Button 
                       variant="ghost" 
                       size="sm"
@@ -459,7 +542,6 @@ export const WhatsAppTab = () => {
           )}
         </div>
 
-        {/* Connection Guide */}
         <Card className="glass-card">
           <CardHeader>
             <CardTitle className="text-foreground font-light tracking-wider-sofia">
