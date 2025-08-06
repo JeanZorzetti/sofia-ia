@@ -318,56 +318,25 @@ class QRCodeProductionService {
     }
 
     /**
-     * 🎨 Gerar QR Code simulado realístico
+     * 🎨 Gerar QR Code simulado realístico (CORRIGIDO)
      */
     generateRealisticQRCode(instanceName) {
-        // Simular dados WhatsApp QR Code
+        // Gerar texto QR válido (formato WhatsApp-like)
         const timestamp = Date.now();
         const randomData = Math.random().toString(36).substring(2, 15);
-        const qrText = `2@${randomData},${instanceName},${timestamp}`;
+        const deviceId = Math.random().toString(36).substring(2, 10);
         
-        // Gerar imagem base64 simulada (pattern 21x21 realístico)
-        const canvas = this.generateQRCodeCanvas(qrText);
+        // ✅ QR text válido para WhatsApp (formato simulado)
+        const qrText = `2@${randomData}:${deviceId},${instanceName.replace(/[^a-zA-Z0-9]/g, '')},${timestamp}@abcd1234`;
         
+        console.log('🔧 QR Text válido gerado:', qrText.substring(0, 50) + '...');
+        
+        // ✅ CORRIGIDO: Retornar QR text válido em vez de JSON de matriz
         return {
-            raw: canvas.base64,
-            base64: canvas.base64,
-            dataUrl: `data:image/png;base64,${canvas.base64}`
+            raw: qrText,
+            base64: qrText, // Frontend vai processar como texto QR
+            dataUrl: null   // Frontend vai gerar imagem com QRCode.js
         };
-    }
-
-    /**
-     * 🎨 Gerar canvas de QR Code simulado
-     */
-    generateQRCodeCanvas(text) {
-        // Simular padrão QR Code 21x21 básico
-        const size = 21;
-        const pattern = [];
-        
-        // Gerar padrão pseudo-aleatório baseado no texto
-        let seed = 0;
-        for (let i = 0; i < text.length; i++) {
-            seed += text.charCodeAt(i);
-        }
-        
-        for (let y = 0; y < size; y++) {
-            pattern[y] = [];
-            for (let x = 0; x < size; x++) {
-                // Padrões fixos do QR Code
-                if ((x < 7 && y < 7) || (x >= size - 7 && y < 7) || (x < 7 && y >= size - 7)) {
-                    // Finder patterns
-                    pattern[y][x] = (x === 0 || x === 6 || y === 0 || y === 6 || (x >= 2 && x <= 4 && y >= 2 && y <= 4)) ? 1 : 0;
-                } else {
-                    // Dados (pseudo-aleatório)
-                    pattern[y][x] = ((seed + x + y) * 7) % 3 === 0 ? 1 : 0;
-                }
-            }
-        }
-        
-        // Converter para base64 simples (representação em texto)
-        const base64 = Buffer.from(JSON.stringify(pattern)).toString('base64');
-        
-        return { base64 };
     }
 
     /**
