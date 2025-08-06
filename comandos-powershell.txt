@@ -1,0 +1,33 @@
+# 🎯 COMANDOS SOFIA IA - COPY/PASTE NO POWERSHELL
+
+# ============================================
+# 🔍 1. VERIFICAR SE SERVIDOR ESTÁ RODANDO
+# ============================================
+Invoke-WebRequest -Uri "http://localhost:8000/health" -Method GET
+
+# ============================================  
+# 📱 2. CRIAR INSTÂNCIA WHATSAPP
+# ============================================
+$body = '{"name": "teste-qr-real-ps"}' 
+$headers = @{"Content-Type" = "application/json"}
+Invoke-WebRequest -Uri "http://localhost:8000/api/whatsapp/instances" -Method POST -Body $body -Headers $headers
+
+# ============================================
+# 📱 3. OBTER QR CODE REAL  
+# ============================================
+Invoke-WebRequest -Uri "http://localhost:8000/api/whatsapp/instances/teste-qr-real-ps/qr" -Method GET
+
+# ============================================
+# 📊 4. VER ESTATÍSTICAS WEBHOOK
+# ============================================  
+Invoke-WebRequest -Uri "http://localhost:8000/webhook/evolution/stats" -Method GET
+
+# ============================================
+# 🔍 5. DEBUG QR CODES EM CACHE
+# ============================================
+Invoke-WebRequest -Uri "http://localhost:8000/webhook/evolution/debug/qrcodes" -Method GET
+
+# ============================================
+# 📱 6. LISTAR INSTÂNCIAS 
+# ============================================
+Invoke-WebRequest -Uri "http://localhost:8000/api/whatsapp/instances" -Method GET
