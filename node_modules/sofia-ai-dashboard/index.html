@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SOFIA IA - SDR Inteligente</title>
+    <meta name="description" content="Sistema SDR inteligente para qualificação automática de leads imobiliários via WhatsApp" />
+    <meta name="author" content="SOFIA IA" />
+    <meta name="keywords" content="SDR, IA, WhatsApp, Imobiliário, Leads, Qualificação, Automação" />
+
+    <!-- 🚀 PWA META TAGS -->
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="background-color" content="#0f172a" />
+    <meta name="display" content="standalone" />
+    <meta name="orientation" content="portrait-primary" />
+    
+    <!-- Apple PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Sofia IA" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="/icon-72x72.png" />
+    <link rel="apple-touch-icon" sizes="96x96" href="/icon-96x96.png" />
+    <link rel="apple-touch-icon" sizes="128x128" href="/icon-128x128.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/icon-144x144.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="384x384" href="/icon-384x384.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512x512.png" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Standard Icons -->
+    <link rel="icon" type="image/svg+xml" href="/icon-base.svg" />
+    <link rel="icon" type="image/png" href="/icon-192x192.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    
+    <!-- Microsoft PWA Support -->
+    <meta name="msapplication-TileImage" content="/icon-144x144.png" />
+    <meta name="msapplication-TileColor" content="#6366f1" />
+    <meta name="msapplication-navbutton-color" content="#6366f1" />
+    <meta name="msapplication-starturl" content="/" />
+    
+    <!-- Firefox PWA Support -->
+    <meta name="theme-color" content="#6366f1" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: dark)" />
+
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="SOFIA IA - SDR Inteligente" />
+    <meta property="og:description" content="Sistema SDR inteligente para qualificação automática de leads imobiliários via WhatsApp" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icon-512x512.png" />
+    <meta property="og:url" content="https://sofia-ia.roilabs.com.br" />
+    <meta property="og:site_name" content="Sofia IA" />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SOFIA IA - SDR Inteligente" />
+    <meta name="twitter:description" content="Sistema SDR inteligente para qualificação automática de leads imobiliários via WhatsApp" />
+    <meta name="twitter:image" content="/icon-512x512.png" />
+    
+    <!-- Security & Performance -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="robots" content="index, follow" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preconnect" href="https://sofiaia.roilabs.com.br" />
+    <link rel="dns-prefetch" href="https://api.anthropic.com" />
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- 🚀 PWA SERVICE WORKER REGISTRATION -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('🚀 Sofia IA PWA registrado:', registration.scope);
+              
+              // Verificar por atualizações
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      console.log('📱 Nova versão disponível - recarregue a página');
+                      // Aqui você pode mostrar um toast para o usuário
+                    }
+                  });
+                }
+              });
+            })
+            .catch((error) => {
+              console.error('❌ Erro ao registrar PWA:', error);
+            });
+        });
+
+        // Detectar quando app é instalado
+        window.addEventListener('beforeinstallprompt', (e) => {
+          console.log('📱 Sofia IA pode ser instalado como app');
+          e.preventDefault();
+          window.deferredPrompt = e;
+          
+          // Aqui você pode mostrar um botão "Instalar App"
+          const installButton = document.createElement('button');
+          installButton.textContent = '📱 Instalar Sofia IA';
+          installButton.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+          `;
+          
+          installButton.addEventListener('click', () => {
+            e.prompt();
+            e.userChoice.then((choiceResult) => {
+              if (choiceResult.outcome === 'accepted') {
+                console.log('✅ Sofia IA instalado como PWA');
+              }
+              installButton.remove();
+              window.deferredPrompt = null;
+            });
+          });
+          
+          document.body.appendChild(installButton);
+        });
+
+        // Detectar quando app foi instalado
+        window.addEventListener('appinstalled', () => {
+          console.log('🎉 Sofia IA foi instalado como PWA!');
+        });
+      }
+    </script>
+  </body>
+</html>

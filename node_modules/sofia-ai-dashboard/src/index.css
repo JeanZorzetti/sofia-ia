@@ -1,0 +1,249 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SOFIA IA - Premium SaaS Design System */
+
+@layer base {
+  :root {
+    /* SOFIA IA Color Palette - Luxury Black Theme */
+    --background: 0 0% 0%;                    /* #000000 - Pure black */
+    --background-secondary: 0 0% 4%;          /* #0a0a0a */
+    --background-tertiary: 0 0% 10%;          /* #1a1a1a */
+    --background-quaternary: 0 0% 16%;        /* #2a2a2a */
+    
+    --foreground: 0 0% 100%;                  /* #ffffff - Pure white */
+    --foreground-secondary: 0 0% 70%;         /* rgba(255, 255, 255, 0.7) */
+    --foreground-tertiary: 0 0% 50%;          /* rgba(255, 255, 255, 0.5) */
+    
+    --card: 0 0% 4%;                         /* Glass cards */
+    --card-foreground: 0 0% 100%;
+    
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 100%;
+    
+    --primary: 0 0% 100%;                    /* White accent */
+    --primary-foreground: 0 0% 0%;
+    
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+    
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 70%;
+    
+    --accent: 0 0% 100%;
+    --accent-foreground: 0 0% 0%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 0 0% 100% / 0.1;               /* White with 10% opacity */
+    --input: 0 0% 100% / 0.1;
+    --ring: 0 0% 100% / 0.3;
+    
+    --radius-card: 20px;
+    --radius-button: 50px;
+    --radius: 8px;
+    
+    /* Glass Effect */
+    --glass-bg: 0 0% 0% / 0.72;
+    --glass-border: 0 0% 100% / 0.1;
+    --glass-blur: 20px;
+    
+    /* Typography */
+    --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    --letter-spacing-wide: 0.05rem;
+    --letter-spacing-wider: 0.15rem;
+    --letter-spacing-widest: 0.3rem;
+    
+    /* Transitions */
+    --transition-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
+    --transition-duration: 0.3s;
+    
+    /* Shadows */
+    --shadow-glass: 
+      0 8px 32px rgba(0, 0, 0, 0.8),
+      0 4px 16px rgba(0, 0, 0, 0.6),
+      0 2px 8px rgba(0, 0, 0, 0.4);
+    
+    --shadow-glow: 0 0 40px rgba(255, 255, 255, 0.1);
+    
+    /* Sidebar tokens */
+    --sidebar-background: 0 0% 4%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 100% / 0.1;
+    --sidebar-ring: 0 0% 100% / 0.3;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: var(--font-primary);
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-primary);
+    font-weight: 300;
+    letter-spacing: var(--letter-spacing-wide);
+  }
+
+  /* Typography Scale */
+  h1 {
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 200;
+    letter-spacing: var(--letter-spacing-widest);
+    line-height: 1.1;
+  }
+  
+  h2 {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 200;
+    letter-spacing: var(--letter-spacing-wider);
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: clamp(1.25rem, 3vw, 1.875rem);
+    font-weight: 300;
+    letter-spacing: var(--letter-spacing-wider);
+    line-height: 1.3;
+  }
+  
+  p {
+    font-weight: 300;
+    letter-spacing: var(--letter-spacing-wide);
+    line-height: 1.6;
+  }
+}
+
+@layer components {
+  /* Glass morphism card */
+  .glass-card {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid hsl(var(--glass-border));
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-glass);
+  }
+  
+  /* Luxury button */
+  .button-luxury {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-radius: var(--radius-button);
+    font-weight: 300;
+    letter-spacing: var(--letter-spacing-wider);
+    transition: all var(--transition-duration) var(--transition-smooth);
+    box-shadow: var(--shadow-glass);
+  }
+  
+  .button-luxury:hover {
+    box-shadow: var(--shadow-glow), var(--shadow-glass);
+    transform: translateY(-2px) scale(1.02);
+  }
+  
+  /* Navbar glass */
+  .navbar-glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(var(--glass-blur));
+    border-bottom: 1px solid hsl(var(--glass-border));
+  }
+  
+  /* Logo styling */
+  .logo-sofia {
+    font-weight: 200;
+    letter-spacing: var(--letter-spacing-widest);
+    font-size: 1.5rem;
+  }
+  
+  /* Smooth scroll */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+  }
+  
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--background-secondary));
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 3px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--foreground-tertiary));
+  }
+}
+
+@layer utilities {
+  /* Animation classes */
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s var(--transition-smooth) forwards;
+  }
+  
+  .animate-glow {
+    animation: glow 2s infinite alternate;
+  }
+  
+  .hover-scale {
+    transition: transform var(--transition-duration) var(--transition-smooth);
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+  
+  .hover-glow {
+    transition: box-shadow var(--transition-duration) var(--transition-smooth);
+  }
+  
+  .hover-glow:hover {
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+  }
+  to {
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
