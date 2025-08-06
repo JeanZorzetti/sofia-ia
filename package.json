@@ -4,33 +4,13 @@
   "description": "Sofia IA - Sistema SDR Inteligente para Imobiliárias (Monorepo)",
   "private": true,
   "workspaces": [
-    "backend",
-    "dashboard", 
-    "landing",
-    "shared"
+    "dashboard"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:dashboard\"",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:dashboard": "cd dashboard && npm run dev", 
-    "dev:landing": "cd landing && npm run dev",
-    "build": "npm run build:backend && npm run build:dashboard && npm run build:landing",
-    "build:backend": "cd backend && npm run build",
-    "build:dashboard": "cd dashboard && npm run build",
-    "build:landing": "cd landing && npm run build",
-    "test": "npm run test --workspaces",
-    "test:backend": "cd backend && npm test",
-    "test:dashboard": "cd dashboard && npm test",
-    "install:all": "npm install && npm install --workspaces",
-    "clean": "rm -rf node_modules backend/node_modules dashboard/node_modules landing/node_modules",
-    "start:backend": "cd backend && npm start",
-    "start:dashboard": "cd dashboard && npm run preview",
-    "start:landing": "cd landing && npm run preview"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2",
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
+    "dev": "cd dashboard && npm run dev",
+    "build": "cd dashboard && npm ci && npm run build",
+    "install": "cd dashboard && npm ci",
+    "start": "cd dashboard && npm run preview"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -42,7 +22,7 @@
   },
   "keywords": [
     "sofia-ia",
-    "sdr",
+    "sdr", 
     "whatsapp",
     "real-estate",
     "ai",
