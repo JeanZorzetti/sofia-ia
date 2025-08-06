@@ -1,26 +1,16 @@
 {
   "version": 2,
-  "name": "sofia-ia",
-  "builds": [
-    {
-      "src": "dashboard/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dashboard/dist"
-      }
-    }
-  ],
+  "buildCommand": "cd dashboard && npm install && npm run build",
+  "outputDirectory": "dashboard/dist",
+  "installCommand": "cd dashboard && npm install",
+  "framework": null,
   "routes": [
     {
       "handle": "filesystem"
     },
     {
       "src": "/(.*)",
-      "dest": "/dashboard/dist/index.html"
+      "dest": "/index.html"
     }
-  ],
-  "buildCommand": "cd dashboard && npm ci && npm run build",
-  "outputDirectory": "dashboard/dist",
-  "installCommand": "cd dashboard && npm ci",
-  "framework": "vite"
+  ]
 }

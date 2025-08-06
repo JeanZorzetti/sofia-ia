@@ -1,15 +1,10 @@
 {
   "name": "sofia-ia",
   "version": "2.6.0",
-  "description": "Sofia IA - Sistema SDR Inteligente para Imobiliárias (Monorepo)",
+  "description": "Sofia IA - Sistema SDR Inteligente para Imobiliárias",
   "private": true,
-  "workspaces": [
-    "dashboard"
-  ],
   "scripts": {
-    "dev": "cd dashboard && npm run dev",
-    "build": "cd dashboard && npm ci && npm run build",
-    "install": "cd dashboard && npm ci",
+    "build": "cd dashboard && npm run build",
     "start": "cd dashboard && npm run preview"
   },
   "engines": {
@@ -20,15 +15,6 @@
     "type": "git",
     "url": "https://github.com/JeanZorzetti/sofia-ia.git"
   },
-  "keywords": [
-    "sofia-ia",
-    "sdr", 
-    "whatsapp",
-    "real-estate",
-    "ai",
-    "claude",
-    "automation"
-  ],
   "author": "Jean Zorzetti",
   "license": "MIT"
 }
