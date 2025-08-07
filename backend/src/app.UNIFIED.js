@@ -23,9 +23,9 @@ const webhookRoutes = require('./routes/webhook.routes.js');
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Middleware - ✅ CORRIGIDO: URL do frontend atualizada
+// Middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'https://sofia-dash.roilabs.com.br'],
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'https://sofia-ai-lux-dash.vercel.app'],
     credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));

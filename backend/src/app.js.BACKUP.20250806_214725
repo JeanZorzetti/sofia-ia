@@ -1,6 +1,6 @@
 /**
- * 🏠 SOFIA IA - Backend UNIFICADO v4.0.0
- * ✅ USANDO EVOLUTION SERVICE CONSOLIDADO
+ * 🏠 SOFIA IA - Backend com Evolution API Webhooks REAIS
+ * ✅ IMPLEMENTAÇÃO COMPLETA BASEADA NA DOCUMENTAÇÃO OFICIAL
  * 
  * Fluxo correto da Evolution API v2:
  * 1. Criar instância com webhook configurado
@@ -14,8 +14,8 @@
 const express = require('express');
 const cors = require('cors');
 
-// 🔗 IMPORTAR SERVIÇO UNIFICADO
-const EvolutionAPIService = require('./services/evolution.service.UNIFIED.js');
+// 🔗 IMPORTAR SERVIÇOS NOVOS
+const EvolutionWebhookService = require('./services/evolution-webhook.service.js');
 
 // 🔗 IMPORTAR ROTAS
 const webhookRoutes = require('./routes/webhook.routes.js');
@@ -23,19 +23,19 @@ const webhookRoutes = require('./routes/webhook.routes.js');
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Middleware - ✅ CORRIGIDO: URL do frontend atualizada
+// Middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'https://sofia-dash.roilabs.com.br'],
+    origin: ['http://localhost:5173', 'http://localhost:3000', 'https://sofia-ai-lux-dash.vercel.app'],
     credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 🔗 INICIALIZAR SERVIÇO UNIFICADO
-const evolutionService = new EvolutionAPIService();
+// 🔗 INICIALIZAR SERVIÇOS NOVOS
+const evolutionWebhookService = new EvolutionWebhookService();
 
-// Disponibilizar serviço globalmente no app
-app.set('evolutionService', evolutionService);
+// Disponibilizar serviços globalmente no app
+app.set('evolutionWebhookService', evolutionWebhookService);
 
 // 🔗 REGISTRAR ROTAS DE WEBHOOK
 app.use('/webhook', webhookRoutes);
@@ -317,26 +317,31 @@ const db = new MetricsDatabase();
 // 🚀 ENDPOINTS PRINCIPAIS
 
 // Health check
-app.get('/health', async (req, res) => {
+app.get('/health', (req, res) => {
     console.log('📊 Health check requisitado');
     
     const whatsappStats = whatsappManager.getStats();
-    const evolutionHealth = await evolutionService.healthCheck();
-    const serviceStats = evolutionService.getServiceStats();
+    const webhookStats = evolutionWebhookService.getCacheStats();
     
     res.json({
         status: 'ok',
         timestamp: new Date().toISOString(),
         service: 'Sofia IA Backend',
-        version: '4.0.0-unified',
+        version: '4.0.0-production',
         uptime: process.uptime(),
         whatsapp_system: {
             status: 'active',
             stats: whatsappStats
         },
+        webhook_system: {
+            status: 'active',
+            stats: webhookStats,
+            webhook_url: evolutionWebhookService.webhookUrl
+        },
         evolution_api: {
-            health: evolutionHealth,
-            stats: serviceStats
+            status: 'configured',
+            api_url: evolutionWebhookService.apiUrl,
+            webhook_configured: true
         }
     });
 });
@@ -393,14 +398,14 @@ app.get('/api/leads', (req, res) => {
     });
 });
 
-// 🔗 ========== WHATSAPP ENDPOINTS COM EVOLUTION API UNIFICADO ==========
+// 🔗 ========== WHATSAPP ENDPOINTS COM EVOLUTION API ==========
 
 // 📱 Listar instâncias
 app.get('/api/whatsapp/instances', async (req, res) => {
     console.log('📱 Instâncias WhatsApp requisitadas');
     
     try {
-        const evolutionResult = await evolutionService.listInstances();
+        const evolutionResult = await evolutionWebhookService.fetchInstances();
         
         if (evolutionResult.success && evolutionResult.data.length > 0) {
             res.json({
@@ -445,7 +450,7 @@ app.post('/api/whatsapp/instances', async (req, res) => {
     }
     
     try {
-        const result = await evolutionService.createInstance(instanceName.trim(), settings);
+        const result = await evolutionWebhookService.createInstanceWithWebhook(instanceName.trim(), settings);
         
         if (result.success) {
             res.status(201).json({
@@ -477,57 +482,61 @@ app.get('/api/whatsapp/qrcode/:instanceName', async (req, res) => {
     const forceRefresh = req.query.refresh === 'true';
     
     try {
-        // 1. Verificar cache de QR codes
-        const cachedQR = evolutionService.getCachedQRCode(instanceName);
+        // 1. Verificar cache de webhooks
+        const cachedQR = evolutionWebhookService.getCachedQRCode(instanceName);
         
         if (cachedQR && !forceRefresh) {
-            return res.json({
-                success: true,
-                data: {
-                    instance_id: instanceName,
-                    qr_code: cachedQR,
-                    qr_data_url: cachedQR.startsWith('data:') ? cachedQR : `data:image/png;base64,${cachedQR}`,
-                    expires_in: 300,
-                    source: 'cache',
-                    cache_hit: true
-                },
-                message: 'QR Code obtido do cache'
-            });
-        }
-        
-        // 2. Criar/conectar instância
-        const createResult = await evolutionService.createInstance(instanceName);
-        
-        if (createResult.success) {
-            // 3. Tentar conectar para gerar QR
-            const connectResult = await evolutionService.connectInstance(instanceName);
+            const timeRemaining = Math.max(0, cachedQR.expires_at - Date.now());
             
-            if (connectResult.success && connectResult.qrcode) {
+            if (timeRemaining > 0) {
                 return res.json({
                     success: true,
                     data: {
                         instance_id: instanceName,
-                        qr_code: connectResult.qrcode,
-                        qr_data_url: connectResult.qrcode.startsWith('data:') ? connectResult.qrcode : `data:image/png;base64,${connectResult.qrcode}`,
-                        expires_in: 300,
-                        source: connectResult.source,
-                        cache_hit: false
+                        qr_code: cachedQR.qrcode,
+                        qr_data_url: cachedQR.qrcode.startsWith('data:') ? cachedQR.qrcode : `data:image/png;base64,${cachedQR.qrcode}`,
+                        expires_in: Math.floor(timeRemaining / 1000),
+                        expires_at: cachedQR.expires_at,
+                        generated_at: cachedQR.timestamp,
+                        source: 'webhook_cache',
+                        cache_hit: true
                     },
-                    message: connectResult.message
+                    message: 'QR Code obtido do cache de webhooks'
                 });
             }
+        }
+        
+        // 2. Criar/reconectar instância
+        const createResult = await evolutionWebhookService.createInstanceWithWebhook(instanceName);
+        
+        if (createResult.success) {
+            // 3. Polling por QR code
+            for (let i = 0; i < 15; i++) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                const pollingQR = evolutionWebhookService.getCachedQRCode(instanceName);
+                if (pollingQR) {
+                    const timeRemaining = Math.max(0, pollingQR.expires_at - Date.now());
+                    
+                    return res.json({
+                        success: true,
+                        data: {
+                            instance_id: instanceName,
+                            qr_code: pollingQR.qrcode,
+                            qr_data_url: pollingQR.qrcode.startsWith('data:') ? pollingQR.qrcode : `data:image/png;base64,${pollingQR.qrcode}`,
+                            expires_in: Math.floor(timeRemaining / 1000),
+                            expires_at: pollingQR.expires_at,
+                            generated_at: pollingQR.timestamp,
+                            source: 'webhook_polling',
+                            cache_hit: false,
+                            polling_time: i + 1
+                        },
+                        message: `QR Code obtido via webhook após ${i + 1}s`
+                    });
+                }
+            }
             
-            // 4. QR code virá via webhook - informar cliente
-            return res.json({
-                success: true,
-                data: {
-                    instance_id: instanceName,
-                    qr_code: null,
-                    status: 'pending',
-                    message: 'QR code será enviado via webhook em instantes.'
-                },
-                message: 'Aguardando QR code via webhook'
-            });
+            throw new Error('Timeout aguardando QR Code via webhook');
         } else {
             throw new Error(createResult.error || 'Falha na criação da instância');
         }
@@ -545,6 +554,8 @@ app.get('/api/whatsapp/qrcode/:instanceName', async (req, res) => {
                 qr_code: simulatedQRCode,
                 qr_data_url: simulatedQRCode,
                 expires_in: 300,
+                expires_at: Date.now() + 300000,
+                generated_at: Date.now(),
                 source: 'fallback_simulation',
                 cache_hit: false
             },
@@ -555,12 +566,10 @@ app.get('/api/whatsapp/qrcode/:instanceName', async (req, res) => {
 });
 
 // 📱 Endpoint alternativo: /api/whatsapp/instances/:instanceId/qr (compatibilidade)
-app.get('/api/whatsapp/instances/:instanceId/qr', (req, res) => {
+app.get('/api/whatsapp/instances/:instanceId/qr', async (req, res) => {
     // Redirecionar para o endpoint principal
-    const { instanceId } = req.params;
-    req.url = `/api/whatsapp/qrcode/${instanceId}`;
-    req.params.instanceName = instanceId;
-    app._router.handle(req, res);
+    req.params.instanceName = req.params.instanceId;
+    return app._router.handle({...req, url: `/api/whatsapp/qrcode/${req.params.instanceId}`}, res, () => {});
 });
 
 // 📱 Stats e Debug endpoints
@@ -568,13 +577,14 @@ app.get('/api/whatsapp/instances/:instanceId/qr', (req, res) => {
 // Stats WhatsApp
 app.get('/api/whatsapp/stats', (req, res) => {
     const whatsappStats = whatsappManager.getStats();
-    const serviceStats = evolutionService.getServiceStats();
+    const webhookStats = evolutionWebhookService.getCacheStats();
     
     res.json({
         success: true,
         data: {
             ...whatsappStats,
-            evolution_stats: serviceStats
+            webhook_stats: webhookStats,
+            webhook_url: evolutionWebhookService.webhookUrl
         },
         timestamp: new Date().toISOString()
     });
@@ -582,16 +592,18 @@ app.get('/api/whatsapp/stats', (req, res) => {
 
 // Debug QR Cache
 app.get('/api/debug/qr-cache', (req, res) => {
-    const serviceStats = evolutionService.getServiceStats();
+    const cacheStats = evolutionWebhookService.getCacheStats();
+    const cacheDetails = evolutionWebhookService.getCacheDetails();
     
     res.json({
         success: true,
-        data: serviceStats,
+        data: cacheDetails,
+        ...cacheStats,
         timestamp: new Date().toISOString()
     });
 });
 
-// Envio de mensagens (placeholder - será implementado com Claude IA)
+// Envio de mensagens
 app.post('/api/whatsapp/send', async (req, res) => {
     const { instance, phone, message } = req.body;
     
@@ -602,18 +614,25 @@ app.post('/api/whatsapp/send', async (req, res) => {
         });
     }
     
-    // TODO: Implementar envio via Evolution API
-    res.json({
-        success: true,
-        data: {
-            instance,
-            phone,
-            message,
-            status: 'sent',
-            timestamp: new Date().toISOString()
-        },
-        message: 'Mensagem enviada com sucesso (simulado)'
-    });
+    try {
+        const result = await evolutionWebhookService.sendMessage(instance, phone, message);
+        
+        if (result.success) {
+            res.json({
+                success: true,
+                data: result.data,
+                message: 'Mensagem enviada com sucesso'
+            });
+        } else {
+            throw new Error(result.error);
+        }
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            message: 'Falha no envio da mensagem'
+        });
+    }
 });
 
 // Demais endpoints WhatsApp...
@@ -621,7 +640,7 @@ app.post('/api/whatsapp/instances/:instanceId/connect', async (req, res) => {
     const { instanceId } = req.params;
     
     try {
-        const result = await evolutionService.connectInstance(instanceId);
+        const result = await evolutionWebhookService.createInstanceWithWebhook(instanceId);
         
         if (result.success) {
             whatsappManager.updateInstanceStatus(instanceId, 'connecting');
@@ -649,14 +668,14 @@ app.post('/api/whatsapp/instances/:instanceId/disconnect', async (req, res) => {
     const { instanceId } = req.params;
     
     try {
-        const result = await evolutionService.disconnectInstance(instanceId);
+        const result = await evolutionWebhookService.logoutInstance(instanceId);
         
         if (result.success) {
             whatsappManager.updateInstanceStatus(instanceId, 'disconnected');
             res.json({
                 success: true,
-                data: { instance_id: instanceId, status: 'disconnected' },
-                message: result.message
+                data: result.data,
+                message: 'Instância desconectada com sucesso'
             });
         } else {
             throw new Error(result.error);
@@ -675,14 +694,14 @@ app.delete('/api/whatsapp/instances/:instanceId', async (req, res) => {
     const { instanceId } = req.params;
     
     try {
-        const result = await evolutionService.deleteInstance(instanceId);
+        const result = await evolutionWebhookService.deleteInstance(instanceId);
         
         if (result.success) {
             whatsappManager.deleteInstance(instanceId);
             res.json({
                 success: true,
-                data: { instance_id: instanceId },
-                message: result.message
+                data: result.data,
+                message: 'Instância deletada com sucesso'
             });
         } else {
             throw new Error(result.error);
@@ -717,19 +736,21 @@ process.on('unhandledRejection', (reason) => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
     console.log('👋 Finalizando servidor...');
+    evolutionWebhookService.cleanExpiredCache();
     process.exit(0);
 });
 
 process.on('SIGINT', () => {
     console.log('\n👋 Interrompido pelo usuário...');
+    evolutionWebhookService.cleanExpiredCache();
     process.exit(0);
 });
 
 // 🚀 Iniciar servidor
 app.listen(PORT, () => {
     console.log('🏠 ==========================================');
-    console.log('🚀 SOFIA IA BACKEND v4.0.0 UNIFICADO!');
-    console.log('🔔 EVOLUTION API SERVICE CONSOLIDADO!');
+    console.log('🚀 SOFIA IA BACKEND v4.0.0 INICIADO!');
+    console.log('🔔 PRODUÇÃO COM ENDPOINTS CORRIGIDOS!');
     console.log('🏠 ==========================================');
     console.log(`📍 URL: http://localhost:${PORT}`);
     console.log(`📊 Health: http://localhost:${PORT}/health`);
@@ -738,12 +759,19 @@ app.listen(PORT, () => {
     console.log(`📱 QR Code: http://localhost:${PORT}/api/whatsapp/qrcode/:instanceName`);
     console.log(`🔍 Debug: http://localhost:${PORT}/api/debug/qr-cache`);
     console.log('🏠 ==========================================');
-    console.log('✅ EVOLUTION SERVICE UNIFICADO ATIVO!');
-    console.log('🔔 Webhook configurado para receber eventos!');
-    console.log('📱 QR codes via webhook QRCODE_UPDATED!');
-    console.log('💾 Cache local implementado!');
-    console.log('🎯 TODOS OS SERVICES CONSOLIDADOS!');
+    console.log('✅ SISTEMA EVOLUTION API CONFIGURADO!');
+    console.log('🔔 Webhook ativo para receber eventos!');
+    console.log('📱 QR codes reais via webhook QRCODE_UPDATED!');
+    console.log('💾 Cache local otimizado!');
+    console.log('🎯 ENDPOINTS CORRIGIDOS PARA PRODUÇÃO!');
     console.log('🏠 ==========================================');
+    
+    // Limpeza automática de cache
+    setInterval(() => {
+        evolutionWebhookService.cleanExpiredCache();
+    }, 60000);
+    
+    console.log('🧹 Limpeza automática ativa (60s)');
 });
 
 module.exports = app;
