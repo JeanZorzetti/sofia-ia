@@ -1,0 +1,25 @@
+('🏠 ==========================================');
+    console.log('🚀 SOFIA IA BACKEND v4.0.0 UNIFICADO!');
+    console.log('🔔 EVOLUTION API SERVICE CONSOLIDADO!');
+    console.log('🔧 CORS CORRIGIDO PARA DOMÍNIO CUSTOMIZADO!');
+    console.log('🏠 ==========================================');
+    console.log(`📍 URL: http://localhost:${PORT}`);
+    console.log(`📊 Health: http://localhost:${PORT}/health`);
+    console.log(`📱 WhatsApp: http://localhost:${PORT}/api/whatsapp/instances`);
+    console.log(`🔔 Webhook: http://localhost:${PORT}/webhook/evolution`);
+    console.log(`📱 QR Code: http://localhost:${PORT}/api/whatsapp/qrcode/:instanceName`);
+    console.log(`🔍 Debug: http://localhost:${PORT}/api/debug/qr-cache`);
+    console.log('🏠 ==========================================');
+    console.log('✅ EVOLUTION SERVICE UNIFICADO ATIVO!');
+    console.log('🔔 Webhook configurado para receber eventos!');
+    console.log('📱 QR codes via webhook QRCODE_UPDATED!');
+    console.log('💾 Cache local implementado!');
+    console.log('🎯 TODOS OS SERVICES CONSOLIDADOS!');
+    console.log('🔧 CORS CONFIGURADO PARA:');
+    console.log('   - https://sofia-dash.roilabs.com.br');
+    console.log('   - https://sofia-ai-lux-dash.vercel.app');
+    console.log('   - http://localhost:5173 (desenvolvimento)');
+    console.log('🏠 ==========================================');
+});
+
+module.exports = app;
