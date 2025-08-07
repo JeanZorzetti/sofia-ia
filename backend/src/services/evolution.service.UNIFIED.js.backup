@@ -51,10 +51,10 @@ class EvolutionAPIService extends EventEmitter {
                 integration: 'WHATSAPP-BAILEYS',
                 
                 // 🔔 Configuração de webhooks (CRÍTICO!)
-                webhookUrl: this.webhookUrl,
+                webhook: this.webhookUrl,
                 webhookByEvents: true,
                 webhookBase64: true,
-                webhookEvents: [
+                events: [
                     'QRCODE_UPDATED',
                     'CONNECTION_UPDATE', 
                     'MESSAGES_UPSERT',
@@ -63,12 +63,12 @@ class EvolutionAPIService extends EventEmitter {
                 
                 // ⚙️ Configurações anti-ban otimizadas
                 reject_call: true,
-                msgCall: 'Sofia IA não aceita chamadas. Use mensagens de texto.',
-                groupsIgnore: true,
-                alwaysOnline: true,
-                readMessages: true,
-                readStatus: false,
-                syncFullHistory: false,
+                msg_call: 'Sofia IA não aceita chamadas. Use mensagens de texto.',
+                groups_ignore: true,
+                always_online: true,
+                read_messages: true,
+                read_status: false,
+                sync_full_history: false,
                 
                 ...settings
             };
