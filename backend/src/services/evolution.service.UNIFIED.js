@@ -1,13 +1,8 @@
 /**
- * 🚀 SOFIA IA - Evolution API Service UNIFICADO
- * Versão: v3.0.0 - Janeiro 2025
+ * 🚀 SOFIA IA - Evolution API Service SIMPLIFICADO
+ * Versão: v3.1.0 - Janeiro 2025
  * 
- * Service consolidado com TODAS as funcionalidades:
- * - Criação de instâncias
- * - QR codes via webhook
- * - Multi-instâncias
- * - Anti-ban protection
- * - Error handling robusto
+ * SEGUINDO EXATAMENTE A DOCUMENTAÇÃO OFICIAL
  */
 
 const axios = require('axios');
@@ -17,20 +12,16 @@ class EvolutionAPIService extends EventEmitter {
     constructor() {
         super();
         
-        // 🔐 Configurações da Evolution API
         this.baseURL = process.env.EVOLUTION_API_URL || 'https://evolutionapi.roilabs.com.br';
         this.apiKey = process.env.EVOLUTION_API_KEY || 'SuOOmamlmXs4NV3nkxpHAy7z3rcurbIz';
         this.webhookUrl = process.env.WEBHOOK_URL || 'https://sofiaia.roilabs.com.br/webhook/evolution';
         
-        // 📱 Cache para QR codes e status das instâncias
         this.qrCodeCache = new Map();
         this.instanceStatus = new Map();
         
-        // ⚙️ Headers padrão para todas as requisições
         this.defaultHeaders = {
             'apikey': this.apiKey,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
+            'Content-Type': 'application/json'
         };
         
         console.log('🚀 Evolution API Service inicializado');
@@ -39,30 +30,18 @@ class EvolutionAPIService extends EventEmitter {
     }
 
     /**
-     * 📱 CRIAR NOVA INSTÂNCIA WhatsApp
+     * 📱 CRIAR NOVA INSTÂNCIA - SEGUINDO EXATAMENTE A DOCUMENTAÇÃO OFICIAL
      */
     async createInstance(instanceName, settings = {}) {
         try {
             console.log(`🏗️ Criando instância: ${instanceName}`);
             
+            // ✅ PAYLOAD EXATAMENTE COMO NA DOCUMENTAÇÃO OFICIAL
             const instanceData = {
                 instanceName: instanceName,
                 qrcode: true,
                 integration: 'WHATSAPP-BAILEYS',
-                
-                // 🔔 Configuração de webhooks (CRÍTICO!)
-                webhookUrl: this.webhookUrl,
-                webhookByEvents: true,
-                webhookBase64: true,
-                webhookEvents: [
-                    'QRCODE_UPDATED',
-                    'CONNECTION_UPDATE', 
-                    'MESSAGES_UPSERT',
-                    'MESSAGE_STATUS_UPDATE'
-                ],
-                
-                // ⚙️ Configurações anti-ban otimizadas
-                reject_call: true,
+                rejectCall: true,
                 msgCall: 'Sofia IA não aceita chamadas. Use mensagens de texto.',
                 groupsIgnore: true,
                 alwaysOnline: true,
@@ -70,16 +49,32 @@ class EvolutionAPIService extends EventEmitter {
                 readStatus: false,
                 syncFullHistory: false,
                 
+                // ✅ WEBHOOK COMO OBJETO (DOCUMENTAÇÃO OFICIAL)
+                webhook: {
+                    url: this.webhookUrl,
+                    byEvents: true,
+                    base64: true,
+                    events: [
+                        'QRCODE_UPDATED',
+                        'CONNECTION_UPDATE',
+                        'MESSAGES_UPSERT',
+                        'MESSAGE_STATUS_UPDATE'
+                    ]
+                },
+                
                 ...settings
             };
+            
+            console.log('📋 Payload sendo enviado:', JSON.stringify(instanceData, null, 2));
             
             const response = await axios.post(`${this.baseURL}/instance/create`, instanceData, {
                 headers: this.defaultHeaders,
                 timeout: 30000
             });
             
+            console.log('✅ Response da Evolution API:', JSON.stringify(response.data, null, 2));
+            
             if (response.data && response.data.instance) {
-                // ✅ Marcar instância como criada
                 this.instanceStatus.set(instanceName, {
                     status: 'created',
                     instanceId: response.data.instance.instanceId,
@@ -104,6 +99,7 @@ class EvolutionAPIService extends EventEmitter {
             
         } catch (error) {
             console.error(`❌ Erro ao criar instância ${instanceName}:`, error.message);
+            console.error('📋 Error details:', error.response?.data || 'Sem detalhes');
             
             return {
                 success: false,
@@ -113,9 +109,6 @@ class EvolutionAPIService extends EventEmitter {
         }
     }
 
-    /**
-     * 📋 LISTAR TODAS AS INSTÂNCIAS
-     */
     async listInstances() {
         try {
             const response = await axios.get(`${this.baseURL}/instance/fetchInstances`, {
@@ -124,7 +117,6 @@ class EvolutionAPIService extends EventEmitter {
             });
             
             if (response.data && Array.isArray(response.data)) {
-                // 🔄 Atualizar status interno das instâncias
                 response.data.forEach(instance => {
                     this.instanceStatus.set(instance.instanceName, {
                         status: instance.status,
@@ -158,14 +150,10 @@ class EvolutionAPIService extends EventEmitter {
         }
     }
 
-    /**
-     * 🔗 CONECTAR INSTÂNCIA (obter QR code)
-     */
     async connectInstance(instanceName) {
         try {
             console.log(`🔗 Conectando instância: ${instanceName}`);
             
-            // 📱 Verificar se já temos QR code no cache
             const cachedQR = this.getCachedQRCode(instanceName);
             if (cachedQR) {
                 return {
@@ -176,13 +164,11 @@ class EvolutionAPIService extends EventEmitter {
                 };
             }
             
-            // 🔄 Solicitar nova conexão
             const response = await axios.get(`${this.baseURL}/instance/connect/${instanceName}`, {
                 headers: this.defaultHeaders,
                 timeout: 30000
             });
             
-            // 📱 QR code virá via webhook, não no response direto
             return {
                 success: true,
                 qrcode: null,
@@ -200,47 +186,6 @@ class EvolutionAPIService extends EventEmitter {
         }
     }
 
-    /**
-     * ❌ DESCONECTAR INSTÂNCIA
-     */
-    async disconnectInstance(instanceName) {
-        try {
-            console.log(`❌ Desconectando instância: ${instanceName}`);
-            
-            const response = await axios.delete(`${this.baseURL}/instance/logout/${instanceName}`, {
-                headers: this.defaultHeaders,
-                timeout: 15000
-            });
-            
-            // 🧹 Limpar cache
-            this.qrCodeCache.delete(instanceName);
-            
-            // 🔄 Atualizar status
-            const currentStatus = this.instanceStatus.get(instanceName);
-            if (currentStatus) {
-                currentStatus.connected = false;
-                currentStatus.status = 'disconnected';
-                currentStatus.lastSeen = new Date();
-            }
-            
-            return {
-                success: true,
-                message: `Instância ${instanceName} desconectada`
-            };
-            
-        } catch (error) {
-            console.error(`❌ Erro ao desconectar ${instanceName}:`, error.message);
-            
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    /**
-     * 🗑️ DELETAR INSTÂNCIA
-     */
     async deleteInstance(instanceName) {
         try {
             console.log(`🗑️ Deletando instância: ${instanceName}`);
@@ -250,7 +195,6 @@ class EvolutionAPIService extends EventEmitter {
                 timeout: 15000
             });
             
-            // 🧹 Limpar todos os caches
             this.qrCodeCache.delete(instanceName);
             this.instanceStatus.delete(instanceName);
             
@@ -269,9 +213,6 @@ class EvolutionAPIService extends EventEmitter {
         }
     }
 
-    /**
-     * 🔔 PROCESSAR WEBHOOK da Evolution API
-     */
     async processWebhook(webhookData) {
         try {
             const { event, instance, data } = webhookData;
@@ -291,7 +232,6 @@ class EvolutionAPIService extends EventEmitter {
                 case 'CONNECTION_UPDATE':
                     console.log(`🔗 Conexão ${instance}: ${data.state}`);
                     
-                    // 🔄 Atualizar status da instância
                     const currentStatus = this.instanceStatus.get(instance) || {};
                     currentStatus.connected = data.state === 'open';
                     currentStatus.status = data.state;
@@ -299,7 +239,6 @@ class EvolutionAPIService extends EventEmitter {
                     this.instanceStatus.set(instance, currentStatus);
                     
                     if (data.state === 'open') {
-                        // ✅ Conectou - remover QR code do cache
                         this.qrCodeCache.delete(instance);
                         this.emit('instance_connected', { instance });
                         console.log(`✅ ${instance} conectado com sucesso!`);
@@ -309,7 +248,6 @@ class EvolutionAPIService extends EventEmitter {
                     break;
                     
                 case 'MESSAGES_UPSERT':
-                    // 💬 Processar mensagens recebidas
                     if (data && data.messages) {
                         for (const message of data.messages) {
                             this.emit('message_received', { instance, message });
@@ -319,7 +257,6 @@ class EvolutionAPIService extends EventEmitter {
                     break;
                     
                 case 'MESSAGE_STATUS_UPDATE':
-                    // ✅ Status de entrega das mensagens
                     this.emit('message_status', { instance, status: data });
                     break;
             }
@@ -341,9 +278,6 @@ class EvolutionAPIService extends EventEmitter {
         }
     }
 
-    /**
-     * 📱 GERENCIAR CACHE DE QR CODES
-     */
     cacheQRCode(instance, qrcode) {
         this.qrCodeCache.set(instance, {
             qrcode: qrcode,
@@ -357,7 +291,6 @@ class EvolutionAPIService extends EventEmitter {
         const cached = this.qrCodeCache.get(instance);
         if (!cached) return null;
         
-        // 📅 QR codes expiram em 5 minutos
         if (Date.now() - cached.timestamp > 300000) {
             this.qrCodeCache.delete(instance);
             return null;
@@ -366,9 +299,6 @@ class EvolutionAPIService extends EventEmitter {
         return cached.qrcode;
     }
 
-    /**
-     * 📊 ESTATÍSTICAS DO SERVIÇO
-     */
     getServiceStats() {
         return {
             totalInstances: this.instanceStatus.size,
@@ -381,9 +311,6 @@ class EvolutionAPIService extends EventEmitter {
         };
     }
 
-    /**
-     * 🩺 HEALTH CHECK
-     */
     async healthCheck() {
         try {
             const response = await axios.get(`${this.baseURL}/instance/fetchInstances`, {
