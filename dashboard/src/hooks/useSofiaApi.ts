@@ -346,7 +346,7 @@ export const useWhatsAppInstances = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ instanceName: name }),
       });
       
       if (!response.ok) {
