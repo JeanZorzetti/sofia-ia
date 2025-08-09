@@ -82,16 +82,17 @@ class EvolutionAPIService extends EventEmitter {
 
                 // Webhook (só enviar se HTTPS; muitos provedores rejeitam HTTP)
                 // Em dev usamos polling, então omitimos quando URL não é HTTPS
-                ...(this.webhookUrl.startsWith('https://') ? {
-                    webhook: this.webhookUrl,
-                    webhookByEvents: true,
-                    webhookBase64: true,
-                    events: [
-                        'QRCODE_UPDATED',
-                        'CONNECTION_UPDATE',
-                        'MESSAGES_UPSERT'
-                    ]
-                } : {}),
+                // Webhook (temporariamente removido para debug)
+                // ...(this.webhookUrl.startsWith('https://') ? {
+                //     webhook: this.webhookUrl,
+                //     webhookByEvents: true,
+                //     webhookBase64: true,
+                //     events: [
+                //         'QRCODE_UPDATED',
+                //         'CONNECTION_UPDATE',
+                //         'MESSAGES_UPSERT'
+                //     ]
+                // } : {}),
 
                 ...settings
             };
