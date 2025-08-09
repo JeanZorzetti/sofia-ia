@@ -12,12 +12,15 @@
 const axios = require('axios');
 const EventEmitter = require('events');
 
+const PLACEHOLDER_API_KEY = 'SuOOmamlmXs4NV3nkxpHAy7z3rcurbIz';
+
 class EvolutionAPIService extends EventEmitter {
     constructor() {
         super();
         
         this.baseURL = process.env.EVOLUTION_API_URL || 'https://evolutionapi.roilabs.com.br';
-        this.apiKey = process.env.EVOLUTION_API_KEY || 'SuOOmamlmXs4NV3nkxpHAy7z3rcurbIz';
+        this.apiKey = process.env.EVOLUTION_API_KEY || PLACEHOLDER_API_KEY;
+        this.isConfigured = this.apiKey !== PLACEHOLDER_API_KEY;
         
         // Webhook URL - não funcionará em localhost, mas precisamos configurar mesmo assim
         // Em dev, use http local; em prod, use domínio público
@@ -38,13 +41,24 @@ class EvolutionAPIService extends EventEmitter {
         
         console.log('🚀 Evolution API Service v5.0.0 inicializado');
         console.log(`📡 Base URL: ${this.baseURL}`);
-        console.log(`🔑 API Key: ${this.apiKey.substring(0, 10)}...`);
+        if (!this.isConfigured) {
+            console.warn('⚠️  ATENÇÃO: Evolution API Key não configurada. Usando chave placeholder. Funcionalidades de WhatsApp estarão desabilitadas.');
+        } else {
+            if (!this.isConfigured) {
+            console.warn('⚠️  ATENÇÃO: Evolution API Key não configurada. Usando chave placeholder. Funcionalidades de WhatsApp estarão desabilitadas.');
+        } else {
+            console.log(`🔑 API Key: ${this.apiKey.substring(0, 10)}...`);
+        }
+        }
     }
 
     /**
      * 📱 CRIAR NOVA INSTÂNCIA COM POLLING PARA QR CODE
      */
     async createInstance(instanceName, settings = {}) {
+        if (!this.isConfigured) {
+            return { success: false, error: 'Evolution API não configurada. Verifique a API Key.' };
+        }
         try {
             console.log(`\n🏗️ Criando instância: ${instanceName}`);
             
@@ -154,6 +168,7 @@ class EvolutionAPIService extends EventEmitter {
      * Como webhook não funciona em localhost, fazemos polling
      */
     async startQRCodePolling(instanceName) {
+        if (!this.isConfigured) return;
         console.log(`🔄 Iniciando polling de QR code para ${instanceName}`);
         
         // Limpar polling anterior se existir
@@ -250,6 +265,7 @@ class EvolutionAPIService extends EventEmitter {
      * 🗑️ DELETAR INSTÂNCIA SE EXISTIR (antes de criar nova)
      */
     async deleteInstanceIfExists(instanceName) {
+        if (!this.isConfigured) return;
         try {
             await axios.delete(
                 `${this.baseURL}/instance/delete/${instanceName}`,
@@ -271,6 +287,9 @@ class EvolutionAPIService extends EventEmitter {
      * 📱 OBTER QR CODE (do cache ou nova tentativa)
      */
     async getQRCode(instanceName) {
+        if (!this.isConfigured) {
+            return { success: false, error: 'Evolution API não configurada. Verifique a API Key.' };
+        }
         try {
             console.log(`📱 Obtendo QR code para ${instanceName}`);
             
@@ -380,6 +399,9 @@ class EvolutionAPIService extends EventEmitter {
      * 📋 LISTAR INSTÂNCIAS
      */
     async listInstances() {
+        if (!this.isConfigured) {
+            return { success: false, error: 'Evolution API não configurada. Verifique a API Key.', data: [] };
+        }
         try {
             const response = await axios.get(
                 `${this.baseURL}/instance/fetchInstances`,
@@ -422,6 +444,9 @@ class EvolutionAPIService extends EventEmitter {
      * 🗑️ DELETAR INSTÂNCIA
      */
     async deleteInstance(instanceName) {
+        if (!this.isConfigured) {
+            return { success: false, error: 'Evolution API não configurada. Verifique a API Key.' };
+        }
         try {
             console.log(`🗑️ Deletando instância: ${instanceName}`);
             
@@ -484,6 +509,9 @@ class EvolutionAPIService extends EventEmitter {
      * 🔔 PROCESSAR WEBHOOK (caso funcione em produção)
      */
     async processWebhook(webhookData) {
+        if (!this.isConfigured) {
+            return { success: false, error: 'Evolution API não configurada. Verifique a API Key.' };
+        }
         try {
             const { event, instance, data } = webhookData;
             
@@ -546,7 +574,8 @@ class EvolutionAPIService extends EventEmitter {
             activePolling: this.pollingIntervals.size,
             baseURL: this.baseURL,
             webhookURL: this.webhookUrl,
-            uptime: process.uptime()
+            uptime: process.uptime(),
+            isConfigured: this.isConfigured
         };
     }
 
@@ -554,6 +583,14 @@ class EvolutionAPIService extends EventEmitter {
      * ✅ HEALTH CHECK
      */
     async healthCheck() {
+        if (!this.isConfigured) {
+            return {
+                success: false,
+                status: 'unconfigured',
+                error: 'Evolution API Key não configurada.',
+                timestamp: new Date().toISOString()
+            };
+        }
         try {
             const response = await axios.get(
                 `${this.baseURL}/instance/fetchInstances`,

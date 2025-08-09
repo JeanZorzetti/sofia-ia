@@ -319,7 +319,17 @@ app.get('/health', async (req, res) => {
     console.log('📊 Health check requisitado');
     
     const whatsappStats = whatsappManager.getStats();
-    const evolutionHealth = await evolutionService.healthCheck();
+    let evolutionHealth;
+    try {
+        evolutionHealth = await evolutionService.healthCheck();
+    } catch (error) {
+        evolutionHealth = {
+            success: false,
+            status: 'unhealthy',
+            error: error.message,
+            timestamp: new Date().toISOString()
+        };
+    }
     const serviceStats = evolutionService.getServiceStats();
     
     res.json({
