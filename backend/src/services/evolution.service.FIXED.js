@@ -107,6 +107,8 @@ class EvolutionAPIService extends EventEmitter {
                     validateStatus: () => true
                 }
             );
+            console.log('DEBUG: Evolution API createInstance Response Status:', response.status);
+            console.log('DEBUG: Evolution API createInstance Response Data:', response.data);
             if (response.status >= 400) {
                 throw new Error(`Evolution create error ${response.status}: ${JSON.stringify(response.data)}`);
             }
@@ -151,8 +153,12 @@ class EvolutionAPIService extends EventEmitter {
             console.error(`❌ Erro ao criar instância ${instanceName}:`, error.message);
             
             if (error.response) {
-                console.error('Response data:', error.response.data);
-                console.error('Response status:', error.response.status);
+                console.error('DEBUG: Evolution API createInstance Error Response Data:', error.response.data);
+                console.error('DEBUG: Evolution API createInstance Error Response Status:', error.response.status);
+            } else if (error.request) {
+                console.error('DEBUG: Evolution API createInstance Error Request:', error.request);
+            } else {
+                console.error('DEBUG: Evolution API createInstance Error Message:', error.message);
             }
             
             return {
@@ -191,6 +197,8 @@ class EvolutionAPIService extends EventEmitter {
                         timeout: 10000
                     }
                 );
+                console.log('DEBUG: Polling getQRCode Response Status:', response.status);
+                console.log('DEBUG: Polling getQRCode Response Data:', response.data);
                 
                 // Verificar se temos QR code na resposta (robusto)
                 const c = response.data;
@@ -322,6 +330,8 @@ class EvolutionAPIService extends EventEmitter {
                     validateStatus: () => true
                 }
             );
+            console.log('DEBUG: getQRCode Response Status:', response.status);
+            console.log('DEBUG: getQRCode Response Data:', response.data);
             if (response.status === 404) {
                 console.log('⚠️ Evolution retornou 404 no connect, iniciando polling e aguardando próximo ciclo...');
             } else if (response.status >= 400) {
@@ -371,6 +381,13 @@ class EvolutionAPIService extends EventEmitter {
             
         } catch (error) {
             console.error(`❌ Erro ao obter QR code:`, error.message);
+            console.error('DEBUG: getQRCode Error Message:', error.message);
+            if (error.response) {
+                console.error('DEBUG: getQRCode Error Response Data:', error.response.data);
+                console.error('DEBUG: getQRCode Error Response Status:', error.response.status);
+            } else if (error.request) {
+                console.error('DEBUG: getQRCode Error Request:', error.request);
+            }
             
             // Retornar QR de fallback para testes
             const fallbackQR = this.generateFallbackQRCode(instanceName);
@@ -431,6 +448,13 @@ class EvolutionAPIService extends EventEmitter {
             
         } catch (error) {
             console.error('❌ Erro ao listar instâncias:', error.message);
+            console.error('DEBUG: listInstances Error Message:', error.message);
+            if (error.response) {
+                console.error('DEBUG: listInstances Error Response Data:', error.response.data);
+                console.error('DEBUG: listInstances Error Response Status:', error.response.status);
+            } else if (error.request) {
+                console.error('DEBUG: listInstances Error Request:', error.request);
+            }
             
             return {
                 success: false,
@@ -472,6 +496,13 @@ class EvolutionAPIService extends EventEmitter {
             
         } catch (error) {
             console.error(`❌ Erro ao deletar ${instanceName}:`, error.message);
+            console.error('DEBUG: deleteInstance Error Message:', error.message);
+            if (error.response) {
+                console.error('DEBUG: deleteInstance Error Response Data:', error.response.data);
+                console.error('DEBUG: deleteInstance Error Response Status:', error.response.status);
+            } else if (error.request) {
+                console.error('DEBUG: deleteInstance Error Request:', error.request);
+            }
             
             return {
                 success: false,
@@ -558,6 +589,13 @@ class EvolutionAPIService extends EventEmitter {
             
         } catch (error) {
             console.error('❌ Erro ao processar webhook:', error);
+            console.error('DEBUG: processWebhook Error Message:', error.message);
+            if (error.response) {
+                console.error('DEBUG: processWebhook Error Response Data:', error.response.data);
+                console.error('DEBUG: processWebhook Error Response Status:', error.response.status);
+            } else if (error.request) {
+                console.error('DEBUG: processWebhook Error Request:', error.request);
+            }
             return { success: false, error: error.message };
         }
     }
@@ -607,6 +645,14 @@ class EvolutionAPIService extends EventEmitter {
             };
             
         } catch (error) {
+            console.error('❌ Erro no health check:', error.message);
+            console.error('DEBUG: healthCheck Error Message:', error.message);
+            if (error.response) {
+                console.error('DEBUG: healthCheck Error Response Data:', error.response.data);
+                console.error('DEBUG: healthCheck Error Response Status:', error.response.status);
+            } else if (error.request) {
+                console.error('DEBUG: healthCheck Error Request:', error.request);
+            }
             return {
                 success: false,
                 status: 'unhealthy',
