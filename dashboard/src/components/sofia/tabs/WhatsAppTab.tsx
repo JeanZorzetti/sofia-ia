@@ -490,7 +490,7 @@ export const WhatsAppTab = () => {
                       ) : (
                         <div ref={qrContainerRef} className="absolute inset-0" />
                       )}
-                      {!qrCodeReady && (
+                      {qrLoading && (
                         <div className="text-center">
                           <RefreshCw className="h-6 w-6 animate-spin text-blue-500 mx-auto mb-1" />
                           <div className="text-xs text-gray-500">
