@@ -208,7 +208,7 @@ export const SofiaDashboard = () => {
   ), []);
 
   return (
-    <div className="min-h-screen bg-background font-sofia">
+    <div className="min-h-screen bg-background" style={{fontSize: '16px', fontFamily: 'Inter, sans-serif'}}>
       {/* Navbar */}
       <Navbar 
         activeTab={activeTab} 
