@@ -4,21 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* RESET FORÇADO PARA CORRIGIR ZOOM */
-* {
-  font-size: inherit !important;
-  font-family: 'Inter', sans-serif !important;
-  letter-spacing: 0 !important;
-}
 
-html {
-  font-size: 16px !important;
-}
-
-body {
-  font-size: 16px !important;
-  line-height: 1.5 !important;
-}
 
 /* SOFIA IA - Premium SaaS Design System */
 
