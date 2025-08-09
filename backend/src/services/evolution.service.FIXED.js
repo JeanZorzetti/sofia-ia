@@ -25,7 +25,7 @@ class EvolutionAPIService extends EventEmitter {
         // Webhook URL - não funcionará em localhost, mas precisamos configurar mesmo assim
         // Em dev, use http local; em prod, use domínio público
         const defaultWebhook = (process.env.NODE_ENV === 'production') 
-            ? 'https://sofiaia.roilabs.com.br/webhook/evolution' 
+            ? 'https://sofia-api.roilabs.com.br/webhook/evolution' 
             : 'http://localhost:8000/webhook/evolution';
         this.webhookUrl = process.env.WEBHOOK_URL || defaultWebhook;
         
