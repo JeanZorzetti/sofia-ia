@@ -12,7 +12,7 @@
 const axios = require('axios');
 const EventEmitter = require('events');
 
-const PLACEHOLDER_API_KEY = 'SuOOmamlmXs4NV3nkxpHAy7z3rcurbIz';
+const PLACEHOLDER_API_KEY = 'a_truly_random_and_unique_placeholder_key_1234567890';
 
 class EvolutionAPIService extends EventEmitter {
     constructor() {
