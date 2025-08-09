@@ -29,21 +29,20 @@ import { useWhatsAppInstances, useRealTimeStats } from '@/hooks/useSofiaApi';
 import { useQRCodesReais } from '@/hooks/useQRCodesReais';
 import { FORCE_QR_REFRESH, PRODUCTION_CONFIG } from '@/force-qr-refresh';
 
-// 🔥 CARREGAR QRCode.js do CDN
-const loadQRCodeJS = () => {
-  return new Promise((resolve, reject) => {
-    if (window.QRCode) {
-      resolve(window.QRCode);
-      return;
-    }
-    
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-    script.onload = () => resolve(window.QRCode);
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-};
+// 🔥 CARREGAR QRCode.js do CDN (Promise correta sem retornar objeto)
+const loadQRCodeJS = () => new Promise<void>((resolve, reject) => {
+  const win = window as any;
+  if (win.QRCode) {
+    resolve();
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+  script.async = true;
+  script.onload = () => resolve();
+  script.onerror = reject;
+  document.head.appendChild(script);
+});
 
 export const WhatsAppTab = () => {
   // 🔗 Hooks para dados reais
@@ -111,6 +110,23 @@ export const WhatsAppTab = () => {
       attempt: generationAttempt + 1
     });
 
+    // ✅ Se já for uma imagem (data URL), renderizar direto
+    if (qrText.startsWith('data:image')) {
+      const img = document.createElement('img');
+      img.src = qrText;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'contain';
+      if (qrContainerRef.current) {
+        qrContainerRef.current.innerHTML = '';
+        qrContainerRef.current.appendChild(img);
+      }
+      setUseImageFallback(true);
+      setQrCodeReady(true);
+      setQrGenerationError(null);
+      return;
+    }
+
     // 🚨 Se string muito longa (>2000 chars), usar APIs externas como fallback
     if (qrText.length > 2000) {
       console.log('⚠️ STRING MUITO LONGA, usando fallback de imagem');
@@ -154,7 +170,8 @@ export const WhatsAppTab = () => {
     }
 
     // 🔥 TENTAR QRCode.js LOCAL para strings normais
-    if (!qrContainerRef.current || !window.QRCode) {
+    const win = window as any;
+    if (!qrContainerRef.current || !win.QRCode) {
       console.error('❌ Container ou biblioteca não disponível');
       setQrGenerationError('Container não encontrado');
       return;
@@ -165,13 +182,13 @@ export const WhatsAppTab = () => {
       qrContainerRef.current.innerHTML = '';
       
       // Tentar gerar QR local
-      const qr = new window.QRCode(qrContainerRef.current, {
+      const qr = new win.QRCode(qrContainerRef.current, {
         text: qrText,
         width: 180,
         height: 180,
         colorDark: '#000000',
         colorLight: '#ffffff',
-        correctLevel: window.QRCode.CorrectLevel.L // Menor correção para strings grandes
+        correctLevel: win.QRCode.CorrectLevel.L // Menor correção para strings grandes
       });
       
       setQrInstance(qr);
@@ -210,8 +227,12 @@ export const WhatsAppTab = () => {
       setUseImageFallback(false);
       
       // Delay pequeno para garantir que DOM está pronto
+      const el = qrContainerRef.current;
       setTimeout(() => {
-        generateQRWithFallback(realQRCode);
+        // Reconfirma o container antes de gerar (evita flash/limpeza prematura)
+        if (el) {
+          generateQRWithFallback(realQRCode);
+        }
       }, 100);
     }
   }, [realQRCode, qrLibraryLoaded]);
@@ -463,15 +484,19 @@ export const WhatsAppTab = () => {
                       </button>
                     </div>
                   ) : (
-                    <div 
-                      ref={qrContainerRef}
-                      className="w-full h-full flex items-center justify-center"
-                    >
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      {typeof realQRCode === 'string' && realQRCode.startsWith('data:image') ? (
+                        <img src={realQRCode} alt="QR" className="absolute inset-0 w-full h-full object-contain" />
+                      ) : (
+                        <div ref={qrContainerRef} className="absolute inset-0" />
+                      )}
                       {!qrCodeReady && (
                         <div className="text-center">
                           <RefreshCw className="h-6 w-6 animate-spin text-blue-500 mx-auto mb-1" />
                           <div className="text-xs text-gray-500">
-                            {useImageFallback ? 'Carregando API...' : 'Gerando local...'}
+                            {useImageFallback || (typeof realQRCode === 'string' && realQRCode.startsWith('data:image'))
+                              ? 'Imagem pronta...'
+                              : 'Gerando local...'}
                           </div>
                         </div>
                       )}

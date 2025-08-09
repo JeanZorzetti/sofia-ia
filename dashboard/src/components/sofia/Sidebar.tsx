@@ -33,7 +33,7 @@ export const Sidebar = ({ activeTab, onTabChange, tokensUsed = 12450, tokensLimi
   const tokenPercentage = (tokensUsed / tokensLimit) * 100;
 
   return (
-    <div className="glass-card h-full w-64 p-6 flex flex-col space-y-6">
+    <div className="glass-card min-h-[calc(100vh-4rem)] h-full w-64 p-6 flex flex-col space-y-6">
       {/* Menu Items */}
       <div className="space-y-2">
         {menuItems.map((item) => {

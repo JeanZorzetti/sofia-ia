@@ -92,7 +92,7 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased min-h-screen;
     font-family: var(--font-primary);
     font-weight: 300;
     letter-spacing: var(--letter-spacing-wide);

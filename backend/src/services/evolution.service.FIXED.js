@@ -20,11 +20,16 @@ class EvolutionAPIService extends EventEmitter {
         this.apiKey = process.env.EVOLUTION_API_KEY || 'SuOOmamlmXs4NV3nkxpHAy7z3rcurbIz';
         
         // Webhook URL - não funcionará em localhost, mas precisamos configurar mesmo assim
-        this.webhookUrl = process.env.WEBHOOK_URL || 'https://sofiaia.roilabs.com.br/webhook/evolution';
+        // Em dev, use http local; em prod, use domínio público
+        const defaultWebhook = (process.env.NODE_ENV === 'production') 
+            ? 'https://sofiaia.roilabs.com.br/webhook/evolution' 
+            : 'http://localhost:8000/webhook/evolution';
+        this.webhookUrl = process.env.WEBHOOK_URL || defaultWebhook;
         
         this.qrCodeCache = new Map();
         this.instanceStatus = new Map();
         this.pollingIntervals = new Map(); // Para armazenar intervalos de polling
+        this.immediateQRCodes = new Map(); // QR recebido no create
         
         this.defaultHeaders = {
             'apikey': this.apiKey,
@@ -46,12 +51,12 @@ class EvolutionAPIService extends EventEmitter {
             // Limpar instância existente se houver
             await this.deleteInstanceIfExists(instanceName);
             
-            // Payload para criar instância
+            // Payload para criar instância (formato compatível com Evolution API)
             const instanceData = {
                 instanceName: instanceName,
                 qrcode: true,
                 integration: 'WHATSAPP-BAILEYS',
-                
+
                 // Configurações WhatsApp
                 rejectCall: true,
                 msgCall: 'Sofia IA não aceita chamadas. Use mensagens de texto.',
@@ -60,19 +65,20 @@ class EvolutionAPIService extends EventEmitter {
                 readMessages: true,
                 readStatus: false,
                 syncFullHistory: false,
-                
-                // Webhook (mesmo que não funcione em localhost, precisamos configurar)
-                webhook: {
-                    url: this.webhookUrl,
-                    byEvents: true,
-                    base64: true,
+
+                // Webhook (só enviar se HTTPS; muitos provedores rejeitam HTTP)
+                // Em dev usamos polling, então omitimos quando URL não é HTTPS
+                ...(this.webhookUrl.startsWith('https://') ? {
+                    webhook: this.webhookUrl,
+                    webhookByEvents: true,
+                    webhookBase64: true,
                     events: [
                         'QRCODE_UPDATED',
                         'CONNECTION_UPDATE',
                         'MESSAGES_UPSERT'
                     ]
-                },
-                
+                } : {}),
+
                 ...settings
             };
             
@@ -83,11 +89,28 @@ class EvolutionAPIService extends EventEmitter {
                 instanceData,
                 {
                     headers: this.defaultHeaders,
-                    timeout: 30000
+                    timeout: 30000,
+                    validateStatus: () => true
                 }
             );
+            if (response.status >= 400) {
+                throw new Error(`Evolution create error ${response.status}: ${JSON.stringify(response.data)}`);
+            }
             
             console.log('✅ Instância criada:', response.data);
+
+            // Se a Evolution já retornou um QR no create, cachear imediatamente
+            try {
+                const preQR = response.data?.qrcode?.base64 || response.data?.qrcode?.image || response.data?.qrcode?.code || response.data?.qrcode;
+                if (typeof preQR === 'string' && preQR.length > 50) {
+                    const finalQR = preQR.startsWith('data:') ? preQR : `data:image/png;base64,${preQR}`;
+                    this.cacheQRCode(instanceName, finalQR);
+                    this.immediateQRCodes.set(instanceName, finalQR);
+                    console.log('💾 QR prévio cacheado a partir do create');
+                }
+            } catch (e) {
+                // ignore
+            }
             
             // Salvar status da instância
             this.instanceStatus.set(instanceName, {
@@ -154,37 +177,22 @@ class EvolutionAPIService extends EventEmitter {
                     }
                 );
                 
-                // Verificar se temos QR code na resposta
-                if (response.data?.qrcode?.base64 || response.data?.qr || response.data?.qrcode) {
-                    const qrCode = response.data.qrcode?.base64 || 
-                                  response.data.qr || 
-                                  response.data.qrcode ||
-                                  response.data;
-                    
-                    // Se é um objeto com base64, extrair
-                    const qrData = typeof qrCode === 'object' && qrCode.base64 
-                        ? qrCode.base64 
-                        : qrCode;
-                    
-                    if (qrData && qrData !== 'connected' && qrData !== 'CONNECTED') {
-                        console.log(`✅ QR Code obtido para ${instanceName}!`);
-                        
-                        // Garantir que é um data URL válido
-                        const finalQR = qrData.startsWith('data:') 
-                            ? qrData 
-                            : `data:image/png;base64,${qrData}`;
-                        
-                        // Cachear QR code
-                        this.cacheQRCode(instanceName, finalQR);
-                        
-                        // Parar polling
-                        this.stopQRCodePolling(instanceName);
-                        
-                        // Emitir evento
-                        this.emit('qrcode_ready', { instance: instanceName, qrcode: finalQR });
-                        
-                        return;
-                    }
+                // Verificar se temos QR code na resposta (robusto)
+                const c = response.data;
+                const qrCandidate = c?.qrcode?.base64 || c?.qrcode?.image || c?.qrcode?.data || c?.qrcode?.code || c?.qr || c?.qrcode || c;
+                const qrData = typeof qrCandidate === 'string'
+                  ? qrCandidate
+                  : (qrCandidate && typeof qrCandidate === 'object' && (qrCandidate.base64 || qrCandidate.image || qrCandidate.code || qrCandidate.data))
+                    ? (qrCandidate.base64 || qrCandidate.image || qrCandidate.code || qrCandidate.data)
+                    : '';
+
+                if (qrData && typeof qrData === 'string' && qrData !== 'connected' && qrData !== 'CONNECTED') {
+                    console.log(`✅ QR Code obtido para ${instanceName}!`);
+                    const finalQR = qrData.startsWith('data:') ? qrData : `data:image/png;base64,${qrData}`;
+                    this.cacheQRCode(instanceName, finalQR);
+                    this.stopQRCodePolling(instanceName);
+                    this.emit('qrcode_ready', { instance: instanceName, qrcode: finalQR });
+                    return;
                 }
                 
                 // Verificar se já está conectado
@@ -266,6 +274,13 @@ class EvolutionAPIService extends EventEmitter {
         try {
             console.log(`📱 Obtendo QR code para ${instanceName}`);
             
+            // 0. Verificar QR imediato (do create)
+            const immediate = this.immediateQRCodes.get(instanceName);
+            if (immediate) {
+                this.immediateQRCodes.delete(instanceName);
+                return { success: true, qrcode: immediate, source: 'create_response' };
+            }
+
             // 1. Verificar cache primeiro
             const cached = this.getCachedQRCode(instanceName);
             if (cached) {
@@ -284,20 +299,37 @@ class EvolutionAPIService extends EventEmitter {
                 `${this.baseURL}/instance/connect/${instanceName}`,
                 {
                     headers: this.defaultHeaders,
-                    timeout: 10000
+                    timeout: 10000,
+                    validateStatus: () => true
                 }
             );
+            if (response.status === 404) {
+                console.log('⚠️ Evolution retornou 404 no connect, iniciando polling e aguardando próximo ciclo...');
+            } else if (response.status >= 400) {
+                console.log(`⚠️ Evolution connect erro ${response.status}:`, response.data);
+            }
             
-            // Extrair QR code de diferentes formatos possíveis
-            const qrCode = response.data?.qrcode?.base64 || 
-                          response.data?.qr || 
-                          response.data?.qrcode ||
-                          response.data;
-            
-            if (qrCode && qrCode !== 'connected' && qrCode !== 'CONNECTED') {
-                const finalQR = qrCode.startsWith('data:') 
-                    ? qrCode 
-                    : `data:image/png;base64,${qrCode}`;
+            // Extrair QR code de diferentes formatos possíveis (robusto)
+            const qrCandidate = response.data?.qrcode?.base64 ||
+                               response.data?.qrcode?.image ||
+                               response.data?.qrcode?.data ||
+                               response.data?.qrcode?.code ||
+                               response.data?.qr ||
+                               response.data?.qrcode ||
+                               response.data;
+
+            // Normalizar para string
+            const qrString = typeof qrCandidate === 'string'
+                ? qrCandidate
+                : (qrCandidate && typeof qrCandidate === 'object' &&
+                   (qrCandidate.base64 || qrCandidate.image || qrCandidate.code || qrCandidate.data))
+                    ? (qrCandidate.base64 || qrCandidate.image || qrCandidate.code || qrCandidate.data)
+                    : '';
+
+            if (qrString && typeof qrString === 'string' && qrString !== 'connected' && qrString !== 'CONNECTED') {
+                const finalQR = qrString.startsWith('data:')
+                    ? qrString
+                    : `data:image/png;base64,${qrString}`;
                 
                 this.cacheQRCode(instanceName, finalQR);
                 
@@ -459,7 +491,7 @@ class EvolutionAPIService extends EventEmitter {
             
             switch (event) {
                 case 'QRCODE_UPDATED':
-                    if (data?.qrcode) {
+                    if (data?.qrcode && typeof data.qrcode === 'string') {
                         const qrCode = data.qrcode.startsWith('data:') 
                             ? data.qrcode 
                             : `data:image/png;base64,${data.qrcode}`;

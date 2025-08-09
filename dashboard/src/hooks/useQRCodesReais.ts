@@ -6,8 +6,15 @@
 
 import { useState, useCallback } from 'react';
 
-// 🎯 CONFIGURAÇÃO FORÇADA PARA PRODUÇÃO
-const PRODUCTION_API_BASE = 'https://sofia-api.roilabs.com.br';
+// 🎯 CONFIGURAÇÃO: detecção automática local/produção
+const getApiBase = () => {
+  if (typeof window !== 'undefined') {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    return isLocal ? 'http://localhost:8000' : 'https://sofia-api.roilabs.com.br';
+  }
+  return 'https://sofia-api.roilabs.com.br';
+};
+const PRODUCTION_API_BASE = getApiBase();
 const EVOLUTION_API_BASE = 'https://evolutionapi.roilabs.com.br';
 
 interface QRCodeResponse {
@@ -48,7 +55,7 @@ export const useQRCodesReais = () => {
     last_updated: ''
   });
 
-  // 🔥 GERAR QR CODE REAL (não simulado)
+  // 🔥 GERAR QR CODE REAL via backend unificado
   const generateRealQRCode = useCallback(async (instanceName: string): Promise<string> => {
     try {
       setQrState(prev => ({ ...prev, loading: true, error: null }));
@@ -59,16 +66,15 @@ export const useQRCodesReais = () => {
         timestamp: new Date().toISOString()
       });
 
-      // Step 1: Criar instância no backend
+      // Passo 1: Criar instância no backend
       const createResponse = await fetch(`${PRODUCTION_API_BASE}/api/whatsapp/instances`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          name: instanceName,
-          force_production: true,
-          evolution_api_url: EVOLUTION_API_BASE 
+          instanceName: instanceName,
+          settings: { evolution_api_url: EVOLUTION_API_BASE }
         }),
       });
 
@@ -82,15 +88,11 @@ export const useQRCodesReais = () => {
         throw new Error(createResult.error || 'Erro ao criar instância');
       }
 
-      const instanceId = createResult.data.id;
+      const instanceId: string = createResult.data?.instanceName || createResult.data?.instance_id || instanceName;
 
-      // Step 2: Obter QR Code da instância
-      const qrResponse = await fetch(`${PRODUCTION_API_BASE}/api/whatsapp/instances/${instanceId}/qr`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Passo 2: Obter QR Code da instância pelo endpoint principal
+      // Tenta primeira vez sem esperar (o backend pode ter cacheado o QR do create)
+      const qrResponse = await fetch(`${PRODUCTION_API_BASE}/api/whatsapp/qrcode/${encodeURIComponent(instanceId)}`);
 
       if (!qrResponse.ok) {
         throw new Error(`Erro ao obter QR Code: ${qrResponse.status}`);
@@ -98,19 +100,26 @@ export const useQRCodesReais = () => {
 
       const qrResult: QRCodeResponse = await qrResponse.json();
 
-      if (!qrResult.success) {
-        throw new Error(qrResult.error || 'Erro ao gerar QR Code');
+      if (!qrResult.success || !qrResult.data?.qr_code) {
+        // Pequeno retry rápido (500ms) para capturar QR cacheado logo após o create
+        await new Promise(r => setTimeout(r, 500));
+        const retry = await fetch(`${PRODUCTION_API_BASE}/api/whatsapp/qrcode/${encodeURIComponent(instanceId)}`);
+        const retryJson: QRCodeResponse = await retry.json();
+        if (!retryJson.success || !retryJson.data?.qr_code) {
+          throw new Error(retryJson.error || 'Erro ao gerar QR Code');
+        }
+        (qrResult as any) = retryJson;
       }
 
-      // Step 3: Atualizar estado com dados reais
+      // Passo 3: Atualizar estado com dados reais
       setQrState({
         qr_code: qrResult.data.qr_code,
         loading: false,
         error: null,
-        instance_id: qrResult.data.instance_id,
-        expires_in: qrResult.data.expires_in,
-        source: qrResult.data.source,
-        api_url: qrResult.data.api_url,
+        instance_id: qrResult.data.instance_id || instanceId,
+        expires_in: qrResult.data.expires_in || 300,
+        source: qrResult.data.source || 'evolution_api',
+        api_url: PRODUCTION_API_BASE,
         last_updated: new Date().toISOString()
       });
 
@@ -149,12 +158,8 @@ export const useQRCodesReais = () => {
     try {
       setQrState(prev => ({ ...prev, loading: true, error: null }));
 
-      const response = await fetch(`${PRODUCTION_API_BASE}/api/whatsapp/instances/${instanceId}/qr/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // nosso backend usa GET com query refresh=true
+      const response = await fetch(`${PRODUCTION_API_BASE}/api/whatsapp/qrcode/${encodeURIComponent(instanceId)}?refresh=true`);
 
       if (!response.ok) {
         throw new Error(`Erro ao refresh QR: ${response.status}`);
@@ -170,7 +175,7 @@ export const useQRCodesReais = () => {
         ...prev,
         qr_code: result.data.qr_code,
         loading: false,
-        expires_in: result.data.expires_in,
+        expires_in: result.data.expires_in || 300,
         last_updated: new Date().toISOString()
       }));
 
