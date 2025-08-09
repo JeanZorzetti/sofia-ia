@@ -214,28 +214,32 @@ export const WhatsAppTab = () => {
   // 🔥 GERAR QR quando receber string da Evolution API
   useEffect(() => {
     if (realQRCode && qrLibraryLoaded && qrContainerRef.current) {
-      console.log('🎯 INICIANDO GERAÇÃO QR:', {
-        hasQR: !!realQRCode,
-        length: realQRCode.length,
-        libraryLoaded: qrLibraryLoaded,
-        containerReady: !!qrContainerRef.current
-      });
-      
-      setQrCodeReady(false);
-      setQrGenerationError(null);
-      setGenerationAttempt(0);
-      setUseImageFallback(false);
-      
-      // Delay pequeno para garantir que DOM está pronto
-      const el = qrContainerRef.current;
-      setTimeout(() => {
-        // Reconfirma o container antes de gerar (evita flash/limpeza prematura)
-        if (el) {
-          generateQRWithFallback(realQRCode);
-        }
-      }, 100);
+      // Only draw if we haven't drawn this specific QR code yet
+      // or if the QR code string has changed
+      if (qrContainerRef.current.dataset.drawnQrCode !== realQRCode) { // Add a data attribute to track
+        console.log('🎯 INICIANDO GERAÇÃO QR:', {
+          hasQR: !!realQRCode,
+          length: realQRCode.length,
+          libraryLoaded: qrLibraryLoaded,
+          containerReady: !!qrContainerRef.current
+        });
+        
+        setQrCodeReady(false);
+        setQrGenerationError(null);
+        setGenerationAttempt(0);
+        setUseImageFallback(false);
+        
+        // Delay small to ensure DOM is ready
+        const el = qrContainerRef.current;
+        setTimeout(() => {
+          if (el) {
+            generateQRWithFallback(realQRCode);
+            el.dataset.drawnQrCode = realQRCode; // Mark as drawn
+          }
+        }, 100);
+      }
     }
-  }, [realQRCode, qrLibraryLoaded]);
+  }, [realQRCode, qrLibraryLoaded, showQR]);
 
   // 🛠️ Controlar auto-refresh quando modal abrir/fechar
   useEffect(() => {
