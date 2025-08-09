@@ -6,15 +6,8 @@
 
 import { useState, useCallback } from 'react';
 
-// 🎯 CONFIGURAÇÃO: detecção automática local/produção
-const getApiBase = () => {
-  if (typeof window !== 'undefined') {
-    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    return isLocal ? 'http://localhost:8000' : 'https://sofia-api.roilabs.com.br';
-  }
-  return 'https://sofia-api.roilabs.com.br';
-};
-const PRODUCTION_API_BASE = getApiBase();
+// 🎯 CONFIGURAÇÃO: CORRIGIDO PARA USAR .env
+const PRODUCTION_API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const EVOLUTION_API_BASE = 'https://evolutionapi.roilabs.com.br';
 
 interface QRCodeResponse {

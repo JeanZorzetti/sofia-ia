@@ -6,23 +6,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 
-// 📍 Configuração de ambiente - SMARTLY DETECT!
-const getApiBaseUrl = () => {
-  // Se estamos em desenvolvimento (localhost), usa porta local
-  if (typeof window !== 'undefined') {
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    
-    if (isLocalhost) {
-      // Ambiente LOCAL - tenta 8000 (versão atualizada com WhatsApp)
-      return 'http://localhost:8000';
-    }
-  }
-  
-  // Ambiente PRODUÇÃO - usa domínio EasyPanel
-  return 'https://sofia-api.roilabs.com.br';
-};
-
-const API_BASE_URL = getApiBaseUrl();
+// 📍 Configuração de ambiente - CORRIGIDO PARA USAR .env
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 // Log para debug
 console.log('🔗 Sofia IA API URL configurada:', API_BASE_URL);
@@ -218,7 +203,7 @@ export const useRealTimeStats = (pauseUpdates = false) => {
     try {
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}/api/realtime/stats`);
+            const response = await fetch(`${API_BASE_URL}/api/whatsapp/stats`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
