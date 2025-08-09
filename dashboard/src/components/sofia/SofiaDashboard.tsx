@@ -229,8 +229,8 @@ export const SofiaDashboard = () => {
         )}
 
         {/* Main Content */}
-        <main className="flex-1 p-6 lg:p-8 overflow-x-hidden">
-          <div className={`mx-auto max-w-none`}>
+        <main className="flex-1 p-4 lg:p-6 overflow-x-hidden">
+          <div className="mx-auto max-w-7xl">
             {renderTabContent()}
           </div>
         </main>

@@ -33,7 +33,7 @@ export const Sidebar = ({ activeTab, onTabChange, tokensUsed = 12450, tokensLimi
   const tokenPercentage = (tokensUsed / tokensLimit) * 100;
 
   return (
-    <div className="glass-card min-h-[calc(100vh-4rem)] h-full w-64 p-6 flex flex-col space-y-6">
+    <div className="glass-card min-h-[calc(100vh-4rem)] h-full w-56 p-4 flex flex-col space-y-4">
       {/* Menu Items */}
       <div className="space-y-2">
         {menuItems.map((item) => {
@@ -45,7 +45,7 @@ export const Sidebar = ({ activeTab, onTabChange, tokensUsed = 12450, tokensLimi
               key={item.id}
               onClick={() => onTabChange(item.id)}
               className={`
-                w-full flex items-center space-x-3 px-4 py-3 rounded-lg
+                w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-sm
                 transition-all duration-300 ease-smooth font-light tracking-wide-sofia
                 ${isActive 
                   ? 'bg-secondary text-foreground' 
@@ -53,7 +53,7 @@ export const Sidebar = ({ activeTab, onTabChange, tokensUsed = 12450, tokensLimi
                 }
               `}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className="h-4 w-4" />
               <span>{item.label}</span>
             </button>
           );
