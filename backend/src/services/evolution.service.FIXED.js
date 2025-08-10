@@ -700,6 +700,39 @@ class EvolutionAPIService extends EventEmitter {
     }
 
     /**
+     * ℹ️ OBTER INFORMAÇÕES GERAIS DA API
+     * Faz uma chamada para a raiz da API da Evolution.
+     */
+    async getApiInformation() {
+        if (!this.isConfigured) {
+            return { success: false, error: 'Evolution API não configurada. Verifique a API Key.' };
+        }
+        try {
+            console.log('ℹ️ Buscando informações gerais da Evolution API...');
+            const response = await axios.get(
+                `${this.baseURL}/`, // Root URL
+                {
+                    timeout: 10000
+                    // Note: No API key is sent, as per the user's example.
+                }
+            );
+            
+            return {
+                success: true,
+                data: response.data
+            };
+            
+        } catch (error) {
+            console.error('❌ Erro ao buscar informações da API:', error.message);
+            return {
+                success: false,
+                error: error.message,
+                details: error.response?.data
+            };
+        }
+    }
+
+    /**
      * 🧹 CLEANUP - Limpar recursos ao desligar
      */
     cleanup() {

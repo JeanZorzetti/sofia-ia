@@ -4,13 +4,14 @@ import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useDashboardData, useRecentConversations, useApiHealth, formatStatsForDisplay } from '@/hooks/useSofiaApi';
+import { useDashboardData, useRecentConversations, useApiHealth, useEvolutionApiInfo, formatStatsForDisplay } from '@/hooks/useSofiaApi';
 
 export const OverviewTab = () => {
   // 🔗 Hooks para dados reais
   const { data, loading, error, refresh } = useDashboardData();
   const { conversations, loading: conversationsLoading } = useRecentConversations();
   const { isHealthy, healthData } = useApiHealth();
+  const { info, loading: infoLoading, error: infoError } = useEvolutionApiInfo();
 
   // 📊 Formatar stats para display
   const statsCards = data ? formatStatsForDisplay(data.stats) : [];
@@ -267,6 +268,29 @@ export const OverviewTab = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Evolution API Info Card */}
+      <Card className="glass-card border-purple-500/30 mt-8">
+        <CardHeader>
+          <CardTitle className="text-purple-400 font-light tracking-wider-sofia">
+            Evolution API - Informações
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {infoLoading ? (
+            <div className="flex items-center justify-center">
+              <RefreshCw className="h-6 w-6 animate-spin text-primary" />
+              <p className="ml-2 text-foreground-secondary">Carregando...</p>
+            </div>
+          ) : infoError ? (
+            <p className="text-red-400">{infoError}</p>
+          ) : (
+            <pre className="text-xs text-foreground-tertiary overflow-x-auto bg-background-secondary p-4 rounded-lg">
+              {JSON.stringify(info, null, 2)}
+            </pre>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Debug Info (apenas em desenvolvimento) */}
       {process.env.NODE_ENV === 'development' && healthData && (

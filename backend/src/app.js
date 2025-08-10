@@ -610,6 +610,21 @@ app.get('/api/debug/qr-cache', (req, res) => {
     });
 });
 
+// ℹ️ Obter informações da API da Evolution
+app.get('/api/evolution/info', async (req, res) => {
+    console.log('ℹ️ Rota de informações da Evolution API requisitada');
+    try {
+        const result = await evolutionService.getApiInformation();
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(500).json({ success: false, error: result.error, details: result.details });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Graceful shutdown
 process.on('SIGTERM', () => {
     console.log('👋 Finalizando servidor...');

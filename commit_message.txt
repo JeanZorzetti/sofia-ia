@@ -1,0 +1,7 @@
+feat(backend): Add resilience to backend services
+
+Makes the backend more resilient to configuration errors, especially when the Evolution API key is not set.
+
+- The `/health` endpoint now handles failures in the Evolution API health check gracefully.
+- The `EvolutionAPIService` now detects if a placeholder API key is being used and disables WhatsApp-related features, preventing crashes and providing clear warnings.
+- This ensures the dashboard remains functional even if the WhatsApp integration is not configured.
