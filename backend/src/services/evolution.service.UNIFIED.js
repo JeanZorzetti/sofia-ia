@@ -396,7 +396,7 @@ class EvolutionAPIService extends EventEmitter {
             // Parar polling se existir
             this.stopQRCodePolling(instanceName);
             
-            const response = await axios.delete(
+            await axios.delete(
                 `${this.baseURL}/instance/delete/${instanceName}`,
                 {
                     headers: this.defaultHeaders,
@@ -404,21 +404,39 @@ class EvolutionAPIService extends EventEmitter {
                 }
             );
             
-            // Limpar caches
+            // Limpar caches locais independentemente do resultado da API
             this.qrCodeCache.delete(instanceName);
             this.instanceStatus.delete(instanceName);
             
+            console.log(`✅ Instância ${instanceName} deletada com sucesso da Evolution API.`);
+            
             return {
                 success: true,
-                message: `Instância ${instanceName} deletada com sucesso`
+                message: `Instância ${instanceName} deletada com sucesso.`
             };
             
         } catch (error) {
-            console.error(`❌ Erro ao deletar ${instanceName}:`, error.message);
+            // Se a API retornou 404, a instância não existe lá.
+            // Para o nosso sistema, isso é um sucesso, pois o estado desejado (instância deletada) foi alcançado.
+            if (error.response && error.response.status === 404) {
+                console.log(`⚠️ Instância ${instanceName} não encontrada na Evolution API, considerando como sucesso.`);
+                
+                // Limpar caches locais
+                this.qrCodeCache.delete(instanceName);
+                this.instanceStatus.delete(instanceName);
+                
+                return {
+                    success: true,
+                    message: `Instância ${instanceName} já não existia na API, removida localmente.`
+                };
+            }
             
+            // Para todos os outros erros, reportar a falha.
+            console.error(`❌ Erro ao deletar ${instanceName}:`, error.message);
             return {
                 success: false,
-                error: error.message
+                error: error.message,
+                details: error.response?.data
             };
         }
     }
