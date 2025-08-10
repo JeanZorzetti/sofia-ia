@@ -546,6 +546,23 @@ app.get('/api/whatsapp/qrcode/:instanceName', async (req, res) => {
     }
 });
 
+// 📱 Desconectar (Logout) instância
+app.delete('/api/whatsapp/instances/:instanceName/logout', async (req, res) => {
+    const { instanceName } = req.params;
+    console.log(`🚪 Desconectando instância: ${instanceName}`);
+    try {
+        const result = await evolutionService.logoutInstance(instanceName);
+        if (result.success) {
+            whatsappManager.updateInstanceStatus(instanceName, 'disconnected');
+            res.json({ success: true, message: `Instância ${instanceName} desconectada com sucesso.` });
+        } else {
+            res.status(500).json({ success: false, error: result.error, details: result.details });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // 📱 Deletar instância
 app.delete('/api/whatsapp/instances/:instanceId', async (req, res) => {
     const { instanceId } = req.params;

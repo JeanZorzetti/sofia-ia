@@ -330,11 +330,17 @@ export const WhatsAppTab = () => {
   };
 
   // Resto das funções...
-  const handleDisconnect = async (instanceId: string) => {
+  const handleLogout = async (instanceName: string) => {
+    if (!window.confirm(`Tem certeza que deseja desconectar a instância "${instanceName}"?`)) {
+      return;
+    }
     try {
-      await disconnectInstance(instanceId);
+      // No need for a specific loading state for logout, as the instance status will update
+      await logoutInstance(instanceName);
+      alert(`Instância ${instanceName} desconectada com sucesso!`);
     } catch (err) {
       console.error('Erro ao desconectar:', err);
+      alert(`Erro ao desconectar instância: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
     }
   };
 
@@ -757,7 +763,7 @@ export const WhatsAppTab = () => {
                         className={instance.status === 'connected' ? 'text-red-400 hover:text-red-300' : 'text-green-400 hover:text-green-300'}
                         onClick={() => {
                           if (instance.status === 'connected') {
-                            handleDisconnect(instance.id);
+                            handleLogout(instance.name);
                           }
                         }}
                       >

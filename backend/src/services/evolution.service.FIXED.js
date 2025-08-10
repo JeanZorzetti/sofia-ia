@@ -578,6 +578,39 @@ class EvolutionAPIService extends EventEmitter {
     }
 
     /**
+     * 🚪 LOGOUT INSTÂNCIA (DESCONECTAR)
+     */
+    async logoutInstance(instanceName) {
+        if (!this.isConfigured) {
+            return { success: false, error: 'Evolution API não configurada. Verifique a API Key.' };
+        }
+        try {
+            console.log(`🚪 Desconectando instância: ${instanceName}`);
+            const response = await axios.delete(
+                `${this.baseURL}/instance/logout/${instanceName}`,
+                {
+                    headers: this.defaultHeaders,
+                    timeout: 30000
+                }
+            );
+
+            if (response.status === 200) {
+                this.instanceStatus.set(instanceName, {
+                    ...this.instanceStatus.get(instanceName),
+                    connected: false,
+                    status: 'disconnected'
+                });
+                return { success: true, data: response.data };
+            } else {
+                throw new Error(`API retornou status ${response.status}`);
+            }
+        } catch (error) {
+            console.error(`❌ Erro ao desconectar ${instanceName}:`, error.message);
+            return { success: false, error: error.message, details: error.response?.data };
+        }
+    }
+
+    /**
      * 💾 CACHE DE QR CODES
      */
     cacheQRCode(instance, qrcode) {

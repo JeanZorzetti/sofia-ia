@@ -390,30 +390,25 @@ export const useWhatsAppInstances = () => {
     }
   };
 
-  const disconnectInstance = async (instanceId: string): Promise<void> => {
+  const logoutInstance = async (instanceName: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/whatsapp/instances/${instanceId}/disconnect`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/whatsapp/instances/${instanceName}/logout`, {
+        method: 'DELETE',
       });
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
       
-      const result: ApiResponse<void> = await response.json();
-      
-      if (result.success) {
-        // Atualizar status local
-        setInstances(prev => 
-          prev.map(instance => 
-            instance.id === instanceId 
-              ? { ...instance, status: 'disconnected' as const }
-              : instance
-          )
-        );
-      } else {
-        throw new Error(result.error || 'Erro ao desconectar instância');
-      }
+      // Atualizar status local
+      setInstances(prev => 
+        prev.map(instance => 
+          instance.name === instanceName 
+            ? { ...instance, status: 'disconnected' as const }
+            : instance
+        )
+      );
     } catch (err) {
       console.error('Erro ao desconectar instância:', err);
       throw err;
@@ -544,7 +539,7 @@ export const useWhatsAppInstances = () => {
     loading,
     error,
     createInstance,
-    disconnectInstance,
+    logoutInstance, // Changed from disconnectInstance
     connectInstance,
     deleteInstance,
     restartInstance,
