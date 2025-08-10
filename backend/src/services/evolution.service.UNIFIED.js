@@ -429,13 +429,36 @@ class EvolutionAPIService extends EventEmitter {
     /**
      * 🗑️ DELETAR INSTÂNCIA
      */
-    async deleteInstance(instanceName) {
+    async deleteInstance(identifier) {
         try {
-            console.log(`🗑️ Deletando instância: ${instanceName}`);
+            console.log(`🗑️ Iniciando exclusão para o identificador: ${identifier}`);
+
+            // 1. Atualizar a lista de instâncias para garantir que o cache local está sincronizado
+            await this.listInstances();
+
+            let instanceName = identifier; // Por padrão, assume que o identificador é o nome
+            let foundById = false;
+
+            // 2. Tentar encontrar o NOME da instância usando o IDENTIFICADOR como ID
+            for (const [name, status] of this.instanceStatus.entries()) {
+                if (status.instanceId === identifier) {
+                    instanceName = name;
+                    foundById = true;
+                    console.log(`✅ Identificador ${identifier} corresponde ao nome de instância: ${instanceName}`);
+                    break;
+                }
+            }
+
+            if (!foundById) {
+                console.log(`⚠️ Não foi possível encontrar uma instância com o ID ${identifier}. O sistema tentará excluir usando o valor como nome.`);
+            }
+
+            console.log(`🗑️ Tentando deletar instância na Evolution API com o nome: ${instanceName}`);
             
-            // Parar polling se existir
+            // Parar polling se existir para o nome da instância encontrado
             this.stopQRCodePolling(instanceName);
             
+            // 3. Chamar a API com o nome da instância
             await axios.delete(
                 `${this.baseURL}/instance/delete/${instanceName}`,
                 {
@@ -444,7 +467,7 @@ class EvolutionAPIService extends EventEmitter {
                 }
             );
             
-            // Limpar caches locais independentemente do resultado da API
+            // 4. Limpar caches locais com o nome da instância
             this.qrCodeCache.delete(instanceName);
             this.instanceStatus.delete(instanceName);
             
@@ -456,23 +479,25 @@ class EvolutionAPIService extends EventEmitter {
             };
             
         } catch (error) {
-            // Se a API retornou 404, a instância não existe lá.
-            // Para o nosso sistema, isso é um sucesso, pois o estado desejado (instância deletada) foi alcançado.
+            const instanceNameToClean = identifier; // Limpa o cache usando o identificador original em caso de erro
+            
             if (error.response && error.response.status === 404) {
-                console.log(`⚠️ Instância ${instanceName} não encontrada na Evolution API, considerando como sucesso.`);
+                console.log(`⚠️ Instância ${instanceNameToClean} não encontrada na Evolution API (404). Removendo do cache local se existir.`);
                 
-                // Limpar caches locais
-                this.qrCodeCache.delete(instanceName);
-                this.instanceStatus.delete(instanceName);
+                // Limpar caches locais mesmo em caso de 404
+                this.qrCodeCache.delete(instanceNameToClean);
+                this.instanceStatus.delete(instanceNameToClean);
                 
                 return {
-                    success: true,
-                    message: `Instância ${instanceName} já não existia na API, removida localmente.`
+                    success: true, // Consideramos sucesso porque o estado final (sem instância) foi atingido
+                    message: `Instância ${instanceNameToClean} não foi encontrada na API, removida localmente.`
                 };
             }
             
-            // Para todos os outros erros, reportar a falha.
-            console.error(`❌ Erro ao deletar ${instanceName}:`, error.message);
+            console.error(`❌ Erro ao deletar ${instanceNameToClean}:`, error.message);
+            if (error.response) {
+                console.error('DEBUG: deleteInstance Error Response Data:', error.response.data);
+            }
             return {
                 success: false,
                 error: error.message,
