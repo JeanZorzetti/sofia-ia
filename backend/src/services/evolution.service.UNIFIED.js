@@ -41,7 +41,8 @@ class EvolutionAPIService extends EventEmitter {
      */
     async createInstance(instanceName, settings = {}) {
         try {
-            console.log(`\n🏗️ Criando instância: ${instanceName}`);
+            console.log(`
+🏗️  Criando instância: ${instanceName}`);
             
             // Limpar instância existente se houver
             await this.deleteInstanceIfExists(instanceName);
@@ -87,12 +88,21 @@ class EvolutionAPIService extends EventEmitter {
                 }
             );
             
-            console.log('✅ Instância criada:', response.data);
+            console.log('✅ Instância criada na API:', response.data);
+
+            // Agora, busca os detalhes da instância para garantir o ID correto
+            const instanceDetails = await this.fetchInstanceDetails(instanceName);
             
+            const instanceId = instanceDetails?.instance?.instanceId || response.data.instance?.instanceId || instanceName;
+
+            if (!instanceDetails) {
+                console.warn(`⚠️ Não foi possível buscar os detalhes da instância ${instanceName} após a criação. O ID pode não estar correto.`);
+            }
+
             // Salvar status da instância
             this.instanceStatus.set(instanceName, {
                 status: 'created',
-                instanceId: response.data.instance?.instanceId || instanceName,
+                instanceId: instanceId,
                 createdAt: new Date(),
                 connected: false
             });
@@ -104,7 +114,7 @@ class EvolutionAPIService extends EventEmitter {
                 success: true,
                 data: {
                     instanceName: instanceName,
-                    instanceId: response.data.instance?.instanceId || instanceName,
+                    instanceId: instanceId,
                     status: 'created',
                     message: 'Instância criada. Obtendo QR code...'
                 }
@@ -342,6 +352,36 @@ class EvolutionAPIService extends EventEmitter {
         
         console.log(`🎨 QR code de fallback gerado para ${instanceName}`);
         return placeholderQR;
+    }
+
+    /**
+     * 🔍 BUSCAR DETALHES DE UMA INSTÂNCIA ESPECÍFICA
+     */
+    async fetchInstanceDetails(instanceName) {
+        try {
+            console.log(`🔍 Buscando detalhes da instância: ${instanceName}`);
+            const response = await axios.get(
+                `${this.baseURL}/instance/fetchInstances?instanceName=${instanceName}`,
+                {
+                    headers: this.defaultHeaders,
+                    timeout: 10000
+                }
+            );
+
+            const instances = response.data;
+            if (Array.isArray(instances) && instances.length > 0) {
+                const instance = instances.find(inst => inst.instance?.instanceName === instanceName);
+                if (instance) {
+                    console.log(`✅ Detalhes da instância ${instanceName} encontrados.`);
+                    return instance;
+                }
+            }
+            console.log(`⚠️ Instância ${instanceName} não encontrada na API após busca.`);
+            return null;
+        } catch (error) {
+            console.error(`❌ Erro ao buscar detalhes da instância ${instanceName}:`, error.message);
+            return null;
+        }
     }
 
     /**
