@@ -468,42 +468,78 @@ class EvolutionAPIService extends EventEmitter {
     /**
      * 🗑️ DELETAR INSTÂNCIA
      */
-    async deleteInstance(instanceName) {
+    /**
+     * 🗑️ DELETAR INSTÂNCIA (ROBUSTO)
+     * Aceita tanto o nome da instância quanto um ID e tenta resolver para o nome correto.
+     */
+    async deleteInstance(identifier) {
         if (!this.isConfigured) {
             return { success: false, error: 'Evolution API não configurada. Verifique a API Key.' };
         }
         try {
-            console.log(`🗑️ Deletando instância: ${instanceName}`);
+            console.log(`🗑️ Iniciando exclusão para o identificador: ${identifier}`);
+
+            // 1. Atualizar a lista de instâncias para garantir que o cache local está sincronizado
+            await this.listInstances();
+
+            let instanceName = identifier; // Por padrão, assume que o identificador é o nome
+            let foundById = false;
+
+            // 2. Tentar encontrar o NOME da instância usando o IDENTIFICADOR como ID
+            // Isso corrige o problema de IDs dessincronizados.
+            for (const [name, status] of this.instanceStatus.entries()) {
+                if (status.instanceId === identifier) {
+                    instanceName = name;
+                    foundById = true;
+                    console.log(`✅ Identificador ${identifier} corresponde ao nome de instância: ${instanceName}`);
+                    break;
+                }
+            }
+
+            if (!foundById) {
+                console.log(`⚠️  Não foi possível encontrar uma instância com o ID ${identifier}. O sistema tentará excluir usando o valor como nome (comportamento legado).`);
+            }
+
+            console.log(`🗑️  Tentando deletar instância na Evolution API com o nome: ${instanceName}`);
             
-            // Parar polling se existir
+            // Parar polling se existir para o nome da instância encontrado
             this.stopQRCodePolling(instanceName);
             
+            // 3. Chamar a API com o nome da instância resolvido
             const response = await axios.delete(
                 `${this.baseURL}/instance/delete/${instanceName}`,
                 {
                     headers: this.defaultHeaders,
-                    timeout: 15000
+                    timeout: 15000,
+                    validateStatus: () => true // Aceitar qualquer status para tratar o 404 manualmente
                 }
             );
+
+            // 4. Tratar a resposta
+            if (response.status < 400) {
+                 console.log(`✅ Instância ${instanceName} deletada com sucesso da Evolution API.`);
+            } else if (response.status === 404) {
+                console.log(`⚠️ Instância ${instanceName} não encontrada na Evolution API (404), considerando como sucesso.`);
+            } else {
+                // Lançar erro para outras falhas (500, etc)
+                throw new Error(`Falha ao deletar na API: Status ${response.status} - ${JSON.stringify(response.data)}`);
+            }
             
-            // Limpar caches
+            // 5. Limpar caches locais com o nome da instância, independentemente do resultado
             this.qrCodeCache.delete(instanceName);
             this.instanceStatus.delete(instanceName);
+            console.log(`🧹 Cache local para ${instanceName} foi limpo.`);
             
             return {
                 success: true,
-                message: `Instância ${instanceName} deletada com sucesso`
+                message: `Instância ${instanceName} foi removida com sucesso.`
             };
             
         } catch (error) {
-            console.error(`❌ Erro ao deletar ${instanceName}:`, error.message);
-            console.error('DEBUG: deleteInstance Error Message:', error.message);
-            if (error.response) {
-                console.error('DEBUG: deleteInstance Error Response Data:', error.response.data);
-                console.error('DEBUG: deleteInstance Error Response Status:', error.response.status);
-            } else if (error.request) {
-                console.error('DEBUG: deleteInstance Error Request:', error.request);
-            }
+            console.error(`❌ Erro grave ao deletar instância com identificador ${identifier}:`, error.message);
+            // Em caso de erro, tenta limpar o cache com o identificador original também
+            this.qrCodeCache.delete(identifier);
+            this.instanceStatus.delete(identifier);
             
             return {
                 success: false,
