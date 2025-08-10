@@ -549,6 +549,35 @@ class EvolutionAPIService extends EventEmitter {
     }
 
     /**
+     * 🔄 REINICIAR INSTÂNCIA
+     */
+    async restartInstance(instanceName) {
+        if (!this.isConfigured) {
+            return { success: false, error: 'Evolution API não configurada. Verifique a API Key.' };
+        }
+        try {
+            console.log(`🔄 Reiniciando instância: ${instanceName}`);
+            const response = await axios.put(
+                `${this.baseURL}/instance/restart/${instanceName}`,
+                null, // No body content for this PUT request
+                {
+                    headers: this.defaultHeaders,
+                    timeout: 30000
+                }
+            );
+
+            if (response.status === 200) {
+                return { success: true, data: response.data };
+            } else {
+                throw new Error(`API retornou status ${response.status}`);
+            }
+        } catch (error) {
+            console.error(`❌ Erro ao reiniciar ${instanceName}:`, error.message);
+            return { success: false, error: error.message, details: error.response?.data };
+        }
+    }
+
+    /**
      * 💾 CACHE DE QR CODES
      */
     cacheQRCode(instance, qrcode) {

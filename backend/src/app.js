@@ -585,6 +585,22 @@ app.delete('/api/whatsapp/instances/:instanceId', async (req, res) => {
     }
 });
 
+// 📱 Reiniciar instância
+app.post('/api/whatsapp/instances/:instanceName/restart', async (req, res) => {
+    const { instanceName } = req.params;
+    console.log(`🔄 Reiniciando instância: ${instanceName}`);
+    try {
+        const result = await evolutionService.restartInstance(instanceName);
+        if (result.success) {
+            res.json({ success: true, message: `Instância ${instanceName} reiniciada com sucesso.`, data: result.data });
+        } else {
+            res.status(500).json({ success: false, error: result.error, details: result.details });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Stats e Debug endpoints
 app.get('/api/whatsapp/stats', (req, res) => {
     const whatsappStats = whatsappManager.getStats();

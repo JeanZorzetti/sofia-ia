@@ -474,6 +474,22 @@ export const useWhatsAppInstances = () => {
     }
   };
 
+  const restartInstance = async (instanceName: string): Promise<void> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/whatsapp/instances/${instanceName}/restart`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+      // Assuming success, no need to change local state as restart is a backend action
+    } catch (err) {
+      console.error('Erro ao reiniciar instância:', err);
+      throw err;
+    }
+  };
+
   const getQRCode = async (instanceId: string): Promise<QRCodeData> => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/whatsapp/instances/${instanceId}/qr`);
@@ -531,6 +547,7 @@ export const useWhatsAppInstances = () => {
     disconnectInstance,
     connectInstance,
     deleteInstance,
+    restartInstance,
     getQRCode,
     pauseAutoRefresh,
     resumeAutoRefresh,
