@@ -455,64 +455,66 @@ class EvolutionAPIService extends EventEmitter {
     }
 
     async listInstances() {
-        if (!this.isConfigured) {
-            return { success: false, error: 'Evolution API não configurada. Verifique a API Key.', data: [] };
-        }
-        try {
-            const response = await axios.get(
-                `${this.baseURL}/instance/fetchInstances`,
-                {
-                    headers: this.defaultHeaders,
-                    timeout: 15000
-                }
-            );
-            
-            const instances = response.data || [];
-            
-            if (Array.isArray(instances)) {
-                const statusChecks = instances.map(async (instance) => {
-                    const statusResult = await this.getInstanceConnectionState(instance.instance.instanceName);
-                    return {
-                        ...instance,
-                        connectionStatus: statusResult.state,
-                        connected: statusResult.connected,
-                    };
-                });
-
-                const instancesWithRealStatus = await Promise.all(statusChecks);
-
-                instancesWithRealStatus.forEach(instance => {
-                    this.instanceStatus.set(instance.instance.instanceName, {
-                        status: instance.connectionStatus,
-                        instanceId: instance.instance.instanceId,
-                        connected: instance.connected,
-                        lastSeen: new Date()
-                    });
-                });
-                
-                return {
-                    success: true,
-                    data: instancesWithRealStatus,
-                    count: instancesWithRealStatus.length
-                };
+    if (!this.isConfigured) {
+        return { success: false, error: 'Evolution API não configurada. Verifique a API Key.', data: [] };
+    }
+    try {
+        const response = await axios.get(
+            `${this.baseURL}/instance/fetchInstances`,
+            {
+                headers: this.defaultHeaders,
+                timeout: 15000
             }
+        );
+        
+        const instances = response.data || [];
+        
+        if (Array.isArray(instances)) {
+            const statusChecks = instances.map(async (instance) => {
+                // CORREÇÃO APLICADA AQUI: Acessa instance.instanceName diretamente
+                const statusResult = await this.getInstanceConnectionState(instance.instanceName);
+                return {
+                    ...instance,
+                    connectionStatus: statusResult.state,
+                    connected: statusResult.connected,
+                };
+            });
+
+            const instancesWithRealStatus = await Promise.all(statusChecks);
+
+            instancesWithRealStatus.forEach(instance => {
+                // CORREÇÃO APLICADA AQUI: Acessa instance.instanceName e instance.instanceId diretamente
+                this.instanceStatus.set(instance.instanceName, {
+                    status: instance.connectionStatus,
+                    instanceId: instance.instanceId,
+                    connected: instance.connected,
+                    lastSeen: new Date()
+                });
+            });
             
             return {
                 success: true,
-                data: [],
-                count: 0
-            };
-            
-        } catch (error) {
-            console.error('❌ Erro ao listar instâncias:', error.message);
-            
-            return {
-                success: false,
-                error: error.message,
-                data: []
+                data: instancesWithRealStatus,
+                count: instancesWithRealStatus.length
             };
         }
+        
+        return {
+            success: true,
+            data: [],
+            count: 0
+        };
+        
+    } catch (error) {
+        console.error('❌ Erro ao listar instâncias:', error.message);
+        
+        return {
+            success: false,
+            error: error.message,
+            data: []
+        };
     }
+}
 
     /**
      * 🗑️ DELETAR INSTÂNCIA
