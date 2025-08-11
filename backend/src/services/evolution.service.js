@@ -58,7 +58,8 @@ class EvolutionAPIService extends EventEmitter {
                     'QRCODE_UPDATED',
                     'CONNECTION_UPDATE', 
                     'MESSAGES_UPSERT',
-                    'MESSAGE_STATUS_UPDATE'
+                    'MESSAGE_STATUS_UPDATE',
+                    'SEND_MESSAGE' // Adicionado para métricas
                 ],
                 
                 // ⚙️ Configurações anti-ban otimizadas
@@ -114,7 +115,47 @@ class EvolutionAPIService extends EventEmitter {
     }
 
     /**
-     * 📋 LISTAR TODAS AS INSTÂNCIAS
+     * 🩺 OBTER O ESTADO DA CONEXÃO DE UMA INSTÂNCIA
+     */
+    async getInstanceConnectionState(instanceName) {
+        try {
+            const response = await axios.get(`${this.baseURL}/instance/connectionState/${instanceName}`, {
+                headers: this.defaultHeaders,
+                timeout: 10000
+            });
+
+            if (response.data && response.data.state) {
+                const isConnected = response.data.state === 'open';
+                
+                // Atualizar cache de status
+                const currentStatus = this.instanceStatus.get(instanceName) || {};
+                currentStatus.connected = isConnected;
+                currentStatus.status = response.data.state;
+                this.instanceStatus.set(instanceName, currentStatus);
+
+                return {
+                    success: true,
+                    state: response.data.state,
+                    connected: isConnected
+                };
+            }
+            return { success: false, state: 'unknown', connected: false };
+        } catch (error) {
+            // Se a instância não for encontrada (404), significa que está desconectada
+            if (error.response && error.response.status === 404) {
+                 const currentStatus = this.instanceStatus.get(instanceName) || {};
+                 currentStatus.connected = false;
+                 currentStatus.status = 'close';
+                 this.instanceStatus.set(instanceName, currentStatus);
+                 return { success: true, state: 'close', connected: false };
+            }
+            console.error(`❌ Erro ao verificar status da instância ${instanceName}:`, error.message);
+            return { success: false, state: 'error', connected: false, error: error.message };
+        }
+    }
+
+    /**
+     * 📋 LISTAR TODAS AS INSTÂNCIAS E VERIFICAR STATUS REAL
      */
     async listInstances() {
         try {
@@ -122,22 +163,36 @@ class EvolutionAPIService extends EventEmitter {
                 headers: this.defaultHeaders,
                 timeout: 15000
             });
-            
+
             if (response.data && Array.isArray(response.data)) {
-                // 🔄 Atualizar status interno das instâncias
-                response.data.forEach(instance => {
-                    this.instanceStatus.set(instance.instanceName, {
-                        status: instance.status,
-                        instanceId: instance.instanceId,
-                        connected: instance.status === 'open',
+                // Mapeia todas as promises de verificação de status
+                const statusChecks = response.data.map(async (instance) => {
+                    const statusResult = await this.getInstanceConnectionState(instance.instance.instanceName);
+                    // Retorna um objeto mesclado com os dados da instância e o status real
+                    return {
+                        ...instance,
+                        connectionStatus: statusResult.state,
+                        connected: statusResult.connected,
+                    };
+                });
+
+                // Executa todas as verificações em paralelo
+                const instancesWithRealStatus = await Promise.all(statusChecks);
+
+                // Atualiza o cache global
+                instancesWithRealStatus.forEach(instance => {
+                    this.instanceStatus.set(instance.instance.instanceName, {
+                        status: instance.connectionStatus,
+                        instanceId: instance.instance.instanceId,
+                        connected: instance.connected,
                         lastSeen: new Date()
                     });
                 });
                 
                 return {
                     success: true,
-                    data: response.data,
-                    count: response.data.length
+                    data: instancesWithRealStatus,
+                    count: instancesWithRealStatus.length
                 };
             }
             
@@ -364,6 +419,16 @@ class EvolutionAPIService extends EventEmitter {
                 case 'MESSAGE_STATUS_UPDATE':
                     // ✅ Status de entrega das mensagens
                     this.emit('message_status', { instance, status: data });
+                    break;
+
+                case 'SEND_MESSAGE':
+                    // 💬 Processar mensagens enviadas
+                    if (data && data.messages) {
+                        for (const message of data.messages) {
+                            this.emit('message_sent', { instance, message });
+                        }
+                        console.log(`💬 ${data.messages.length} mensagens enviadas em ${instance}`);
+                    }
                     break;
             }
             
