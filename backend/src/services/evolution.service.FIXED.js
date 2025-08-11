@@ -416,6 +416,44 @@ class EvolutionAPIService extends EventEmitter {
     /**
      * 📋 LISTAR INSTÂNCIAS
      */
+    async getInstanceConnectionState(instanceName) {
+        if (!this.isConfigured) {
+            return { success: false, state: 'unconfigured', connected: false };
+        }
+        try {
+            const response = await axios.get(`${this.baseURL}/instance/connectionState/${instanceName}`, {
+                headers: this.defaultHeaders,
+                timeout: 10000
+            });
+
+            if (response.data && response.data.state) {
+                const isConnected = response.data.state === 'open';
+                
+                const currentStatus = this.instanceStatus.get(instanceName) || {};
+                currentStatus.connected = isConnected;
+                currentStatus.status = response.data.state;
+                this.instanceStatus.set(instanceName, currentStatus);
+
+                return {
+                    success: true,
+                    state: response.data.state,
+                    connected: isConnected
+                };
+            }
+            return { success: false, state: 'unknown', connected: false };
+        } catch (error) {
+            if (error.response && error.response.status === 404) {
+                 const currentStatus = this.instanceStatus.get(instanceName) || {};
+                 currentStatus.connected = false;
+                 currentStatus.status = 'close';
+                 this.instanceStatus.set(instanceName, currentStatus);
+                 return { success: true, state: 'close', connected: false };
+            }
+            console.error(`❌ Erro ao verificar status da instância ${instanceName}:`, error.message);
+            return { success: false, state: 'error', connected: false, error: error.message };
+        }
+    }
+
     async listInstances() {
         if (!this.isConfigured) {
             return { success: false, error: 'Evolution API não configurada. Verifique a API Key.', data: [] };
@@ -431,31 +469,42 @@ class EvolutionAPIService extends EventEmitter {
             
             const instances = response.data || [];
             
-            // Atualizar status local
-            instances.forEach(instance => {
-                this.instanceStatus.set(instance.instanceName || instance.instance, {
-                    status: instance.state || instance.status,
-                    instanceId: instance.instanceId,
-                    connected: instance.state === 'open' || instance.status === 'connected',
-                    lastSeen: new Date()
+            if (Array.isArray(instances)) {
+                const statusChecks = instances.map(async (instance) => {
+                    const statusResult = await this.getInstanceConnectionState(instance.instance.instanceName);
+                    return {
+                        ...instance,
+                        connectionStatus: statusResult.state,
+                        connected: statusResult.connected,
+                    };
                 });
-            });
+
+                const instancesWithRealStatus = await Promise.all(statusChecks);
+
+                instancesWithRealStatus.forEach(instance => {
+                    this.instanceStatus.set(instance.instance.instanceName, {
+                        status: instance.connectionStatus,
+                        instanceId: instance.instance.instanceId,
+                        connected: instance.connected,
+                        lastSeen: new Date()
+                    });
+                });
+                
+                return {
+                    success: true,
+                    data: instancesWithRealStatus,
+                    count: instancesWithRealStatus.length
+                };
+            }
             
             return {
                 success: true,
-                data: instances,
-                count: instances.length
+                data: [],
+                count: 0
             };
             
         } catch (error) {
             console.error('❌ Erro ao listar instâncias:', error.message);
-            console.error('DEBUG: listInstances Error Message:', error.message);
-            if (error.response) {
-                console.error('DEBUG: listInstances Error Response Data:', error.response.data);
-                console.error('DEBUG: listInstances Error Response Status:', error.response.status);
-            } else if (error.request) {
-                console.error('DEBUG: listInstances Error Request:', error.request);
-            }
             
             return {
                 success: false,

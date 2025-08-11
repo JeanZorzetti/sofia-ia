@@ -410,31 +410,32 @@ app.get('/api/whatsapp/instances', async (req, res) => {
     try {
         const evolutionResult = await evolutionService.listInstances();
         
-        if (evolutionResult.success && evolutionResult.data.length > 0) {
+        if (evolutionResult.success) {
             res.json({
                 success: true,
                 data: evolutionResult.data,
-                total: evolutionResult.data.length,
+                total: evolutionResult.count || 0,
                 source: 'evolution_api',
                 timestamp: new Date().toISOString()
             });
         } else {
-            const instances = whatsappManager.getAllInstances();
-            res.json({
-                success: true,
-                data: instances,
-                total: instances.length,
-                source: 'local_simulation',
+            // Se a chamada à API falhar, retorna um erro estruturado
+            res.status(500).json({
+                success: false,
+                data: [],
+                total: 0,
+                source: 'evolution_api_error',
+                error: evolutionResult.error || 'Falha ao buscar instâncias na Evolution API.',
                 timestamp: new Date().toISOString()
             });
         }
     } catch (error) {
-        const instances = whatsappManager.getAllInstances();
-        res.json({
-            success: true,
-            data: instances,
-            total: instances.length,
-            source: 'local_fallback',
+        // Captura erros inesperados na execução
+        res.status(500).json({
+            success: false,
+            data: [],
+            total: 0,
+            source: 'server_error',
             error: error.message,
             timestamp: new Date().toISOString()
         });
