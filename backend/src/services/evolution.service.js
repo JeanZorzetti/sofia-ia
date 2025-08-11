@@ -270,6 +270,49 @@ class EvolutionAPIService extends EventEmitter {
     }
 
     /**
+     * 💬 ENVIAR MENSAGEM DE TEXTO
+     * Implementa o endpoint POST /message/sendText/{instance}
+     */
+    async sendMessage(instanceName, number, text, options = {}) {
+        try {
+            console.log(`💬 Enviando mensagem de texto para ${number} na instância ${instanceName}`);
+
+            const payload = {
+                number: number,
+                text: text,
+                ...options // Permite passar delay, linkPreview, etc.
+            };
+
+            const response = await axios.post(
+                `${this.baseURL}/message/sendText/${instanceName}`,
+                payload,
+                {
+                    headers: this.defaultHeaders,
+                    timeout: 15000
+                }
+            );
+
+            if (response.data && response.data.key) {
+                console.log(`✅ Mensagem enviada com sucesso para ${number}. ID: ${response.data.key.id}`);
+                return {
+                    success: true,
+                    data: response.data
+                };
+            }
+
+            throw new Error('Resposta inválida da Evolution API ao enviar mensagem.');
+
+        } catch (error) {
+            console.error(`❌ Erro ao enviar mensagem para ${number} na instância ${instanceName}:`, error.message);
+            return {
+                success: false,
+                error: error.message,
+                details: error.response?.data || null
+            };
+        }
+    }
+
+    /**
      * 🔔 PROCESSAR WEBHOOK da Evolution API
      */
     async processWebhook(webhookData) {
