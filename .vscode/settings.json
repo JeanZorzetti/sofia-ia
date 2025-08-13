@@ -1,0 +1,14 @@
+{
+  "google.gemini.codeAssistant.customInstructions": {
+    "user": ""
+  },
+  "project.cleanup.progress": [
+    "Deleted 10 backup files.",
+    "Deleted 4 test files.",
+    "Deleted backend/server-with-real-metrics.js.",
+    "Unified app.js to use webhook-based Evolution API.",
+    "Deleted 4 redundant app.*.js files.",
+    "Deleted 2 redundant evolution.service.*.js files.",
+    "Deleted webhook.routes.UNIFIED.js."
+  ]
+}

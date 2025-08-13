@@ -9,8 +9,9 @@
  */
 
 const axios = require('axios');
+const EventEmitter = require('events');
 
-class EvolutionWebhookService {
+class EvolutionAPIService extends EventEmitter {
     constructor() {
         this.apiUrl = process.env.EVOLUTION_API_URL || 'https://evolutionapi.roilabs.com.br';
         this.apiKey = process.env.EVOLUTION_API_KEY || 'SuOOmamlmXs4NV3nkxpHAy7z3rcurbIz';
@@ -473,6 +474,44 @@ class EvolutionWebhookService {
         
         return cleaned;
     }
+
+    /**
+     * ✅ HEALTH CHECK
+     */
+    async healthCheck() {
+        try {
+            const response = await axios.get(
+                `${this.apiUrl}/instance/fetchInstances`,
+                {
+                    headers: this.defaultHeaders,
+                    timeout: 10000
+                }
+            );
+            
+            return {
+                success: true,
+                status: 'healthy',
+                timestamp: new Date().toISOString()
+            };
+            
+        } catch (error) {
+            return {
+                success: false,
+                status: 'unhealthy',
+                error: error.message,
+                timestamp: new Date().toISOString()
+            };
+        }
+    }
+
+    /**
+     * 🧹 CLEANUP - Limpar recursos ao desligar
+     */
+    cleanup() {
+        console.log('🧹 Limpando recursos do Evolution Service...');
+        this.qrCodeCache.clear();
+        this.instanceStatusCache.clear();
+    }
 }
 
-module.exports = EvolutionWebhookService;
+module.exports = EvolutionAPIService;
