@@ -59,7 +59,7 @@ export const Navbar = ({ activeTab, onTabChange, user, onLogout }: NavbarProps) 
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="" alt={user.name || user.email} />
                   <AvatarFallback className="bg-secondary text-secondary-foreground">
-                    {(user.name || user.email).charAt(0).toUpperCase()}
+                    {(user.name || user.email || 'U').charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </Button>

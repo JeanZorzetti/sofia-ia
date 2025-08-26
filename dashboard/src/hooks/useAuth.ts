@@ -252,7 +252,7 @@ export const useAuth = () => {
 
 // Hook para requisições autenticadas
 export const useAuthenticatedFetch = () => {
-  const { auth, logout, refreshToken } = useAuth();
+  const { auth, logout, refreshToken } = useAuthContext();
 
   const authenticatedFetch = useCallback(async (
     url: string, 

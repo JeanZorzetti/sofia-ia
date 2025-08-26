@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from './Navbar';
+import { useAuthContext } from '@/hooks/useAuth';
 import { Sidebar } from './Sidebar';
 import { OverviewTab } from './tabs/OverviewTab';
 import { SDRConfigTab } from './tabs/SDRConfigTab';
@@ -130,34 +131,19 @@ LoginModal.displayName = 'LoginModal';
 
 export const SofiaDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [user, setUser] = useState<User | null>(null);
-  const [showLogin, setShowLogin] = useState(false);
-
-  // Simular autenticação persistente
-  useEffect(() => {
-    const savedUser = localStorage.getItem('sofia_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
-
-  // 🔧 CORREÇÃO: Função de login estável
-  const handleLogin = useCallback((email: string, password: string) => {
-    const newUser = {
-      email,
-      name: email.split('@')[0],
-      plan: 'professional'
-    };
-    setUser(newUser);
-    localStorage.setItem('sofia_user', JSON.stringify(newUser));
-    setShowLogin(false);
-  }, []);
+  const { auth, logout } = useAuthContext();
+  
+  // Converter user do JWT para formato do componente
+  const user = auth.user ? {
+    email: auth.user.username + '@sofia.ai', // Criar email fictício do username
+    name: auth.user.username,
+    plan: 'professional'
+  } : null;
 
   const handleLogout = useCallback(() => {
-    setUser(null);
-    localStorage.removeItem('sofia_user');
+    logout();
     setActiveTab('overview');
-  }, []);
+  }, [logout]);
 
   const renderTabContent = () => {
     if (!user && ['sdr-config', 'workflows', 'billing', 'whatsapp'].includes(activeTab)) {
@@ -198,9 +184,10 @@ export const SofiaDashboard = () => {
         <CardContent>
           <Button 
             className="w-full button-luxury" 
-            onClick={() => setShowLogin(true)}
+            onClick={() => setActiveTab('overview')}
           >
-            Fazer Login
+            <Sparkles className="mr-2 h-4 w-4" />
+            Voltar ao Dashboard
           </Button>
         </CardContent>
       </Card>
@@ -236,12 +223,6 @@ export const SofiaDashboard = () => {
         </main>
       </div>
 
-      {/* 🔧 CORREÇÃO: Modal isolado que não sofre re-render */}
-      <LoginModal 
-        showLogin={showLogin}
-        onClose={() => setShowLogin(false)}
-        onLogin={handleLogin}
-      />
     </div>
   );
 };
