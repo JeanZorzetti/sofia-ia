@@ -289,42 +289,6 @@ export const useApiHealth = () => {
   };
 };
 
-// ℹ️ NOVO: Hook para informações da API da Evolution
-export const useEvolutionApiInfo = () => {
-  const [info, setInfo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchInfo = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/evolution/info`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json();
-      if (result.success) {
-        setInfo(result.data);
-      } else {
-        throw new Error(result.error || 'Falha ao buscar informações da API');
-      }
-    } catch (err) {
-      console.error('Erro ao buscar informações da API Evolution:', err);
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInfo();
-    // Atualiza a cada 2 minutos
-    const interval = setInterval(fetchInfo, 120000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return { info, loading, error, refresh: fetchInfo };
-};
 
 // 📱 🛠️ CORREÇÃO: Hook para WhatsApp instances otimizado
 export const useWhatsAppInstances = () => {
