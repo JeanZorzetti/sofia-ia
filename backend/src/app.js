@@ -81,8 +81,28 @@ app.get('/health', async (req, res) => {
 
 // --- Instance Management - PROTEGIDAS ---
 app.get('/api/instances', authenticateToken, async (req, res) => {
-  const result = await evolutionService.fetchInstances();
-  res.status(result.success ? 200 : 500).json(result);
+  try {
+    console.log('[API] Fetching instances - Start');
+    console.log('[API] Evolution API URL:', evolutionService.apiUrl);
+    console.log('[API] Evolution API Key exists:', !!evolutionService.apiKey);
+    
+    const result = await evolutionService.fetchInstances();
+    
+    console.log('[API] Fetch instances result:', {
+      success: result.success,
+      dataLength: result.data?.length || 0,
+      error: result.error
+    });
+    
+    res.status(result.success ? 200 : 500).json(result);
+  } catch (error) {
+    console.error('[API] Unexpected error in /api/instances:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      details: error.message
+    });
+  }
 });
 
 app.post('/api/instances', 

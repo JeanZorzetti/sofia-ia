@@ -104,6 +104,9 @@ class EvolutionAPIService extends EventEmitter {
 
   async fetchInstances() {
     try {
+      console.log('[EvolutionAPI] Fetching instances from:', `${this.apiUrl}/instance/fetchInstances`);
+      console.log('[EvolutionAPI] Headers:', { ...this.defaultHeaders, apikey: '***hidden***' });
+      
       const response = await axios.get(
         `${this.apiUrl}/instance/fetchInstances`,
         {
@@ -111,6 +114,10 @@ class EvolutionAPIService extends EventEmitter {
           timeout: 15000,
         }
       );
+      
+      console.log('[EvolutionAPI] Response status:', response.status);
+      console.log('[EvolutionAPI] Response data length:', response.data?.length || 0);
+      
       const instances = response.data.map((inst) => {
         this.updateInstanceStatus(
           inst.instance.instanceName,
@@ -120,8 +127,20 @@ class EvolutionAPIService extends EventEmitter {
       });
       return { success: true, data: instances };
     } catch (error) {
-      console.error('[EvolutionAPI] Error fetching instances:', error.message);
-      return { success: false, error: error.message, data: [] };
+      console.error('[EvolutionAPI] Error fetching instances:');
+      console.error('- URL:', `${this.apiUrl}/instance/fetchInstances`);
+      console.error('- Status:', error.response?.status);
+      console.error('- Status Text:', error.response?.statusText);
+      console.error('- Response Data:', error.response?.data);
+      console.error('- Message:', error.message);
+      
+      return { 
+        success: false, 
+        error: error.message,
+        statusCode: error.response?.status,
+        responseData: error.response?.data,
+        data: [] 
+      };
     }
   }
 
