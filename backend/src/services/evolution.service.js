@@ -1,520 +1,370 @@
-/**
- * 🚀 SOFIA IA - Evolution API Service UNIFICADO
- * Versão: v3.0.0 - Janeiro 2025
- * 
- * Service consolidado com TODAS as funcionalidades:
- * - Criação de instâncias
- * - QR codes via webhook
- * - Multi-instâncias
- * - Anti-ban protection
- * - Error handling robusto
- */
-
 const axios = require('axios');
 const EventEmitter = require('events');
+const config = require('../config');
 
+/**
+ * @class EvolutionAPIService
+ * @description Unified service for all interactions with the Evolution API.
+ * Handles instance management, messaging, and webhook processing.
+ * Emits events for 'qrcode_updated', 'connection_update', and 'message_received'.
+ */
 class EvolutionAPIService extends EventEmitter {
-    constructor() {
-        super();
-        
-        // 🔐 Configurações da Evolution API
-        this.baseURL = process.env.EVOLUTION_API_URL || 'https://evolutionapi.roilabs.com.br';
-        this.apiKey = process.env.EVOLUTION_API_KEY || 'SuOOmamlmXs4NV3nkxpHAy7z3rcurbIz';
-        this.webhookUrl = process.env.WEBHOOK_URL || 'https://sofiaia.roilabs.com.br/webhook/evolution';
-        
-        // 📱 Cache para QR codes e status das instâncias
-        this.qrCodeCache = new Map();
-        this.instanceStatus = new Map();
-        
-        // ⚙️ Headers padrão para todas as requisições
-        this.defaultHeaders = {
-            'apikey': this.apiKey,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        };
-        
-        console.log('🚀 Evolution API Service inicializado');
-        console.log(`📡 Base URL: ${this.baseURL}`);
-        console.log(`🔗 Webhook URL: ${this.webhookUrl}`);
+  constructor() {
+    super();
+    this.apiUrl = config.evolution.apiUrl;
+    this.apiKey = config.evolution.apiKey;
+    this.webhookUrl = config.evolution.webhookUrl;
+
+    if (!this.apiKey) {
+      console.error(
+        'FATAL ERROR: EVOLUTION_API_KEY is not defined in environment variables.'
+      );
+      process.exit(1); // Exit if the API key is not configured
     }
 
-    /**
-     * 📱 CRIAR NOVA INSTÂNCIA WhatsApp
-     */
-    async createInstance(instanceName, settings = {}) {
-        try {
-            console.log(`🏗️ Criando instância: ${instanceName}`);
-            
-            const instanceData = {
-                instanceName: instanceName,
-                qrcode: true,
-                integration: 'WHATSAPP-BAILEYS',
-                
-                // 🔔 Configuração de webhooks (CRÍTICO!)
-                webhook: this.webhookUrl,
-                webhookByEvents: true,
-                webhookBase64: true,
-                events: [
-                    'QRCODE_UPDATED',
-                    'CONNECTION_UPDATE', 
-                    'MESSAGES_UPSERT',
-                    'MESSAGE_STATUS_UPDATE',
-                    'SEND_MESSAGE' // Adicionado para métricas
-                ],
-                
-                // ⚙️ Configurações anti-ban otimizadas
-                reject_call: true,
-                msg_call: 'Sofia IA não aceita chamadas. Use mensagens de texto.',
-                groups_ignore: true,
-                always_online: true,
-                read_messages: true,
-                read_status: false,
-                sync_full_history: false,
-                
-                ...settings
-            };
-            
-            const response = await axios.post(`${this.baseURL}/instance/create`, instanceData, {
-                headers: this.defaultHeaders,
-                timeout: 30000
-            });
-            
-            if (response.data && response.data.instance) {
-                // ✅ Marcar instância como criada
-                this.instanceStatus.set(instanceName, {
-                    status: 'created',
-                    instanceId: response.data.instance.instanceId,
-                    createdAt: new Date(),
-                    connected: false
-                });
-                
-                console.log(`✅ Instância ${instanceName} criada com sucesso`);
-                
-                return {
-                    success: true,
-                    data: {
-                        instanceName: instanceName,
-                        instanceId: response.data.instance.instanceId,
-                        status: 'created',
-                        message: 'Instância criada. QR code será enviado via webhook.'
-                    }
-                };
-            }
-            
-            throw new Error('Response inválido da Evolution API');
-            
-        } catch (error) {
-            console.error(`❌ Erro ao criar instância ${instanceName}:`, error.message);
-            
-            return {
-                success: false,
-                error: error.message,
-                details: error.response?.data || null
-            };
+    this.qrCodeCache = new Map();
+    this.instanceStatusCache = new Map();
+
+    this.defaultHeaders = {
+      apikey: this.apiKey,
+      'Content-Type': 'application/json',
+    };
+
+    console.log('🚀 Unified Evolution API Service Initialized');
+    console.log(`API URL: ${this.apiUrl}`);
+    console.log(`Webhook URL configured: ${this.webhookUrl}`);
+  }
+
+  // --- Instance Management ---
+
+  async createInstance(instanceName, settings = {}) {
+    try {
+      console.log(`[EvolutionAPI] Creating instance: ${instanceName}`);
+      const instanceData = {
+        instanceName,
+        qrcode: true,
+        integration: 'WHATSAPP-BAILEYS',
+        webhookUrl: this.webhookUrl,
+        webhookByEvents: true,
+        webhookBase64: true,
+        webhookEvents: [
+          'QRCODE_UPDATED',
+          'CONNECTION_UPDATE',
+          'MESSAGES_UPSERT',
+          'MESSAGE_STATUS_UPDATE',
+        ],
+        rejectCall: true,
+        msgCall: 'Sofia IA does not accept calls. Please use text messages.',
+        groupsIgnore: true,
+        alwaysOnline: true,
+        readMessages: true,
+        readStatus: false,
+        syncFullHistory: false,
+        ...settings,
+      };
+
+      const response = await axios.post(
+        `${this.apiUrl}/instance/create`,
+        instanceData,
+        {
+          headers: this.defaultHeaders,
+          timeout: 30000,
         }
-    }
+      );
 
-    /**
-     * 🩺 OBTER O ESTADO DA CONEXÃO DE UMA INSTÂNCIA
-     */
-    async getInstanceConnectionState(instanceName) {
-        try {
-            const response = await axios.get(`${this.baseURL}/instance/connectionState/${instanceName}`, {
-                headers: this.defaultHeaders,
-                timeout: 10000
-            });
-
-            if (response.data && response.data.state) {
-                const isConnected = response.data.state === 'open';
-                
-                // Atualizar cache de status
-                const currentStatus = this.instanceStatus.get(instanceName) || {};
-                currentStatus.connected = isConnected;
-                currentStatus.status = response.data.state;
-                this.instanceStatus.set(instanceName, currentStatus);
-
-                return {
-                    success: true,
-                    state: response.data.state,
-                    connected: isConnected
-                };
-            }
-            return { success: false, state: 'unknown', connected: false };
-        } catch (error) {
-            // Se a instância não for encontrada (404), significa que está desconectada
-            if (error.response && error.response.status === 404) {
-                 const currentStatus = this.instanceStatus.get(instanceName) || {};
-                 currentStatus.connected = false;
-                 currentStatus.status = 'close';
-                 this.instanceStatus.set(instanceName, currentStatus);
-                 return { success: true, state: 'close', connected: false };
-            }
-            console.error(`❌ Erro ao verificar status da instância ${instanceName}:`, error.message);
-            return { success: false, state: 'error', connected: false, error: error.message };
-        }
-    }
-
-    /**
-     * 📋 LISTAR TODAS AS INSTÂNCIAS E VERIFICAR STATUS REAL
-     */
-    async listInstances() {
-        try {
-            const response = await axios.get(`${this.baseURL}/instance/fetchInstances`, {
-                headers: this.defaultHeaders,
-                timeout: 15000
-            });
-
-            if (response.data && Array.isArray(response.data)) {
-                // Mapeia todas as promises de verificação de status
-                const statusChecks = response.data.map(async (instance) => {
-                    const statusResult = await this.getInstanceConnectionState(instance.instance.instanceName);
-                    // Retorna um objeto mesclado com os dados da instância e o status real
-                    return {
-                        ...instance,
-                        connectionStatus: statusResult.state,
-                        connected: statusResult.connected,
-                    };
-                });
-
-                // Executa todas as verificações em paralelo
-                const instancesWithRealStatus = await Promise.all(statusChecks);
-
-                // Atualiza o cache global
-                instancesWithRealStatus.forEach(instance => {
-                    this.instanceStatus.set(instance.instance.instanceName, {
-                        status: instance.connectionStatus,
-                        instanceId: instance.instance.instanceId,
-                        connected: instance.connected,
-                        lastSeen: new Date()
-                    });
-                });
-                
-                return {
-                    success: true,
-                    data: instancesWithRealStatus,
-                    count: instancesWithRealStatus.length
-                };
-            }
-            
-            return {
-                success: true,
-                data: [],
-                count: 0
-            };
-            
-        } catch (error) {
-            console.error('❌ Erro ao listar instâncias:', error.message);
-            
-            return {
-                success: false,
-                error: error.message,
-                data: []
-            };
-        }
-    }
-
-    /**
-     * 🔗 CONECTAR INSTÂNCIA (obter QR code)
-     */
-    async connectInstance(instanceName) {
-        try {
-            console.log(`🔗 Conectando instância: ${instanceName}`);
-            
-            // 📱 Verificar se já temos QR code no cache
-            const cachedQR = this.getCachedQRCode(instanceName);
-            if (cachedQR) {
-                return {
-                    success: true,
-                    qrcode: cachedQR,
-                    source: 'cache',
-                    message: 'QR code do cache (ainda válido)'
-                };
-            }
-            
-            // 🔄 Solicitar nova conexão
-            const response = await axios.get(`${this.baseURL}/instance/connect/${instanceName}`, {
-                headers: this.defaultHeaders,
-                timeout: 30000
-            });
-            
-            // 📱 QR code virá via webhook, não no response direto
-            return {
-                success: true,
-                qrcode: null,
-                source: 'webhook_pending',
-                message: 'QR code será enviado via webhook em instantes.'
-            };
-            
-        } catch (error) {
-            console.error(`❌ Erro ao conectar ${instanceName}:`, error.message);
-            
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    /**
-     * ❌ DESCONECTAR INSTÂNCIA
-     */
-    async disconnectInstance(instanceName) {
-        try {
-            console.log(`❌ Desconectando instância: ${instanceName}`);
-            
-            const response = await axios.delete(`${this.baseURL}/instance/logout/${instanceName}`, {
-                headers: this.defaultHeaders,
-                timeout: 15000
-            });
-            
-            // 🧹 Limpar cache
-            this.qrCodeCache.delete(instanceName);
-            
-            // 🔄 Atualizar status
-            const currentStatus = this.instanceStatus.get(instanceName);
-            if (currentStatus) {
-                currentStatus.connected = false;
-                currentStatus.status = 'disconnected';
-                currentStatus.lastSeen = new Date();
-            }
-            
-            return {
-                success: true,
-                message: `Instância ${instanceName} desconectada`
-            };
-            
-        } catch (error) {
-            console.error(`❌ Erro ao desconectar ${instanceName}:`, error.message);
-            
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    /**
-     * 🗑️ DELETAR INSTÂNCIA
-     */
-    async deleteInstance(instanceName) {
-        try {
-            console.log(`🗑️ Deletando instância: ${instanceName}`);
-            
-            const response = await axios.delete(`${this.baseURL}/instance/delete/${instanceName}`, {
-                headers: this.defaultHeaders,
-                timeout: 15000
-            });
-            
-            // 🧹 Limpar todos os caches
-            this.qrCodeCache.delete(instanceName);
-            this.instanceStatus.delete(instanceName);
-            
-            return {
-                success: true,
-                message: `Instância ${instanceName} deletada`
-            };
-            
-        } catch (error) {
-            console.error(`❌ Erro ao deletar ${instanceName}:`, error.message);
-            
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    /**
-     * 💬 ENVIAR MENSAGEM DE TEXTO
-     * Implementa o endpoint POST /message/sendText/{instance}
-     */
-    async sendMessage(instanceName, number, text, options = {}) {
-        try {
-            console.log(`💬 Enviando mensagem de texto para ${number} na instância ${instanceName}`);
-
-            const payload = {
-                number: number,
-                text: text,
-                ...options // Permite passar delay, linkPreview, etc.
-            };
-
-            const response = await axios.post(
-                `${this.baseURL}/message/sendText/${instanceName}`,
-                payload,
-                {
-                    headers: this.defaultHeaders,
-                    timeout: 15000
-                }
-            );
-
-            if (response.data && response.data.key) {
-                console.log(`✅ Mensagem enviada com sucesso para ${number}. ID: ${response.data.key.id}`);
-                return {
-                    success: true,
-                    data: response.data
-                };
-            }
-
-            throw new Error('Resposta inválida da Evolution API ao enviar mensagem.');
-
-        } catch (error) {
-            console.error(`❌ Erro ao enviar mensagem para ${number} na instância ${instanceName}:`, error.message);
-            return {
-                success: false,
-                error: error.message,
-                details: error.response?.data || null
-            };
-        }
-    }
-
-    /**
-     * 🔔 PROCESSAR WEBHOOK da Evolution API
-     */
-    async processWebhook(webhookData) {
-        try {
-            const { event, instance, data } = webhookData;
-            
-            console.log(`🔔 Webhook recebido: ${event} para ${instance}`);
-            console.log(`📋 Data:`, JSON.stringify(data, null, 2));
-            
-            switch (event) {
-                case 'QRCODE_UPDATED':
-                    if (data && data.qrcode) {
-                        this.cacheQRCode(instance, data.qrcode);
-                        this.emit('qrcode_updated', { instance, qrcode: data.qrcode });
-                        console.log(`📱 QR code atualizado para ${instance}`);
-                    }
-                    break;
-                    
-                case 'CONNECTION_UPDATE':
-                    console.log(`🔗 Conexão ${instance}: ${data.state}`);
-                    
-                    // 🔄 Atualizar status da instância
-                    const currentStatus = this.instanceStatus.get(instance) || {};
-                    currentStatus.connected = data.state === 'open';
-                    currentStatus.status = data.state;
-                    currentStatus.lastSeen = new Date();
-                    this.instanceStatus.set(instance, currentStatus);
-                    
-                    if (data.state === 'open') {
-                        // ✅ Conectou - remover QR code do cache
-                        this.qrCodeCache.delete(instance);
-                        this.emit('instance_connected', { instance });
-                        console.log(`✅ ${instance} conectado com sucesso!`);
-                    } else if (data.state === 'close') {
-                        this.emit('instance_disconnected', { instance });
-                    }
-                    break;
-                    
-                case 'MESSAGES_UPSERT':
-                    // 💬 Processar mensagens recebidas
-                    if (data && data.messages) {
-                        for (const message of data.messages) {
-                            this.emit('message_received', { instance, message });
-                        }
-                        console.log(`💬 ${data.messages.length} mensagens recebidas em ${instance}`);
-                    }
-                    break;
-                    
-                case 'MESSAGE_STATUS_UPDATE':
-                    // ✅ Status de entrega das mensagens
-                    this.emit('message_status', { instance, status: data });
-                    break;
-
-                case 'SEND_MESSAGE':
-                    // 💬 Processar mensagens enviadas
-                    if (data && data.messages) {
-                        for (const message of data.messages) {
-                            this.emit('message_sent', { instance, message });
-                        }
-                        console.log(`💬 ${data.messages.length} mensagens enviadas em ${instance}`);
-                    }
-                    break;
-            }
-            
-            return { 
-                success: true, 
-                event, 
-                instance,
-                processed: true 
-            };
-            
-        } catch (error) {
-            console.error('❌ Erro ao processar webhook:', error);
-            
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    /**
-     * 📱 GERENCIAR CACHE DE QR CODES
-     */
-    cacheQRCode(instance, qrcode) {
-        this.qrCodeCache.set(instance, {
-            qrcode: qrcode,
-            timestamp: Date.now(),
-            status: 'active'
-        });
-        console.log(`💾 QR code cached para ${instance}`);
-    }
-
-    getCachedQRCode(instance) {
-        const cached = this.qrCodeCache.get(instance);
-        if (!cached) return null;
-        
-        // 📅 QR codes expiram em 5 minutos
-        if (Date.now() - cached.timestamp > 300000) {
-            this.qrCodeCache.delete(instance);
-            return null;
-        }
-        
-        return cached.qrcode;
-    }
-
-    /**
-     * 📊 ESTATÍSTICAS DO SERVIÇO
-     */
-    getServiceStats() {
+      const result = {
+        success: true,
+        data: response.data,
+        message: 'Instance created. QR code will be sent via webhook.',
+      };
+      this.updateInstanceStatus(instanceName, 'created');
+      console.log(
+        `[EvolutionAPI] Instance ${instanceName} created successfully.`
+      );
+      return result;
+    } catch (error) {
+      console.error(
+        `[EvolutionAPI] Error creating instance ${instanceName}:`,
+        error.message
+      );
+      if (error.response?.status === 409) {
         return {
-            totalInstances: this.instanceStatus.size,
-            connectedInstances: Array.from(this.instanceStatus.values())
-                .filter(status => status.connected).length,
-            cachedQRCodes: this.qrCodeCache.size,
-            baseURL: this.baseURL,
-            webhookURL: this.webhookUrl,
-            uptime: process.uptime()
+          success: false,
+          error: 'Instance already exists',
+          existing: true,
         };
+      }
+      return {
+        success: false,
+        error: error.message,
+        details: error.response?.data,
+      };
     }
+  }
 
-    /**
-     * 🩺 HEALTH CHECK
-     */
-    async healthCheck() {
-        try {
-            const response = await axios.get(`${this.baseURL}/instance/fetchInstances`, {
-                headers: this.defaultHeaders,
-                timeout: 10000
-            });
-            
-            return {
-                success: true,
-                status: 'healthy',
-                responseTime: response.headers['x-response-time'] || 'unknown',
-                timestamp: new Date().toISOString()
-            };
-            
-        } catch (error) {
-            return {
-                success: false,
-                status: 'unhealthy',
-                error: error.message,
-                timestamp: new Date().toISOString()
-            };
+  async fetchInstances() {
+    try {
+      const response = await axios.get(
+        `${this.apiUrl}/instance/fetchInstances`,
+        {
+          headers: this.defaultHeaders,
+          timeout: 15000,
         }
+      );
+      const instances = response.data.map((inst) => {
+        this.updateInstanceStatus(
+          inst.instance.instanceName,
+          inst.instance.status
+        );
+        return inst;
+      });
+      return { success: true, data: instances };
+    } catch (error) {
+      console.error('[EvolutionAPI] Error fetching instances:', error.message);
+      return { success: false, error: error.message, data: [] };
     }
+  }
+
+  async logoutInstance(instanceName) {
+    try {
+      await axios.delete(`${this.apiUrl}/instance/logout/${instanceName}`, {
+        headers: this.defaultHeaders,
+        timeout: 10000,
+      });
+      this.qrCodeCache.delete(instanceName);
+      this.updateInstanceStatus(instanceName, 'disconnected');
+      console.log(`[EvolutionAPI] Instance ${instanceName} logged out.`);
+      return {
+        success: true,
+        message: `Instance ${instanceName} disconnected.`,
+      };
+    } catch (error) {
+      console.error(
+        `[EvolutionAPI] Error logging out instance ${instanceName}:`,
+        error.message
+      );
+      return { success: false, error: error.message };
+    }
+  }
+
+  async deleteInstance(instanceName) {
+    try {
+      await axios.delete(`${this.apiUrl}/instance/delete/${instanceName}`, {
+        headers: this.defaultHeaders,
+        timeout: 10000,
+      });
+      this.qrCodeCache.delete(instanceName);
+      this.instanceStatusCache.delete(instanceName);
+      console.log(`[EvolutionAPI] Instance ${instanceName} deleted.`);
+      return { success: true, message: `Instance ${instanceName} deleted.` };
+    } catch (error) {
+      console.error(
+        `[EvolutionAPI] Error deleting instance ${instanceName}:`,
+        error.message
+      );
+      return { success: false, error: error.message };
+    }
+  }
+
+  // --- Messaging ---
+
+  async sendMessage(instanceName, number, text) {
+    try {
+      const payload = {
+        number,
+        options: { delay: 1200, presence: 'composing' },
+        textMessage: { text },
+      };
+      const response = await axios.post(
+        `${this.apiUrl}/message/sendText/${instanceName}`,
+        payload,
+        {
+          headers: this.defaultHeaders,
+        }
+      );
+      console.log(
+        `[EvolutionAPI] Message sent to ${number} via ${instanceName}.`
+      );
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error(
+        `[EvolutionAPI] Error sending message to ${number}:`,
+        error.message
+      );
+      return {
+        success: false,
+        error: error.message,
+        details: error.response?.data,
+      };
+    }
+  }
+
+  // --- Webhook Processing ---
+
+  async processWebhook(webhookData) {
+    const { event, instance, data } = webhookData;
+    console.log(
+      `[Webhook] Received event '${event}' for instance '${instance}'`
+    );
+
+    try {
+      switch (event) {
+        case 'QRCODE_UPDATED':
+          this.handleQrCodeUpdate(instance, data);
+          break;
+        case 'CONNECTION_UPDATE':
+          this.handleConnectionUpdate(instance, data);
+          break;
+        case 'MESSAGES_UPSERT':
+          await this.handleMessageUpsert(instance, data);
+          break;
+        default:
+          console.log(`[Webhook] Unhandled event type: ${event}`);
+          return { success: true, processed: false, event };
+      }
+      return { success: true, processed: true, event, instance };
+    } catch (error) {
+      console.error(
+        `[Webhook] Error processing event '${event}' for '${instance}':`,
+        error.message
+      );
+      return { success: false, error: error.message };
+    }
+  }
+
+  handleQrCodeUpdate(instance, data) {
+    if (data.qrcode) {
+      const qrData = {
+        qrcode: data.qrcode,
+        timestamp: Date.now(),
+        expires_at: Date.now() + config.qrCode.expiryTime,
+      };
+      this.qrCodeCache.set(instance, qrData);
+      this.updateInstanceStatus(instance, 'qr_ready');
+      this.emit('qrcode_updated', { instance, qrcode: data.qrcode });
+      console.log(
+        `[Webhook] QR code for ${instance} cached. Expires in ${config.qrCode.expiryTime / 1000}s.`
+      );
+    }
+  }
+
+  handleConnectionUpdate(instance, data) {
+    const status = data.state === 'open' ? 'connected' : 'disconnected';
+    this.updateInstanceStatus(instance, status);
+    if (status === 'connected') {
+      this.qrCodeCache.delete(instance);
+      console.log(
+        `[Webhook] Instance ${instance} connected. QR cache cleared.`
+      );
+    }
+    this.emit('connection_update', { instance, status });
+  }
+
+  async handleMessageUpsert(instance, data) {
+    // This logic is imported from the old webhook.service.js
+    // In a real scenario, this would call an external AI/NLP service.
+    for (const message of data.messages) {
+      if (message.key.fromMe) {
+        continue; // Ignore messages sent by the bot
+      }
+      const contact = message.key.remoteJid;
+      const text =
+        message.message?.conversation ||
+        message.message?.extendedTextMessage?.text ||
+        '';
+
+      console.log(
+        `[Webhook] Processing message from ${contact} on ${instance}: "${text}"`
+      );
+
+      // Placeholder for AI processing
+      const aiResponse = this.getAutomatedResponse(text);
+
+      if (aiResponse) {
+        await this.sendMessage(instance, contact, aiResponse);
+      }
+    }
+  }
+
+  getAutomatedResponse(text) {
+    const lowerText = text.toLowerCase();
+    if (lowerText.includes('olá') || lowerText.includes('oi')) {
+      return 'Olá! Sou a Sofia, assistente virtual da imobiliária. Como posso te ajudar?';
+    }
+    if (lowerText.includes('preço') || lowerText.includes('valor')) {
+      return 'Para te informar os valores, preciso saber mais sobre o tipo de imóvel e a região que você procura. Pode me dar mais detalhes?';
+    }
+    // Add more rules as needed
+    return null;
+  }
+
+  // --- Cache & Status ---
+
+  getCachedQRCode(instance) {
+    const cached = this.qrCodeCache.get(instance);
+    if (!cached || Date.now() > cached.expires_at) {
+      if (cached) this.qrCodeCache.delete(instance);
+      return null;
+    }
+    return cached;
+  }
+
+  updateInstanceStatus(instance, status) {
+    const current = this.instanceStatusCache.get(instance) || {};
+    this.instanceStatusCache.set(instance, {
+      ...current,
+      status,
+      last_update: new Date().toISOString(),
+    });
+    console.log(`[Status] Instance ${instance} status updated to: ${status}`);
+  }
+
+  getInstanceStatus(instance) {
+    return this.instanceStatusCache.get(instance) || { status: 'unknown' };
+  }
+
+  getCacheStats() {
+    return {
+      qr_codes: this.qrCodeCache.size,
+      instances: this.instanceStatusCache.size,
+    };
+  }
+
+  cleanExpiredCache() {
+    let cleaned = 0;
+    const now = Date.now();
+    for (const [instance, data] of this.qrCodeCache.entries()) {
+      if (now > data.expires_at) {
+        this.qrCodeCache.delete(instance);
+        cleaned++;
+      }
+    }
+    if (cleaned > 0) {
+      console.log(`[Cache] Cleaned ${cleaned} expired QR codes.`);
+    }
+    return cleaned;
+  }
+
+  // --- Health & Cleanup ---
+
+  async healthCheck() {
+    try {
+      await axios.get(`${this.apiUrl}/instance/fetchInstances`, {
+        headers: this.defaultHeaders,
+        timeout: 10000,
+      });
+      return { success: true, status: 'healthy' };
+    } catch (error) {
+      return { success: false, status: 'unhealthy', error: error.message };
+    }
+  }
+
+  cleanup() {
+    console.log('[System] Cleaning up Evolution Service resources...');
+    this.qrCodeCache.clear();
+    this.instanceStatusCache.clear();
+  }
 }
 
-module.exports = EvolutionAPIService;
+// Export a singleton instance
+module.exports = new EvolutionAPIService();
