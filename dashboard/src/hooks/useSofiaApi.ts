@@ -155,13 +155,14 @@ export const useRecentConversations = () => {
   const [conversations, setConversations] = useState<ConversationMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const authenticatedFetch = useAuthenticatedFetch();
 
   const fetchConversations = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}/api/conversations/recent`);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/conversations/recent`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -205,12 +206,13 @@ export const useRealTimeStats = (pauseUpdates = false) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const authenticatedFetch = useAuthenticatedFetch();
 
   const fetchRealTimeStats = async () => {
     try {
       setError(null);
       
-            const response = await fetch(`${API_BASE_URL}/api/whatsapp/stats`);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/whatsapp/stats`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -302,13 +304,14 @@ export const useWhatsAppInstances = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const authenticatedFetch = useAuthenticatedFetch();
 
   const fetchInstances = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}/api/instances`);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/instances`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -334,7 +337,7 @@ export const useWhatsAppInstances = () => {
 
   const createInstance = async (name: string): Promise<WhatsAppInstance> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/instances`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/instances`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -363,7 +366,7 @@ export const useWhatsAppInstances = () => {
 
   const logoutInstance = async (instanceName: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/instances/${instanceName}/logout`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/instances/${instanceName}/logout`, {
         method: 'DELETE',
       });
       
@@ -388,7 +391,7 @@ export const useWhatsAppInstances = () => {
 
   const connectInstance = async (instanceId: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/instances/${instanceId}/connect`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/instances/${instanceId}/connect`, {
         method: 'POST',
       });
       
@@ -418,7 +421,7 @@ export const useWhatsAppInstances = () => {
 
   const deleteInstance = async (instanceId: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/instances/${instanceId}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/instances/${instanceId}`, {
         method: 'DELETE',
       });
       
@@ -442,7 +445,7 @@ export const useWhatsAppInstances = () => {
 
   const restartInstance = async (instanceName: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/instances/${instanceName}/restart`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/instances/${instanceName}/restart`, {
         method: 'POST',
       });
       if (!response.ok) {
@@ -458,7 +461,7 @@ export const useWhatsAppInstances = () => {
 
   const getQRCode = async (instanceId: string): Promise<QRCodeData> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/instances/${instanceId}/qrcode`);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/instances/${instanceId}/qrcode`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -526,12 +529,13 @@ export const useWhatsAppStats = () => {
   const [stats, setStats] = useState<WhatsAppStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const authenticatedFetch = useAuthenticatedFetch();
 
   const fetchStats = async () => {
     try {
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}/api/whatsapp/stats`);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/whatsapp/stats`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -573,13 +577,14 @@ export const useWhatsAppStats = () => {
 export const useApiOperations = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const authenticatedFetch = useAuthenticatedFetch();
 
   const apiCall = async (endpoint: string, options?: RequestInit) => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      const response = await authenticatedFetch(`${API_BASE_URL}${endpoint}`, {
         headers: {
           'Content-Type': 'application/json',
           ...options?.headers,
