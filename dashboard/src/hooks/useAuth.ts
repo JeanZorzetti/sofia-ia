@@ -3,7 +3,7 @@
  * Sistema JWT para proteger APIs do dashboard
  */
 
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import React, { useState, useEffect, useCallback, createContext, useContext } from 'react';
 
 // Configuração da API
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -39,13 +39,15 @@ interface AuthResponse {
 }
 
 // Context para autenticação
-const AuthContext = createContext<{
+interface AuthContextType {
   auth: AuthState;
   login: (credentials: LoginCredentials) => Promise<boolean>;
   logout: () => void;
   refreshToken: () => Promise<boolean>;
   isTokenExpired: () => boolean;
-} | null>(null);
+}
+
+const AuthContext = createContext<AuthContextType | null>(null);
 
 // Hook principal de autenticação
 export const useAuth = () => {
@@ -305,13 +307,21 @@ export const useAuthenticatedFetch = () => {
 };
 
 // Provider de contexto
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const authValue = useAuth();
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const authData = useAuth();
 
-  return (
-    <AuthContext.Provider value={authValue}>
-      {children}
-    </AuthContext.Provider>
+  const contextValue = React.useMemo(() => ({
+    auth: authData.auth,
+    login: authData.login,
+    logout: authData.logout,
+    refreshToken: authData.refreshToken,
+    isTokenExpired: authData.isTokenExpired
+  }), [authData]);
+
+  return React.createElement(
+    AuthContext.Provider,
+    { value: contextValue },
+    children
   );
 };
 
@@ -324,45 +334,24 @@ export const useAuthContext = () => {
   return context;
 };
 
-// Componente de proteção de rotas
-export const ProtectedRoute: React.FC<{ 
-  children: React.ReactNode;
-  requiredRole?: 'admin' | 'user';
-  fallback?: React.ReactNode;
-}> = ({ children, requiredRole, fallback }) => {
-  const { auth } = useAuth();
-
+// Função para verificar se usuário pode acessar
+export const checkUserAccess = (
+  auth: AuthState, 
+  requiredRole?: 'admin' | 'user'
+): { canAccess: boolean; reason?: string } => {
   if (auth.loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+    return { canAccess: false, reason: 'loading' };
   }
-
+  
   if (!auth.isAuthenticated) {
-    return fallback || (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-xl font-light mb-2">Acesso Restrito</h2>
-          <p className="text-gray-600">Faça login para continuar</p>
-        </div>
-      </div>
-    );
+    return { canAccess: false, reason: 'not_authenticated' };
   }
-
+  
   if (requiredRole && auth.user?.role !== requiredRole && auth.user?.role !== 'admin') {
-    return fallback || (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-xl font-light mb-2">Permissão Insuficiente</h2>
-          <p className="text-gray-600">Você não tem acesso a esta área</p>
-        </div>
-      </div>
-    );
+    return { canAccess: false, reason: 'insufficient_role' };
   }
-
-  return <>{children}</>;
+  
+  return { canAccess: true };
 };
 
 export default useAuth;

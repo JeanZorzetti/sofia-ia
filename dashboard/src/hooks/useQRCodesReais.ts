@@ -93,6 +93,8 @@ export const useQRCodesReais = () => {
 
       const qrResult: QRCodeResponse = await qrResponse.json();
 
+      let finalQrResult = qrResult;
+      
       if (!qrResult.success || !qrResult.data?.qr_code) {
         // Pequeno retry rápido (500ms) para capturar QR cacheado logo após o create
         await new Promise(r => setTimeout(r, 500));
@@ -101,30 +103,30 @@ export const useQRCodesReais = () => {
         if (!retryJson.success || !retryJson.data?.qr_code) {
           throw new Error(retryJson.error || 'Erro ao gerar QR Code');
         }
-        (qrResult as any) = retryJson;
+        finalQrResult = retryJson;
       }
 
       // Passo 3: Atualizar estado com dados reais
       setQrState({
-        qr_code: qrResult.data.qr_code,
+        qr_code: finalQrResult.data.qr_code,
         loading: false,
         error: null,
-        instance_id: qrResult.data.instance_id || instanceId,
-        expires_in: qrResult.data.expires_in || 300,
-        source: qrResult.data.source || 'evolution_api',
+        instance_id: finalQrResult.data.instance_id || instanceId,
+        expires_in: finalQrResult.data.expires_in || 300,
+        source: finalQrResult.data.source || 'evolution_api',
         api_url: PRODUCTION_API_BASE,
         last_updated: new Date().toISOString()
       });
 
       console.log('✅ QR CODE REAL GERADO:', {
-        instanceId: qrResult.data.instance_id,
-        source: qrResult.data.source,
-        api_url: qrResult.data.api_url,
-        webhook: qrResult.data.webhook_configured,
-        expires_in: qrResult.data.expires_in
+        instanceId: finalQrResult.data.instance_id,
+        source: finalQrResult.data.source,
+        api_url: finalQrResult.data.api_url,
+        webhook: finalQrResult.data.webhook_configured,
+        expires_in: finalQrResult.data.expires_in
       });
 
-      return qrResult.data.qr_code;
+      return finalQrResult.data.qr_code;
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Erro desconhecido';
