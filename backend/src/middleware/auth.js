@@ -11,13 +11,13 @@ const TEMP_USERS = [
   {
     id: 1,
     username: 'admin',
-    password: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', // 'secret123'
+    password: '$2a$10$UvPLzB2DCbunfuqezXMoWOm55CHcvGb90mQIQoQ7.S85..2aCKbme', // '123456'
     role: 'admin'
   },
   {
     id: 2,
     username: 'sofia',
-    password: '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', // 'secret123'
+    password: '$2a$10$UvPLzB2DCbunfuqezXMoWOm55CHcvGb90mQIQoQ7.S85..2aCKbme', // '123456'
     role: 'user'
   }
 ];
