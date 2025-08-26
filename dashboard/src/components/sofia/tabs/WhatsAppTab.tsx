@@ -51,7 +51,7 @@ export const WhatsAppTab = () => {
     loading, 
     error, 
     createInstance, 
-    disconnectInstance, 
+    logoutInstance, 
     deleteInstance, 
     pauseAutoRefresh, 
     resumeAutoRefresh, 

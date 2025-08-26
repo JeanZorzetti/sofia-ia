@@ -60,7 +60,7 @@ export const useQRCodesReais = () => {
       });
 
       // Passo 1: Criar instância no backend
-      const createResponse = await fetch(`${PRODUCTION_API_BASE}/api/whatsapp/instances`, {
+      const createResponse = await fetch(`${PRODUCTION_API_BASE}/api/instances`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ export const useQRCodesReais = () => {
 
       // Passo 2: Obter QR Code da instância pelo endpoint principal
       // Tenta primeira vez sem esperar (o backend pode ter cacheado o QR do create)
-      const qrResponse = await fetch(`${PRODUCTION_API_BASE}/api/whatsapp/qrcode/${encodeURIComponent(instanceId)}`);
+      const qrResponse = await fetch(`${PRODUCTION_API_BASE}/api/instances/${encodeURIComponent(instanceId)}/qrcode`);
 
       if (!qrResponse.ok) {
         throw new Error(`Erro ao obter QR Code: ${qrResponse.status}`);
@@ -96,7 +96,7 @@ export const useQRCodesReais = () => {
       if (!qrResult.success || !qrResult.data?.qr_code) {
         // Pequeno retry rápido (500ms) para capturar QR cacheado logo após o create
         await new Promise(r => setTimeout(r, 500));
-        const retry = await fetch(`${PRODUCTION_API_BASE}/api/whatsapp/qrcode/${encodeURIComponent(instanceId)}`);
+        const retry = await fetch(`${PRODUCTION_API_BASE}/api/instances/${encodeURIComponent(instanceId)}/qrcode`);
         const retryJson: QRCodeResponse = await retry.json();
         if (!retryJson.success || !retryJson.data?.qr_code) {
           throw new Error(retryJson.error || 'Erro ao gerar QR Code');
@@ -152,7 +152,7 @@ export const useQRCodesReais = () => {
       setQrState(prev => ({ ...prev, loading: true, error: null }));
 
       // nosso backend usa GET com query refresh=true
-      const response = await fetch(`${PRODUCTION_API_BASE}/api/whatsapp/qrcode/${encodeURIComponent(instanceId)}?refresh=true`);
+      const response = await fetch(`${PRODUCTION_API_BASE}/api/instances/${encodeURIComponent(instanceId)}/qrcode?refresh=true`);
 
       if (!response.ok) {
         throw new Error(`Erro ao refresh QR: ${response.status}`);
@@ -191,7 +191,7 @@ export const useQRCodesReais = () => {
   // 🎯 VALIDAR STATUS DA INSTÂNCIA
   const checkInstanceStatus = useCallback(async (instanceId: string) => {
     try {
-      const response = await fetch(`${PRODUCTION_API_BASE}/api/whatsapp/instances/${instanceId}/status`);
+      const response = await fetch(`${PRODUCTION_API_BASE}/api/instances/${instanceId}/status`);
       
       if (!response.ok) {
         throw new Error(`Erro ao verificar status: ${response.status}`);

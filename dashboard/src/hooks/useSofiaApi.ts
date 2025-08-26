@@ -5,6 +5,7 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useAuthenticatedFetch } from './useAuth';
 
 // 📍 Configuração de ambiente - CORRIGIDO PARA USAR .env
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -99,13 +100,14 @@ export const useDashboardData = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const authenticatedFetch = useAuthenticatedFetch();
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}/api/dashboard/overview`);
+      const response = await authenticatedFetch(`${API_BASE_URL}/api/dashboard/overview`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -337,7 +339,7 @@ export const useWhatsAppInstances = () => {
       if (!silent) setLoading(true);
       setError(null);
       
-      const response = await fetch(`${API_BASE_URL}/api/whatsapp/instances`);
+      const response = await fetch(`${API_BASE_URL}/api/instances`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -363,7 +365,7 @@ export const useWhatsAppInstances = () => {
 
   const createInstance = async (name: string): Promise<WhatsAppInstance> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/whatsapp/instances`, {
+      const response = await fetch(`${API_BASE_URL}/api/instances`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -392,7 +394,7 @@ export const useWhatsAppInstances = () => {
 
   const logoutInstance = async (instanceName: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/whatsapp/instances/${instanceName}/logout`, {
+      const response = await fetch(`${API_BASE_URL}/api/instances/${instanceName}/logout`, {
         method: 'DELETE',
       });
       
@@ -417,7 +419,7 @@ export const useWhatsAppInstances = () => {
 
   const connectInstance = async (instanceId: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/whatsapp/instances/${instanceId}/connect`, {
+      const response = await fetch(`${API_BASE_URL}/api/instances/${instanceId}/connect`, {
         method: 'POST',
       });
       
@@ -447,7 +449,7 @@ export const useWhatsAppInstances = () => {
 
   const deleteInstance = async (instanceId: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/whatsapp/instances/${instanceId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/instances/${instanceId}`, {
         method: 'DELETE',
       });
       
@@ -471,7 +473,7 @@ export const useWhatsAppInstances = () => {
 
   const restartInstance = async (instanceName: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/whatsapp/instances/${instanceName}/restart`, {
+      const response = await fetch(`${API_BASE_URL}/api/instances/${instanceName}/restart`, {
         method: 'POST',
       });
       if (!response.ok) {
@@ -487,7 +489,7 @@ export const useWhatsAppInstances = () => {
 
   const getQRCode = async (instanceId: string): Promise<QRCodeData> => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/whatsapp/instances/${instanceId}/qr`);
+      const response = await fetch(`${API_BASE_URL}/api/instances/${instanceId}/qrcode`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
