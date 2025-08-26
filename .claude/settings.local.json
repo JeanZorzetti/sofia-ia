@@ -6,7 +6,8 @@
       "Bash(git push:*)",
       "Bash(git commit:*)",
       "Bash(npm run build:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "WebSearch"
     ],
     "deny": []
   }
