@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthContext } from '@/hooks/useAuth';
 
 export const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +19,7 @@ export const LoginForm: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { auth, login } = useAuth();
+  const { auth, login } = useAuthContext();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,11 +149,11 @@ export const LoginForm: React.FC = () => {
           <div className="border-t border-glass-border pt-4 mt-6">
             <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded text-xs">
               <div className="font-medium text-blue-400 mb-2">
-                🔐 Credenciais de Demonstração:
+                🔐 Credenciais de Acesso:
               </div>
               <div className="space-y-1 text-blue-300">
-                <div><strong>Admin:</strong> admin / secret123</div>
-                <div><strong>User:</strong> sofia / secret123</div>
+                <div><strong>Admin:</strong> admin / SofiaAI2024#Admin</div>
+                <div><strong>User:</strong> sofia / SofiaAI2024#Admin</div>
               </div>
             </div>
           </div>
