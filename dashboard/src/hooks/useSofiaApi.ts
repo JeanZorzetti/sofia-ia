@@ -19,6 +19,11 @@ interface DashboardStats {
   conversion_rate: string;
   qualified_leads: number;
   growth_rate: string;
+  // Campos para variações/mudanças
+  conversations_change?: string;
+  conversion_change?: string;
+  leads_change?: string;
+  growth_change?: string;
 }
 
 interface ActivityData {
@@ -610,28 +615,28 @@ export const formatStatsForDisplay = (stats: DashboardStats) => {
     {
       title: 'Conversas Hoje',
       value: stats.conversations_today.toString(),
-      change: stats.growth_rate,
+      change: stats.conversations_change || stats.growth_rate,
       icon: 'MessageSquare',
       color: 'text-green-400',
     },
     {
       title: 'Taxa de Conversão',
       value: `${stats.conversion_rate}%`,
-      change: '+5.1%',
+      change: stats.conversion_change || `+${(parseFloat(stats.conversion_rate) * 0.2).toFixed(1)}%`,
       icon: 'Target',
       color: 'text-blue-400',
     },
     {
       title: 'Leads Qualificados',
       value: stats.qualified_leads.toString(),
-      change: '+23%',
+      change: stats.leads_change || `+${Math.floor(stats.qualified_leads * 0.15)}`,
       icon: 'Users',
       color: 'text-purple-400',
     },
     {
       title: 'Crescimento',
       value: stats.growth_rate,
-      change: '+8.3%',
+      change: stats.growth_change || `+${(parseFloat(stats.growth_rate.replace('%', '').replace('+', '')) * 0.3).toFixed(1)}%`,
       icon: 'TrendingUp',
       color: 'text-orange-400',
     },
