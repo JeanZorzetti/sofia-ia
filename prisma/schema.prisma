@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  email        String    @unique @db.VarChar(255)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  name         String    @db.VarChar(255)
+  role         String    @default("agent") @db.VarChar(50)
+  status       String    @default("active") @db.VarChar(20)
+  permissions  Json      @default("{}")
+  lastLogin    DateTime? @map("last_login") @db.Timestamptz()
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  leads     Lead[]
+  campaigns Campaign[]
+
+  @@map("users")
+}
+
+model Lead {
+  id              String    @id @default(uuid()) @db.Uuid
+  nome            String    @db.VarChar(255)
+  telefone        String    @unique @db.VarChar(20)
+  email           String?   @db.VarChar(255)
+  status          String    @default("novo") @db.VarChar(20)
+  score           Int       @default(0)
+  interesse       String?   @db.Text
+  valorMin        Int?      @map("valor_min")
+  valorMax        Int?      @map("valor_max")
+  regiao          String?   @db.VarChar(255)
+  tipoImovel      String?   @map("tipo_imovel") @db.VarChar(50)
+  fonte           String    @default("whatsapp") @db.VarChar(50)
+  metadata        Json      @default("{}")
+  ultimaInteracao DateTime  @default(now()) @map("ultima_interacao") @db.Timestamptz()
+  assignedTo      String?   @map("assigned_to") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  assignedUser  User?          @relation(fields: [assignedTo], references: [id])
+  conversations Conversation[]
+  messages      Message[]
+
+  @@index([telefone])
+  @@index([status])
+  @@index([score(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+  @@index([ultimaInteracao(sort: Desc)])
+  @@map("leads")
+}
+
+model Conversation {
+  id              String   @id @default(uuid()) @db.Uuid
+  leadId          String   @map("lead_id") @db.Uuid
+  whatsappChatId  String?  @map("whatsapp_chat_id") @db.VarChar(255)
+  status          String   @default("active") @db.VarChar(20)
+  startedAt       DateTime @default(now()) @map("started_at") @db.Timestamptz()
+  lastMessageAt   DateTime @default(now()) @map("last_message_at") @db.Timestamptz()
+  messageCount    Int      @default(0) @map("message_count")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  lead     Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([leadId])
+  @@index([status])
+  @@index([lastMessageAt(sort: Desc)])
+  @@map("conversations")
+}
+
+model Message {
+  id                String    @id @default(uuid()) @db.Uuid
+  conversationId    String    @map("conversation_id") @db.Uuid
+  leadId            String    @map("lead_id") @db.Uuid
+  whatsappMessageId String?   @map("whatsapp_message_id") @db.VarChar(255)
+  sender            String    @db.VarChar(20)
+  messageType       String    @default("text") @map("message_type") @db.VarChar(20)
+  content           String    @db.Text
+  mediaUrl          String?   @map("media_url") @db.Text
+  mediaCaption      String?   @map("media_caption") @db.Text
+  isAiGenerated     Boolean   @default(false) @map("is_ai_generated")
+  aiModel           String?   @map("ai_model") @db.VarChar(50)
+  aiConfidence      Float?    @map("ai_confidence")
+  sentAt            DateTime  @default(now()) @map("sent_at") @db.Timestamptz()
+  deliveredAt       DateTime? @map("delivered_at") @db.Timestamptz()
+  readAt            DateTime? @map("read_at") @db.Timestamptz()
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  lead         Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([leadId])
+  @@index([sentAt(sort: Desc)])
+  @@index([sender])
+  @@map("messages")
+}
+
+model Campaign {
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String    @db.VarChar(255)
+  description     String?   @db.Text
+  type            String    @default("drip") @db.VarChar(50)
+  status          String    @default("draft") @db.VarChar(20)
+  targetCriteria  Json      @default("{}") @map("target_criteria")
+  messageTemplate String?   @map("message_template") @db.Text
+  scheduleConfig  Json      @default("{}") @map("schedule_config")
+  leadsCount      Int       @default(0) @map("leads_count")
+  messagesSent    Int       @default(0) @map("messages_sent")
+  conversionCount Int       @default(0) @map("conversion_count")
+  conversionRate  Float     @default(0) @map("conversion_rate")
+  createdBy       String?   @map("created_by") @db.Uuid
+  startedAt       DateTime? @map("started_at") @db.Timestamptz()
+  endedAt         DateTime? @map("ended_at") @db.Timestamptz()
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  creator User? @relation(fields: [createdBy], references: [id])
+
+  @@map("campaigns")
+}
+
+model AnalyticsDaily {
+  id                     String   @id @default(uuid()) @db.Uuid
+  date                   DateTime @unique @db.Date
+  conversationsStarted   Int      @default(0) @map("conversations_started")
+  conversationsCompleted Int      @default(0) @map("conversations_completed")
+  messagesSent           Int      @default(0) @map("messages_sent")
+  messagesReceived       Int      @default(0) @map("messages_received")
+  leadsCreated           Int      @default(0) @map("leads_created")
+  leadsQualified         Int      @default(0) @map("leads_qualified")
+  conversionCount        Int      @default(0) @map("conversion_count")
+  conversionRate         Float    @default(0) @map("conversion_rate")
+  avgResponseTime        Float    @default(0) @map("avg_response_time")
+  aiInteractions         Int      @default(0) @map("ai_interactions")
+  metadata               Json     @default("{}")
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([date(sort: Desc)])
+  @@map("analytics_daily")
+}
+
+model Setting {
+  id          String   @id @default(uuid()) @db.Uuid
+  category    String   @db.VarChar(100)
+  key         String   @db.VarChar(100)
+  value       Json
+  description String?  @db.Text
+  isEncrypted Boolean  @default(false) @map("is_encrypted")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([category, key])
+  @@map("settings")
+}
+
+model WhatsappInstance {
+  id                  String    @id @default(uuid()) @db.Uuid
+  name                String    @unique @db.VarChar(100)
+  phoneNumber         String?   @map("phone_number") @db.VarChar(20)
+  status              String    @default("disconnected") @db.VarChar(20)
+  qrCode              String?   @map("qr_code") @db.Text
+  webhookUrl          String?   @map("webhook_url") @db.Text
+  evolutionInstanceId String?   @map("evolution_instance_id") @db.VarChar(100)
+  batteryLevel        Int?      @map("battery_level")
+  lastSeen            DateTime? @map("last_seen") @db.Timestamptz()
+  messagesSentToday   Int       @default(0) @map("messages_sent_today")
+  messagesReceivedToday Int     @default(0) @map("messages_received_today")
+  isActive            Boolean   @default(true) @map("is_active")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("whatsapp_instances")
+}
