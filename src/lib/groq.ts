@@ -1,8 +1,15 @@
 import Groq from 'groq-sdk'
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-})
+let _groq: Groq | null = null
+
+function getGroqClient(): Groq {
+  if (!_groq) {
+    _groq = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
+    })
+  }
+  return _groq
+}
 
 const DEFAULT_SYSTEM_PROMPT = `Você é Sofia, uma SDR (Sales Development Representative) especializada em imóveis, trabalhando para uma imobiliária premium.
 
@@ -55,7 +62,7 @@ export async function chatWithSofia(
 - Score de qualificação: ${leadContext.score ?? 'Não calculado'}/100`
   }
 
-  const completion = await groq.chat.completions.create({
+  const completion = await getGroqClient().chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     messages: [{ role: 'system', content: systemPrompt }, ...messages],
     temperature: 0.7,
