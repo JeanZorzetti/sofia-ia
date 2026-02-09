@@ -294,7 +294,7 @@ ROI Labs Platform
 ### 9.4 Infraestrutura
 - [x] Testes automatizados (Jest + Playwright)
 - [x] CI/CD (GitHub Actions)
-- [ ] Monitoramento (Sentry, Datadog)
+- [x] Monitoramento (Sentry, Datadog)
 - [ ] Performance: caching Redis, connection pooling, CDN
 - [x] Backup automatico do banco
 
