@@ -308,3 +308,18 @@ model WorkflowExecution {
   @@index([startedAt(sort: Desc)])
   @@map("workflow_executions")
 }
+
+model Integration {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(255)
+  type        String   @db.VarChar(100)
+  config      Json     @default("{}")
+  credentials Json     @default("{}")
+  status      String   @default("inactive") @db.VarChar(20)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([type])
+  @@index([status])
+  @@map("integrations")
+}

@@ -219,10 +219,10 @@ ROI Labs Platform
 **Objetivo:** Expandir canais e conectar com sistemas externos.
 
 ### 7.1 Catalogo de Integracoes
-- [ ] Criar tabela `Integration` (id, name, type, config JSON, credentials JSON encrypted, status)
-- [ ] Pagina `/dashboard/integrations` com catalogo visual (cards)
-- [ ] Configuracao de credenciais por integracao
-- [ ] Teste de conexao
+- [x] Criar tabela `Integration` (id, name, type, config JSON, credentials JSON encrypted, status)
+- [x] Pagina `/dashboard/integrations` com catalogo visual (cards)
+- [x] Configuracao de credenciais por integracao
+- [x] Teste de conexao
 
 ### 7.2 Integracoes MVP
 - [ ] WhatsApp (ja existente - mover para formato padrao de Integration)

@@ -11,6 +11,7 @@ import {
   Inbox,
   Database,
   BarChart3,
+  Plug,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
@@ -40,6 +41,11 @@ const menuItems = [
     href: '/dashboard/workflows',
     label: 'Workflows',
     icon: Workflow,
+  },
+  {
+    href: '/dashboard/integrations',
+    label: 'Integrações',
+    icon: Plug,
   },
   {
     href: '/dashboard/analytics',
