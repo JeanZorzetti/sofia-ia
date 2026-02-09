@@ -105,12 +105,12 @@ ROI Labs Platform
 **Objetivo:** Centralizar todas as conversas em um inbox profissional.
 
 ### 3.1 Inbox Backend
-- [ ] Endpoint `/api/conversations` com filtros (status, canal, agente, periodo, busca)
-- [ ] Endpoint `/api/conversations/[id]` com mensagens paginadas
-- [ ] Endpoint `/api/conversations/[id]/messages` (GET paginado, POST para enviar)
-- [ ] Endpoint `/api/conversations/[id]/takeover` (humano assume conversa)
-- [ ] Endpoint `/api/conversations/[id]/close` (encerrar conversa)
-- [ ] Endpoint `/api/conversations/[id]/tags` (adicionar/remover tags)
+- [x] Endpoint `/api/conversations` com filtros (status, canal, agente, periodo, busca)
+- [x] Endpoint `/api/conversations/[id]` com mensagens paginadas
+- [x] Endpoint `/api/conversations/[id]/messages` (GET paginado, POST para enviar)
+- [x] Endpoint `/api/conversations/[id]/takeover` (humano assume conversa)
+- [x] Endpoint `/api/conversations/[id]/close` (encerrar conversa)
+- [x] Endpoint `/api/conversations/[id]/tags` (adicionar/remover tags)
 
 ### 3.2 Inbox Frontend
 - [ ] Nova pagina `/dashboard/conversations` - layout 3 colunas (lista | chat | detalhes)
