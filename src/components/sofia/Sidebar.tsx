@@ -10,6 +10,7 @@ import {
   CreditCard,
   Inbox,
   Database,
+  BarChart3,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
@@ -36,6 +37,16 @@ const menuItems = [
     icon: Database,
   },
   {
+    href: '/dashboard/workflows',
+    label: 'Workflows',
+    icon: Workflow,
+  },
+  {
+    href: '/dashboard/analytics',
+    label: 'Analytics',
+    icon: BarChart3,
+  },
+  {
     href: '/dashboard/whatsapp',
     label: 'WhatsApp',
     icon: MessageSquare,
@@ -44,11 +55,6 @@ const menuItems = [
     href: '/dashboard/sdr-config',
     label: 'SDR Config',
     icon: Bot,
-  },
-  {
-    href: '/dashboard/workflows',
-    label: 'Workflows',
-    icon: Workflow,
   },
   {
     href: '/dashboard/billing',

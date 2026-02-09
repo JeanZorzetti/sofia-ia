@@ -193,24 +193,24 @@ ROI Labs Platform
 **Objetivo:** Dashboards inteligentes com dados reais e insights.
 
 ### 6.1 Coleta de Dados
-- [ ] Cron job (ou on-demand) para popular tabela AnalyticsDaily
-- [ ] Metricas por agente: conversas, resolucao, tempo medio de resposta
-- [ ] Metricas por workflow: execucoes, sucesso, falha
-- [ ] Metricas de leads: criados, qualificados, convertidos por periodo
+- [x] Cron job (ou on-demand) para popular tabela AnalyticsDaily
+- [x] Metricas por agente: conversas, resolucao, tempo medio de resposta
+- [x] Metricas por workflow: execucoes, sucesso, falha
+- [x] Metricas de leads: criados, qualificados, convertidos por periodo
 
 ### 6.2 API de Analytics
-- [ ] Endpoint `/api/analytics/overview` (metricas gerais com filtro de periodo)
-- [ ] Endpoint `/api/analytics/agents` (metricas por agente)
-- [ ] Endpoint `/api/analytics/workflows` (metricas por workflow)
-- [ ] Endpoint `/api/analytics/leads` (funil de leads)
-- [ ] Suporte a filtros: periodo, agente, canal, status
+- [x] Endpoint `/api/analytics/overview` (metricas gerais com filtro de periodo)
+- [x] Endpoint `/api/analytics/agents` (metricas por agente)
+- [x] Endpoint `/api/analytics/workflows` (metricas por workflow)
+- [x] Endpoint `/api/analytics/leads` (funil de leads)
+- [x] Suporte a filtros: periodo, agente, canal, status
 
 ### 6.3 Frontend
-- [ ] Refatorar dashboard principal com dados reais
-- [ ] Nova pagina `/dashboard/analytics` com dashboards detalhados
-- [ ] Graficos: linha (tendencias), barra (comparativos), pizza (distribuicao), funil (leads)
-- [ ] Filtros de periodo (7d, 30d, 90d, custom)
-- [ ] Exportacao CSV
+- [x] Refatorar dashboard principal com dados reais
+- [x] Nova pagina `/dashboard/analytics` com dashboards detalhados
+- [x] Graficos: linha (tendencias), barra (comparativos), pizza (distribuicao), funil (leads)
+- [x] Filtros de periodo (7d, 30d, 90d, custom)
+- [x] Exportacao CSV
 
 ---
 

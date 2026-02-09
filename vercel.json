@@ -8,5 +8,11 @@
     "src/app/api/**/*.ts": {
       "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/analytics/collect",
+      "schedule": "0 1 * * *"
+    }
+  ]
 }
