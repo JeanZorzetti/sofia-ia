@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { fetchInstances } from '@/lib/evolution-service';
+import { prisma } from '@/lib/prisma';
 
-// Helper to generate simulated conversations
+// Helper to generate simulated conversations (fallback)
 function generateSimulatedConversations(instances: any[]): any[] {
   const conversations: any[] = [];
   const connectedInstances = instances.filter((inst: any) => inst.status === 'open');
@@ -85,7 +86,78 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch instances
+    // Tentar buscar conversas reais do banco de dados
+    try {
+      const conversations = await prisma.conversation.findMany({
+        where: {
+          status: 'active'
+        },
+        include: {
+          lead: {
+            select: {
+              id: true,
+              nome: true,
+              telefone: true,
+              status: true,
+              score: true,
+              metadata: true
+            }
+          },
+          messages: {
+            orderBy: {
+              sentAt: 'desc'
+            },
+            take: 1
+          }
+        },
+        orderBy: {
+          lastMessageAt: 'desc'
+        },
+        take: 50
+      })
+
+      // Formatar conversas para o formato esperado pelo frontend
+      const formattedConversations = conversations.map(conv => {
+        const lastMessage = conv.messages[0]
+        const leadStatusMap: Record<string, string> = {
+          'novo': 'cold',
+          'qualificado': 'warm',
+          'interessado': 'hot',
+          'convertido': 'immediate'
+        }
+
+        return {
+          id: conv.id,
+          contact: {
+            name: conv.lead.nome,
+            phone: conv.lead.telefone,
+            avatar: null
+          },
+          last_message: lastMessage ? {
+            text: lastMessage.content,
+            timestamp: lastMessage.sentAt.toISOString(),
+            from_me: lastMessage.sender === 'assistant'
+          } : null,
+          unread_count: 0, // Pode ser calculado depois com campo no banco
+          lead_status: leadStatusMap[conv.lead.status] || 'cold',
+          instance_name: (conv.lead.metadata as any)?.instanceName || 'default',
+          updated_at: conv.lastMessageAt.toISOString()
+        }
+      })
+
+      if (formattedConversations.length > 0) {
+        console.log(`✅ Retornando ${formattedConversations.length} conversas do banco`)
+        return NextResponse.json({
+          success: true,
+          data: formattedConversations
+        })
+      }
+    } catch (dbError) {
+      console.error('❌ Erro ao buscar conversas do banco:', dbError)
+      // Continua para fallback
+    }
+
+    // Fallback: buscar instâncias e gerar conversas simuladas
     const instancesResult = await fetchInstances();
 
     if (!instancesResult.success) {
@@ -99,6 +171,8 @@ export async function GET(request: NextRequest) {
 
     // Generate simulated conversations
     const conversations = generateSimulatedConversations(instances);
+
+    console.log('⚠️ Retornando conversas simuladas (fallback)')
 
     return NextResponse.json({
       success: true,

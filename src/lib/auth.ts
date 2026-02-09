@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from 'jose'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'sofia-next-jwt-secret-2026-roilabs'
@@ -10,9 +11,10 @@ const JWT_EXPIRES_IN = '24h'
 const COOKIE_NAME = 'sofia_token'
 
 export interface JWTPayload {
-  id: number
-  username: string
-  role: 'admin' | 'user'
+  id: string
+  email: string
+  name: string
+  role: string
 }
 
 // Temporary users (same as original project)
@@ -52,13 +54,55 @@ export async function authenticateUser(
   username: string,
   password: string
 ): Promise<{ user: JWTPayload; token: string } | null> {
+  try {
+    // Tentar autenticar contra o banco de dados primeiro
+    const dbUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: username },
+          { name: username }
+        ],
+        status: 'active'
+      }
+    })
+
+    if (dbUser) {
+      const valid = await bcrypt.compare(password, dbUser.passwordHash)
+      if (valid) {
+        // Atualizar lastLogin
+        await prisma.user.update({
+          where: { id: dbUser.id },
+          data: { lastLogin: new Date() }
+        })
+
+        const payload: JWTPayload = {
+          id: dbUser.id,
+          email: dbUser.email,
+          name: dbUser.name,
+          role: dbUser.role
+        }
+        const token = await signToken(payload)
+        return { user: payload, token }
+      }
+    }
+  } catch (error) {
+    console.error('Database authentication error:', error)
+    // Continua para fallback
+  }
+
+  // Fallback para usuários hardcoded (compatibilidade)
   const user = USERS.find((u) => u.username === username)
   if (!user) return null
 
   const valid = await bcrypt.compare(password, user.passwordHash)
   if (!valid) return null
 
-  const payload: JWTPayload = { id: user.id, username: user.username, role: user.role }
+  const payload: JWTPayload = {
+    id: user.id.toString(),
+    email: `${user.username}@roilabs.com.br`,
+    name: user.username,
+    role: user.role
+  }
   const token = await signToken(payload)
   return { user: payload, token }
 }

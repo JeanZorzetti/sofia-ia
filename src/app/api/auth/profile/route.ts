@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,12 +14,49 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Return user profile
+    // Buscar dados completos do usuário no banco de dados
+    try {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          status: true,
+          permissions: true,
+          lastLogin: true,
+          createdAt: true
+        }
+      });
+
+      if (dbUser) {
+        return NextResponse.json({
+          success: true,
+          user: {
+            id: dbUser.id,
+            email: dbUser.email,
+            name: dbUser.name,
+            role: dbUser.role,
+            status: dbUser.status,
+            permissions: dbUser.permissions,
+            lastLogin: dbUser.lastLogin,
+            createdAt: dbUser.createdAt
+          }
+        });
+      }
+    } catch (dbError) {
+      console.error('Database error:', dbError);
+      // Fallback para dados do token se o banco falhar
+    }
+
+    // Fallback: retornar dados do token JWT
     return NextResponse.json({
       success: true,
       user: {
         id: user.id,
-        username: user.username,
+        email: user.email,
+        name: user.name,
         role: user.role
       }
     });

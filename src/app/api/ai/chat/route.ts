@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { chatWithSofia } from '@/lib/groq';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +16,32 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate body
     const body = await request.json();
-    const { messages, leadContext, customPrompt } = body;
+    let { messages, leadContext, customPrompt } = body;
+
+    // Tentar carregar prompt customizado do banco de dados se não foi fornecido
+    if (!customPrompt) {
+      try {
+        const setting = await prisma.setting.findUnique({
+          where: {
+            category_key: {
+              category: 'sdr',
+              key: 'custom_prompt'
+            }
+          }
+        })
+
+        if (setting && setting.value) {
+          const settingValue = setting.value as any
+          if (settingValue.enabled && settingValue.systemPrompt) {
+            customPrompt = settingValue.systemPrompt
+            console.log('✅ Usando prompt customizado do banco de dados')
+          }
+        }
+      } catch (dbError) {
+        console.error('❌ Erro ao carregar prompt customizado:', dbError)
+        // Continua sem prompt customizado
+      }
+    }
 
     // Validation
     if (!messages || !Array.isArray(messages)) {

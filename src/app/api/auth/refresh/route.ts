@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
     // Sign new token with updated expiration
     const newToken = await signToken({
       id: user.id,
-      username: user.username,
+      email: user.email,
+      name: user.name,
       role: user.role
     });
 

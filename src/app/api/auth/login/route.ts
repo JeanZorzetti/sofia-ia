@@ -53,7 +53,8 @@ export async function POST(req: NextRequest) {
         token: result.token,
         user: {
           id: result.user.id,
-          username: result.user.username,
+          email: result.user.email,
+          name: result.user.name,
           role: result.user.role
         },
         expires_in: '24h'

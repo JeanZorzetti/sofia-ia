@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { sendMessage } from '@/lib/evolution-service';
+import { prisma } from '@/lib/prisma';
 
 // Rate limiting map
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -87,6 +88,95 @@ export async function POST(request: NextRequest) {
 
     // Send message
     const result = await sendMessage(instanceName, number, text);
+
+    // Salvar mensagem enviada no banco de dados
+    if (result.success) {
+      try {
+        const phoneNumber = cleanNumber
+        const contact = `${cleanNumber}@s.whatsapp.net`
+
+        // Buscar ou criar Lead
+        let lead = await prisma.lead.findUnique({
+          where: { telefone: phoneNumber }
+        })
+
+        if (!lead) {
+          lead = await prisma.lead.create({
+            data: {
+              nome: phoneNumber,
+              telefone: phoneNumber,
+              status: 'novo',
+              fonte: 'whatsapp',
+              score: 0,
+              metadata: {
+                whatsappChatId: contact,
+                instanceName: instanceName
+              }
+            }
+          })
+        }
+
+        // Buscar ou criar Conversation
+        let conversation = await prisma.conversation.findFirst({
+          where: {
+            leadId: lead.id,
+            whatsappChatId: contact,
+            status: 'active'
+          }
+        })
+
+        if (!conversation) {
+          conversation = await prisma.conversation.create({
+            data: {
+              leadId: lead.id,
+              whatsappChatId: contact,
+              status: 'active',
+              startedAt: new Date(),
+              lastMessageAt: new Date(),
+              messageCount: 0
+            }
+          })
+        }
+
+        // Salvar mensagem enviada
+        const resultData = result.data as Record<string, unknown> | undefined
+        const messageKey = (resultData?.key as Record<string, unknown>) || {}
+        const messageId = (messageKey.id as string) || `sent_${Date.now()}`
+
+        await prisma.message.create({
+          data: {
+            conversationId: conversation.id,
+            leadId: lead.id,
+            whatsappMessageId: messageId,
+            sender: 'assistant',
+            messageType: 'text',
+            content: text,
+            isAiGenerated: false, // Mensagem manual do usuário
+            sentAt: new Date(),
+          }
+        })
+
+        // Atualizar conversa
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: {
+            messageCount: { increment: 1 },
+            lastMessageAt: new Date()
+          }
+        })
+
+        // Atualizar última interação do lead
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: { ultimaInteracao: new Date() }
+        })
+
+        console.log('✅ Mensagem enviada salva no banco:', messageId)
+      } catch (dbError) {
+        console.error('❌ Erro ao salvar mensagem enviada no banco:', dbError)
+        // Não falha o request mesmo se o banco falhar
+      }
+    }
 
     return NextResponse.json({
       success: true,

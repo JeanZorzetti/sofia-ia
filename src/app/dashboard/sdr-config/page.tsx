@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -8,8 +8,11 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Save, Sparkles, MessageSquare } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function SDRConfigPage() {
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [prompt, setPrompt] = useState(
     'Você é Sofia, uma assistente de vendas especializada em imóveis de alto padrão. Seja profissional, empática e sempre busque qualificar o lead.'
   )
@@ -21,6 +24,37 @@ export default function SDRConfigPage() {
     technical_knowledge: true,
     auto_followup: true
   })
+
+  // Carregar configurações ao montar o componente
+  useEffect(() => {
+    loadSettings()
+  }, [])
+
+  const loadSettings = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/settings?category=sdr&key=custom_prompt')
+
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success && result.data) {
+          const settingValue = result.data.value
+          if (settingValue.systemPrompt) {
+            setPrompt(settingValue.systemPrompt)
+          }
+          if (settingValue.behaviors) {
+            setBehaviors(settingValue.behaviors)
+          }
+          toast.success('Configurações carregadas')
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações:', error)
+      toast.error('Erro ao carregar configurações')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const suggestions = [
     {
@@ -76,9 +110,39 @@ export default function SDRConfigPage() {
     }))
   }
 
-  const handleSave = () => {
-    // TODO: Implement save logic
-    alert('Configuração salva com sucesso!')
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          category: 'sdr',
+          key: 'custom_prompt',
+          value: {
+            systemPrompt: prompt,
+            behaviors: behaviors,
+            enabled: true,
+          },
+          description: 'Prompt customizado para o SDR imobiliário'
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        toast.success('Configuração salva com sucesso!')
+      } else {
+        toast.error(result.error || 'Erro ao salvar configuração')
+      }
+    } catch (error) {
+      console.error('Erro ao salvar:', error)
+      toast.error('Erro ao salvar configuração')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const mockResponse = `Olá! 👋 Sou a Sofia, sua consultora imobiliária digital.\n\nVi que você tem interesse em imóveis na região. Que tal eu te mostrar algumas opções exclusivas que acabaram de chegar?\n\nPara começar, me conta: você está buscando para morar ou investir?`
@@ -234,9 +298,13 @@ export default function SDRConfigPage() {
             </CardContent>
           </Card>
 
-          <Button className="button-luxury w-full" onClick={handleSave}>
+          <Button
+            className="button-luxury w-full"
+            onClick={handleSave}
+            disabled={saving || loading}
+          >
             <Save className="h-4 w-4 mr-2" />
-            Salvar Configuração
+            {saving ? 'Salvando...' : 'Salvar Configuração'}
           </Button>
         </div>
       </div>

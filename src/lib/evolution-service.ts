@@ -1,3 +1,5 @@
+import { prisma } from '@/lib/prisma'
+
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL || 'https://ia-evolution-api.tjmarr.easypanel.host'
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || ''
 const WEBHOOK_URL = process.env.NEXT_PUBLIC_APP_URL
@@ -316,10 +318,118 @@ async function handleMessageUpsert(instance: string, data: Record<string, unknow
 
     if (!text || !contact) continue
 
-    // AI response via Groq will be handled by the AI service
-    const autoResponse = getAutomatedResponse(text)
-    if (autoResponse) {
-      await sendMessage(instance, contact, autoResponse)
+    // Extrair número de telefone do contact (remover @s.whatsapp.net)
+    const phoneNumber = contact.replace('@s.whatsapp.net', '')
+
+    try {
+      // 1. Buscar ou criar Lead
+      let lead = await prisma.lead.findUnique({
+        where: { telefone: phoneNumber }
+      })
+
+      if (!lead) {
+        // Criar novo lead a partir da mensagem recebida
+        lead = await prisma.lead.create({
+          data: {
+            nome: phoneNumber, // Será atualizado depois com o nome real
+            telefone: phoneNumber,
+            status: 'novo',
+            fonte: 'whatsapp',
+            score: 0,
+            metadata: {
+              whatsappChatId: contact,
+              instanceName: instance
+            }
+          }
+        })
+        console.log('✅ Novo lead criado:', lead.id, phoneNumber)
+      } else {
+        // Atualizar última interação
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: { ultimaInteracao: new Date() }
+        })
+      }
+
+      // 2. Buscar ou criar Conversation
+      let conversation = await prisma.conversation.findFirst({
+        where: {
+          leadId: lead.id,
+          whatsappChatId: contact,
+          status: 'active'
+        }
+      })
+
+      if (!conversation) {
+        conversation = await prisma.conversation.create({
+          data: {
+            leadId: lead.id,
+            whatsappChatId: contact,
+            status: 'active',
+            startedAt: new Date(),
+            lastMessageAt: new Date(),
+            messageCount: 0
+          }
+        })
+        console.log('✅ Nova conversa criada:', conversation.id)
+      }
+
+      // 3. Salvar mensagem recebida no banco
+      const messageId = (key.id as string) || `msg_${Date.now()}`
+      await prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          leadId: lead.id,
+          whatsappMessageId: messageId,
+          sender: 'user',
+          messageType: 'text',
+          content: text,
+          isAiGenerated: false,
+          sentAt: new Date(),
+        }
+      })
+
+      // 4. Atualizar contador de mensagens da conversa
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: {
+          messageCount: { increment: 1 },
+          lastMessageAt: new Date()
+        }
+      })
+
+      console.log('✅ Mensagem salva no banco:', messageId)
+
+      // AI response via Groq will be handled by the AI service
+      const autoResponse = getAutomatedResponse(text)
+      if (autoResponse) {
+        await sendMessage(instance, contact, autoResponse)
+
+        // Salvar resposta automática no banco
+        await prisma.message.create({
+          data: {
+            conversationId: conversation.id,
+            leadId: lead.id,
+            sender: 'assistant',
+            messageType: 'text',
+            content: autoResponse,
+            isAiGenerated: true,
+            aiModel: 'rule-based',
+            sentAt: new Date(),
+          }
+        })
+
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: {
+            messageCount: { increment: 1 },
+            lastMessageAt: new Date()
+          }
+        })
+      }
+    } catch (error) {
+      console.error('❌ Erro ao salvar mensagem no banco:', error)
+      // Continua processando outras mensagens mesmo se houver erro
     }
   }
 }
