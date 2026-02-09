@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
-import { chunkText } from '@/lib/chunking';
+import { chunkText, type Chunk } from '@/lib/chunking';
 
 // GET /api/knowledge/[id]/documents - Lista documentos de uma base
 export async function GET(
@@ -63,7 +63,7 @@ export async function POST(
     // Processa o documento
     let processedContent = content;
     let status = 'processing';
-    let chunks: string[] = [];
+    let chunks: Chunk[] = [];
 
     try {
       // Se for URL, faz fetch do conteúdo

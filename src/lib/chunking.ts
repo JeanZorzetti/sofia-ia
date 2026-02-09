@@ -4,7 +4,7 @@
  * Target: 500 tokens ≈ 2000 caracteres por chunk
  */
 
-interface Chunk {
+export interface Chunk {
   text: string;
   index: number;
   tokens: number;
