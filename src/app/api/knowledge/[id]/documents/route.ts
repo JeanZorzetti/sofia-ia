@@ -63,7 +63,7 @@ export async function POST(
     // Processa o documento
     let processedContent = content;
     let status = 'processing';
-    let chunks = [];
+    let chunks: string[] = [];
 
     try {
       // Se for URL, faz fetch do conteúdo
