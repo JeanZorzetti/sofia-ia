@@ -100,7 +100,7 @@ export function useRecentConversations() {
 
       if (response.ok) {
         const result = await response.json()
-        setData(result.conversations || result)
+        setData(Array.isArray(result.data) ? result.data : Array.isArray(result) ? result : [])
         setError(null)
       } else if (response.status === 401) {
         setError('Unauthorized')

@@ -6,16 +6,19 @@
 
 ## Estado Atual
 
-O webapp hoje e um dashboard focado em SDR imobiliario com:
-- Autenticacao JWT funcional
+O webapp hoje e um dashboard com base solida e dados reais:
+- Autenticacao JWT funcional validando contra banco PostgreSQL
 - Gerenciamento de instancias WhatsApp (Evolution API)
-- Chat IA com Groq (Llama 3.3 70B)
-- Dashboard com dados simulados/mock
-- Workflows, Billing e SDR Config como placeholders (UI pronta, sem backend)
-- Prisma schema com 8 models (nao conectado aos endpoints)
+- Chat IA com Groq (Llama 3.3 70B) usando prompt customizado do banco
+- Dashboard com dados REAIS do banco (mensagens, leads, conversas)
+- Persistencia completa: mensagens, leads e conversas salvos automaticamente
+- API de Settings funcional (CRUD completo)
+- SDR Config salvando/carregando prompt customizado via banco
+- Seed script com dados iniciais (admin, sofia, settings)
+- Webhook Evolution API persistindo mensagens no banco
 - Landing page reposicionada para "IA e Automacao para Empresas"
 
-**Gap principal:** A landing page promete uma plataforma completa de IA e Automacao multi-vertical, mas o webapp so entrega um SDR imobiliario com dados mockados.
+**Fase 1 concluida.** Gap atual: A landing page promete uma plataforma completa de IA e Automacao multi-vertical, mas o webapp so entrega um SDR imobiliario (agora com dados reais).
 
 ---
 
@@ -42,28 +45,28 @@ ROI Labs Platform
 **Objetivo:** Sair de dados mockados para dados reais. Base solida para tudo que vem depois.
 
 ### 1.1 Banco de Dados Real
-- [ ] Executar `prisma db push` para sincronizar schema com PostgreSQL
-- [ ] Criar seed script com dados iniciais (admin user, settings default)
-- [ ] Migrar endpoint `/api/auth/login` para validar contra tabela User (sair de hardcoded)
-- [ ] Migrar endpoint `/api/auth/profile` para buscar User real do banco
+- [x] Executar `prisma db push` para sincronizar schema com PostgreSQL
+- [x] Criar seed script com dados iniciais (admin user, settings default)
+- [x] Migrar endpoint `/api/auth/login` para validar contra tabela User (sair de hardcoded)
+- [x] Migrar endpoint `/api/auth/profile` para buscar User real do banco
 
 ### 1.2 Persistencia de Conversas e Mensagens
-- [ ] Endpoint `/api/conversations/recent` buscar do banco (sair de mock generator)
-- [ ] Webhook Evolution API salvar mensagens recebidas na tabela Message
-- [ ] Endpoint `/api/messages/send` salvar mensagem enviada na tabela Message
-- [ ] Criar/atualizar Conversation automaticamente ao receber/enviar mensagem
-- [ ] Criar/atualizar Lead automaticamente a partir do numero de telefone
+- [x] Endpoint `/api/conversations/recent` buscar do banco (sair de mock generator)
+- [x] Webhook Evolution API salvar mensagens recebidas na tabela Message
+- [x] Endpoint `/api/messages/send` salvar mensagem enviada na tabela Message
+- [x] Criar/atualizar Conversation automaticamente ao receber/enviar mensagem
+- [x] Criar/atualizar Lead automaticamente a partir do numero de telefone
 
 ### 1.3 Dashboard com Dados Reais
-- [ ] Endpoint `/api/dashboard/overview` calcular metricas do banco (count de mensagens, leads, conversas)
-- [ ] Activity chart baseado em AnalyticsDaily (criar cron job ou calcular on-the-fly)
-- [ ] Leads by status baseado em query real
+- [x] Endpoint `/api/dashboard/overview` calcular metricas do banco (count de mensagens, leads, conversas)
+- [x] Activity chart baseado em AnalyticsDaily (criar cron job ou calcular on-the-fly)
+- [x] Leads by status baseado em query real
 
 ### 1.4 Configuracoes Persistentes
-- [ ] Endpoint POST `/api/settings` para salvar configuracoes na tabela Setting
-- [ ] Endpoint GET `/api/settings` para carregar configuracoes
-- [ ] SDR Config page salvar/carregar prompt customizado via Settings
-- [ ] Endpoint `/api/ai/chat` usar prompt customizado salvo (se existir)
+- [x] Endpoint POST `/api/settings` para salvar configuracoes na tabela Setting
+- [x] Endpoint GET `/api/settings` para carregar configuracoes
+- [x] SDR Config page salvar/carregar prompt customizado via Settings
+- [x] Endpoint `/api/ai/chat` usar prompt customizado salvo (se existir)
 
 ---
 
