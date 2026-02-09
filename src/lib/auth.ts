@@ -97,8 +97,17 @@ export async function authenticateUser(
   const valid = await bcrypt.compare(password, user.passwordHash)
   if (!valid) return null
 
+  // Tenta buscar UUID real do banco para manter consistência
+  let userId = user.id.toString()
+  try {
+    const fallbackDbUser = await prisma.user.findFirst({
+      where: { email: `${user.username}@roilabs.com.br` }
+    })
+    if (fallbackDbUser) userId = fallbackDbUser.id
+  } catch { /* DB indisponível, usa ID numérico */ }
+
   const payload: JWTPayload = {
-    id: user.id.toString(),
+    id: userId,
     email: `${user.username}@roilabs.com.br`,
     name: user.username,
     role: user.role
