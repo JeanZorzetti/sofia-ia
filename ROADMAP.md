@@ -121,9 +121,9 @@ ROI Labs Platform
 - [x] Indicador de quem respondeu (IA vs humano) em cada mensagem
 
 ### 3.3 Takeover Humano
-- [ ] Flag na conversa: `handledBy` (ai | human)
-- [ ] Quando humano assume: pausar agente IA nessa conversa
-- [ ] Botao "Devolver para IA" para reativar agente
+- [x] Flag na conversa: `handledBy` (ai | human)
+- [x] Quando humano assume: pausar agente IA nessa conversa
+- [x] Botao "Devolver para IA" para reativar agente
 
 ---
 

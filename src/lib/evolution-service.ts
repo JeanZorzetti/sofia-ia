@@ -365,7 +365,9 @@ async function handleMessageUpsert(instance: string, data: Record<string, unknow
           data: {
             leadId: lead.id,
             whatsappChatId: contact,
+            channel: 'whatsapp',
             status: 'active',
+            handledBy: 'ai',
             startedAt: new Date(),
             lastMessageAt: new Date(),
             messageCount: 0
@@ -399,6 +401,12 @@ async function handleMessageUpsert(instance: string, data: Record<string, unknow
       })
 
       console.log('✅ Mensagem salva no banco:', messageId)
+
+      // Verificar se a conversa está sendo tratada por humano
+      if (conversation.handledBy === 'human') {
+        console.log('⚠️ Conversa está em modo humano, IA não irá responder')
+        return
+      }
 
       // Buscar agente ativo para WhatsApp nesta instância
       const agent = await prisma.agent.findFirst({
