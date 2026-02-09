@@ -82,6 +82,7 @@ export async function chatWithAgent(
   leadContext?: Record<string, any>
 ) {
   const { prisma } = await import('@/lib/prisma')
+  const { getKnowledgeContext } = await import('@/lib/knowledge-context')
 
   // Buscar agente do banco
   const agent = await prisma.agent.findUnique({
@@ -101,6 +102,16 @@ export async function chatWithAgent(
 - Nome: ${leadContext.leadName || 'Não informado'}
 - Telefone: ${leadContext.leadPhone || 'Não informado'}
 - Status: ${leadContext.leadStatus || 'Não informado'}`
+  }
+
+  // Buscar contexto da knowledge base se o agente tiver uma associada
+  const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
+  if (lastUserMessage && agent.knowledgeBaseId) {
+    const knowledgeContext = await getKnowledgeContext(agentId, lastUserMessage.content)
+    if (knowledgeContext) {
+      systemPrompt += knowledgeContext
+      systemPrompt += `\n\nIMPORTANTE: Use o contexto acima para responder de forma mais precisa e informada. Se a informação estiver no contexto, use-a. Se não estiver, responda com base no seu conhecimento geral.`
+    }
   }
 
   const completion = await getGroqClient().chat.completions.create({

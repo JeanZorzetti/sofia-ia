@@ -230,3 +230,37 @@ model AgentChannel {
   @@index([channel])
   @@map("agent_channels")
 }
+
+model KnowledgeBase {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(255)
+  agentId   String?  @map("agent_id") @db.Uuid
+  type      String   @default("general") @db.VarChar(50)
+  config    Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  documents KnowledgeDocument[]
+
+  @@index([agentId])
+  @@map("knowledge_bases")
+}
+
+model KnowledgeDocument {
+  id              String   @id @default(uuid()) @db.Uuid
+  knowledgeBaseId String   @map("knowledge_base_id") @db.Uuid
+  title           String   @db.VarChar(500)
+  content         String   @db.Text
+  sourceUrl       String?  @map("source_url") @db.Text
+  fileType        String?  @map("file_type") @db.VarChar(50)
+  chunks          Json     @default("[]")
+  status          String   @default("processing") @db.VarChar(20)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+
+  @@index([knowledgeBaseId])
+  @@index([status])
+  @@map("knowledge_documents")
+}

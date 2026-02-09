@@ -9,6 +9,7 @@ import {
   Workflow,
   CreditCard,
   Inbox,
+  Database,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
@@ -28,6 +29,11 @@ const menuItems = [
     href: '/dashboard/conversations',
     label: 'Conversas',
     icon: Inbox,
+  },
+  {
+    href: '/dashboard/knowledge',
+    label: 'Knowledge Base',
+    icon: Database,
   },
   {
     href: '/dashboard/whatsapp',

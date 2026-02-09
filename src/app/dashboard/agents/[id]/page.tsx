@@ -23,6 +23,7 @@ interface Agent {
   model: string
   temperature: number
   status: string
+  knowledgeBaseId: string | null
   channels: {
     id: string
     channel: string
@@ -37,10 +38,16 @@ interface Agent {
   createdAt: string
 }
 
+interface KnowledgeBase {
+  id: string
+  name: string
+}
+
 export default function AgentEditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
   const [agent, setAgent] = useState<Agent | null>(null)
+  const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -50,6 +57,7 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
     model: 'llama-3.3-70b-versatile',
     temperature: 0.7,
     status: 'active',
+    knowledgeBaseId: '',
     channels: {
       whatsapp: false,
       webchat: false,
@@ -59,6 +67,7 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     fetchAgent()
+    fetchKnowledgeBases()
   }, [resolvedParams.id])
 
   const fetchAgent = async () => {
@@ -77,6 +86,7 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
           model: agentData.model,
           temperature: agentData.temperature,
           status: agentData.status,
+          knowledgeBaseId: agentData.knowledgeBaseId || '',
           channels: {
             whatsapp: agentData.channels.some((ch: any) => ch.channel === 'whatsapp'),
             webchat: agentData.channels.some((ch: any) => ch.channel === 'webchat'),
@@ -88,6 +98,19 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
       console.error('Error fetching agent:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchKnowledgeBases = async () => {
+    try {
+      const response = await fetch('/api/knowledge')
+      const result = await response.json()
+
+      if (result.knowledgeBases) {
+        setKnowledgeBases(result.knowledgeBases)
+      }
+    } catch (error) {
+      console.error('Error fetching knowledge bases:', error)
     }
   }
 
@@ -116,6 +139,7 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
           model: formData.model,
           temperature: formData.temperature,
           status: formData.status,
+          knowledgeBaseId: formData.knowledgeBaseId || null,
           channels
         })
       })
@@ -259,6 +283,24 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
                 />
                 <p className="text-xs text-white/40">
                   Controla a criatividade das respostas (0 = mais preciso, 2 = mais criativo)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="knowledgeBaseId" className="text-white">Knowledge Base</Label>
+                <Select value={formData.knowledgeBaseId} onValueChange={(value) => setFormData({ ...formData, knowledgeBaseId: value })}>
+                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                    <SelectValue placeholder="Nenhuma" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0a0a0b] border-white/10">
+                    <SelectItem value="">Nenhuma</SelectItem>
+                    {knowledgeBases.map((kb) => (
+                      <SelectItem key={kb.id} value={kb.id}>{kb.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-white/40">
+                  Base de conhecimento para contextualizar respostas do agente
                 </p>
               </div>
             </CardContent>

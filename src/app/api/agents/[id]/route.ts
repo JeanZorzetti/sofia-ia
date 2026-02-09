@@ -98,6 +98,7 @@ export async function PUT(
       temperature,
       status,
       config,
+      knowledgeBaseId,
       channels
     } = body;
 
@@ -112,6 +113,7 @@ export async function PUT(
         temperature: temperature !== undefined ? temperature : undefined,
         status: status !== undefined ? status : undefined,
         config: config !== undefined ? config : undefined,
+        knowledgeBaseId: knowledgeBaseId !== undefined ? knowledgeBaseId : undefined,
         updatedAt: new Date()
       },
       include: {

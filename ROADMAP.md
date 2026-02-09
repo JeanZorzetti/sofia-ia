@@ -132,26 +132,26 @@ ROI Labs Platform
 **Objetivo:** Permitir que agentes tenham base de conhecimento para respostas mais precisas.
 
 ### 4.1 Modelo de Knowledge Base
-- [ ] Criar tabela `KnowledgeBase` (id, name, agentId, type, config)
-- [ ] Criar tabela `KnowledgeDocument` (id, knowledgeBaseId, title, content, sourceUrl, fileType, chunks JSON, status)
-- [ ] CRUD API `/api/knowledge` e `/api/knowledge/[id]/documents`
+- [x] Criar tabela `KnowledgeBase` (id, name, agentId, type, config)
+- [x] Criar tabela `KnowledgeDocument` (id, knowledgeBaseId, title, content, sourceUrl, fileType, chunks JSON, status)
+- [x] CRUD API `/api/knowledge` e `/api/knowledge/[id]/documents`
 
 ### 4.2 Upload e Processamento
 - [ ] Upload de documentos (PDF, DOC, TXT) via form multipart
-- [ ] Importacao de URL (fetch + extract text)
-- [ ] Entrada de texto manual
-- [ ] Chunking de documentos (split em pedacos de ~500 tokens)
+- [x] Importacao de URL (fetch + extract text)
+- [x] Entrada de texto manual
+- [x] Chunking de documentos (split em pedacos de ~500 tokens)
 
 ### 4.3 Busca e Contexto
-- [ ] Busca por similaridade nos chunks (keyword match como v1, embeddings como v2)
-- [ ] Injetar chunks relevantes no system prompt do agente antes de responder
-- [ ] Endpoint `/api/ai/chat` buscar contexto da knowledge base do agente
+- [x] Busca por similaridade nos chunks (keyword match como v1, embeddings como v2)
+- [x] Injetar chunks relevantes no system prompt do agente antes de responder
+- [x] Endpoint `/api/ai/chat` buscar contexto da knowledge base do agente
 
 ### 4.4 Frontend
-- [ ] Pagina `/dashboard/knowledge` - lista de bases de conhecimento
+- [x] Pagina `/dashboard/knowledge` - lista de bases de conhecimento
 - [ ] Upload drag-and-drop de documentos
-- [ ] Preview de documentos processados
-- [ ] Associar base de conhecimento a agentes
+- [x] Preview de documentos processados
+- [x] Associar base de conhecimento a agentes
 
 ---
 
