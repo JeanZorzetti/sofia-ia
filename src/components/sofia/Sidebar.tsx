@@ -8,6 +8,7 @@ import {
   Bot,
   Workflow,
   CreditCard,
+  Inbox,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
@@ -22,6 +23,11 @@ const menuItems = [
     href: '/dashboard/agents',
     label: 'Agentes de IA',
     icon: Bot,
+  },
+  {
+    href: '/dashboard/conversations',
+    label: 'Conversas',
+    icon: Inbox,
   },
   {
     href: '/dashboard/whatsapp',

@@ -113,12 +113,12 @@ ROI Labs Platform
 - [x] Endpoint `/api/conversations/[id]/tags` (adicionar/remover tags)
 
 ### 3.2 Inbox Frontend
-- [ ] Nova pagina `/dashboard/conversations` - layout 3 colunas (lista | chat | detalhes)
-- [ ] Lista de conversas com avatar, nome, ultima mensagem, timestamp, status badge, unread count
-- [ ] Filtros: canal (WhatsApp, webchat), status (ativa, aguardando, encerrada), agente
-- [ ] Area de chat: historico de mensagens, input de resposta, botao takeover
-- [ ] Painel lateral: dados do lead/contato, tags, notas internas, score
-- [ ] Indicador de quem respondeu (IA vs humano) em cada mensagem
+- [x] Nova pagina `/dashboard/conversations` - layout 3 colunas (lista | chat | detalhes)
+- [x] Lista de conversas com avatar, nome, ultima mensagem, timestamp, status badge, unread count
+- [x] Filtros: canal (WhatsApp, webchat), status (ativa, aguardando, encerrada), agente
+- [x] Area de chat: historico de mensagens, input de resposta, botao takeover
+- [x] Painel lateral: dados do lead/contato, tags, notas internas, score
+- [x] Indicador de quem respondeu (IA vs humano) em cada mensagem
 
 ### 3.3 Takeover Humano
 - [ ] Flag na conversa: `handledBy` (ai | human)
