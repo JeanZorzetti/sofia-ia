@@ -24,7 +24,8 @@ import {
   Plus,
   Play,
   Eye,
-  Sparkles
+  Sparkles,
+  Workflow as WorkflowIcon
 } from 'lucide-react'
 
 interface Workflow {
@@ -246,10 +247,16 @@ export default function WorkflowsPage() {
           <h1 className="text-3xl font-bold text-white">Automações</h1>
           <p className="text-white/60 mt-1">Workflows automatizados com IA</p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Workflow
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => router.push('/dashboard/workflows/builder')} variant="outline" className="gap-2">
+            <WorkflowIcon className="h-4 w-4" />
+            Visual Builder
+          </Button>
+          <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Novo Workflow
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
