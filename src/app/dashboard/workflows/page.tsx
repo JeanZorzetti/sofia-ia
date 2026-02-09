@@ -22,7 +22,8 @@ import {
   Activity,
   Plus,
   Play,
-  Eye
+  Eye,
+  Sparkles
 } from 'lucide-react'
 
 interface Workflow {
@@ -266,6 +267,29 @@ export default function WorkflowsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {workflows.length === 0 && !loading && (
+        <Card className="glass-card border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <div className="mb-4 rounded-full bg-muted/50 p-6">
+              <Sparkles className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h3 className="mb-2 text-2xl font-semibold text-white">Nenhum workflow criado</h3>
+            <p className="mb-6 text-center text-white/60 max-w-md">
+              Workflows automatizam processos e economizam tempo. Crie seu primeiro workflow ou use um template pronto.
+            </p>
+            <div className="flex gap-3">
+              <Button onClick={() => setCreateDialogOpen(true)} size="lg">
+                <Plus className="mr-2 h-4 w-4" />
+                Criar Workflow
+              </Button>
+              <Button variant="outline" size="lg" onClick={() => router.push('/dashboard/templates?type=workflow')}>
+                Ver Templates
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {workflows.map((workflow) => {

@@ -3,6 +3,9 @@
 import { useAuth } from '@/hooks/use-auth'
 import { Navbar } from '@/components/sofia/Navbar'
 import { Sidebar } from '@/components/sofia/Sidebar'
+import { CommandPalette } from '@/components/command-palette'
+import { Breadcrumb } from '@/components/breadcrumb'
+import { Toaster } from 'sonner'
 
 function LoadingScreen() {
   return (
@@ -32,9 +35,12 @@ export default function DashboardLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <Navbar user={user} onLogout={logout} />
         <main className="custom-scrollbar flex-1 overflow-y-auto p-6">
+          <Breadcrumb />
           {children}
         </main>
       </div>
+      <CommandPalette />
+      <Toaster position="top-right" richColors />
     </div>
   )
 }

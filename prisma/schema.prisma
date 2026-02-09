@@ -323,3 +323,22 @@ model Integration {
   @@index([status])
   @@map("integrations")
 }
+
+model Template {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(255)
+  description String   @db.Text
+  category    String   @db.VarChar(100)
+  type        String   @db.VarChar(50)
+  icon        String?  @db.VarChar(50)
+  config      Json     @default("{}")
+  isOfficial  Boolean  @default(false) @map("is_official")
+  usageCount  Int      @default(0) @map("usage_count")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([category])
+  @@index([type])
+  @@index([isOfficial])
+  @@map("templates")
+}

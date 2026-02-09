@@ -243,22 +243,22 @@ ROI Labs Platform
 **Objetivo:** Biblioteca de templates e refinamento da experiencia.
 
 ### 8.1 Templates
-- [ ] Pagina `/dashboard/templates` com biblioteca categorizada
-- [ ] Templates de agentes por vertical (Imobiliario, Atendimento, Vendas, RH, Financeiro, Juridico)
-- [ ] Templates de workflows por caso de uso
-- [ ] Deploy com 1 click (criar agente/workflow a partir do template)
+- [x] Pagina `/dashboard/templates` com biblioteca categorizada
+- [x] Templates de agentes por vertical (Imobiliario, Atendimento, Vendas, RH, Financeiro, Juridico)
+- [x] Templates de workflows por caso de uso
+- [x] Deploy com 1 click (criar agente/workflow a partir do template)
 
 ### 8.2 Onboarding
-- [ ] Wizard de primeiro acesso: "Crie seu primeiro agente em 3 passos"
-- [ ] Empty states uteis com CTAs (quando nao ha agentes, workflows, etc.)
+- [x] Wizard de primeiro acesso: "Crie seu primeiro agente em 3 passos"
+- [x] Empty states uteis com CTAs (quando nao ha agentes, workflows, etc.)
 - [ ] Tooltips e guias contextuais
 
 ### 8.3 UX/UI Polish
-- [ ] Command palette (Ctrl+K) para busca global
-- [ ] Breadcrumbs em todas as paginas
+- [x] Command palette (Ctrl+K) para busca global
+- [x] Breadcrumbs em todas as paginas
 - [ ] Skeleton loading em vez de spinners
-- [ ] Toast notifications para todas as acoes
-- [ ] Sidebar colapsavel com icones
+- [x] Toast notifications para todas as acoes
+- [x] Sidebar colapsavel com icones
 - [ ] Responsivo para tablet
 
 ### 8.4 Admin e Configuracoes

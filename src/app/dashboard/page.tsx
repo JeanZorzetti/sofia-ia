@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { MessageSquare, TrendingUp, Target, Percent, Loader2, CheckCircle, XCircle, Users, Workflow, Calendar } from 'lucide-react'
 import Link from 'next/link'
+import { OnboardingWizard } from '@/components/onboarding-wizard'
 
 interface AnalyticsOverview {
   conversationsStarted: number
@@ -40,9 +41,24 @@ export default function DashboardPage() {
   const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null)
   const [timeline, setTimeline] = useState<TimelineData[]>([])
   const [loading, setLoading] = useState(true)
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [userId, setUserId] = useState<string>('')
 
   const { data: conversations, loading: conversationsLoading } = useRecentConversations()
   const { isHealthy } = useApiHealth()
+
+  useEffect(() => {
+    const user = localStorage.getItem('user')
+    if (user) {
+      const parsedUser = JSON.parse(user)
+      setUserId(parsedUser.id)
+
+      const onboardingCompleted = localStorage.getItem('onboarding_completed')
+      if (!onboardingCompleted) {
+        setTimeout(() => setShowOnboarding(true), 1000)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     async function fetchAnalytics() {
@@ -341,6 +357,12 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      <OnboardingWizard
+        open={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
+        userId={userId}
+      />
     </div>
   )
 }

@@ -359,20 +359,27 @@ export default function AgentsPage() {
         ))}
       </div>
 
-      {agents.length === 0 && (
-        <Card className="glass-card">
-          <CardContent className="py-12 text-center">
-            <Bot className="h-16 w-16 text-white/20 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">
+      {agents.length === 0 && !loading && (
+        <Card className="glass-card border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <div className="mb-4 rounded-full bg-muted/50 p-6">
+              <Bot className="h-12 w-12 text-muted-foreground" />
+            </div>
+            <h3 className="mb-2 text-2xl font-semibold text-white">
               Nenhum agente criado
             </h3>
-            <p className="text-white/60 mb-6">
-              Crie seu primeiro agente de IA para começar a automatizar conversas
+            <p className="mb-6 text-center text-white/60 max-w-md">
+              Agentes de IA automatizam atendimento, qualificam leads e economizam tempo. Crie seu primeiro agente ou use um template pronto.
             </p>
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Primeiro Agente
-            </Button>
+            <div className="flex gap-3">
+              <Button onClick={() => setCreateDialogOpen(true)} size="lg">
+                <Plus className="mr-2 h-4 w-4" />
+                Criar Agente
+              </Button>
+              <Button variant="outline" size="lg" onClick={() => router.push('/dashboard/templates?type=agent')}>
+                Ver Templates
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
