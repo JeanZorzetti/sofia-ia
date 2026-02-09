@@ -288,7 +288,7 @@ ROI Labs Platform
 - [ ] SSO/SAML
 - [ ] Compliance dashboard (LGPD)
 - [ ] Whitelabel
-- [ ] API publica com documentacao OpenAPI
+- [x] API publica com documentacao OpenAPI
 - [ ] Marketplace de templates da comunidade
 
 ### 9.4 Infraestrutura

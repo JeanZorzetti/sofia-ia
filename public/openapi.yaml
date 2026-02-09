@@ -1,0 +1,589 @@
+openapi: 3.0.3
+info:
+  title: ROI Labs Platform API
+  description: |
+    API pública da plataforma ROI Labs para integração com agentes de IA,
+    automações, conversas e analytics.
+
+    ## Autenticação
+    Todas as rotas requerem autenticação via API Key no header:
+    ```
+    Authorization: Bearer YOUR_API_KEY
+    ```
+
+    ## Rate Limiting
+    - 1000 requests por hora por API key
+    - 100 requests por minuto por API key
+
+    ## Webhooks
+    A plataforma suporta webhooks para notificações em tempo real de eventos.
+
+  version: 1.0.0
+  contact:
+    name: ROI Labs Support
+    email: suporte@roilabs.com.br
+    url: https://roilabs.com.br
+  license:
+    name: Proprietary
+    url: https://roilabs.com.br/terms
+
+servers:
+  - url: https://sofiaia.roilabs.com.br/api
+    description: Production
+  - url: http://localhost:3000/api
+    description: Development
+
+tags:
+  - name: Agents
+    description: Gerenciamento de agentes de IA
+  - name: Conversations
+    description: Conversas e mensagens
+  - name: Workflows
+    description: Automações e workflows
+  - name: Orchestrations
+    description: Orquestração multi-agente
+  - name: Analytics
+    description: Métricas e análises
+  - name: Webhooks
+    description: Configuração de webhooks
+
+security:
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Agent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        systemPrompt:
+          type: string
+        model:
+          type: string
+          example: llama-3.3-70b-versatile
+        temperature:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 2
+        status:
+          type: string
+          enum: [active, inactive, testing]
+        channels:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+              config:
+                type: object
+
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        leadId:
+          type: string
+          format: uuid
+        agentId:
+          type: string
+          format: uuid
+        channel:
+          type: string
+          enum: [whatsapp, webchat, email]
+        status:
+          type: string
+          enum: [active, waiting, closed]
+        handledBy:
+          type: string
+          enum: [ai, human]
+        messageCount:
+          type: integer
+        lastMessageAt:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        conversationId:
+          type: string
+          format: uuid
+        sender:
+          type: string
+          enum: [user, agent, system]
+        content:
+          type: string
+        messageType:
+          type: string
+          enum: [text, image, audio, video, document]
+        isAiGenerated:
+          type: boolean
+        sentAt:
+          type: string
+          format: date-time
+
+    Workflow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        trigger:
+          type: object
+        actions:
+          type: array
+          items:
+            type: object
+        status:
+          type: string
+          enum: [active, inactive]
+        runCount:
+          type: integer
+        successCount:
+          type: integer
+
+    Orchestration:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        agents:
+          type: array
+          items:
+            type: object
+            properties:
+              agentId:
+                type: string
+              role:
+                type: string
+        strategy:
+          type: string
+          enum: [sequential, parallel, consensus]
+        status:
+          type: string
+          enum: [active, inactive]
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+paths:
+  /agents:
+    get:
+      tags:
+        - Agents
+      summary: Listar todos os agentes
+      description: Retorna lista de todos os agentes de IA configurados
+      responses:
+        '200':
+          description: Lista de agentes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Agent'
+        '401':
+          description: Não autorizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Agents
+      summary: Criar novo agente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - systemPrompt
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                systemPrompt:
+                  type: string
+                model:
+                  type: string
+                temperature:
+                  type: number
+                channels:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Agente criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Agent'
+
+  /agents/{id}:
+    get:
+      tags:
+        - Agents
+      summary: Buscar agente por ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalhes do agente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Agent'
+
+    put:
+      tags:
+        - Agents
+      summary: Atualizar agente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Agent'
+      responses:
+        '200':
+          description: Agente atualizado
+
+    delete:
+      tags:
+        - Agents
+      summary: Deletar agente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agente deletado
+
+  /conversations:
+    get:
+      tags:
+        - Conversations
+      summary: Listar conversas
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, waiting, closed]
+        - name: channel
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Lista de conversas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+
+  /conversations/{id}/messages:
+    get:
+      tags:
+        - Conversations
+      summary: Buscar mensagens de uma conversa
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: Lista de mensagens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+
+    post:
+      tags:
+        - Conversations
+      summary: Enviar mensagem em uma conversa
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+                messageType:
+                  type: string
+                  default: text
+      responses:
+        '200':
+          description: Mensagem enviada
+
+  /workflows:
+    get:
+      tags:
+        - Workflows
+      summary: Listar workflows
+      responses:
+        '200':
+          description: Lista de workflows
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Workflow'
+
+    post:
+      tags:
+        - Workflows
+      summary: Criar workflow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Workflow'
+      responses:
+        '200':
+          description: Workflow criado
+
+  /workflows/{id}/run:
+    post:
+      tags:
+        - Workflows
+      summary: Executar workflow manualmente
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  type: object
+      responses:
+        '200':
+          description: Workflow executado
+
+  /orchestrations:
+    get:
+      tags:
+        - Orchestrations
+      summary: Listar orquestrações
+      responses:
+        '200':
+          description: Lista de orquestrações
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Orchestration'
+
+    post:
+      tags:
+        - Orchestrations
+      summary: Criar orquestração
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Orchestration'
+      responses:
+        '200':
+          description: Orquestração criada
+
+  /orchestrations/{id}/execute:
+    post:
+      tags:
+        - Orchestrations
+      summary: Executar orquestração
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input:
+                  type: string
+                conversationId:
+                  type: string
+      responses:
+        '200':
+          description: Orquestração executada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      executionId:
+                        type: string
+                      output:
+                        type: object
+                      agentResults:
+                        type: array
+
+  /analytics/overview:
+    get:
+      tags:
+        - Analytics
+      summary: Métricas gerais
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Métricas agregadas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
