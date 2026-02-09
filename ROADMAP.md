@@ -292,11 +292,11 @@ ROI Labs Platform
 - [ ] Marketplace de templates da comunidade
 
 ### 9.4 Infraestrutura
-- [ ] Testes automatizados (Jest + Playwright)
-- [ ] CI/CD (GitHub Actions)
+- [x] Testes automatizados (Jest + Playwright)
+- [x] CI/CD (GitHub Actions)
 - [ ] Monitoramento (Sentry, Datadog)
 - [ ] Performance: caching Redis, connection pooling, CDN
-- [ ] Backup automatico do banco
+- [x] Backup automatico do banco
 
 ---
 
