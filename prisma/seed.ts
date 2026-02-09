@@ -231,6 +231,109 @@ Lembre-se: você está aqui para ajudar e facilitar a busca do imóvel ideal!`,
   })
   console.log('✅ Sofia SDR Agent criado:', sofiaAgent.name)
 
+  // Criar integração WhatsApp default
+  const whatsappIntegration = await prisma.integration.upsert({
+    where: {
+      id: '00000000-0000-0000-0000-000000000101'
+    },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000101',
+      name: 'WhatsApp Evolution API',
+      type: 'whatsapp',
+      config: {
+        evolutionApiUrl: process.env.EVOLUTION_API_URL || 'https://api.evolution.roilabs.com.br',
+        instanceName: 'default',
+        autoRespond: true,
+        businessHours: {
+          enabled: false,
+          timezone: 'America/Sao_Paulo'
+        }
+      },
+      credentials: {
+        apiKey: process.env.EVOLUTION_API_KEY || ''
+      },
+      status: process.env.EVOLUTION_API_KEY ? 'active' : 'inactive'
+    }
+  })
+  console.log('✅ WhatsApp Integration criado:', whatsappIntegration.name)
+
+  // Criar integração Webhook genérico
+  const webhookIntegration = await prisma.integration.upsert({
+    where: {
+      id: '00000000-0000-0000-0000-000000000102'
+    },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000102',
+      name: 'Webhook Genérico',
+      type: 'webhook',
+      config: {
+        webhookUrl: '',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        events: ['lead.created', 'lead.qualified', 'message.received']
+      },
+      credentials: {},
+      status: 'inactive'
+    }
+  })
+  console.log('✅ Webhook Integration criado:', webhookIntegration.name)
+
+  // Criar integração API REST genérico
+  const apiRestIntegration = await prisma.integration.upsert({
+    where: {
+      id: '00000000-0000-0000-0000-000000000103'
+    },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000103',
+      name: 'API REST Genérica',
+      type: 'api_rest',
+      config: {
+        baseUrl: '',
+        testEndpoint: '/health',
+        timeout: 30000,
+        retries: 3
+      },
+      credentials: {
+        apiKey: '',
+        customHeaders: {}
+      },
+      status: 'inactive'
+    }
+  })
+  console.log('✅ API REST Integration criado:', apiRestIntegration.name)
+
+  // Criar integração Email SMTP
+  const emailSmtpIntegration = await prisma.integration.upsert({
+    where: {
+      id: '00000000-0000-0000-0000-000000000104'
+    },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000104',
+      name: 'Email SMTP',
+      type: 'email_smtp',
+      config: {
+        fromName: 'ROI Labs',
+        fromEmail: 'noreply@roilabs.com.br',
+        replyTo: 'contato@roilabs.com.br'
+      },
+      credentials: {
+        host: '',
+        port: 587,
+        user: '',
+        pass: '',
+        secure: false
+      },
+      status: 'inactive'
+    }
+  })
+  console.log('✅ Email SMTP Integration criado:', emailSmtpIntegration.name)
+
   console.log('🎉 Seed concluído com sucesso!')
 }
 

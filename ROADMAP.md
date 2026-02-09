@@ -225,10 +225,10 @@ ROI Labs Platform
 - [x] Teste de conexao
 
 ### 7.2 Integracoes MVP
-- [ ] WhatsApp (ja existente - mover para formato padrao de Integration)
-- [ ] Webhook generico (receber e enviar webhooks)
-- [ ] API REST generico (fazer chamadas HTTP em workflows)
-- [ ] E-mail SMTP (enviar emails em workflows e como canal de agente)
+- [x] WhatsApp (ja existente - mover para formato padrao de Integration)
+- [x] Webhook generico (receber e enviar webhooks)
+- [x] API REST generico (fazer chamadas HTTP em workflows)
+- [x] E-mail SMTP (enviar emails em workflows e como canal de agente)
 
 ### 7.3 Web Chat Widget
 - [ ] Componente React embeddable para sites de clientes
