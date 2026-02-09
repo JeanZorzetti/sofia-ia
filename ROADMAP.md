@@ -89,9 +89,9 @@ ROI Labs Platform
 - [x] Toggle ativar/desativar agente
 
 ### 2.3 Roteamento de Mensagens por Agente
-- [ ] Webhook Evolution API rotear mensagem para o agente correto (por instancia WhatsApp)
-- [ ] Endpoint `/api/ai/chat` aceitar `agentId` e usar prompt do agente
-- [ ] Historico de conversa: carregar ultimas N mensagens do banco como contexto
+- [x] Webhook Evolution API rotear mensagem para o agente correto (por instancia WhatsApp)
+- [x] Endpoint `/api/ai/chat` aceitar `agentId` e usar prompt do agente
+- [x] Historico de conversa: carregar ultimas N mensagens do banco como contexto
 
 ### 2.4 Teste Integrado
 - [ ] Componente de chat inline na pagina do agente ("Testar agente")

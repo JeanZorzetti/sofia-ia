@@ -400,32 +400,105 @@ async function handleMessageUpsert(instance: string, data: Record<string, unknow
 
       console.log('✅ Mensagem salva no banco:', messageId)
 
-      // AI response via Groq will be handled by the AI service
-      const autoResponse = getAutomatedResponse(text)
-      if (autoResponse) {
-        await sendMessage(instance, contact, autoResponse)
-
-        // Salvar resposta automática no banco
-        await prisma.message.create({
-          data: {
-            conversationId: conversation.id,
-            leadId: lead.id,
-            sender: 'assistant',
-            messageType: 'text',
-            content: autoResponse,
-            isAiGenerated: true,
-            aiModel: 'rule-based',
-            sentAt: new Date(),
+      // Buscar agente ativo para WhatsApp nesta instância
+      const agent = await prisma.agent.findFirst({
+        where: {
+          status: 'active',
+          channels: {
+            some: {
+              channel: 'whatsapp',
+              isActive: true
+            }
           }
+        },
+        include: {
+          channels: true
+        }
+      })
+
+      if (agent) {
+        // Usar IA para gerar resposta com o agente encontrado
+        const { chatWithAgent } = await import('@/lib/groq')
+
+        // Buscar histórico de mensagens da conversa
+        const previousMessages = await prisma.message.findMany({
+          where: { conversationId: conversation.id },
+          orderBy: { sentAt: 'asc' },
+          take: 10 // Últimas 10 mensagens como contexto
         })
 
-        await prisma.conversation.update({
-          where: { id: conversation.id },
-          data: {
-            messageCount: { increment: 1 },
-            lastMessageAt: new Date()
+        // Formatar mensagens para o formato do Groq
+        const messageHistory = previousMessages.map(msg => ({
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        }))
+
+        try {
+          const aiResponse = await chatWithAgent(agent.id, messageHistory, {
+            leadName: lead.nome,
+            leadPhone: lead.telefone,
+            leadStatus: lead.status
+          })
+
+          if (aiResponse.message) {
+            await sendMessage(instance, contact, aiResponse.message)
+
+            // Salvar resposta da IA no banco
+            await prisma.message.create({
+              data: {
+                conversationId: conversation.id,
+                leadId: lead.id,
+                sender: 'assistant',
+                messageType: 'text',
+                content: aiResponse.message,
+                isAiGenerated: true,
+                aiModel: agent.model,
+                aiConfidence: aiResponse.confidence,
+                sentAt: new Date(),
+              }
+            })
+
+            await prisma.conversation.update({
+              where: { id: conversation.id },
+              data: {
+                messageCount: { increment: 1 },
+                lastMessageAt: new Date()
+              }
+            })
+
+            console.log('✅ Resposta da IA enviada via agente:', agent.name)
           }
-        })
+        } catch (aiError) {
+          console.error('❌ Erro ao gerar resposta da IA:', aiError)
+          // Fallback para resposta automática simples
+          const autoResponse = getAutomatedResponse(text)
+          if (autoResponse) {
+            await sendMessage(instance, contact, autoResponse)
+
+            await prisma.message.create({
+              data: {
+                conversationId: conversation.id,
+                leadId: lead.id,
+                sender: 'assistant',
+                messageType: 'text',
+                content: autoResponse,
+                isAiGenerated: true,
+                aiModel: 'rule-based',
+                sentAt: new Date(),
+              }
+            })
+
+            await prisma.conversation.update({
+              where: { id: conversation.id },
+              data: {
+                messageCount: { increment: 1 },
+                lastMessageAt: new Date()
+              }
+            })
+          }
+        }
+      } else {
+        console.log('⚠️ Nenhum agente ativo encontrado para WhatsApp')
       }
     } catch (error) {
       console.error('❌ Erro ao salvar mensagem no banco:', error)

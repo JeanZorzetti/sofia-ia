@@ -75,3 +75,47 @@ export async function chatWithSofia(
     usage: completion.usage,
   }
 }
+
+export async function chatWithAgent(
+  agentId: string,
+  messages: ChatMessage[],
+  leadContext?: Record<string, any>
+) {
+  const { prisma } = await import('@/lib/prisma')
+
+  // Buscar agente do banco
+  const agent = await prisma.agent.findUnique({
+    where: { id: agentId },
+    include: { channels: true }
+  })
+
+  if (!agent) {
+    throw new Error('Agent not found')
+  }
+
+  // Construir prompt do sistema
+  let systemPrompt = agent.systemPrompt
+
+  if (leadContext) {
+    systemPrompt += `\n\nContexto do lead:
+- Nome: ${leadContext.leadName || 'Não informado'}
+- Telefone: ${leadContext.leadPhone || 'Não informado'}
+- Status: ${leadContext.leadStatus || 'Não informado'}`
+  }
+
+  const completion = await getGroqClient().chat.completions.create({
+    model: agent.model,
+    messages: [{ role: 'system', content: systemPrompt }, ...messages],
+    temperature: agent.temperature,
+    max_tokens: 1024,
+  })
+
+  const content = completion.choices[0]?.message?.content || ''
+
+  return {
+    message: content,
+    model: completion.model,
+    usage: completion.usage,
+    confidence: 0.85, // Placeholder - pode ser calculado baseado em outras métricas
+  }
+}

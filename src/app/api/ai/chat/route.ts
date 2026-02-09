@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
-import { chatWithSofia } from '@/lib/groq';
+import { chatWithSofia, chatWithAgent } from '@/lib/groq';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
@@ -16,32 +16,7 @@ export async function POST(request: NextRequest) {
 
     // Parse and validate body
     const body = await request.json();
-    let { messages, leadContext, customPrompt } = body;
-
-    // Tentar carregar prompt customizado do banco de dados se não foi fornecido
-    if (!customPrompt) {
-      try {
-        const setting = await prisma.setting.findUnique({
-          where: {
-            category_key: {
-              category: 'sdr',
-              key: 'custom_prompt'
-            }
-          }
-        })
-
-        if (setting && setting.value) {
-          const settingValue = setting.value as any
-          if (settingValue.enabled && settingValue.systemPrompt) {
-            customPrompt = settingValue.systemPrompt
-            console.log('✅ Usando prompt customizado do banco de dados')
-          }
-        }
-      } catch (dbError) {
-        console.error('❌ Erro ao carregar prompt customizado:', dbError)
-        // Continua sem prompt customizado
-      }
-    }
+    let { messages, leadContext, customPrompt, agentId } = body;
 
     // Validation
     if (!messages || !Array.isArray(messages)) {
@@ -67,7 +42,46 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Call Sofia AI
+    // Se agentId foi fornecido, usar chatWithAgent
+    if (agentId) {
+      const result = await chatWithAgent(agentId, messages, leadContext);
+      return NextResponse.json({
+        success: true,
+        data: {
+          content: result.message,
+          model: result.model,
+          usage: result.usage,
+          confidence: result.confidence
+        }
+      });
+    }
+
+    // Caso contrário, tentar carregar prompt customizado do banco de dados
+    if (!customPrompt) {
+      try {
+        const setting = await prisma.setting.findUnique({
+          where: {
+            category_key: {
+              category: 'sdr',
+              key: 'custom_prompt'
+            }
+          }
+        })
+
+        if (setting && setting.value) {
+          const settingValue = setting.value as any
+          if (settingValue.enabled && settingValue.systemPrompt) {
+            customPrompt = settingValue.systemPrompt
+            console.log('✅ Usando prompt customizado do banco de dados')
+          }
+        }
+      } catch (dbError) {
+        console.error('❌ Erro ao carregar prompt customizado:', dbError)
+        // Continua sem prompt customizado
+      }
+    }
+
+    // Call Sofia AI (compatibilidade com código legado)
     const result = await chatWithSofia(messages, leadContext, customPrompt);
 
     return NextResponse.json({
