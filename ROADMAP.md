@@ -273,7 +273,7 @@ ROI Labs Platform
 
 ### 9.1 Avancado
 - [x] Canvas visual drag-and-drop para workflows (estilo n8n/Make)
-- [ ] Multi-agent orchestration (agentes que colaboram)
+- [x] Multi-agent orchestration (agentes que colaboram)
 - [ ] Knowledge Base com embeddings vetoriais (pgvector)
 - [ ] Natural Language Queries no Analytics ("quantos leads qualificamos essa semana?")
 - [ ] A/B testing de agentes

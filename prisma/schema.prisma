@@ -374,3 +374,45 @@ model AuditLog {
   @@index([createdAt(sort: Desc)])
   @@map("audit_logs")
 }
+
+model AgentOrchestration {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  agents      Json     @default("[]")
+  strategy    String   @default("sequential") @db.VarChar(50)
+  config      Json     @default("{}")
+  status      String   @default("active") @db.VarChar(20)
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  executions OrchestrationExecution[]
+
+  @@index([status])
+  @@index([createdBy])
+  @@map("agent_orchestrations")
+}
+
+model OrchestrationExecution {
+  id               String    @id @default(uuid()) @db.Uuid
+  orchestrationId  String    @map("orchestration_id") @db.Uuid
+  conversationId   String?   @map("conversation_id") @db.Uuid
+  status           String    @default("pending") @db.VarChar(20)
+  currentAgentId   String?   @map("current_agent_id") @db.Uuid
+  agentResults     Json      @default("[]") @map("agent_results")
+  input            Json      @default("{}")
+  output           Json?
+  error            String?   @db.Text
+  startedAt        DateTime  @default(now()) @map("started_at") @db.Timestamptz()
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz()
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  orchestration AgentOrchestration @relation(fields: [orchestrationId], references: [id], onDelete: Cascade)
+
+  @@index([orchestrationId])
+  @@index([conversationId])
+  @@index([status])
+  @@index([startedAt(sort: Desc)])
+  @@map("orchestration_executions")
+}
