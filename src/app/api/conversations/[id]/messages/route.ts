@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuthFromRequest(request);
@@ -14,6 +12,7 @@ export async function GET(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -21,12 +20,12 @@ export async function GET(
 
     const [messages, total] = await Promise.all([
       prisma.message.findMany({
-        where: { conversationId: params.id },
+        where: { conversationId: id },
         orderBy: { sentAt: 'asc' },
         skip,
         take: limit,
       }),
-      prisma.message.count({ where: { conversationId: params.id } }),
+      prisma.message.count({ where: { conversationId: id } }),
     ]);
 
     return NextResponse.json({
@@ -44,14 +43,12 @@ export async function GET(
       { error: 'Erro ao buscar mensagens' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuthFromRequest(request);
@@ -59,6 +56,7 @@ export async function POST(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const { content, messageType = 'text' } = body;
 
@@ -69,9 +67,8 @@ export async function POST(
       );
     }
 
-    // Buscar a conversa para obter o leadId
     const conversation = await prisma.conversation.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!conversation) {
@@ -81,10 +78,9 @@ export async function POST(
       );
     }
 
-    // Criar a mensagem
     const message = await prisma.message.create({
       data: {
-        conversationId: params.id,
+        conversationId: id,
         leadId: conversation.leadId,
         sender: 'assistant',
         content,
@@ -94,9 +90,8 @@ export async function POST(
       },
     });
 
-    // Atualizar a conversa
     await prisma.conversation.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         lastMessageAt: new Date(),
         messageCount: { increment: 1 },
@@ -110,7 +105,5 @@ export async function POST(
       { error: 'Erro ao enviar mensagem' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

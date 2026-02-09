@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const auth = await getAuthFromRequest(request);
@@ -14,8 +12,10 @@ export async function POST(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const conversation = await prisma.conversation.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!conversation) {
@@ -26,7 +26,7 @@ export async function POST(
     }
 
     const updatedConversation = await prisma.conversation.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: 'closed',
         closedAt: new Date(),
@@ -44,7 +44,5 @@ export async function POST(
       { error: 'Erro ao encerrar conversa' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
