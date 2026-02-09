@@ -429,7 +429,7 @@ async function handleMessageUpsert(instance: string, data: Record<string, unknow
 
         // Formatar mensagens para o formato do Groq
         const messageHistory = previousMessages.map(msg => ({
-          role: msg.sender === 'user' ? 'user' : 'assistant',
+          role: (msg.sender === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
           content: msg.content
         }))
 
