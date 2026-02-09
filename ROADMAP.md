@@ -94,9 +94,9 @@ ROI Labs Platform
 - [x] Historico de conversa: carregar ultimas N mensagens do banco como contexto
 
 ### 2.4 Teste Integrado
-- [ ] Componente de chat inline na pagina do agente ("Testar agente")
-- [ ] Enviar mensagens de teste via `/api/ai/chat` com agentId
-- [ ] Exibir resposta em tempo real
+- [x] Componente de chat inline na pagina do agente ("Testar agente")
+- [x] Enviar mensagens de teste via `/api/ai/chat` com agentId
+- [x] Exibir resposta em tempo real
 
 ---
 

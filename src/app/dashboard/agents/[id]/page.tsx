@@ -13,6 +13,7 @@ import { Slider } from '@/components/ui/slider'
 import { ArrowLeft, Loader2, Save, MessageSquare, Mail, Globe } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { AgentChatTester } from '@/components/sofia/AgentChatTester'
 
 interface Agent {
   id: string
@@ -183,6 +184,7 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
+          <AgentChatTester agentId={agent.id} agentName={agent.name} />
           <Card className="glass-card">
             <CardHeader>
               <CardTitle className="text-white">Informações Básicas</CardTitle>
