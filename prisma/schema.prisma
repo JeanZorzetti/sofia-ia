@@ -342,3 +342,35 @@ model Template {
   @@index([isOfficial])
   @@map("templates")
 }
+
+model ApiKey {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(255)
+  key         String    @unique @db.VarChar(255)
+  userId      String    @map("user_id") @db.Uuid
+  lastUsedAt  DateTime? @map("last_used_at") @db.Timestamptz()
+  status      String    @default("active") @db.VarChar(20)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([userId])
+  @@index([status])
+  @@map("api_keys")
+}
+
+model AuditLog {
+  id           String   @id @default(uuid()) @db.Uuid
+  action       String   @db.VarChar(100)
+  userId       String?  @map("user_id") @db.Uuid
+  resourceType String?  @map("resource_type") @db.VarChar(50)
+  resourceId   String?  @map("resource_id") @db.Uuid
+  details      Json     @default("{}")
+  ipAddress    String?  @map("ip_address") @db.VarChar(50)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([userId])
+  @@index([action])
+  @@index([resourceType])
+  @@index([createdAt(sort: Desc)])
+  @@map("audit_logs")
+}

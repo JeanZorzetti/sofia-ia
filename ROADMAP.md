@@ -251,21 +251,21 @@ ROI Labs Platform
 ### 8.2 Onboarding
 - [x] Wizard de primeiro acesso: "Crie seu primeiro agente em 3 passos"
 - [x] Empty states uteis com CTAs (quando nao ha agentes, workflows, etc.)
-- [ ] Tooltips e guias contextuais
+- [x] Tooltips e guias contextuais
 
 ### 8.3 UX/UI Polish
 - [x] Command palette (Ctrl+K) para busca global
 - [x] Breadcrumbs em todas as paginas
-- [ ] Skeleton loading em vez de spinners
+- [x] Skeleton loading em vez de spinners
 - [x] Toast notifications para todas as acoes
 - [x] Sidebar colapsavel com icones
-- [ ] Responsivo para tablet
+- [x] Responsivo para tablet
 
 ### 8.4 Admin e Configuracoes
-- [ ] Gestao de usuarios (convite, roles: admin, editor, viewer)
-- [ ] Perfil da empresa
-- [ ] API Keys para integracao externa
-- [ ] Logs de auditoria
+- [x] Gestao de usuarios (convite, roles: admin, editor, viewer)
+- [x] Perfil da empresa
+- [x] API Keys para integracao externa
+- [x] Logs de auditoria
 
 ---
 
