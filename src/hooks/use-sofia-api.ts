@@ -135,10 +135,23 @@ export function useWhatsAppInstances() {
 
       if (response.ok) {
         const result = await response.json()
-        setInstances(result.instances || result)
+        const raw = Array.isArray(result.data) ? result.data : []
+        // Normalize Evolution API shape: { instance: { instanceName, status }, ... } → flat
+        const list = raw.map((item: any) => {
+          const inst = item.instance || item
+          const status = inst.status === 'open' ? 'connected' : inst.status === 'close' ? 'disconnected' : inst.status || 'unknown'
+          return {
+            id: inst.instanceName || inst.name || item.instanceName || item.name,
+            name: inst.instanceName || inst.name || item.instanceName || item.name,
+            phone: inst.owner || item.owner || '',
+            status,
+            phone_number: inst.owner || item.owner || '',
+          }
+        })
+        setInstances(list)
 
-        const total = result.instances?.length || 0
-        const connected = result.instances?.filter((i: WhatsAppInstance) => i.status === 'connected').length || 0
+        const total = list.length
+        const connected = list.filter((i: any) => i.status === 'connected').length
         setStats({
           total,
           connected,

@@ -13,26 +13,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch instances
+    // Fetch instances (graceful - return zeros if Evolution API is down)
     const instancesResult = await fetchInstances();
-
-    if (!instancesResult.success) {
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch instances' },
-        { status: 500 }
-      );
-    }
-
-    const instances = instancesResult.data;
+    const instances = instancesResult.success ? instancesResult.data : [];
 
     // Calculate stats
     const total_instances = instances.length;
 
     const statusCounts: { connected: number; disconnected: number; connecting: number; pending: number } = instances.reduce(
       (acc: { connected: number; disconnected: number; connecting: number; pending: number }, inst: any) => {
-        const status = inst.status || 'pending';
-        if (status === 'open') acc.connected++;
-        else if (status === 'close') acc.disconnected++;
+        const status = inst?.instance?.status || inst?.status || 'pending';
+        if (status === 'open' || status === 'connected') acc.connected++;
+        else if (status === 'close' || status === 'disconnected') acc.disconnected++;
         else if (status === 'connecting') acc.connecting++;
         else acc.pending++;
         return acc;
@@ -55,11 +47,11 @@ export async function GET(request: NextRequest) {
       success: true,
       data: {
         total_instances,
-        connected: statusCounts.connected,
+        connected_instances: statusCounts.connected,
         disconnected: statusCounts.disconnected,
         connecting: statusCounts.connecting,
         pending: statusCounts.pending,
-        totalMessages,
+        messages_today: totalMessages,
         avg_response_time: '1.2s',
         uptime_percentage: `${uptime_percentage}%`
       }
