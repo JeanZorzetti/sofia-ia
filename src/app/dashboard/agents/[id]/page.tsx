@@ -288,12 +288,12 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
 
               <div className="space-y-2">
                 <Label htmlFor="knowledgeBaseId" className="text-white">Knowledge Base</Label>
-                <Select value={formData.knowledgeBaseId} onValueChange={(value) => setFormData({ ...formData, knowledgeBaseId: value })}>
+                <Select value={formData.knowledgeBaseId || 'none'} onValueChange={(value) => setFormData({ ...formData, knowledgeBaseId: value === 'none' ? '' : value })}>
                   <SelectTrigger className="bg-white/5 border-white/10 text-white">
                     <SelectValue placeholder="Nenhuma" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#0a0a0b] border-white/10">
-                    <SelectItem value="">Nenhuma</SelectItem>
+                    <SelectItem value="none">Nenhuma</SelectItem>
                     {knowledgeBases.map((kb) => (
                       <SelectItem key={kb.id} value={kb.id}>{kb.name}</SelectItem>
                     ))}
