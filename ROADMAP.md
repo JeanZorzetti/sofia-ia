@@ -75,11 +75,11 @@ ROI Labs Platform
 **Objetivo:** Expandir de "Sofia SDR" para plataforma de criacao de agentes multi-proposito.
 
 ### 2.1 Modelo de Agente
-- [ ] Criar tabela Prisma `Agent` (id, name, description, systemPrompt, model, temperature, channels, knowledgeBaseId, status, createdBy, config JSON)
-- [ ] Criar tabela `AgentChannel` (agentId, channel: whatsapp|webchat|email, config JSON)
-- [ ] CRUD API `/api/agents` (GET, POST)
-- [ ] CRUD API `/api/agents/[id]` (GET, PUT, DELETE)
-- [ ] Migrar Sofia SDR como agente default na seed
+- [x] Criar tabela Prisma `Agent` (id, name, description, systemPrompt, model, temperature, channels, knowledgeBaseId, status, createdBy, config JSON)
+- [x] Criar tabela `AgentChannel` (agentId, channel: whatsapp|webchat|email, config JSON)
+- [x] CRUD API `/api/agents` (GET, POST)
+- [x] CRUD API `/api/agents/[id]` (GET, PUT, DELETE)
+- [x] Migrar Sofia SDR como agente default na seed
 
 ### 2.2 Pagina de Agentes
 - [ ] Nova pagina `/dashboard/agents` - lista de agentes com status (ativo/inativo/teste)

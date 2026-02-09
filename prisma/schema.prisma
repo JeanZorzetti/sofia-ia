@@ -21,6 +21,7 @@ model User {
 
   leads     Lead[]
   campaigns Campaign[]
+  agents    Agent[]
 
   @@map("users")
 }
@@ -179,4 +180,43 @@ model WhatsappInstance {
   updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@map("whatsapp_instances")
+}
+
+model Agent {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String   @db.VarChar(255)
+  description     String?  @db.Text
+  systemPrompt    String   @map("system_prompt") @db.Text
+  model           String   @default("llama-3.3-70b-versatile") @db.VarChar(100)
+  temperature     Float    @default(0.7)
+  knowledgeBaseId String?  @map("knowledge_base_id") @db.Uuid
+  status          String   @default("active") @db.VarChar(20)
+  createdBy       String   @map("created_by") @db.Uuid
+  config          Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  creator  User           @relation(fields: [createdBy], references: [id])
+  channels AgentChannel[]
+
+  @@index([status])
+  @@index([createdBy])
+  @@map("agents")
+}
+
+model AgentChannel {
+  id        String   @id @default(uuid()) @db.Uuid
+  agentId   String   @map("agent_id") @db.Uuid
+  channel   String   @db.VarChar(50)
+  config    Json     @default("{}")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, channel])
+  @@index([agentId])
+  @@index([channel])
+  @@map("agent_channels")
 }

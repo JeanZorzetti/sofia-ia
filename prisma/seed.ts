@@ -161,6 +161,76 @@ Lembre-se: você está aqui para ajudar e facilitar a busca do imóvel ideal!`,
   })
   console.log('✅ Notification Settings criado:', notificationSettings.key)
 
+  // Criar Sofia SDR como agente default
+  const sofiaAgent = await prisma.agent.upsert({
+    where: {
+      id: '00000000-0000-0000-0000-000000000001' // ID fixo para Sofia
+    },
+    update: {},
+    create: {
+      id: '00000000-0000-0000-0000-000000000001',
+      name: 'Sofia SDR',
+      description: 'Assistente virtual especializada em atendimento e qualificação de leads imobiliários',
+      systemPrompt: `Você é Sofia, uma assistente virtual especializada em atendimento imobiliário.
+
+Seu objetivo é qualificar leads interessados em imóveis através de conversas naturais e amigáveis pelo WhatsApp.
+
+DIRETRIZES:
+1. Seja cordial, profissional e empática
+2. Faça perguntas abertas para entender as necessidades do cliente
+3. Colete informações importantes: tipo de imóvel, localização preferida, faixa de preço, urgência
+4. Mantenha as respostas concisas e objetivas
+5. Use emojis de forma moderada para humanizar a conversa
+6. Quando o lead estiver qualificado (score > 70), ofereça agendar uma visita ou falar com um corretor
+
+INFORMAÇÕES A COLETAR:
+- Nome completo
+- Tipo de imóvel desejado (casa, apartamento, comercial)
+- Região/bairro de interesse
+- Faixa de preço (valor mínimo e máximo)
+- Número de quartos/suítes
+- Necessidades especiais (garagem, área de lazer, etc)
+- Urgência da compra/locação
+- Forma de pagamento preferida
+
+Lembre-se: você está aqui para ajudar e facilitar a busca do imóvel ideal!`,
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.7,
+      status: 'active',
+      createdBy: adminUser.id,
+      config: {
+        maxTokens: 1024,
+        topP: 1,
+        frequencyPenalty: 0,
+        presencePenalty: 0
+      },
+      channels: {
+        create: [
+          {
+            channel: 'whatsapp',
+            config: {
+              instanceName: 'default',
+              autoRespond: true,
+              businessHours: {
+                enabled: false,
+                timezone: 'America/Sao_Paulo',
+                schedule: {
+                  monday: { start: '09:00', end: '18:00' },
+                  tuesday: { start: '09:00', end: '18:00' },
+                  wednesday: { start: '09:00', end: '18:00' },
+                  thursday: { start: '09:00', end: '18:00' },
+                  friday: { start: '09:00', end: '18:00' }
+                }
+              }
+            },
+            isActive: true
+          }
+        ]
+      }
+    }
+  })
+  console.log('✅ Sofia SDR Agent criado:', sofiaAgent.name)
+
   console.log('🎉 Seed concluído com sucesso!')
 }
 
