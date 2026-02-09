@@ -19,6 +19,11 @@ const menuItems = [
     icon: LayoutDashboard,
   },
   {
+    href: '/dashboard/agents',
+    label: 'Agentes de IA',
+    icon: Bot,
+  },
+  {
     href: '/dashboard/whatsapp',
     label: 'WhatsApp',
     icon: MessageSquare,

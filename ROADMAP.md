@@ -82,11 +82,11 @@ ROI Labs Platform
 - [x] Migrar Sofia SDR como agente default na seed
 
 ### 2.2 Pagina de Agentes
-- [ ] Nova pagina `/dashboard/agents` - lista de agentes com status (ativo/inativo/teste)
-- [ ] Card de agente: nome, descricao, canais, metricas basicas (conversas, resolucao)
-- [ ] Dialogo de criacao: wizard com nome, descricao, personalidade, canal, instrucoes
-- [ ] Pagina de edicao: `/dashboard/agents/[id]` com configuracao completa
-- [ ] Toggle ativar/desativar agente
+- [x] Nova pagina `/dashboard/agents` - lista de agentes com status (ativo/inativo/teste)
+- [x] Card de agente: nome, descricao, canais, metricas basicas (conversas, resolucao)
+- [x] Dialogo de criacao: wizard com nome, descricao, personalidade, canal, instrucoes
+- [x] Pagina de edicao: `/dashboard/agents/[id]` com configuracao completa
+- [x] Toggle ativar/desativar agente
 
 ### 2.3 Roteamento de Mensagens por Agente
 - [ ] Webhook Evolution API rotear mensagem para o agente correto (por instancia WhatsApp)
