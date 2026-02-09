@@ -137,7 +137,7 @@ ROI Labs Platform
 - [x] CRUD API `/api/knowledge` e `/api/knowledge/[id]/documents`
 
 ### 4.2 Upload e Processamento
-- [ ] Upload de documentos (PDF, DOC, TXT) via form multipart
+- [x] Upload de documentos (PDF, DOC, TXT) via form multipart
 - [x] Importacao de URL (fetch + extract text)
 - [x] Entrada de texto manual
 - [x] Chunking de documentos (split em pedacos de ~500 tokens)
@@ -149,7 +149,7 @@ ROI Labs Platform
 
 ### 4.4 Frontend
 - [x] Pagina `/dashboard/knowledge` - lista de bases de conhecimento
-- [ ] Upload drag-and-drop de documentos
+- [x] Upload drag-and-drop de documentos
 - [x] Preview de documentos processados
 - [x] Associar base de conhecimento a agentes
 

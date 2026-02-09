@@ -57,6 +57,9 @@ export default function KnowledgePage() {
     content: '',
     sourceUrl: '',
   })
+  const [uploadFile, setUploadFile] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
 
   useEffect(() => {
     fetchKnowledgeBases()
@@ -119,33 +122,83 @@ export default function KnowledgePage() {
     if (!selectedKnowledgeBaseId) return
 
     try {
-      const payload: any = {
-        title: documentFormData.title,
-        sourceType: documentType,
-      }
+      setUploading(true)
 
-      if (documentType === 'text') {
-        payload.content = documentFormData.content
-        payload.fileType = 'text'
-      } else if (documentType === 'url') {
-        payload.sourceUrl = documentFormData.sourceUrl
-        payload.content = '' // Will be fetched by backend
-        payload.fileType = 'url'
-      }
+      if (documentType === 'file' && uploadFile) {
+        // Upload via multipart/form-data
+        const formData = new FormData()
+        formData.append('file', uploadFile)
+        formData.append('title', documentFormData.title || uploadFile.name)
 
-      const response = await fetch(`/api/knowledge/${selectedKnowledgeBaseId}/documents`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+        const response = await fetch(`/api/knowledge/${selectedKnowledgeBaseId}/documents/upload`, {
+          method: 'POST',
+          body: formData,
+        })
 
-      if (response.ok) {
-        setAddDocumentDialogOpen(false)
-        setDocumentFormData({ title: '', content: '', sourceUrl: '' })
-        fetchKnowledgeBases()
+        if (response.ok) {
+          setAddDocumentDialogOpen(false)
+          setDocumentFormData({ title: '', content: '', sourceUrl: '' })
+          setUploadFile(null)
+          fetchKnowledgeBases()
+        } else {
+          const err = await response.json()
+          alert(err.error || 'Erro ao fazer upload')
+        }
+      } else {
+        // Texto ou URL via JSON
+        const payload: Record<string, string> = {
+          title: documentFormData.title,
+          sourceType: documentType,
+        }
+
+        if (documentType === 'text') {
+          payload.content = documentFormData.content
+          payload.fileType = 'text'
+        } else if (documentType === 'url') {
+          payload.sourceUrl = documentFormData.sourceUrl
+          payload.content = ''
+          payload.fileType = 'url'
+        }
+
+        const response = await fetch(`/api/knowledge/${selectedKnowledgeBaseId}/documents`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+
+        if (response.ok) {
+          setAddDocumentDialogOpen(false)
+          setDocumentFormData({ title: '', content: '', sourceUrl: '' })
+          fetchKnowledgeBases()
+        }
       }
     } catch (error) {
       console.error('Error adding document:', error)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleFileDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      setUploadFile(file)
+      setDocumentType('file')
+      if (!documentFormData.title) {
+        setDocumentFormData({ ...documentFormData, title: file.name.replace(/\.[^.]+$/, '') })
+      }
+    }
+  }
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setUploadFile(file)
+      if (!documentFormData.title) {
+        setDocumentFormData({ ...documentFormData, title: file.name.replace(/\.[^.]+$/, '') })
+      }
     }
   }
 
@@ -382,7 +435,6 @@ export default function KnowledgePage() {
                 size="sm"
                 onClick={() => setDocumentType('file')}
                 className="flex-1"
-                disabled
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Arquivo
@@ -429,14 +481,71 @@ export default function KnowledgePage() {
             )}
 
             {documentType === 'file' && (
-              <div className="py-8 text-center text-white/40">
-                <Upload className="w-8 h-8 mx-auto mb-2" />
-                <p>Upload de arquivos em breve</p>
+              <div
+                className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isDragging
+                    ? 'border-blue-400 bg-blue-400/10'
+                    : 'border-white/20 hover:border-white/40'
+                }`}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleFileDrop}
+              >
+                <input
+                  type="file"
+                  accept=".txt,.md,.csv,.json,.pdf,.doc,.docx"
+                  onChange={handleFileSelect}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                {uploadFile ? (
+                  <div>
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-blue-400" />
+                    <p className="text-white font-medium">{uploadFile.name}</p>
+                    <p className="text-white/40 text-xs mt-1">
+                      {(uploadFile.size / 1024).toFixed(1)} KB
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-2 text-white/40 hover:text-red-400"
+                      onClick={(e) => { e.stopPropagation(); setUploadFile(null) }}
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Remover
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    <Upload className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-blue-400' : 'text-white/40'}`} />
+                    <p className="text-white/60">
+                      {isDragging ? 'Solte o arquivo aqui' : 'Arraste um arquivo ou clique para selecionar'}
+                    </p>
+                    <p className="text-white/30 text-xs mt-2">
+                      Formatos: TXT, MD, CSV, JSON, PDF, DOC, DOCX (max 10MB)
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
-            <Button onClick={handleAddDocument} className="w-full" disabled={!documentFormData.title || (documentType === 'text' && !documentFormData.content) || (documentType === 'url' && !documentFormData.sourceUrl)}>
-              Adicionar Documento
+            <Button
+              onClick={handleAddDocument}
+              className="w-full"
+              disabled={
+                uploading ||
+                (documentType === 'text' && (!documentFormData.title || !documentFormData.content)) ||
+                (documentType === 'url' && (!documentFormData.title || !documentFormData.sourceUrl)) ||
+                (documentType === 'file' && !uploadFile)
+              }
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                'Adicionar Documento'
+              )}
             </Button>
           </div>
         </DialogContent>
