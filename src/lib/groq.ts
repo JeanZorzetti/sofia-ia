@@ -2,7 +2,7 @@ import Groq from 'groq-sdk'
 
 let _groq: Groq | null = null
 
-function getGroqClient(): Groq {
+export function getGroqClient(): Groq {
   if (!_groq) {
     _groq = new Groq({
       apiKey: process.env.GROQ_API_KEY,

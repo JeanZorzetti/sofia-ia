@@ -20,8 +20,10 @@ import {
   XCircle,
   Loader2,
   Settings,
-  Trash2
+  Trash2,
+  Code
 } from 'lucide-react'
+import Link from 'next/link'
 
 interface Integration {
   id: string
@@ -212,10 +214,18 @@ export default function IntegrationsPage() {
             Conecte sistemas externos e expanda os canais de comunicação
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Integração
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/dashboard/integrations/widget">
+              <Code className="mr-2 h-4 w-4" />
+              Web Chat Widget
+            </Link>
+          </Button>
+          <Button onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Integração
+          </Button>
+        </div>
       </div>
 
       {/* Catálogo de Integrações Disponíveis */}

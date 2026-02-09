@@ -231,10 +231,10 @@ ROI Labs Platform
 - [x] E-mail SMTP (enviar emails em workflows e como canal de agente)
 
 ### 7.3 Web Chat Widget
-- [ ] Componente React embeddable para sites de clientes
-- [ ] Endpoint `/api/chat/widget` para comunicacao
-- [ ] Roteamento para agente configurado
-- [ ] Customizacao visual (cores, logo, posicao)
+- [x] Componente React embeddable para sites de clientes
+- [x] Endpoint `/api/chat/widget` para comunicacao
+- [x] Roteamento para agente configurado
+- [x] Customizacao visual (cores, logo, posicao)
 
 ---
 
