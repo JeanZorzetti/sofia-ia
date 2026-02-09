@@ -22,6 +22,7 @@ model User {
   leads     Lead[]
   campaigns Campaign[]
   agents    Agent[]
+  workflows Workflow[]
 
   @@map("users")
 }
@@ -263,4 +264,47 @@ model KnowledgeDocument {
   @@index([knowledgeBaseId])
   @@index([status])
   @@map("knowledge_documents")
+}
+
+model Workflow {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(255)
+  description  String?  @db.Text
+  trigger      Json     @default("{}")
+  conditions   Json     @default("[]")
+  actions      Json     @default("[]")
+  status       String   @default("inactive") @db.VarChar(20)
+  lastRun      DateTime? @map("last_run") @db.Timestamptz()
+  runCount     Int      @default(0) @map("run_count")
+  successCount Int      @default(0) @map("success_count")
+  createdBy    String   @map("created_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  creator    User                @relation(fields: [createdBy], references: [id])
+  executions WorkflowExecution[]
+
+  @@index([status])
+  @@index([createdBy])
+  @@map("workflows")
+}
+
+model WorkflowExecution {
+  id          String    @id @default(uuid()) @db.Uuid
+  workflowId  String    @map("workflow_id") @db.Uuid
+  status      String    @default("pending") @db.VarChar(20)
+  input       Json      @default("{}")
+  output      Json?
+  error       String?   @db.Text
+  duration    Int?
+  startedAt   DateTime  @default(now()) @map("started_at") @db.Timestamptz()
+  completedAt DateTime? @map("completed_at") @db.Timestamptz()
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([status])
+  @@index([startedAt(sort: Desc)])
+  @@map("workflow_executions")
 }

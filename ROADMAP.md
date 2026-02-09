@@ -160,31 +160,31 @@ ROI Labs Platform
 **Objetivo:** Builder visual de automacoes que conectam triggers a acoes.
 
 ### 5.1 Modelo de Workflow
-- [ ] Criar tabela `Workflow` (id, name, description, trigger, conditions JSON, actions JSON, status, lastRun, runCount, successCount)
-- [ ] Criar tabela `WorkflowExecution` (id, workflowId, status, input JSON, output JSON, error, duration, startedAt, completedAt)
-- [ ] CRUD API `/api/workflows` e `/api/workflows/[id]`
-- [ ] API `/api/workflows/[id]/executions` (historico)
-- [ ] API `/api/workflows/[id]/run` (executar manualmente)
+- [x] Criar tabela `Workflow` (id, name, description, trigger, conditions JSON, actions JSON, status, lastRun, runCount, successCount)
+- [x] Criar tabela `WorkflowExecution` (id, workflowId, status, input JSON, output JSON, error, duration, startedAt, completedAt)
+- [x] CRUD API `/api/workflows` e `/api/workflows/[id]`
+- [x] API `/api/workflows/[id]/executions` (historico)
+- [x] API `/api/workflows/[id]/run` (executar manualmente)
 
 ### 5.2 Engine de Execucao
-- [ ] Trigger types: webhook, schedule (cron), evento de agente (nova conversa, lead qualificado, score > X), manual
-- [ ] Action types: enviar mensagem WhatsApp, chamar API externa, atualizar lead, notificar (email/webhook), chamar agente IA
-- [ ] Condition types: if/else baseado em dados do lead, horario, status
-- [ ] Executor sequencial: trigger -> condicao -> acao1 -> acao2
-- [ ] Logging de cada execucao com status e duracao
+- [x] Trigger types: webhook, schedule (cron), evento de agente (nova conversa, lead qualificado, score > X), manual
+- [x] Action types: enviar mensagem WhatsApp, chamar API externa, atualizar lead, notificar (email/webhook), chamar agente IA
+- [x] Condition types: if/else baseado em dados do lead, horario, status
+- [x] Executor sequencial: trigger -> condicao -> acao1 -> acao2
+- [x] Logging de cada execucao com status e duracao
 
 ### 5.3 Workflows Pre-configurados
-- [ ] Template: Qualificacao de Leads (nova mensagem -> IA analisa -> atualiza score)
-- [ ] Template: Follow-up Automatico (lead inativo 24h -> envia mensagem)
-- [ ] Template: Alerta Lead Quente (score > 80 -> notifica via webhook)
-- [ ] Template: Resposta Automatica (mensagem recebida -> IA responde com contexto)
+- [x] Template: Qualificacao de Leads (nova mensagem -> IA analisa -> atualiza score)
+- [x] Template: Follow-up Automatico (lead inativo 24h -> envia mensagem)
+- [x] Template: Alerta Lead Quente (score > 80 -> notifica via webhook)
+- [x] Template: Resposta Automatica (mensagem recebida -> IA responde com contexto)
 
 ### 5.4 Frontend
-- [ ] Refatorar pagina `/dashboard/workflows` para usar dados reais
-- [ ] Lista de workflows com status, ultima execucao, taxa de sucesso
-- [ ] Dialogo de criacao: selecionar trigger, configurar condicoes, adicionar acoes
-- [ ] Pagina de detalhes do workflow com historico de execucoes
-- [ ] Toggle ativar/desativar
+- [x] Refatorar pagina `/dashboard/workflows` para usar dados reais
+- [x] Lista de workflows com status, ultima execucao, taxa de sucesso
+- [x] Dialogo de criacao: selecionar trigger, configurar condicoes, adicionar acoes
+- [x] Pagina de detalhes do workflow com historico de execucoes
+- [x] Toggle ativar/desativar
 
 ---
 
