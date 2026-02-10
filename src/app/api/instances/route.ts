@@ -14,6 +14,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const result = await fetchInstances()
+    if (!result.success) {
+      return NextResponse.json(result, { status: 502 })
+    }
     return NextResponse.json(result)
   } catch (error) {
     return NextResponse.json(
@@ -53,6 +56,9 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await createInstance(instanceName, settings)
+    if (!result.success) {
+      return NextResponse.json(result, { status: 502 })
+    }
     return NextResponse.json(result)
   } catch (error) {
     return NextResponse.json(

@@ -132,38 +132,40 @@ export function useWhatsAppInstances() {
   const refresh = useCallback(async () => {
     try {
       const response = await fetch('/api/instances')
+      const result = await response.json()
 
-      if (response.ok) {
-        const result = await response.json()
-        const raw = Array.isArray(result.data) ? result.data : []
-        // Normalize Evolution API shape: { instance: { instanceName, status }, ... } → flat
-        const list = raw.map((item: any) => {
-          const inst = item.instance || item
-          const status = inst.status === 'open' ? 'connected' : inst.status === 'close' ? 'disconnected' : inst.status || 'unknown'
-          return {
-            id: inst.instanceName || inst.name || item.instanceName || item.name,
-            name: inst.instanceName || inst.name || item.instanceName || item.name,
-            phone: inst.owner || item.owner || '',
-            status,
-            phone_number: inst.owner || item.owner || '',
-          }
-        })
-        setInstances(list)
-
-        const total = list.length
-        const connected = list.filter((i: any) => i.status === 'connected').length
-        setStats({
-          total,
-          connected,
-          disconnected: total - connected,
-        })
-
-        setError(null)
-      } else if (response.status === 401) {
-        setError('Unauthorized')
-      } else {
-        setError('Failed to fetch instances')
+      if (!response.ok || !result.success) {
+        setError(result.error || `HTTP ${response.status}`)
+        setInstances([])
+        setStats({ total: 0, connected: 0, disconnected: 0 })
+        return
       }
+
+      const raw = Array.isArray(result.data) ? result.data : []
+      // Normalize: Evolution API v2 returns { name, connectionStatus, ownerJid, ... }
+      // Evolution API v1 returns { instance: { instanceName, status }, ... }
+      const list = raw.map((item: any) => {
+        const inst = item.instance || item
+        // v2 uses 'connectionStatus', v1 uses 'status'
+        const rawStatus = inst.connectionStatus || inst.status || item.connectionStatus || item.status || 'unknown'
+        const status = rawStatus === 'open' ? 'connected' : rawStatus === 'close' ? 'disconnected' : rawStatus
+        const name = inst.instanceName || inst.name || item.instanceName || item.name || ''
+        const owner = inst.ownerJid || inst.owner || item.ownerJid || item.owner || ''
+        return {
+          id: name,
+          name,
+          phone: owner.replace('@s.whatsapp.net', ''),
+          status,
+          phone_number: owner.replace('@s.whatsapp.net', ''),
+          profileName: inst.profileName || item.profileName || '',
+        }
+      })
+      setInstances(list)
+
+      const total = list.length
+      const connected = list.filter((i: any) => i.status === 'connected').length
+      setStats({ total, connected, disconnected: total - connected })
+      setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch instances')
     } finally {
@@ -179,11 +181,12 @@ export function useWhatsAppInstances() {
         body: JSON.stringify({ instanceName: name }),
       })
 
-      if (response.ok) {
+      const data = await response.json()
+
+      if (response.ok && data.success) {
         await refresh()
         return { success: true }
       } else {
-        const data = await response.json()
         return { success: false, error: data.error || data.message || `HTTP ${response.status}` }
       }
     } catch (err) {
@@ -247,14 +250,15 @@ export function useWhatsAppInstances() {
 
   const getQRCode = useCallback(async (instanceId: string | number) => {
     try {
-      const response = await fetch(`/api/instances/${instanceId}/qr`)
+      const response = await fetch(`/api/instances/${instanceId}/qrcode`)
+      const data = await response.json()
 
-      if (response.ok) {
-        const data = await response.json()
-        return { success: true, qrCode: data.qrCode }
+      if (response.ok && data.success) {
+        // evolution-service retorna: { success, data: { qr_code, ... } } ou { success, source, data: { qr_code } }
+        const qrCode = data.data?.qr_code || data.data?.qrcode || data.qrCode || null
+        return { success: true, qrCode }
       } else {
-        const data = await response.json()
-        return { success: false, error: data.message || 'Failed to get QR code' }
+        return { success: false, error: data.error || data.message || 'Failed to get QR code' }
       }
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : 'Failed to get QR code' }
