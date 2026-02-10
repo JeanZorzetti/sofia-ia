@@ -275,7 +275,7 @@ ROI Labs Platform
 - [x] Canvas visual drag-and-drop para workflows (estilo n8n/Make)
 - [x] Multi-agent orchestration (agentes que colaboram)
 - [x] Knowledge Base com embeddings vetoriais (pgvector)
-- [ ] Natural Language Queries no Analytics ("quantos leads qualificamos essa semana?")
+- [x] Natural Language Queries no Analytics ("quantos leads qualificamos essa semana?")
 - [ ] A/B testing de agentes
 
 ### 9.2 Canais Adicionais
