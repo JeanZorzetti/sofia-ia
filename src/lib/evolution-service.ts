@@ -253,21 +253,25 @@ export async function sendMessage(instanceName: string, number: string, text: st
 export async function processWebhook(webhookData: {
   event: string
   instance: string
-  data: Record<string, unknown>
+  data: unknown
 }): Promise<EvolutionResponse> {
   const { event, instance, data } = webhookData
 
-  switch (event) {
+  // Normalize event name: Evolution API v2 uses "messages.upsert", v1 uses "MESSAGES_UPSERT"
+  const normalizedEvent = event?.toUpperCase().replace(/\./g, '_') || ''
+
+  switch (normalizedEvent) {
     case 'QRCODE_UPDATED':
-      handleQrCodeUpdate(instance, data)
+      handleQrCodeUpdate(instance, data as Record<string, unknown>)
       break
     case 'CONNECTION_UPDATE':
-      handleConnectionUpdate(instance, data)
+      handleConnectionUpdate(instance, data as Record<string, unknown>)
       break
     case 'MESSAGES_UPSERT':
       await handleMessageUpsert(instance, data)
       break
     default:
+      console.log(`[WEBHOOK] Unhandled event: ${event} (normalized: ${normalizedEvent})`)
       return { success: true, message: `Unhandled event: ${event}` }
   }
 
@@ -294,8 +298,21 @@ function handleConnectionUpdate(instance: string, data: Record<string, unknown>)
   }
 }
 
-async function handleMessageUpsert(instance: string, data: Record<string, unknown>) {
-  const messages = (data.messages || []) as Array<Record<string, unknown>>
+async function handleMessageUpsert(instance: string, data: unknown) {
+  // Evolution API v2: data is an array of messages directly
+  // Evolution API v1: data is { messages: [...] }
+  let messages: Array<Record<string, unknown>> = []
+  if (Array.isArray(data)) {
+    messages = data
+  } else if (data && typeof data === 'object') {
+    const dataObj = data as Record<string, unknown>
+    messages = (dataObj.messages || []) as Array<Record<string, unknown>>
+    // v2 single message: data has key, message, etc. directly
+    if (dataObj.key && dataObj.message) {
+      messages = [dataObj]
+    }
+  }
+  console.log(`[WEBHOOK] handleMessageUpsert: ${messages.length} messages from ${instance}`)
   for (const message of messages) {
     const key = message.key as Record<string, unknown>
     if (key?.fromMe) continue
