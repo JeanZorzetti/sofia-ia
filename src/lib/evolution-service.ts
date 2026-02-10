@@ -141,6 +141,7 @@ export async function connectInstance(instanceName: string, number?: string): Pr
       data: {
         pairingCode: data.pairingCode,
         code: data.code,
+        base64: data.base64,
         count: data.count || 1,
       },
       message: number ? 'Pairing code generated' : 'QR code generated',
@@ -554,7 +555,7 @@ export async function getQRCode(instanceName: string, forceRefresh = false) {
       source: 'evolution_api',
       data: {
         instanceName,
-        qr_code: connData.code || connData.pairingCode,
+        qr_code: connData.base64 || connData.code || connData.pairingCode,
         ...connData,
       },
     }
