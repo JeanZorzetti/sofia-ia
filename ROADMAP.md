@@ -279,9 +279,9 @@ ROI Labs Platform
 - [x] A/B testing de agentes
 
 ### 9.2 Canais Adicionais
-- [ ] Instagram DM
-- [ ] Telegram
-- [ ] Voice (telefone)
+- [x] Instagram DM
+- [x] Telegram
+- [x] Voice (telefone)
 
 ### 9.3 Enterprise
 - [ ] Multi-tenancy (workspaces separados)
