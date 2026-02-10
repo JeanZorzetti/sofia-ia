@@ -1,10 +1,12 @@
 import { prisma } from '@/lib/prisma';
-import { searchChunks } from '@/lib/chunking';
+import { searchChunks, hybridSearch, ChunkWithEmbedding } from '@/lib/chunking';
+import { generateQueryEmbedding } from '@/lib/embeddings';
 
 interface Chunk {
   text: string;
   index: number;
   tokens: number;
+  embedding?: number[];
 }
 
 /**
@@ -48,10 +50,10 @@ export async function getKnowledgeContext(
     }
 
     // Agrega todos os chunks de todos os documentos
-    const allChunks: Array<Chunk & { documentTitle: string }> = [];
+    const allChunks: Array<ChunkWithEmbedding & { documentTitle: string }> = [];
 
     for (const doc of documents) {
-      const chunks = doc.chunks as unknown as Chunk[];
+      const chunks = doc.chunks as unknown as ChunkWithEmbedding[];
       if (Array.isArray(chunks)) {
         chunks.forEach((chunk) => {
           allChunks.push({
@@ -66,8 +68,16 @@ export async function getKnowledgeContext(
       return '';
     }
 
-    // Busca os chunks mais relevantes
-    const relevantChunks = searchChunks(allChunks, query, topK);
+    // Tenta gerar embedding da query para busca semântica
+    let queryEmbedding: number[] | null = null;
+    try {
+      queryEmbedding = await generateQueryEmbedding(query);
+    } catch (error) {
+      console.warn('Failed to generate query embedding, falling back to keyword search:', error);
+    }
+
+    // Busca os chunks mais relevantes usando busca híbrida (embeddings + keywords)
+    const relevantChunks = hybridSearch(allChunks, query, queryEmbedding, topK);
 
     if (relevantChunks.length === 0) {
       return '';

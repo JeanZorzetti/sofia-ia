@@ -86,6 +86,10 @@ export function chunkText(text: string, maxChars = TARGET_CHARS): Chunk[] {
   return chunks;
 }
 
+export interface ChunkWithEmbedding extends Chunk {
+  embedding?: number[];
+}
+
 /**
  * Busca chunks relevantes usando keyword matching simples
  */
@@ -127,5 +131,112 @@ export function searchChunks(chunks: Chunk[], query: string, topK = 3): Chunk[] 
   return scoredChunks
     .filter((chunk) => chunk.score > 0)
     .sort((a, b) => b.score - a.score)
+    .slice(0, topK);
+}
+
+/**
+ * Calcula similaridade de cosseno entre dois vetores
+ */
+export function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  if (vecA.length !== vecB.length) {
+    throw new Error('Vetores devem ter o mesmo tamanho');
+  }
+
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+
+  const magnitude = Math.sqrt(normA) * Math.sqrt(normB);
+  if (magnitude === 0) return 0;
+
+  return dotProduct / magnitude;
+}
+
+export interface ChunkWithSimilarity extends ChunkWithEmbedding {
+  similarity?: number;
+}
+
+/**
+ * Busca chunks relevantes usando embeddings vetoriais (similaridade de cosseno)
+ */
+export function searchChunksBySimilarity(
+  chunks: ChunkWithEmbedding[],
+  queryEmbedding: number[],
+  topK = 3
+): ChunkWithSimilarity[] {
+  if (!queryEmbedding || chunks.length === 0) {
+    return [];
+  }
+
+  // Calcula similaridade para cada chunk
+  const scoredChunks: ChunkWithSimilarity[] = chunks
+    .filter(chunk => chunk.embedding && chunk.embedding.length > 0)
+    .map((chunk) => {
+      const similarity = cosineSimilarity(queryEmbedding, chunk.embedding!);
+      return { ...chunk, similarity };
+    });
+
+  // Ordena por similaridade e retorna top K
+  return scoredChunks
+    .sort((a, b) => (b.similarity || 0) - (a.similarity || 0))
+    .slice(0, topK);
+}
+
+/**
+ * Busca híbrida: combina keyword matching e embeddings
+ */
+export function hybridSearch(
+  chunks: ChunkWithEmbedding[],
+  query: string,
+  queryEmbedding: number[] | null,
+  topK = 3,
+  alpha = 0.5 // peso para similaridade (1-alpha para keywords)
+): ChunkWithEmbedding[] {
+  if (chunks.length === 0) {
+    return [];
+  }
+
+  // Se não há embedding, usa apenas keyword
+  if (!queryEmbedding) {
+    return searchChunks(chunks, query, topK) as ChunkWithEmbedding[];
+  }
+
+  // Se não há chunks com embeddings, usa apenas keyword
+  const chunksWithEmbeddings = chunks.filter(c => c.embedding && c.embedding.length > 0);
+  if (chunksWithEmbeddings.length === 0) {
+    return searchChunks(chunks, query, topK) as ChunkWithEmbedding[];
+  }
+
+  // Busca por keywords
+  const keywordResults = searchChunks(chunks, query, chunks.length);
+  const keywordScoreMap = new Map(
+    keywordResults.map((chunk, idx) => [chunk.index, 1 - idx / keywordResults.length])
+  );
+
+  // Busca por similaridade
+  const similarityResults = searchChunksBySimilarity(chunksWithEmbeddings, queryEmbedding, chunks.length);
+  const similarityScoreMap = new Map(
+    similarityResults.map((chunk) => [chunk.index, chunk.similarity || 0])
+  );
+
+  // Combina scores
+  const hybridScores = chunks.map((chunk) => {
+    const keywordScore = keywordScoreMap.get(chunk.index) || 0;
+    const similarityScore = similarityScoreMap.get(chunk.index) || 0;
+    const hybridScore = (1 - alpha) * keywordScore + alpha * similarityScore;
+
+    return { ...chunk, hybridScore };
+  });
+
+  // Ordena por score híbrido e retorna top K
+  return hybridScores
+    .filter((chunk) => chunk.hybridScore > 0)
+    .sort((a, b) => b.hybridScore - a.hybridScore)
     .slice(0, topK);
 }

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
-import { chunkText, type Chunk } from '@/lib/chunking';
+import { chunkText, type Chunk, type ChunkWithEmbedding } from '@/lib/chunking';
+import { generateEmbeddingsBatch } from '@/lib/embeddings';
 
 // GET /api/knowledge/[id]/documents - Lista documentos de uma base
 export async function GET(
@@ -63,7 +64,7 @@ export async function POST(
     // Processa o documento
     let processedContent = content;
     let status = 'processing';
-    let chunks: Chunk[] = [];
+    let chunks: Chunk[] | ChunkWithEmbedding[] = [];
 
     try {
       // Se for URL, faz fetch do conteúdo
@@ -79,6 +80,21 @@ export async function POST(
 
       // Faz chunking do conteúdo
       chunks = chunkText(processedContent);
+
+      // Gera embeddings para os chunks
+      try {
+        const chunkTexts = chunks.map(c => c.text);
+        const embeddings = await generateEmbeddingsBatch(chunkTexts);
+
+        // Adiciona embeddings aos chunks
+        chunks = chunks.map((chunk, index) => ({
+          ...chunk,
+          embedding: embeddings[index],
+        }));
+      } catch (embeddingError) {
+        console.warn('Failed to generate embeddings, saving without them:', embeddingError);
+      }
+
       status = 'completed';
     } catch (error) {
       console.error('Error processing document:', error);

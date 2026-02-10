@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
 import { chunkText } from '@/lib/chunking';
+import { generateEmbeddingsBatch } from '@/lib/embeddings';
 
 // POST /api/knowledge/[id]/documents/upload - Upload de arquivo
 export async function POST(
@@ -79,21 +80,54 @@ export async function POST(
       }
 
       const chunks = chunkText(textContent);
-      status = 'completed';
 
-      const document = await prisma.knowledgeDocument.create({
-        data: {
-          knowledgeBaseId: id,
-          title: title || fileName,
-          content: textContent,
-          sourceUrl: null,
-          fileType,
-          chunks: chunks as any,
-          status,
-        },
-      });
+      // Gerar embeddings para os chunks
+      try {
+        const chunkTexts = chunks.map(c => c.text);
+        const embeddings = await generateEmbeddingsBatch(chunkTexts);
 
-      return NextResponse.json({ document }, { status: 201 });
+        // Adiciona embeddings aos chunks
+        const chunksWithEmbeddings = chunks.map((chunk, index) => ({
+          ...chunk,
+          embedding: embeddings[index],
+        }));
+
+        status = 'completed';
+
+        const document = await prisma.knowledgeDocument.create({
+          data: {
+            knowledgeBaseId: id,
+            title: title || fileName,
+            content: textContent,
+            sourceUrl: null,
+            fileType,
+            chunks: chunksWithEmbeddings as any,
+            status,
+          },
+        });
+
+        return NextResponse.json({ document }, { status: 201 });
+      } catch (embeddingError) {
+        console.warn('Failed to generate embeddings, saving without them:', embeddingError);
+
+        // Salva sem embeddings se houver erro
+        status = 'completed';
+
+        const document = await prisma.knowledgeDocument.create({
+          data: {
+            knowledgeBaseId: id,
+            title: title || fileName,
+            content: textContent,
+            sourceUrl: null,
+            fileType,
+            chunks: chunks as any,
+            status,
+          },
+        });
+
+        return NextResponse.json({ document, warning: 'Documento processado sem embeddings' }, { status: 201 });
+      }
+
     } catch (processingError) {
       console.error('Error processing file:', processingError);
 
