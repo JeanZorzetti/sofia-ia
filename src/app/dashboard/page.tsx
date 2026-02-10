@@ -392,14 +392,14 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center gap-4">
                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
-                      {conversation.contact_name?.[0]?.toUpperCase() || 'U'}
+                      {conversation.contact?.name?.[0]?.toUpperCase() || 'U'}
                     </div>
                     <div>
                       <p className="text-white font-medium">
-                        {conversation.contact_name || 'Usuário Anônimo'}
+                        {conversation.contact?.name || 'Usuário Anônimo'}
                       </p>
                       <p className="text-sm text-white/60">
-                        {conversation.last_message || 'Sem mensagens'}
+                        {conversation.last_message?.text || 'Sem mensagens'}
                       </p>
                     </div>
                   </div>
