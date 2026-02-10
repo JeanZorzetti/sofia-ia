@@ -43,11 +43,17 @@ interface KnowledgeBase {
   name: string
 }
 
+interface WhatsappInstance {
+  name: string
+  connectionStatus: string
+}
+
 export default function AgentEditPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
   const [agent, setAgent] = useState<Agent | null>(null)
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([])
+  const [whatsappInstances, setWhatsappInstances] = useState<WhatsappInstance[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -60,6 +66,7 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
     knowledgeBaseId: '',
     channels: {
       whatsapp: false,
+      whatsappInstance: '',
       webchat: false,
       email: false
     }
@@ -68,6 +75,7 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     fetchAgent()
     fetchKnowledgeBases()
+    fetchWhatsappInstances()
   }, [resolvedParams.id])
 
   const fetchAgent = async () => {
@@ -79,6 +87,7 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
       if (result.success && result.data) {
         const agentData = result.data
         setAgent(agentData)
+        const whatsappChannel = agentData.channels.find((ch: any) => ch.channel === 'whatsapp')
         setFormData({
           name: agentData.name,
           description: agentData.description || '',
@@ -88,7 +97,8 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
           status: agentData.status,
           knowledgeBaseId: agentData.knowledgeBaseId || '',
           channels: {
-            whatsapp: agentData.channels.some((ch: any) => ch.channel === 'whatsapp'),
+            whatsapp: !!whatsappChannel,
+            whatsappInstance: whatsappChannel?.config?.instanceName || '',
             webchat: agentData.channels.some((ch: any) => ch.channel === 'webchat'),
             email: agentData.channels.some((ch: any) => ch.channel === 'email')
           }
@@ -114,13 +124,33 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
     }
   }
 
+  const fetchWhatsappInstances = async () => {
+    try {
+      const response = await fetch('/api/instances')
+      const result = await response.json()
+      const instances: any[] = result.data || []
+      setWhatsappInstances(
+        instances.map((inst: any) => ({
+          name: inst.name || inst.instance?.instanceName,
+          connectionStatus: inst.connectionStatus || inst.instance?.status,
+        }))
+      )
+    } catch (error) {
+      console.error('Error fetching WhatsApp instances:', error)
+    }
+  }
+
   const handleSave = async () => {
     try {
       setSaving(true)
 
       const channels = []
       if (formData.channels.whatsapp) {
-        channels.push({ channel: 'whatsapp', config: {}, isActive: true })
+        channels.push({
+          channel: 'whatsapp',
+          config: { instanceName: formData.channels.whatsappInstance || null },
+          isActive: true
+        })
       }
       if (formData.channels.webchat) {
         channels.push({ channel: 'webchat', config: {}, isActive: true })
@@ -335,20 +365,47 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
               <CardTitle className="text-white">Canais Ativos</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">
-                <div className="flex items-center gap-3">
-                  <MessageSquare className="h-5 w-5 text-green-400" />
-                  <span className="text-white">WhatsApp</span>
+              <div className="rounded-lg bg-white/5 overflow-hidden">
+                <div className="flex items-center justify-between p-3">
+                  <div className="flex items-center gap-3">
+                    <MessageSquare className="h-5 w-5 text-green-400" />
+                    <span className="text-white">WhatsApp</span>
+                  </div>
+                  <Switch
+                    checked={formData.channels.whatsapp}
+                    onCheckedChange={(checked) =>
+                      setFormData({
+                        ...formData,
+                        channels: { ...formData.channels, whatsapp: checked }
+                      })
+                    }
+                  />
                 </div>
-                <Switch
-                  checked={formData.channels.whatsapp}
-                  onCheckedChange={(checked) =>
-                    setFormData({
-                      ...formData,
-                      channels: { ...formData.channels, whatsapp: checked }
-                    })
-                  }
-                />
+                {formData.channels.whatsapp && (
+                  <div className="px-3 pb-3 border-t border-white/10 pt-3">
+                    <Label className="text-xs text-white/60 mb-2 block">Instância</Label>
+                    <select
+                      className="w-full rounded-lg border border-white/10 bg-[#0a0a0b] px-3 py-2 text-sm text-white"
+                      value={formData.channels.whatsappInstance}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          channels: { ...formData.channels, whatsappInstance: e.target.value }
+                        })
+                      }
+                    >
+                      <option value="">Qualquer instância conectada</option>
+                      {whatsappInstances.map((inst) => (
+                        <option key={inst.name} value={inst.name}>
+                          {inst.name} {inst.connectionStatus === 'open' ? '🟢' : '🔴'}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-xs text-white/40">
+                      Vincule este agente a uma instância específica do WhatsApp
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-lg bg-white/5">

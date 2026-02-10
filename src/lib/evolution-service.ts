@@ -433,21 +433,43 @@ async function handleMessageUpsert(instance: string, data: unknown) {
         return
       }
 
-      // Buscar agente ativo para WhatsApp nesta instância
-      const agent = await prisma.agent.findFirst({
+      // Buscar agente ativo para WhatsApp: preferir agente vinculado a esta instância,
+      // depois fallback para agente sem instância definida ("Qualquer instância")
+      let agent = await prisma.agent.findFirst({
         where: {
           status: 'active',
           channels: {
             some: {
               channel: 'whatsapp',
-              isActive: true
+              isActive: true,
+              config: { path: ['instanceName'], equals: instance }
             }
           }
         },
-        include: {
-          channels: true
-        }
+        include: { channels: true }
       })
+
+      if (!agent) {
+        // Fallback: agente com WhatsApp ativo sem instância específica definida
+        agent = await prisma.agent.findFirst({
+          where: {
+            status: 'active',
+            channels: {
+              some: {
+                channel: 'whatsapp',
+                isActive: true,
+                OR: [
+                  { config: { path: ['instanceName'], equals: null } },
+                  { config: { path: ['instanceName'], equals: '' } },
+                ]
+              }
+            }
+          },
+          include: { channels: true }
+        })
+      }
+
+      console.log(`[WEBHOOK] Agente para instância "${instance}": ${agent?.name || 'nenhum'}`)
 
       if (agent) {
         // Usar IA para gerar resposta com o agente encontrado

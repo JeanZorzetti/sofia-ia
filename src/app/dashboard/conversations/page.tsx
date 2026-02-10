@@ -21,6 +21,7 @@ import {
   UserCheck,
   Loader2,
   Filter,
+  RotateCcw,
 } from 'lucide-react'
 
 interface Lead {
@@ -68,6 +69,7 @@ export default function ConversationsPage() {
   const [messageInput, setMessageInput] = useState('')
   const [loading, setLoading] = useState(true)
   const [sendingMessage, setSendingMessage] = useState(false)
+  const [resettingMemory, setResettingMemory] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [channelFilter, setChannelFilter] = useState<string>('all')
@@ -201,6 +203,28 @@ export default function ConversationsPage() {
       }
     } catch (error) {
       console.error('Erro ao encerrar conversa:', error)
+    }
+  }
+
+  const handleResetMemory = async () => {
+    if (!selectedConversation) return
+    if (!confirm('Isso apagará todas as mensagens desta conversa. A IA começará do zero na próxima mensagem. Confirmar?')) return
+
+    try {
+      setResettingMemory(true)
+      const response = await fetch(
+        `/api/conversations/${selectedConversation.id}/reset`,
+        { method: 'POST' }
+      )
+      const result = await response.json()
+      if (result.success) {
+        setMessages([])
+        fetchConversations()
+      }
+    } catch (error) {
+      console.error('Erro ao resetar memória:', error)
+    } finally {
+      setResettingMemory(false)
     }
   }
 
@@ -412,6 +436,21 @@ export default function ConversationsPage() {
                     Devolver para IA
                   </Button>
                 )}
+                <Button
+                  onClick={handleResetMemory}
+                  disabled={resettingMemory}
+                  size="sm"
+                  variant="outline"
+                  className="border-orange-500/40 text-orange-400 hover:bg-orange-500/10"
+                  title="Apaga todas as mensagens e reinicia a memória da IA"
+                >
+                  {resettingMemory ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                  )}
+                  Resetar Memória
+                </Button>
                 <Button
                   onClick={handleCloseConversation}
                   size="sm"
