@@ -276,7 +276,7 @@ ROI Labs Platform
 - [x] Multi-agent orchestration (agentes que colaboram)
 - [x] Knowledge Base com embeddings vetoriais (pgvector)
 - [x] Natural Language Queries no Analytics ("quantos leads qualificamos essa semana?")
-- [ ] A/B testing de agentes
+- [x] A/B testing de agentes
 
 ### 9.2 Canais Adicionais
 - [ ] Instagram DM

@@ -416,3 +416,46 @@ model OrchestrationExecution {
   @@index([startedAt(sort: Desc)])
   @@map("orchestration_executions")
 }
+
+model ABTest {
+  id               String    @id @default(uuid()) @db.Uuid
+  name             String    @db.VarChar(255)
+  description      String?   @db.Text
+  agentAId         String    @map("agent_a_id") @db.Uuid
+  agentBId         String    @map("agent_b_id") @db.Uuid
+  trafficSplit     Int       @default(50) @map("traffic_split")
+  status           String    @default("draft") @db.VarChar(20)
+  startedAt        DateTime? @map("started_at") @db.Timestamptz()
+  endedAt          DateTime? @map("ended_at") @db.Timestamptz()
+  totalInteractions Int      @default(0) @map("total_interactions")
+  winnerAgentId    String?   @map("winner_agent_id") @db.Uuid
+  createdBy        String    @map("created_by") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  interactions ABTestInteraction[]
+
+  @@index([status])
+  @@index([createdBy])
+  @@index([startedAt])
+  @@map("ab_tests")
+}
+
+model ABTestInteraction {
+  id             String   @id @default(uuid()) @db.Uuid
+  testId         String   @map("test_id") @db.Uuid
+  agentId        String   @map("agent_id") @db.Uuid
+  conversationId String   @map("conversation_id") @db.Uuid
+  variant        String   @db.VarChar(1)
+  metrics        Json     @default("{}")
+  outcome        String?  @db.VarChar(50)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  test ABTest @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@index([testId])
+  @@index([agentId])
+  @@index([conversationId])
+  @@index([createdAt(sort: Desc)])
+  @@map("ab_test_interactions")
+}
