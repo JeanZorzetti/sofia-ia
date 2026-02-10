@@ -450,7 +450,7 @@ async function handleMessageUpsert(instance: string, data: unknown) {
       })
 
       if (!agent) {
-        // Fallback: agente com WhatsApp ativo sem instância específica definida
+        // Fallback: qualquer agente com WhatsApp ativo (sem instância específica ou com outra)
         agent = await prisma.agent.findFirst({
           where: {
             status: 'active',
@@ -458,10 +458,6 @@ async function handleMessageUpsert(instance: string, data: unknown) {
               some: {
                 channel: 'whatsapp',
                 isActive: true,
-                OR: [
-                  { config: { path: ['instanceName'], equals: null } },
-                  { config: { path: ['instanceName'], equals: '' } },
-                ]
               }
             }
           },
