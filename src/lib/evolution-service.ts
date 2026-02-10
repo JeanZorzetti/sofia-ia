@@ -339,15 +339,6 @@ async function handleMessageUpsert(instance: string, data: unknown) {
     const messageId = (key.id as string) || `msg_${Date.now()}`
 
     try {
-      // Deduplicação: verificar se mensagem já foi processada (evita resposta duplicada de múltiplas instâncias)
-      const existingMsg = await prisma.message.findFirst({
-        where: { whatsappMessageId: messageId }
-      })
-      if (existingMsg) {
-        console.log(`[WEBHOOK] Mensagem ${messageId} já processada, ignorando duplicata de ${instance}`)
-        continue
-      }
-
       // 1. Buscar ou criar Lead
       let lead = await prisma.lead.findUnique({
         where: { telefone: phoneNumber }
@@ -402,19 +393,29 @@ async function handleMessageUpsert(instance: string, data: unknown) {
         console.log('✅ Nova conversa criada:', conversation.id)
       }
 
-      // 3. Salvar mensagem recebida no banco
-      await prisma.message.create({
-        data: {
-          conversationId: conversation.id,
-          leadId: lead.id,
-          whatsappMessageId: messageId,
-          sender: 'user',
-          messageType: 'text',
-          content: text,
-          isAiGenerated: false,
-          sentAt: new Date(),
+      // 3. Salvar mensagem recebida no banco (constraint @unique em whatsappMessageId garante atomicidade)
+      try {
+        await prisma.message.create({
+          data: {
+            conversationId: conversation.id,
+            leadId: lead.id,
+            whatsappMessageId: messageId,
+            sender: 'user',
+            messageType: 'text',
+            content: text,
+            isAiGenerated: false,
+            sentAt: new Date(),
+          }
+        })
+      } catch (createErr: unknown) {
+        const prismaError = createErr as { code?: string }
+        if (prismaError?.code === 'P2002') {
+          // Outra instância já processou esta mensagem (race condition resolvida pelo DB)
+          console.log(`[WEBHOOK] Mensagem ${messageId} já processada por outra instância, ignorando`)
+          continue
         }
-      })
+        throw createErr
+      }
 
       // 4. Atualizar contador de mensagens da conversa
       await prisma.conversation.update({

@@ -114,6 +114,9 @@ export async function chatWithAgent(
     }
   }
 
+  // Guardrail fixo: impede que a IA invente dados que não possui (agenda, preços exatos, etc.)
+  systemPrompt += `\n\n---\nREGRAS INVIOLÁVEIS DO SISTEMA:\n- NUNCA confirme horários ou datas disponíveis específicos sem que a informação esteja explicitamente no contexto acima. Diga que um responsável confirmará em breve.\n- NUNCA invente preços, endereços ou informações operacionais que não constem no contexto.\n- Se não souber algo, diga: "Vou verificar e um de nossos atendentes entrará em contato para confirmar."`
+
   const completion = await getGroqClient().chat.completions.create({
     model: agent.model,
     messages: [{ role: 'system', content: systemPrompt }, ...messages],

@@ -95,7 +95,7 @@ model Message {
   id                String    @id @default(uuid()) @db.Uuid
   conversationId    String    @map("conversation_id") @db.Uuid
   leadId            String    @map("lead_id") @db.Uuid
-  whatsappMessageId String?   @map("whatsapp_message_id") @db.VarChar(255)
+  whatsappMessageId String?   @unique @map("whatsapp_message_id") @db.VarChar(255)
   sender            String    @db.VarChar(20)
   messageType       String    @default("text") @map("message_type") @db.VarChar(20)
   content           String    @db.Text
