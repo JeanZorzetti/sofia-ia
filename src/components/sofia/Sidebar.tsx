@@ -94,11 +94,6 @@ const menuItems = [
     icon: MessageSquare,
   },
   {
-    href: '/dashboard/sdr-config',
-    label: 'SDR Config',
-    icon: Bot,
-  },
-  {
     href: '/dashboard/billing',
     label: 'Billing',
     icon: CreditCard,
