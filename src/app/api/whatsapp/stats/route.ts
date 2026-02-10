@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     const statusCounts: { connected: number; disconnected: number; connecting: number; pending: number } = instances.reduce(
       (acc: { connected: number; disconnected: number; connecting: number; pending: number }, inst: any) => {
-        const status = inst?.instance?.status || inst?.status || 'pending';
+        const status = inst?.connectionStatus || inst?.instance?.status || inst?.status || 'pending';
         if (status === 'open' || status === 'connected') acc.connected++;
         else if (status === 'close' || status === 'disconnected') acc.disconnected++;
         else if (status === 'connecting') acc.connecting++;
