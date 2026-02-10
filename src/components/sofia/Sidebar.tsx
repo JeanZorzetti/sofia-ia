@@ -17,6 +17,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
+  Users,
+  FlaskConical,
+  Activity,
+  Store,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -50,6 +54,11 @@ const menuItems = [
     icon: Workflow,
   },
   {
+    href: '/dashboard/orchestrations',
+    label: 'Orquestrações',
+    icon: Users,
+  },
+  {
     href: '/dashboard/integrations',
     label: 'Integrações',
     icon: Plug,
@@ -60,9 +69,24 @@ const menuItems = [
     icon: BarChart3,
   },
   {
+    href: '/dashboard/ab-tests',
+    label: 'A/B Tests',
+    icon: FlaskConical,
+  },
+  {
     href: '/dashboard/templates',
     label: 'Templates',
     icon: LayoutTemplate,
+  },
+  {
+    href: '/dashboard/marketplace',
+    label: 'Marketplace',
+    icon: Store,
+  },
+  {
+    href: '/dashboard/monitoring',
+    label: 'Monitoramento',
+    icon: Activity,
   },
   {
     href: '/dashboard/whatsapp',

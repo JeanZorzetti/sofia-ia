@@ -21,7 +21,10 @@ import {
   Loader2,
   Settings,
   Trash2,
-  Code
+  Code,
+  Instagram,
+  Send,
+  Phone,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -214,11 +217,29 @@ export default function IntegrationsPage() {
             Conecte sistemas externos e expanda os canais de comunicação
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline">
             <Link href="/dashboard/integrations/widget">
               <Code className="mr-2 h-4 w-4" />
-              Web Chat Widget
+              Web Chat
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/integrations/instagram">
+              <Instagram className="mr-2 h-4 w-4" />
+              Instagram
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/integrations/telegram">
+              <Send className="mr-2 h-4 w-4" />
+              Telegram
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/integrations/voice">
+              <Phone className="mr-2 h-4 w-4" />
+              Voice
             </Link>
           </Button>
           <Button onClick={() => setCreateDialogOpen(true)}>

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Settings, Users, Building2, Key, Shield } from 'lucide-react';
+import { Settings, Users, Building2, Key, Shield, Lock, Scale, Palette } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function SettingsPage() {
@@ -33,6 +33,27 @@ export default function SettingsPage() {
       icon: Shield,
       href: '/dashboard/settings/audit',
       color: 'text-green-500',
+    },
+    {
+      title: 'SSO / SAML',
+      description: 'Configure login único com SAML 2.0 ou OAuth/OIDC',
+      icon: Lock,
+      href: '/dashboard/settings/sso',
+      color: 'text-cyan-500',
+    },
+    {
+      title: 'Compliance LGPD',
+      description: 'Gerencie privacidade, exportação e exclusão de dados',
+      icon: Scale,
+      href: '/dashboard/settings/compliance',
+      color: 'text-red-500',
+    },
+    {
+      title: 'Whitelabel',
+      description: 'Personalize logo, cores e domínio da plataforma',
+      icon: Palette,
+      href: '/dashboard/settings/whitelabel',
+      color: 'text-pink-500',
     },
   ];
 
