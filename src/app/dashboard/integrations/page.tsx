@@ -66,13 +66,41 @@ const integrationTypes = [
   },
 ]
 
+// Campos de credenciais por tipo de integração
+const credentialFields: Record<string, { key: string; label: string; placeholder: string; type?: string }[]> = {
+  whatsapp: [
+    { key: 'evolutionApiUrl', label: 'Evolution API URL', placeholder: 'https://sua-evolution-api.com' },
+    { key: 'apiKey', label: 'API Key', placeholder: 'Sua API key da Evolution', type: 'password' },
+    { key: 'instanceName', label: 'Nome da Instância', placeholder: 'Ex: atendimento-principal' },
+  ],
+  webhook: [
+    { key: 'url', label: 'URL do Webhook', placeholder: 'https://exemplo.com/webhook' },
+    { key: 'secret', label: 'Secret (opcional)', placeholder: 'Token de verificação', type: 'password' },
+    { key: 'method', label: 'Método HTTP', placeholder: 'POST' },
+  ],
+  api_rest: [
+    { key: 'baseUrl', label: 'Base URL', placeholder: 'https://api.exemplo.com/v1' },
+    { key: 'apiKey', label: 'API Key / Token', placeholder: 'Bearer token ou API key', type: 'password' },
+    { key: 'headerName', label: 'Nome do Header de Auth', placeholder: 'Authorization' },
+  ],
+  email_smtp: [
+    { key: 'host', label: 'Servidor SMTP', placeholder: 'smtp.gmail.com' },
+    { key: 'port', label: 'Porta', placeholder: '587' },
+    { key: 'user', label: 'Usuário / Email', placeholder: 'seu@email.com' },
+    { key: 'password', label: 'Senha / App Password', placeholder: 'Senha do SMTP', type: 'password' },
+    { key: 'fromName', label: 'Nome do Remetente', placeholder: 'Sofia IA' },
+  ],
+}
+
 export default function IntegrationsPage() {
   const [integrations, setIntegrations] = useState<Integration[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false)
   const [configDialogOpen, setConfigDialogOpen] = useState<boolean>(false)
   const [testingId, setTestingId] = useState<string | null>(null)
+  const [saving, setSaving] = useState<boolean>(false)
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null)
+  const [credentialValues, setCredentialValues] = useState<Record<string, string>>({})
   const [newIntegration, setNewIntegration] = useState({
     name: '',
     type: 'whatsapp',
@@ -173,9 +201,47 @@ export default function IntegrationsPage() {
     }
   }
 
-  const handleOpenConfig = (integration: Integration) => {
+  const handleOpenConfig = async (integration: Integration) => {
     setSelectedIntegration(integration)
+    // Inicializar com campos vazios para o tipo
+    const fields = credentialFields[integration.type] || []
+    const initial: Record<string, string> = {}
+    fields.forEach(f => { initial[f.key] = '' })
+    // Preencher com config existente (credenciais reais não vêm da API por segurança)
+    const cfg = (integration.config || {}) as Record<string, string>
+    fields.forEach(f => {
+      if (cfg[f.key]) initial[f.key] = cfg[f.key]
+    })
+    setCredentialValues(initial)
     setConfigDialogOpen(true)
+  }
+
+  const handleSaveConfig = async () => {
+    if (!selectedIntegration) return
+    setSaving(true)
+    try {
+      const response = await fetch(`/api/integrations/${selectedIntegration.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          credentials: credentialValues,
+          config: credentialValues,
+          status: 'active',
+        }),
+      })
+      if (response.ok) {
+        alert('Configuração salva com sucesso!')
+        setConfigDialogOpen(false)
+        fetchIntegrations()
+      } else {
+        const err = await response.json()
+        alert(`Erro: ${err.error || 'Falha ao salvar'}`)
+      }
+    } catch (error) {
+      alert('Erro de conexão ao salvar configuração')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -432,25 +498,37 @@ export default function IntegrationsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de Configuração (placeholder) */}
+      {/* Dialog de Configuração */}
       <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Configurar Integração</DialogTitle>
+            <DialogTitle>Configurar {selectedIntegration?.name}</DialogTitle>
             <DialogDescription>
-              {selectedIntegration?.name}
+              {getTypeLabel(selectedIntegration?.type || '')} - Preencha as credenciais de acesso
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4">
-            <p className="text-sm text-muted-foreground">
-              A configuração detalhada de credenciais será implementada na próxima tarefa.
-            </p>
+          <div className="space-y-4 py-2">
+            {(credentialFields[selectedIntegration?.type || ''] || []).map((field) => (
+              <div key={field.key}>
+                <Label htmlFor={`cred-${field.key}`}>{field.label}</Label>
+                <Input
+                  id={`cred-${field.key}`}
+                  type={field.type || 'text'}
+                  placeholder={field.placeholder}
+                  value={credentialValues[field.key] || ''}
+                  onChange={(e) => setCredentialValues({ ...credentialValues, [field.key]: e.target.value })}
+                />
+              </div>
+            ))}
           </div>
 
           <DialogFooter>
-            <Button onClick={() => setConfigDialogOpen(false)}>
-              Fechar
+            <Button variant="outline" onClick={() => setConfigDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveConfig} disabled={saving}>
+              {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Salvando...</> : 'Salvar Configuração'}
             </Button>
           </DialogFooter>
         </DialogContent>
