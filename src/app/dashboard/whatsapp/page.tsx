@@ -29,13 +29,23 @@ export default function WhatsAppPage() {
     instanceName: ''
   })
 
+  const [creating, setCreating] = useState(false)
+
   const handleCreateInstance = async () => {
     if (!newInstanceName.trim()) return
-    const result = await createInstance(newInstanceName, '')
-    const success = result.success
-    if (success) {
-      setNewInstanceName('')
-      setIsCreateDialogOpen(false)
+    setCreating(true)
+    try {
+      const result = await createInstance(newInstanceName, '')
+      if (result.success) {
+        setNewInstanceName('')
+        setIsCreateDialogOpen(false)
+      } else {
+        alert(`Erro ao criar instância: ${result.error || 'Erro desconhecido'}`)
+      }
+    } catch (err) {
+      alert(`Erro de conexão: ${err instanceof Error ? err.message : 'Erro desconhecido'}`)
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -138,8 +148,8 @@ export default function WhatsAppPage() {
               <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button className="button-luxury" onClick={handleCreateInstance}>
-                Criar
+              <Button className="button-luxury" onClick={handleCreateInstance} disabled={creating || !newInstanceName.trim()}>
+                {creating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Criando...</> : 'Criar'}
               </Button>
             </DialogFooter>
           </DialogContent>
