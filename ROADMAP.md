@@ -284,12 +284,12 @@ ROI Labs Platform
 - [x] Voice (telefone)
 
 ### 9.3 Enterprise
-- [ ] Multi-tenancy (workspaces separados)
-- [ ] SSO/SAML
-- [ ] Compliance dashboard (LGPD)
-- [ ] Whitelabel
+- [x] Multi-tenancy (workspaces separados)
+- [x] SSO/SAML
+- [x] Compliance dashboard (LGPD)
+- [x] Whitelabel
 - [x] API publica com documentacao OpenAPI
-- [ ] Marketplace de templates da comunidade
+- [x] Marketplace de templates da comunidade
 
 ### 9.4 Infraestrutura
 - [x] Testes automatizados (Jest + Playwright)

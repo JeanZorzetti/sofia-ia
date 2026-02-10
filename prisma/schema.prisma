@@ -15,15 +15,18 @@ model User {
   role         String    @default("agent") @db.VarChar(50)
   status       String    @default("active") @db.VarChar(20)
   permissions  Json      @default("{}")
+  workspaceId  String?   @map("workspace_id") @db.Uuid
   lastLogin    DateTime? @map("last_login") @db.Timestamptz()
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
+  workspace Workspace?    @relation(fields: [workspaceId], references: [id])
   leads     Lead[]
   campaigns Campaign[]
   agents    Agent[]
   workflows Workflow[]
 
+  @@index([workspaceId])
   @@map("users")
 }
 
@@ -458,4 +461,62 @@ model ABTestInteraction {
   @@index([conversationId])
   @@index([createdAt(sort: Desc)])
   @@map("ab_test_interactions")
+}
+
+model Workspace {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(255)
+  slug        String   @unique @db.VarChar(100)
+  domain      String?  @db.VarChar(255)
+  plan        String   @default("free") @db.VarChar(50)
+  status      String   @default("active") @db.VarChar(20)
+  settings    Json     @default("{}")
+  branding    Json     @default("{}")
+  ownerId     String   @map("owner_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  users User[]
+
+  @@index([slug])
+  @@index([ownerId])
+  @@index([status])
+  @@map("workspaces")
+}
+
+model SsoConfig {
+  id              String   @id @default(uuid()) @db.Uuid
+  workspaceId     String   @map("workspace_id") @db.Uuid
+  provider        String   @db.VarChar(50)
+  enabled         Boolean  @default(false)
+  config          Json     @default("{}")
+  credentials     Json     @default("{}")
+  metadata        Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@unique([workspaceId, provider])
+  @@index([workspaceId])
+  @@map("sso_configs")
+}
+
+model ComplianceLog {
+  id              String   @id @default(uuid()) @db.Uuid
+  workspaceId     String?  @map("workspace_id") @db.Uuid
+  leadId          String?  @map("lead_id") @db.Uuid
+  userId          String?  @map("user_id") @db.Uuid
+  action          String   @db.VarChar(100)
+  category        String   @db.VarChar(50)
+  details         Json     @default("{}")
+  ipAddress       String?  @map("ip_address") @db.VarChar(50)
+  userAgent       String?  @map("user_agent") @db.Text
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([workspaceId])
+  @@index([leadId])
+  @@index([userId])
+  @@index([action])
+  @@index([category])
+  @@index([createdAt(sort: Desc)])
+  @@map("compliance_logs")
 }
