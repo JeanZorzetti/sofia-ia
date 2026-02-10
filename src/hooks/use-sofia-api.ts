@@ -172,21 +172,27 @@ export function useWhatsAppInstances() {
   }, [])
 
   const createInstance = useCallback(async (name: string, phone: string) => {
+    console.log('[Hook] createInstance chamado com name:', name)
     try {
+      console.log('[Hook] Fazendo POST /api/instances...')
       const response = await fetch('/api/instances', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ instanceName: name }),
       })
+      console.log('[Hook] Response status:', response.status)
 
       if (response.ok) {
+        console.log('[Hook] Sucesso, fazendo refresh...')
         await refresh()
         return { success: true }
       } else {
         const data = await response.json()
-        return { success: false, error: data.message || 'Failed to create instance' }
+        console.log('[Hook] Erro resposta:', JSON.stringify(data))
+        return { success: false, error: data.error || data.message || `HTTP ${response.status}` }
       }
     } catch (err) {
+      console.error('[Hook] Exceção:', err)
       return { success: false, error: err instanceof Error ? err.message : 'Failed to create instance' }
     }
   }, [refresh])
