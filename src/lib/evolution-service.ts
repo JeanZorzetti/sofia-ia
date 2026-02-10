@@ -226,24 +226,32 @@ export async function setPresence(instanceName: string, presence: string): Promi
 
 export async function sendMessage(instanceName: string, number: string, text: string): Promise<EvolutionResponse> {
   try {
+    // Limpar número: remover @s.whatsapp.net se presente
+    const cleanNumber = number.replace('@s.whatsapp.net', '').replace('@g.us', '')
+
+    console.log(`[SEND] Enviando para ${cleanNumber} via instância ${instanceName}`)
+
+    // Evolution API v2 format: { number, text } (NOT { number, textMessage: { text } })
     const res = await evoFetch(`/message/sendText/${instanceName}`, {
       method: 'POST',
       body: JSON.stringify({
-        number,
-        options: { delay: 1200, presence: 'composing' },
-        textMessage: { text },
+        number: cleanNumber,
+        text,
       }),
     })
 
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}))
+      console.error(`[SEND] Falha HTTP ${res.status}:`, JSON.stringify(errData))
       return { success: false, error: `HTTP ${res.status}`, details: errData }
     }
 
     const data = await res.json()
+    console.log(`[SEND] Mensagem enviada com sucesso para ${cleanNumber}`)
     return { success: true, data }
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error'
+    console.error(`[SEND] Erro ao enviar mensagem:`, msg)
     return { success: false, error: msg }
   }
 }
@@ -328,8 +336,18 @@ async function handleMessageUpsert(instance: string, data: unknown) {
 
     // Extrair número de telefone do contact (remover @s.whatsapp.net)
     const phoneNumber = contact.replace('@s.whatsapp.net', '')
+    const messageId = (key.id as string) || `msg_${Date.now()}`
 
     try {
+      // Deduplicação: verificar se mensagem já foi processada (evita resposta duplicada de múltiplas instâncias)
+      const existingMsg = await prisma.message.findFirst({
+        where: { whatsappMessageId: messageId }
+      })
+      if (existingMsg) {
+        console.log(`[WEBHOOK] Mensagem ${messageId} já processada, ignorando duplicata de ${instance}`)
+        continue
+      }
+
       // 1. Buscar ou criar Lead
       let lead = await prisma.lead.findUnique({
         where: { telefone: phoneNumber }
@@ -385,7 +403,6 @@ async function handleMessageUpsert(instance: string, data: unknown) {
       }
 
       // 3. Salvar mensagem recebida no banco
-      const messageId = (key.id as string) || `msg_${Date.now()}`
       await prisma.message.create({
         data: {
           conversationId: conversation.id,
@@ -457,7 +474,10 @@ async function handleMessageUpsert(instance: string, data: unknown) {
           })
 
           if (aiResponse.message) {
-            await sendMessage(instance, contact, aiResponse.message)
+            const sendResult = await sendMessage(instance, contact, aiResponse.message)
+            if (!sendResult.success) {
+              console.error(`[WEBHOOK] Falha ao enviar resposta via WhatsApp:`, sendResult.error, sendResult.details)
+            }
 
             // Salvar resposta da IA no banco
             await prisma.message.create({
