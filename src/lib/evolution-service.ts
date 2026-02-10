@@ -36,24 +36,14 @@ async function evoFetch(path: string, options: RequestInit = {}): Promise<Respon
 
 // --- Instance Management ---
 
-export async function createInstance(instanceName: string, settings: Record<string, unknown> = {}): Promise<EvolutionResponse> {
+export async function createInstance(instanceName: string, _settings: Record<string, unknown> = {}): Promise<EvolutionResponse> {
   try {
+    // Evolution API v2.3.0 only accepts minimal params for creation
+    // Webhook and other settings must be configured separately after creation
     const body = {
       instanceName,
-      qrcode: true,
       integration: 'WHATSAPP-BAILEYS',
-      webhookUrl: WEBHOOK_URL,
-      webhookByEvents: true,
-      webhookBase64: true,
-      webhookEvents: ['QRCODE_UPDATED', 'CONNECTION_UPDATE', 'MESSAGES_UPSERT', 'MESSAGE_STATUS_UPDATE'],
-      rejectCall: true,
-      msgCall: 'Sofia IA does not accept calls. Please use text messages.',
-      groupsIgnore: true,
-      alwaysOnline: true,
-      readMessages: true,
-      readStatus: false,
-      syncFullHistory: false,
-      ...settings,
+      qrcode: true,
     }
 
     const res = await evoFetch('/instance/create', {
