@@ -32,38 +32,24 @@ export default function WhatsAppPage() {
   const [creating, setCreating] = useState(false)
 
   const handleCreateInstance = async () => {
-    console.log('[WhatsApp] handleCreateInstance chamado')
-    console.log('[WhatsApp] newInstanceName:', JSON.stringify(newInstanceName))
-    console.log('[WhatsApp] newInstanceName.trim():', JSON.stringify(newInstanceName.trim()))
-    console.log('[WhatsApp] creating:', creating)
-
     if (!newInstanceName.trim()) {
-      console.log('[WhatsApp] BLOQUEADO: nome vazio')
       alert('Digite um nome para a instância')
       return
     }
 
     setCreating(true)
-    console.log('[WhatsApp] Iniciando fetch POST /api/instances...')
-
     try {
       const result = await createInstance(newInstanceName, '')
-      console.log('[WhatsApp] Resultado:', JSON.stringify(result))
-
       if (result.success) {
-        console.log('[WhatsApp] Sucesso! Fechando dialog.')
         setNewInstanceName('')
         setIsCreateDialogOpen(false)
       } else {
-        console.log('[WhatsApp] Falha:', result.error)
         alert(`Erro ao criar instância: ${result.error || 'Erro desconhecido'}`)
       }
     } catch (err) {
-      console.error('[WhatsApp] Exceção:', err)
       alert(`Erro de conexão: ${err instanceof Error ? err.message : 'Erro desconhecido'}`)
     } finally {
       setCreating(false)
-      console.log('[WhatsApp] Finalizado.')
     }
   }
 
@@ -157,10 +143,7 @@ export default function WhatsAppPage() {
                   id="instance-name"
                   placeholder="Ex: Atendimento Principal"
                   value={newInstanceName}
-                  onChange={(e) => {
-                    console.log('[WhatsApp] Input onChange:', e.target.value)
-                    setNewInstanceName(e.target.value)
-                  }}
+                  onChange={(e) => setNewInstanceName(e.target.value)}
                   className="bg-white/5 border-white/10 text-white"
                 />
               </div>
@@ -171,10 +154,7 @@ export default function WhatsAppPage() {
               </Button>
               <Button
                 className="button-luxury"
-                onClick={() => {
-                  console.log('[WhatsApp] Botão Criar clicado! disabled?', creating || !newInstanceName.trim())
-                  handleCreateInstance()
-                }}
+                onClick={handleCreateInstance}
                 disabled={creating || !newInstanceName.trim()}
               >
                 {creating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Criando...</> : 'Criar'}
