@@ -126,7 +126,7 @@ export async function processDocumentVectorization(
 
     // Divide em chunks
     const chunks = chunkText(content);
-    
+
     if (chunks.length === 0) {
       throw new Error('No chunks generated from document');
     }
@@ -202,11 +202,7 @@ export async function getKnowledgeBaseStats(knowledgeBaseId: string) {
     _count: { id: true },
   });
 
-  // Conta embeddings usando query raw
-  const pool = (await import('@/lib/embeddings-v2')).then(m => {
-    // @ts-ignore - acessando pool interno
-    return m.defaultProvider;
-  });
+
 
   return {
     totalDocuments: stats._count.id,
