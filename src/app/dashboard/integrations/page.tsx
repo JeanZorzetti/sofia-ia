@@ -25,6 +25,7 @@ import {
   Instagram,
   Send,
   Phone,
+  Brain,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -64,6 +65,12 @@ const integrationTypes = [
     icon: Mail,
     description: 'Envie emails via SMTP',
   },
+  {
+    value: 'claude',
+    label: 'Claude AI',
+    icon: Brain,
+    description: 'Conecte via API Oficial ou Assinatura Mensal (Session Key)',
+  },
 ]
 
 // Campos de credenciais por tipo de integração
@@ -89,6 +96,10 @@ const credentialFields: Record<string, { key: string; label: string; placeholder
     { key: 'user', label: 'Usuário / Email', placeholder: 'seu@email.com' },
     { key: 'password', label: 'Senha / App Password', placeholder: 'Senha do SMTP', type: 'password' },
     { key: 'fromName', label: 'Nome do Remetente', placeholder: 'Sofia IA' },
+  ],
+  claude: [
+    { key: 'apiKey', label: 'API Key (Oficial)', placeholder: 'sk-ant-api...', type: 'password' },
+    { key: 'sessionKey', label: 'Session Key (Assinatura - Experimental)', placeholder: 'sk-ant-sid...', type: 'password' },
   ],
 }
 

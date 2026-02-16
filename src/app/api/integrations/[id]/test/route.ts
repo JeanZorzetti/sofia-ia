@@ -42,6 +42,9 @@ export async function POST(
       case 'email_smtp':
         testResult = await testEmailSmtpConnection(integration);
         break;
+      case 'claude':
+        testResult = await testClaudeConnection(integration);
+        break;
       default:
         testResult = {
           success: false,
@@ -220,4 +223,66 @@ async function testEmailSmtpConnection(integration: {
     success: true,
     message: 'Credenciais SMTP configuradas (teste de conexão real será implementado)',
   };
+}
+
+async function testClaudeConnection(integration: {
+  credentials: unknown;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    const creds = integration.credentials as Record<string, string>;
+    const apiKey = creds.apiKey;
+    const sessionKey = creds.sessionKey;
+
+    if (!apiKey && !sessionKey) {
+      return {
+        success: false,
+        message: 'Nenhuma chave configurada (API Key ou Session Key)',
+      };
+    }
+
+    // Official API Test
+    if (apiKey) {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-3-haiku-20240307',
+          max_tokens: 1,
+          messages: [{ role: 'user', content: 'Ping' }],
+        }),
+      });
+
+      if (response.ok) {
+        return { success: true, message: 'Conexão API Oficial: OK' };
+      } else {
+        const error = await response.json();
+        return {
+          success: false,
+          message: `Erro API Oficial: ${error.error?.message || response.statusText}`
+        };
+      }
+    }
+
+    // Session Key Test (Basic validation)
+    if (sessionKey) {
+      if (sessionKey.length < 20) {
+        return { success: false, message: 'Session Key muito curta' };
+      }
+      return {
+        success: true,
+        message: 'Session Key salva (Validação completa requer uso real)'
+      };
+    }
+
+    return { success: false, message: 'Teste falhou' };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Erro ao testar Claude: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+    };
+  }
 }

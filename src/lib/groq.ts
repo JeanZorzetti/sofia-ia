@@ -79,10 +79,10 @@ export async function chatWithSofia(
 export async function chatWithAgent(
   agentId: string,
   messages: ChatMessage[],
-  leadContext?: Record<string, any>
+  leadContext?: Record<string, any>,
+  options?: { useVectorSearch?: boolean }
 ) {
   const { prisma } = await import('@/lib/prisma')
-  const { getKnowledgeContext } = await import('@/lib/knowledge-context')
 
   // Buscar agente do banco
   const agent = await prisma.agent.findUnique({
@@ -107,7 +107,29 @@ export async function chatWithAgent(
   // Buscar contexto da knowledge base se o agente tiver uma associada
   const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
   if (lastUserMessage && agent.knowledgeBaseId) {
-    const knowledgeContext = await getKnowledgeContext(agentId, lastUserMessage.content)
+    // Tenta usar o novo sistema de embeddings vetoriais primeiro
+    let knowledgeContext = ''
+
+    if (options?.useVectorSearch !== false) {
+      try {
+        const { getKnowledgeContextV2 } = await import('@/lib/knowledge-context-v2')
+        knowledgeContext = await getKnowledgeContextV2(agentId, lastUserMessage.content, {
+          topK: 3,
+          threshold: 0.7,
+          useHybridSearch: true,
+          vectorWeight: 0.7,
+        })
+      } catch (vectorError) {
+        console.warn('Vector search failed, falling back to legacy search:', vectorError)
+      }
+    }
+
+    // Fallback para sistema legado se vetorial falhar
+    if (!knowledgeContext) {
+      const { getKnowledgeContext } = await import('@/lib/knowledge-context')
+      knowledgeContext = await getKnowledgeContext(agentId, lastUserMessage.content)
+    }
+
     if (knowledgeContext) {
       systemPrompt += knowledgeContext
       systemPrompt += `\n\nIMPORTANTE: Use o contexto acima para responder de forma mais precisa e informada. Se a informação estiver no contexto, use-a. Se não estiver, responda com base no seu conhecimento geral.`
@@ -116,6 +138,46 @@ export async function chatWithAgent(
 
   // Guardrail fixo: impede que a IA invente dados que não possui (agenda, preços exatos, etc.)
   systemPrompt += `\n\n---\nREGRAS INVIOLÁVEIS DO SISTEMA:\n- NUNCA confirme horários ou datas disponíveis específicos sem que a informação esteja explicitamente no contexto acima. Diga que um responsável confirmará em breve.\n- NUNCA invente preços, endereços ou informações operacionais que não constem no contexto.\n- Se não souber algo, diga: "Vou verificar e um de nossos atendentes entrará em contato para confirmar."`
+
+  // Check if model is Claude
+  if (agent.model.startsWith('claude-')) {
+    try {
+      const { ClaudeService } = await import('@/services/claude-service')
+
+      // Fetch Claude credentials
+      const integration = await prisma.integration.findFirst({
+        where: { type: 'claude', status: 'active' }
+      })
+
+      if (!integration) {
+        throw new Error('Integração com Claude não configurada ou inativa.')
+      }
+
+      const credentials = integration.credentials as Record<string, string>
+
+      const response = await ClaudeService.generateMessage(
+        { apiKey: credentials.apiKey, sessionKey: credentials.sessionKey },
+        [{ role: 'user', content: messages[messages.length - 1].content }], // Sending only last message for now as context is built into system prompt
+        agent.model,
+        systemPrompt
+      )
+
+      return {
+        message: response.content,
+        model: agent.model,
+        usage: response.usage,
+        confidence: 0.9,
+      }
+    } catch (error) {
+      console.error('Claude generation error:', error)
+      return {
+        message: `Erro ao gerar resposta com Claude: ${error instanceof Error ? error.message : 'Desconhecido'}`,
+        model: agent.model,
+        usage: { total_tokens: 0 },
+        confidence: 0,
+      }
+    }
+  }
 
   const completion = await getGroqClient().chat.completions.create({
     model: agent.model,
@@ -130,6 +192,6 @@ export async function chatWithAgent(
     message: content,
     model: completion.model,
     usage: completion.usage,
-    confidence: 0.85, // Placeholder - pode ser calculado baseado em outras métricas
+    confidence: 0.85,
   }
 }

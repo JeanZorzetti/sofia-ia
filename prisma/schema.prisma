@@ -251,22 +251,43 @@ model KnowledgeBase {
 }
 
 model KnowledgeDocument {
-  id              String   @id @default(uuid()) @db.Uuid
-  knowledgeBaseId String   @map("knowledge_base_id") @db.Uuid
-  title           String   @db.VarChar(500)
-  content         String   @db.Text
-  sourceUrl       String?  @map("source_url") @db.Text
-  fileType        String?  @map("file_type") @db.VarChar(50)
-  chunks          Json     @default("[]")
-  status          String   @default("processing") @db.VarChar(20)
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id              String           @id @default(uuid()) @db.Uuid
+  knowledgeBaseId String           @map("knowledge_base_id") @db.Uuid
+  title           String           @db.VarChar(500)
+  content         String           @db.Text
+  sourceUrl       String?          @map("source_url") @db.Text
+  fileType        String?          @map("file_type") @db.VarChar(50)
+  chunks          Json             @default("[]")
+  status          String           @default("processing") @db.VarChar(20)
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  knowledgeBase KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  knowledgeBase KnowledgeBase     @relation(fields: [knowledgeBaseId], references: [id], onDelete: Cascade)
+  embeddings    DocumentEmbedding[]
 
   @@index([knowledgeBaseId])
   @@index([status])
   @@map("knowledge_documents")
+}
+
+/// Tabela de embeddings vetoriais usando pgvector
+model DocumentEmbedding {
+  id          String   @id @default(uuid()) @db.Uuid
+  documentId  String   @map("document_id") @db.Uuid
+  chunkIndex  Int      @map("chunk_index")
+  chunkText   String   @map("chunk_text") @db.Text
+  /// Vetor de 1536 dimensões (OpenAI text-embedding-3-small)
+  /// ou 768 dimensões (Hugging Face all-MiniLM-L6-v2)
+  embedding   Unsupported("vector(1536)")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  document KnowledgeDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, chunkIndex])
+  @@index([documentId])
+  @@index([chunkIndex])
+  @@map("document_embeddings")
 }
 
 model Workflow {

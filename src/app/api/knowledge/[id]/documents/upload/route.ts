@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
 import { chunkText } from '@/lib/chunking';
-import { generateEmbeddingsBatch } from '@/lib/embeddings';
+import { processDocumentVectorization } from '@/lib/knowledge-context-v2';
 
-// POST /api/knowledge/[id]/documents/upload - Upload de arquivo
+// POST /api/knowledge/[id]/documents/upload - Upload de arquivo com pgvector
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -51,7 +51,6 @@ export async function POST(
 
     let textContent = '';
     let fileType = fileExtension;
-    let status = 'processing';
 
     try {
       if (['txt', 'md', 'csv'].includes(fileExtension)) {
@@ -79,54 +78,32 @@ export async function POST(
         );
       }
 
-      const chunks = chunkText(textContent);
+      // Cria o documento inicialmente com status processing
+      const document = await prisma.knowledgeDocument.create({
+        data: {
+          knowledgeBaseId: id,
+          title: title || fileName,
+          content: textContent,
+          sourceUrl: null,
+          fileType,
+          chunks: [],
+          status: 'processing',
+        },
+      });
 
-      // Gerar embeddings para os chunks
-      try {
-        const chunkTexts = chunks.map(c => c.text);
-        const embeddings = await generateEmbeddingsBatch(chunkTexts);
-
-        // Adiciona embeddings aos chunks
-        const chunksWithEmbeddings = chunks.map((chunk, index) => ({
-          ...chunk,
-          embedding: embeddings[index],
-        }));
-
-        status = 'completed';
-
-        const document = await prisma.knowledgeDocument.create({
-          data: {
-            knowledgeBaseId: id,
-            title: title || fileName,
-            content: textContent,
-            sourceUrl: null,
-            fileType,
-            chunks: chunksWithEmbeddings as any,
-            status,
-          },
+      // Processa embeddings em background (não bloqueia a resposta)
+      processDocumentVectorization(document.id, textContent)
+        .then(() => {
+          console.log(`Document ${document.id} vectorized successfully`);
+        })
+        .catch((error) => {
+          console.error(`Error vectorizing document ${document.id}:`, error);
         });
 
-        return NextResponse.json({ document }, { status: 201 });
-      } catch (embeddingError) {
-        console.warn('Failed to generate embeddings, saving without them:', embeddingError);
-
-        // Salva sem embeddings se houver erro
-        status = 'completed';
-
-        const document = await prisma.knowledgeDocument.create({
-          data: {
-            knowledgeBaseId: id,
-            title: title || fileName,
-            content: textContent,
-            sourceUrl: null,
-            fileType,
-            chunks: chunks as any,
-            status,
-          },
-        });
-
-        return NextResponse.json({ document, warning: 'Documento processado sem embeddings' }, { status: 201 });
-      }
+      return NextResponse.json({ 
+        document,
+        message: 'Documento enviado para processamento. Os embeddings serão gerados em breve.'
+      }, { status: 201 });
 
     } catch (processingError) {
       console.error('Error processing file:', processingError);

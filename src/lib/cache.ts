@@ -1,193 +1,263 @@
 /**
- * Redis cache wrapper with graceful fallback
- * Se Redis não estiver disponível, usa cache em memória
+ * Cache Service - Redis/Upstash wrapper
+ * Suporta Redis local, Upstash (serverless), e fallback para memory cache
  */
 
-interface CacheEntry {
-  value: any;
-  expiresAt: number;
-}
+import { Redis } from 'ioredis';
 
-// Cache em memória como fallback
-const memoryCache = new Map<string, CacheEntry>();
+// Configuração do Redis
+const REDIS_URL = process.env.REDIS_URL;
+const UPSTASH_REDIS_REST_URL = process.env.UPSTASH_REDIS_REST_URL;
+const UPSTASH_REDIS_REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-// Limpar cache expirado a cada 5 minutos
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of memoryCache.entries()) {
-    if (entry.expiresAt < now) {
-      memoryCache.delete(key);
-    }
-  }
-}, 5 * 60 * 1000);
+// Cache em memória para fallback
+const memoryCache = new Map<string, { value: string; expires: number }>();
 
-/**
- * Verifica se Redis está disponível
- */
-function isRedisAvailable(): boolean {
-  return !!process.env.REDIS_URL;
+export interface CacheProvider {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, ttl?: number): Promise<void>;
+  del(key: string): Promise<void>;
+  exists(key: string): Promise<boolean>;
+  getJSON<T>(key: string): Promise<T | null>;
+  setJSON<T>(key: string, value: T, ttl?: number): Promise<void>;
 }
 
 /**
- * Obtém cliente Redis se disponível
+ * Redis Provider (IORedis)
  */
-async function getRedisClient() {
-  if (!isRedisAvailable()) {
-    return null;
-  }
+class RedisProvider implements CacheProvider {
+  private client: Redis;
 
-  try {
-    // Redis é opcional - se não estiver instalado, usa memória
-    // Para instalar: npm install redis
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const redis = require('redis');
-    const client = redis.createClient({
-      url: process.env.REDIS_URL,
+  constructor(url: string) {
+    this.client = new Redis(url, {
+      retryStrategy: (times) => {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      },
+      maxRetriesPerRequest: 3,
     });
 
-    await client.connect();
-    return client;
-  } catch (error) {
-    console.warn('Redis não disponível, usando cache em memória');
-    return null;
+    this.client.on('error', (err) => {
+      console.error('Redis error:', err);
+    });
   }
-}
 
-/**
- * Armazena valor no cache
- * @param key Chave do cache
- * @param value Valor a ser armazenado
- * @param ttl Time to live em segundos (padrão: 300 = 5 minutos)
- */
-export async function cacheSet(key: string, value: any, ttl = 300): Promise<void> {
-  try {
-    const redis = await getRedisClient();
+  async get(key: string): Promise<string | null> {
+    return this.client.get(key);
+  }
 
-    if (redis) {
-      // Usar Redis
-      const serialized = JSON.stringify(value);
-      await redis.setEx(key, ttl, serialized);
-      await redis.disconnect();
+  async set(key: string, value: string, ttl?: number): Promise<void> {
+    if (ttl) {
+      await this.client.setex(key, ttl, value);
     } else {
-      // Usar cache em memória
-      const expiresAt = Date.now() + ttl * 1000;
-      memoryCache.set(key, { value, expiresAt });
+      await this.client.set(key, value);
     }
-  } catch (error) {
-    console.error('Erro ao armazenar no cache:', error);
-    // Fallback silencioso para memória
-    const expiresAt = Date.now() + ttl * 1000;
-    memoryCache.set(key, { value, expiresAt });
   }
-}
 
-/**
- * Obtém valor do cache
- * @param key Chave do cache
- * @returns Valor armazenado ou null se não existir/expirou
- */
-export async function cacheGet<T = any>(key: string): Promise<T | null> {
-  try {
-    const redis = await getRedisClient();
+  async del(key: string): Promise<void> {
+    await this.client.del(key);
+  }
 
-    if (redis) {
-      // Usar Redis
-      const cached = await redis.get(key);
-      await redis.disconnect();
+  async exists(key: string): Promise<boolean> {
+    const result = await this.client.exists(key);
+    return result === 1;
+  }
 
-      if (cached) {
-        return JSON.parse(cached) as T;
-      }
+  async getJSON<T>(key: string): Promise<T | null> {
+    const value = await this.get(key);
+    if (!value) return null;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
       return null;
-    } else {
-      // Usar cache em memória
-      const entry = memoryCache.get(key);
-
-      if (!entry) {
-        return null;
-      }
-
-      if (entry.expiresAt < Date.now()) {
-        memoryCache.delete(key);
-        return null;
-      }
-
-      return entry.value as T;
     }
-  } catch (error) {
-    console.error('Erro ao obter do cache:', error);
-    return null;
+  }
+
+  async setJSON<T>(key: string, value: T, ttl?: number): Promise<void> {
+    await this.set(key, JSON.stringify(value), ttl);
   }
 }
 
 /**
- * Remove valor do cache
- * @param key Chave do cache
+ * Upstash Redis Provider (REST API)
  */
-export async function cacheDelete(key: string): Promise<void> {
-  try {
-    const redis = await getRedisClient();
+class UpstashProvider implements CacheProvider {
+  private url: string;
+  private token: string;
 
-    if (redis) {
-      await redis.del(key);
-      await redis.disconnect();
-    } else {
-      memoryCache.delete(key);
+  constructor(url: string, token: string) {
+    this.url = url;
+    this.token = token;
+  }
+
+  private async fetch(command: string, ...args: (string | number)[]): Promise<any> {
+    const response = await fetch(`${this.url}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify([command, ...args]),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Upstash error: ${response.statusText}`);
     }
-  } catch (error) {
-    console.error('Erro ao deletar do cache:', error);
+
+    return response.json();
+  }
+
+  async get(key: string): Promise<string | null> {
+    const result = await this.fetch('GET', key);
+    return result.result;
+  }
+
+  async set(key: string, value: string, ttl?: number): Promise<void> {
+    if (ttl) {
+      await this.fetch('SETEX', key, ttl, value);
+    } else {
+      await this.fetch('SET', key, value);
+    }
+  }
+
+  async del(key: string): Promise<void> {
+    await this.fetch('DEL', key);
+  }
+
+  async exists(key: string): Promise<boolean> {
+    const result = await this.fetch('EXISTS', key);
+    return result.result === 1;
+  }
+
+  async getJSON<T>(key: string): Promise<T | null> {
+    const value = await this.get(key);
+    if (!value) return null;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return null;
+    }
+  }
+
+  async setJSON<T>(key: string, value: T, ttl?: number): Promise<void> {
+    await this.set(key, JSON.stringify(value), ttl);
+  }
+}
+
+/**
+ * Memory Cache Provider (fallback)
+ */
+class MemoryProvider implements CacheProvider {
+  async get(key: string): Promise<string | null> {
+    const item = memoryCache.get(key);
+    if (!item) return null;
+    
+    if (item.expires && item.expires < Date.now()) {
+      memoryCache.delete(key);
+      return null;
+    }
+    
+    return item.value;
+  }
+
+  async set(key: string, value: string, ttl?: number): Promise<void> {
+    const expires = ttl ? Date.now() + ttl * 1000 : 0;
+    memoryCache.set(key, { value, expires });
+  }
+
+  async del(key: string): Promise<void> {
     memoryCache.delete(key);
   }
-}
 
-/**
- * Limpa todo o cache (use com cautela)
- */
-export async function cacheClear(): Promise<void> {
-  try {
-    const redis = await getRedisClient();
-
-    if (redis) {
-      await redis.flushDb();
-      await redis.disconnect();
-    } else {
-      memoryCache.clear();
+  async exists(key: string): Promise<boolean> {
+    const item = memoryCache.get(key);
+    if (!item) return false;
+    
+    if (item.expires && item.expires < Date.now()) {
+      memoryCache.delete(key);
+      return false;
     }
-  } catch (error) {
-    console.error('Erro ao limpar cache:', error);
-    memoryCache.clear();
+    
+    return true;
+  }
+
+  async getJSON<T>(key: string): Promise<T | null> {
+    const value = await this.get(key);
+    if (!value) return null;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return null;
+    }
+  }
+
+  async setJSON<T>(key: string, value: T, ttl?: number): Promise<void> {
+    await this.set(key, JSON.stringify(value), ttl);
   }
 }
 
 /**
- * Wrapper para cachear resultados de funções
- * @param key Chave do cache
- * @param fn Função a ser executada se cache não existir
- * @param ttl Time to live em segundos
+ * Factory para criar o provider de cache
  */
-export async function cachedFunction<T>(
-  key: string,
-  fn: () => Promise<T>,
-  ttl = 300
-): Promise<T> {
-  // Tentar obter do cache
-  const cached = await cacheGet<T>(key);
-
-  if (cached !== null) {
-    return cached;
+function createCacheProvider(): CacheProvider {
+  if (UPSTASH_REDIS_REST_URL && UPSTASH_REDIS_REST_TOKEN) {
+    console.log('Using Upstash Redis');
+    return new UpstashProvider(UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN);
   }
+  
+  if (REDIS_URL) {
+    console.log('Using Redis');
+    return new RedisProvider(REDIS_URL);
+  }
+  
+  console.log('Using Memory Cache (fallback)');
+  return new MemoryProvider();
+}
 
-  // Executar função e armazenar resultado
-  const result = await fn();
-  await cacheSet(key, result, ttl);
+// Singleton instance
+export const cache = createCacheProvider();
 
-  return result;
+// TTL constants (em segundos)
+export const TTL = {
+  SHORT: 60,        // 1 minuto
+  MEDIUM: 300,      // 5 minutos
+  LONG: 3600,       // 1 hora
+  DAY: 86400,       // 1 dia
+  WEEK: 604800,     // 1 semana
+} as const;
+
+/**
+ * Decorator para cache de funções
+ */
+export function withCache<T extends (...args: any[]) => Promise<any>>(
+  fn: T,
+  keyGenerator: (...args: Parameters<T>) => string,
+  ttl: number = TTL.MEDIUM
+): T {
+  return (async (...args: Parameters<T>): Promise<ReturnType<T>> => {
+    const key = keyGenerator(...args);
+    
+    // Tenta buscar do cache
+    const cached = await cache.getJSON<ReturnType<T>>(key);
+    if (cached) {
+      return cached;
+    }
+    
+    // Executa a função
+    const result = await fn(...args);
+    
+    // Salva no cache
+    await cache.setJSON(key, result, ttl);
+    
+    return result;
+  }) as T;
 }
 
 /**
- * Gera chave de cache baseada em parâmetros
+ * Invalida cache por padrão
  */
-export function generateCacheKey(prefix: string, ...params: any[]): string {
-  const paramStr = params.map(p => JSON.stringify(p)).join(':');
-  return `${prefix}:${paramStr}`;
+export async function invalidateCache(pattern: string): Promise<void> {
+  // Nota: implementação simplificada
+  // Em produção, usar SCAN para Redis ou iterar keys para memory cache
+  console.log(`Cache invalidation requested for pattern: ${pattern}`);
 }

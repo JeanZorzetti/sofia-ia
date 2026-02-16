@@ -5,7 +5,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Input } from '@/components/ui/input'
 import {
   LineChart,
   Line,
@@ -21,7 +20,8 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts'
-import { Loader2, Download, TrendingUp, Users, Workflow as WorkflowIcon, Target, Search, Sparkles } from 'lucide-react'
+import { Loader2, Download, TrendingUp, Users, Workflow as WorkflowIcon, Target } from 'lucide-react'
+import { NaturalLanguageQuery } from '@/components/analytics/nl-query'
 
 interface AnalyticsData {
   overview: any
@@ -41,9 +41,6 @@ export default function AnalyticsPage() {
     workflows: [],
     leads: null,
   })
-  const [nlQuery, setNlQuery] = useState<string>('')
-  const [nlLoading, setNlLoading] = useState(false)
-  const [nlResult, setNlResult] = useState<any>(null)
 
   useEffect(() => {
     async function fetchAllAnalytics() {
@@ -91,39 +88,6 @@ export default function AnalyticsPage() {
     a.href = url
     a.download = `analytics-${period}-${new Date().toISOString()}.csv`
     a.click()
-  }
-
-  const handleNLQuery = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!nlQuery.trim()) return
-
-    setNlLoading(true)
-    setNlResult(null)
-
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch('/api/analytics/nl-query', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ question: nlQuery }),
-      })
-
-      const result = await response.json()
-
-      if (response.ok) {
-        setNlResult(result)
-      } else {
-        setNlResult({ error: result.error || 'Erro ao processar pergunta' })
-      }
-    } catch (error) {
-      console.error('Error processing NL query:', error)
-      setNlResult({ error: 'Erro ao processar pergunta' })
-    } finally {
-      setNlLoading(false)
-    }
   }
 
   if (loading) {
@@ -177,52 +141,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Natural Language Query */}
-      <Card className="glass-card border-purple-500/20">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-purple-400" />
-            Pergunte em Linguagem Natural
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleNLQuery} className="flex gap-2">
-            <Input
-              type="text"
-              placeholder='Ex: "Quantos leads qualificamos essa semana?" ou "Qual a taxa de conversão dos últimos 30 dias?"'
-              value={nlQuery}
-              onChange={(e) => setNlQuery(e.target.value)}
-              className="flex-1"
-              disabled={nlLoading}
-            />
-            <Button type="submit" disabled={nlLoading || !nlQuery.trim()}>
-              {nlLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="h-4 w-4" />
-              )}
-            </Button>
-          </form>
-
-          {nlResult && (
-            <div className="mt-4 p-4 rounded-lg bg-white/5 border border-white/10">
-              {nlResult.error ? (
-                <p className="text-red-400">{nlResult.error}</p>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-white font-medium">{nlResult.response}</p>
-                  {nlResult.data && (
-                    <div className="text-sm text-white/60">
-                      <pre className="mt-2 p-3 rounded bg-black/30 overflow-x-auto">
-                        {JSON.stringify(nlResult.data, null, 2)}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <NaturalLanguageQuery />
 
       <Tabs defaultValue="overview" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
