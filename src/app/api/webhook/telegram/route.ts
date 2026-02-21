@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
             result.message,
             [
               { text: 'Falar com humano', callback_data: 'human_handoff' },
-              { text: 'Ver imóveis', callback_data: 'view_properties' },
+              { text: 'Ver serviços', callback_data: 'view_services' },
             ],
             2
           );
@@ -162,10 +162,10 @@ export async function POST(request: NextRequest) {
           chatId,
           text: 'Você será atendido por um humano em breve. Aguarde...',
         });
-      } else if (event.data === 'view_properties') {
+      } else if (event.data === 'view_services') {
         await service.sendMessage({
           chatId,
-          text: '🏠 Aqui estão nossos imóveis disponíveis:\n\nEm breve você poderá ver todos os imóveis aqui!',
+          text: '📋 Confira nossos serviços disponíveis:\n\nEm breve você poderá ver todos os detalhes aqui!',
         });
       }
     }

@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { MessageSquare, TrendingUp, Target, Percent, Loader2, CheckCircle, XCircle, Users, Workflow, Calendar } from 'lucide-react'
 import Link from 'next/link'
-import { OnboardingWizard } from '@/components/onboarding-wizard'
+import { OnboardingWizard } from '@/components/dashboard/onboarding-wizard'
 
 interface AnalyticsOverview {
   conversationsStarted: number

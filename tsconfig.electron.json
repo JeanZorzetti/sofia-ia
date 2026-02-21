@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "lib": [
+            "esnext",
+            "dom"
+        ],
+        "outDir": "./dist/electron",
+        "rootDir": "./src/electron",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    },
+    "include": [
+        "src/electron/**/*"
+    ]
+}

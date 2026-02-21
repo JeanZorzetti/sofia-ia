@@ -260,7 +260,7 @@ export default function KnowledgePage() {
                 <Label htmlFor="name">Nome</Label>
                 <Input
                   id="name"
-                  placeholder="Ex: Catálogo de Imóveis"
+                  placeholder="Ex: Base de Conhecimento Principal"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="bg-white/5 border-white/10 text-white"
@@ -482,11 +482,10 @@ export default function KnowledgePage() {
 
             {documentType === 'file' && (
               <div
-                className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  isDragging
+                className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragging
                     ? 'border-blue-400 bg-blue-400/10'
                     : 'border-white/20 hover:border-white/40'
-                }`}
+                  }`}
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleFileDrop}

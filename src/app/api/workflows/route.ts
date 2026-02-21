@@ -2,56 +2,56 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+// ─────────────────────────────────────────────────────────
+// LEGACY: /api/workflows — Redirects to Flow model
+// These endpoints maintain backward compatibility with old UI code
+// New code should use /api/flows/ instead
+// ─────────────────────────────────────────────────────────
+
 export async function GET(request: NextRequest) {
   try {
-    // Auth check
     const user = await getAuthFromRequest(request);
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { data: null, success: false, error: { code: 'UNAUTHORIZED', message: 'Autenticação necessária' } },
         { status: 401 }
       );
     }
 
-    // Get query params for filtering
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
-    // Build where clause
-    const where: any = {};
+    const where: Record<string, unknown> = { createdBy: user.id };
     if (status) where.status = status;
 
-    // Fetch workflows with their creator
-    const workflows = await prisma.workflow.findMany({
+    const flows = await prisma.flow.findMany({
       where,
       include: {
         creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
+          select: { id: true, name: true, email: true },
         },
         _count: {
-          select: {
-            executions: true
-          }
-        }
+          select: { executions: true },
+        },
       },
-      orderBy: {
-        createdAt: 'desc'
-      }
+      orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: workflows
-    });
+    // Map to legacy format
+    const workflows = flows.map(f => ({
+      ...f,
+      trigger: {},
+      conditions: [],
+      actions: [],
+      lastRun: f.lastRunAt,
+    }));
+
+    return NextResponse.json({ data: workflows, success: true, error: null });
 
   } catch (error) {
-    console.error('Error fetching workflows:', error);
+    console.error('[GET /api/workflows] Error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch workflows' },
+      { data: null, success: false, error: { code: 'INTERNAL_ERROR', message: 'Erro ao buscar workflows' } },
       { status: 500 }
     );
   }
@@ -59,80 +59,44 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Auth check
     const user = await getAuthFromRequest(request);
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { data: null, error: { code: 'UNAUTHORIZED', message: 'Autenticação necessária' } },
         { status: 401 }
       );
     }
 
-    // Parse request body
     const body = await request.json();
-    const {
-      name,
-      description,
-      trigger,
-      conditions,
-      actions,
-      status
-    } = body;
+    const { name, description, status } = body;
 
-    // Validate required fields
     if (!name || typeof name !== 'string') {
       return NextResponse.json(
-        { success: false, error: 'name is required and must be a string' },
+        { data: null, error: { code: 'VALIDATION_ERROR', message: 'name é obrigatório' } },
         { status: 400 }
       );
     }
 
-    if (!trigger || typeof trigger !== 'object') {
-      return NextResponse.json(
-        { success: false, error: 'trigger is required and must be an object' },
-        { status: 400 }
-      );
-    }
-
-    if (!actions || !Array.isArray(actions) || actions.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'actions is required and must be a non-empty array' },
-        { status: 400 }
-      );
-    }
-
-    // Create workflow
-    const workflow = await prisma.workflow.create({
+    const flow = await prisma.flow.create({
       data: {
         name,
         description: description || null,
-        trigger: trigger,
-        conditions: conditions || [],
-        actions: actions,
-        status: status || 'inactive',
-        createdBy: user.id
+        nodes: [],
+        edges: [],
+        status: status || 'draft',
+        createdBy: user.id,
       },
       include: {
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
-      }
+        creator: { select: { id: true, name: true, email: true } },
+      },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: workflow,
-      message: 'Workflow created successfully'
-    }, { status: 201 });
+    return NextResponse.json({ data: flow, error: null }, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating workflow:', error);
+    console.error('[POST /api/workflows] Error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create workflow' },
+      { data: null, error: { code: 'INTERNAL_ERROR', message: 'Erro ao criar workflow' } },
       { status: 500 }
     );
   }

@@ -40,7 +40,7 @@ export function OnboardingWizard({ open, onClose, userId }: OnboardingWizardProp
   const categories = [
     'Atendimento',
     'Vendas',
-    'Imobiliário',
+    'Marketing',
     'RH',
     'Financeiro',
     'Jurídico',
@@ -128,19 +128,17 @@ export function OnboardingWizard({ open, onClose, userId }: OnboardingWizardProp
             {[1, 2, 3].map((s) => (
               <div key={s} className="flex flex-1 items-center">
                 <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                    s <= step
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${s <= step
                       ? 'bg-primary text-white'
                       : 'bg-muted text-muted-foreground'
-                  }`}
+                    }`}
                 >
                   {s < step ? <CheckCircle2 className="h-5 w-5" /> : s}
                 </div>
                 {s < 3 && (
                   <div
-                    className={`h-1 flex-1 ${
-                      s < step ? 'bg-primary' : 'bg-muted'
-                    }`}
+                    className={`h-1 flex-1 ${s < step ? 'bg-primary' : 'bg-muted'
+                      }`}
                   />
                 )}
               </div>

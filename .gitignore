@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# debug response dumps
+openrouter-response.*
+*.response.json
+*.response.log
+
+# electron
+/dist/

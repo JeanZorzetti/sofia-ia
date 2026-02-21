@@ -43,4 +43,7 @@ export const RATE_LIMITS = {
   instanceCreation: { max: 10, window: 10 * 60 * 1000 },
   qrCode: { max: 20, window: 5 * 60 * 1000 },
   messages: { max: 30, window: 60 * 1000 },
+  aiChat: { max: 60, window: 60 * 1000 },           // 60 AI requests/min per user
+  ideChat: { max: 120, window: 60 * 1000 },          // 120 IDE requests/min (devs iterate fast)
+  orchestration: { max: 20, window: 60 * 1000 },     // 20 orchestration runs/min
 } as const

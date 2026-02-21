@@ -1,395 +1,505 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+// ─────────────────────────────────────────────────────────
+// Flow Builder Page — Full-screen N8N-style visual builder
+// ─────────────────────────────────────────────────────────
+
+import React, { useState, useCallback, useEffect, useRef, use } from 'react'
+import {
+  ReactFlow,
+  Controls,
+  MiniMap,
+  Background,
+  BackgroundVariant,
+  addEdge,
+  useNodesState,
+  useEdgesState,
+  type Connection,
+  type Node,
+  type Edge,
+  Panel,
+  ReactFlowProvider,
+} from '@xyflow/react'
+import '@xyflow/react/dist/style.css'
+
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import {
-  ArrowLeft,
-  Play,
-  Trash2,
-  Clock,
-  CheckCircle,
-  XCircle,
-  Activity
+  ArrowLeft, Save, Play, Power, PowerOff, Variable, History, Clock,
 } from 'lucide-react'
 
-interface Workflow {
-  id: string
-  name: string
-  description: string | null
-  trigger: any
-  conditions: any[]
-  actions: any[]
-  status: string
-  lastRun: string | null
-  runCount: number
-  successCount: number
-  createdAt: string
-  updatedAt: string
-  creator: {
-    id: string
-    name: string
-    email: string
+import { FlowCustomNode } from '@/components/flows/flow-custom-node'
+import { FlowCustomEdge } from '@/components/flows/flow-custom-edge'
+import { NodePalette, NODE_CATALOG, type NodeTypeInfo } from '@/components/flows/node-palette'
+import { NodeConfigPanel } from '@/components/flows/node-config-panel'
+import { FlowVariablesPanel } from '@/components/flows/flow-variables-panel'
+import { ExecutionHistoryPanel } from '@/components/flows/execution-history-panel'
+
+// ── Custom node/edge types ─────────────────────────────────
+const nodeTypes = { flowNode: FlowCustomNode }
+const edgeTypes = { flowEdge: FlowCustomEdge }
+
+// ── Config fields lookup by nodeType ───────────────────────
+const CONFIG_FIELDS: Record<string, any[]> = {}
+
+async function loadConfigFields() {
+  try {
+    const res = await fetch('/api/flows/nodes')
+    const { data } = await res.json()
+    if (data?.catalog) {
+      for (const category of Object.values(data.catalog) as any[]) {
+        for (const node of category) {
+          CONFIG_FIELDS[node.type] = node.configFields || []
+        }
+      }
+    }
+  } catch {
+    // Fallback: no config fields
   }
 }
 
-interface WorkflowExecution {
-  id: string
-  workflowId: string
-  status: string
-  input: any
-  output: any
-  error: string | null
-  duration: number | null
-  startedAt: string
-  completedAt: string | null
-  createdAt: string
+// ── Helper: create a React Flow node from a NodeTypeInfo ───
+function createFlowNode(nodeInfo: NodeTypeInfo, position: { x: number; y: number }): Node {
+  const id = `${nodeInfo.type}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`
+  return {
+    id,
+    type: 'flowNode',
+    position,
+    data: {
+      label: nodeInfo.label,
+      nodeType: nodeInfo.type,
+      category: nodeInfo.category,
+      icon: nodeInfo.icon,
+      config: {},
+      outputs: nodeInfo.outputs || [{ name: 'main' }],
+      inputs: nodeInfo.inputs || (nodeInfo.category === 'trigger' ? [] : [{ name: 'main' }]),
+    },
+  }
 }
 
-export default function WorkflowDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params)
+// ── Main builder component ──────────────────────────────────
+
+function FlowBuilderInner({ flowId }: { flowId: string }) {
   const router = useRouter()
-  const [workflow, setWorkflow] = useState<Workflow | null>(null)
-  const [executions, setExecutions] = useState<WorkflowExecution[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+  const reactFlowWrapper = useRef<HTMLDivElement>(null)
+  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null)
 
+  // Flow metadata
+  const [flowName, setFlowName] = useState('')
+  const [flowDescription, setFlowDescription] = useState('')
+  const [flowStatus, setFlowStatus] = useState('draft')
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [executing, setExecuting] = useState(false)
+
+  // Variables & versioning panel state
+  const [flowVariables, setFlowVariables] = useState<Record<string, any>>({})
+  const [showVariablesPanel, setShowVariablesPanel] = useState(false)
+  const [flowVersion, setFlowVersion] = useState(1)
+  const [flowCronExpression, setFlowCronExpression] = useState('')
+  const [flowTriggerType, setFlowTriggerType] = useState('manual')
+  const [showHistory, setShowHistory] = useState(false)
+
+  // React Flow state
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
+
+  // Config panel state
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const selectedNode = selectedNodeId ? nodes.find(n => n.id === selectedNodeId) : null
+
+  // ── Load flow data ──────────────────────────────────────
   useEffect(() => {
-    fetchWorkflow()
-    fetchExecutions()
-  }, [resolvedParams.id])
+    loadConfigFields()
 
-  const fetchWorkflow = async () => {
-    try {
-      const response = await fetch(`/api/workflows/${resolvedParams.id}`)
-      const data = await response.json()
-      if (data.success) {
-        setWorkflow(data.data)
-      }
-    } catch (error) {
-      console.error('Error fetching workflow:', error)
-    } finally {
+    if (flowId === 'new') {
+      setFlowName('Novo Workflow')
+      setFlowDescription('')
       setLoading(false)
+      return
     }
-  }
 
-  const fetchExecutions = async () => {
-    try {
-      const response = await fetch(`/api/workflows/${resolvedParams.id}/executions?limit=20`)
-      const data = await response.json()
-      if (data.success) {
-        setExecutions(data.data)
+    async function load() {
+      try {
+        const res = await fetch(`/api/flows/${flowId}`)
+        const { data, error } = await res.json()
+        if (error) throw new Error(error)
+
+        setFlowName(data.name)
+        setFlowDescription(data.description || '')
+        setFlowStatus(data.status)
+        setFlowVariables(data.variables || {})
+        setFlowVersion(data.version || 1)
+        setFlowTriggerType(data.triggerType || 'manual')
+        setFlowCronExpression(data.cronExpression || '')
+
+        // Convert stored FlowNodes → React Flow nodes
+        const rfNodes: Node[] = (data.nodes || []).map((n: any) => ({
+          id: n.id,
+          type: 'flowNode',
+          position: n.position,
+          data: {
+            label: n.data.label,
+            nodeType: n.type,
+            category: n.type.split('_')[0],
+            icon: getIconForType(n.type),
+            config: n.data.config || {},
+            outputs: getOutputsForType(n.type),
+            inputs: getInputsForType(n.type),
+          },
+        }))
+
+        const rfEdges: Edge[] = (data.edges || []).map((e: any) => ({
+          id: e.id,
+          source: e.source,
+          target: e.target,
+          sourceHandle: e.sourceHandle,
+          type: 'flowEdge',
+          data: { onDelete: handleDeleteEdge },
+          label: e.label,
+        }))
+
+        setNodes(rfNodes)
+        setEdges(rfEdges)
+      } catch (error: any) {
+        toast.error('Erro ao carregar flow: ' + error.message)
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error('Error fetching executions:', error)
     }
-  }
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flowId])
 
-  const handleToggle = async () => {
-    if (!workflow) return
-    const newStatus = workflow.status === 'active' ? 'inactive' : 'active'
-
+  // ── Save flow ───────────────────────────────────────────
+  const handleSave = useCallback(async () => {
+    setSaving(true)
     try {
-      const response = await fetch(`/api/workflows/${resolvedParams.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: newStatus })
-      })
+      const flowNodes = nodes.map(n => ({
+        id: n.id,
+        type: n.data.nodeType,
+        position: n.position,
+        data: { label: n.data.label, config: n.data.config || {} },
+      }))
 
-      if (response.ok) {
-        setWorkflow({ ...workflow, status: newStatus })
+      const flowEdges = edges.map(e => ({
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        sourceHandle: e.sourceHandle,
+        label: e.label,
+      }))
+
+      const triggerNode = nodes.find(n => (n.data as any).category === 'trigger')
+      const triggerType = triggerNode
+        ? (triggerNode.data as any).nodeType.replace('trigger_', '')
+        : 'manual'
+
+      const payload = {
+        name: flowName, description: flowDescription,
+        nodes: flowNodes, edges: flowEdges, triggerType,
+        variables: flowVariables,
+        ...(triggerType === 'cron' && flowCronExpression ? { cronExpression: flowCronExpression } : {}),
       }
-    } catch (error) {
-      console.error('Error toggling workflow:', error)
-    }
-  }
 
-  const handleRun = async () => {
-    try {
-      const response = await fetch(`/api/workflows/${resolvedParams.id}/run`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ context: {} })
-      })
-
-      if (response.ok) {
-        alert('Workflow executado com sucesso!')
-        fetchWorkflow()
-        fetchExecutions()
+      if (flowId === 'new') {
+        const res = await fetch('/api/flows', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const { data, error } = await res.json()
+        if (error) throw new Error(error)
+        toast.success('Workflow criado!')
+        router.push(`/dashboard/workflows/${data.id}`)
       } else {
-        const data = await response.json()
-        alert(`Erro ao executar workflow: ${data.error}`)
+        const res = await fetch(`/api/flows/${flowId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const { error } = await res.json()
+        if (error) throw new Error(error)
+        toast.success('Workflow salvo!')
       }
-    } catch (error) {
-      console.error('Error running workflow:', error)
-      alert('Erro ao executar workflow')
+    } catch (error: any) {
+      toast.error('Erro ao salvar: ' + error.message)
+    } finally {
+      setSaving(false)
     }
-  }
+  }, [nodes, edges, flowName, flowDescription, flowId, router])
 
-  const handleDelete = async () => {
-    if (!confirm('Tem certeza que deseja excluir este workflow?')) return
-
+  // ── Execute flow ────────────────────────────────────────
+  const handleExecute = useCallback(async () => {
+    if (flowId === 'new') { toast.error('Salve o workflow antes de executar'); return }
+    setExecuting(true)
     try {
-      const response = await fetch(`/api/workflows/${resolvedParams.id}`, {
-        method: 'DELETE'
+      const res = await fetch(`/api/flows/${flowId}/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ triggerData: {} }),
       })
+      const { data, error } = await res.json()
+      if (error) throw new Error(error)
 
-      if (response.ok) {
-        router.push('/dashboard/workflows')
+      if (data.status === 'success') toast.success(`Executado com sucesso! (${data.duration}ms)`)
+      else if (data.status === 'failed') toast.error(`Execução falhou: ${data.error}`)
+      else toast.info('Execução em andamento...')
+
+      if (data.nodeResults) {
+        setNodes(nds => nds.map(n => ({
+          ...n,
+          data: { ...n.data, executionStatus: data.nodeResults[n.id]?.status || undefined },
+        })))
+
+        setTimeout(() => {
+          setNodes(nds => nds.map(n => ({ ...n, data: { ...n.data, executionStatus: undefined } })))
+        }, 5000)
       }
-    } catch (error) {
-      console.error('Error deleting workflow:', error)
+    } catch (error: any) {
+      toast.error('Erro ao executar: ' + error.message)
+    } finally {
+      setExecuting(false)
     }
-  }
+  }, [flowId, setNodes])
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-500 text-white">Sucesso</Badge>
-      case 'failed':
-        return <Badge className="bg-red-500 text-white">Falha</Badge>
-      case 'running':
-        return <Badge className="bg-blue-500 text-white">Executando</Badge>
-      default:
-        return <Badge className="bg-gray-500 text-white">Pendente</Badge>
+  // ── Toggle status ───────────────────────────────────────
+  const handleToggleStatus = useCallback(async () => {
+    if (flowId === 'new') return
+    const newStatus = flowStatus === 'active' ? 'inactive' : 'active'
+    try {
+      const res = await fetch(`/api/flows/${flowId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      const { error } = await res.json()
+      if (error) throw new Error(error)
+      setFlowStatus(newStatus)
+      toast.success(newStatus === 'active' ? 'Workflow ativado!' : 'Workflow desativado')
+    } catch (error: any) {
+      toast.error('Erro: ' + error.message)
     }
-  }
+  }, [flowId, flowStatus])
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleString('pt-BR')
-  }
+  // ── Callbacks ───────────────────────────────────────────
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      setEdges((eds) => addEdge({ ...connection, type: 'flowEdge', data: { onDelete: handleDeleteEdge } }, eds))
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setEdges]
+  )
 
-  const formatDuration = (duration: number | null) => {
-    if (!duration) return '-'
-    if (duration < 1000) return `${duration}ms`
-    return `${(duration / 1000).toFixed(2)}s`
-  }
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    setSelectedNodeId(node.id)
+  }, [])
+
+  const onPaneClick = useCallback(() => { setSelectedNodeId(null) }, [])
+
+  const handleDeleteEdge = useCallback((edgeId: string) => {
+    setEdges(eds => eds.filter(e => e.id !== edgeId))
+  }, [setEdges])
+
+  const handleDeleteNode = useCallback((nodeId: string) => {
+    setNodes(nds => nds.filter(n => n.id !== nodeId))
+    setEdges(eds => eds.filter(e => e.source !== nodeId && e.target !== nodeId))
+    setSelectedNodeId(null)
+  }, [setNodes, setEdges])
+
+  const handleNodeConfigUpdate = useCallback((nodeId: string, config: Record<string, any>) => {
+    setNodes(nds => nds.map(n => n.id === nodeId ? { ...n, data: { ...n.data, config } } : n))
+  }, [setNodes])
+
+  const onDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+  }, [])
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault()
+      const nodeData = event.dataTransfer.getData('application/reactflow-node')
+      if (!nodeData) return
+      const nodeInfo: NodeTypeInfo = JSON.parse(nodeData)
+      const position = reactFlowInstance?.screenToFlowPosition({
+        x: event.clientX, y: event.clientY,
+      }) || { x: 250, y: 250 }
+      const newNode = createFlowNode(nodeInfo, position)
+      setNodes((nds) => [...nds, newNode])
+    },
+    [reactFlowInstance, setNodes]
+  )
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-white">Carregando workflow...</div>
+      <div className="h-screen flex items-center justify-center bg-slate-950">
+        <div className="animate-pulse text-white/50">Carregando workflow...</div>
       </div>
     )
   }
-
-  if (!workflow) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-white">Workflow não encontrado</div>
-      </div>
-    )
-  }
-
-  const successRate = workflow.runCount > 0
-    ? Math.round((workflow.successCount / workflow.runCount) * 100)
-    : 0
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => router.push('/dashboard/workflows')}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-white">{workflow.name}</h1>
-            <p className="text-white/60 mt-1">{workflow.description || 'Sem descrição'}</p>
-          </div>
+    <div className="h-screen flex flex-col bg-slate-950">
+      {/* ── Top toolbar ──────────────────────────────────── */}
+      <div className="h-14 border-b border-white/10 bg-slate-900/80 backdrop-blur-sm flex items-center px-4 gap-3 flex-shrink-0 z-10">
+        <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard/workflows')} className="text-white/60 hover:text-white h-8 w-8">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {isEditingName ? (
+            <Input autoFocus value={flowName} onChange={(e) => setFlowName(e.target.value)}
+              onBlur={() => setIsEditingName(false)} onKeyDown={(e) => e.key === 'Enter' && setIsEditingName(false)}
+              className="h-7 text-sm bg-white/5 border-white/20 text-white max-w-[300px]"
+            />
+          ) : (
+            <button onClick={() => setIsEditingName(true)} className="text-sm font-medium text-white hover:text-white/80 truncate max-w-[300px]">
+              {flowName || 'Sem nome'}
+            </button>
+          )}
+          <Badge className={`text-[10px] px-1.5 py-0 ${flowStatus === 'active' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+            flowStatus === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+              'bg-white/10 text-white/50 border-white/20'
+            }`}>
+            {flowStatus === 'active' ? 'Ativo' : flowStatus === 'draft' ? 'Rascunho' : 'Inativo'}
+          </Badge>
         </div>
+
         <div className="flex items-center gap-2">
-          <Switch
-            checked={workflow.status === 'active'}
-            onCheckedChange={handleToggle}
-          />
-          <span className="text-white/60 text-sm">
-            {workflow.status === 'active' ? 'Ativo' : 'Inativo'}
-          </span>
+          <span className="text-[10px] text-white/30 font-mono">v{flowVersion}</span>
+          <Button variant="ghost" size="sm" onClick={() => setShowVariablesPanel(v => !v)}
+            className={`h-8 text-xs ${showVariablesPanel ? 'text-violet-400' : 'text-white/50 hover:text-white'}`}>
+            <Variable className="h-3.5 w-3.5 mr-1.5" />
+            Variáveis
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowHistory(v => !v)} disabled={flowId === 'new'}
+            className={`h-8 text-xs ${showHistory ? 'text-blue-400' : 'text-white/50 hover:text-white'}`}>
+            <History className="h-3.5 w-3.5 mr-1.5" />
+            Histórico
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleToggleStatus} disabled={flowId === 'new'}
+            className={`h-8 text-xs ${flowStatus === 'active' ? 'text-emerald-400 hover:text-emerald-300' : 'text-white/50 hover:text-white'}`}>
+            {flowStatus === 'active' ? <PowerOff className="h-3.5 w-3.5 mr-1.5" /> : <Power className="h-3.5 w-3.5 mr-1.5" />}
+            {flowStatus === 'active' ? 'Desativar' : 'Ativar'}
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleExecute} disabled={executing || flowId === 'new'}
+            className="h-8 text-xs text-blue-400 hover:text-blue-300">
+            <Play className="h-3.5 w-3.5 mr-1.5" />
+            {executing ? 'Executando...' : 'Executar'}
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={saving} className="h-8 text-xs bg-white/10 hover:bg-white/20 text-white">
+            <Save className="h-3.5 w-3.5 mr-1.5" />
+            {saving ? 'Salvando...' : 'Salvar'}
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="glass-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Status</p>
-                <p className="text-2xl font-bold text-white mt-2">
-                  {workflow.status === 'active' ? 'Ativo' : 'Inativo'}
-                </p>
-              </div>
-              <Activity className="h-8 w-8 text-blue-400" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* ── Main content ────────────────────────────────── */}
+      <div className="flex-1 flex overflow-hidden">
+        <div className="w-[240px] flex-shrink-0">
+          <NodePalette />
+        </div>
 
-        <Card className="glass-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Execuções</p>
-                <p className="text-2xl font-bold text-white mt-2">
-                  {workflow.runCount}
-                </p>
-              </div>
-              <Play className="h-8 w-8 text-purple-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Taxa de Sucesso</p>
-                <p className="text-2xl font-bold text-white mt-2">
-                  {successRate}%
-                </p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/60">Última Execução</p>
-                <p className="text-sm font-medium text-white mt-2">
-                  {workflow.lastRun ? formatDate(workflow.lastRun) : 'Nunca'}
-                </p>
-              </div>
-              <Clock className="h-8 w-8 text-yellow-400" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="text-white">Configuração</CardTitle>
-            <CardDescription className="text-white/60">
-              Detalhes do workflow
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-4 rounded-lg bg-white/5">
-              <p className="text-sm text-white/60 mb-2">Trigger</p>
-              <pre className="text-sm text-white font-mono overflow-x-auto">
-                {JSON.stringify(workflow.trigger, null, 2)}
-              </pre>
-            </div>
-
-            <div className="p-4 rounded-lg bg-white/5">
-              <p className="text-sm text-white/60 mb-2">Condições</p>
-              <pre className="text-sm text-white font-mono overflow-x-auto">
-                {JSON.stringify(workflow.conditions, null, 2)}
-              </pre>
-            </div>
-
-            <div className="p-4 rounded-lg bg-white/5">
-              <p className="text-sm text-white/60 mb-2">Ações</p>
-              <pre className="text-sm text-white font-mono overflow-x-auto">
-                {JSON.stringify(workflow.actions, null, 2)}
-              </pre>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button onClick={handleRun} className="flex-1">
-                <Play className="h-4 w-4 mr-2" />
-                Executar Agora
-              </Button>
-              <Button variant="destructive" onClick={handleDelete}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardHeader>
-            <CardTitle className="text-white">Histórico de Execuções</CardTitle>
-            <CardDescription className="text-white/60">
-              Últimas {executions.length} execuções
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3 max-h-[600px] overflow-y-auto">
-              {executions.length === 0 ? (
-                <p className="text-white/60 text-center py-8">
-                  Nenhuma execução ainda
-                </p>
-              ) : (
-                executions.map((execution) => (
-                  <div
-                    key={execution.id}
-                    className="p-4 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      {getStatusBadge(execution.status)}
-                      <span className="text-xs text-white/60">
-                        {formatDate(execution.startedAt)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/60">Duração</span>
-                      <span className="text-white font-medium">
-                        {formatDuration(execution.duration)}
-                      </span>
-                    </div>
-                    {execution.error && (
-                      <div className="mt-2 p-2 rounded bg-red-500/10 border border-red-500/20">
-                        <p className="text-xs text-red-400">{execution.error}</p>
-                      </div>
-                    )}
+        <div className="flex-1" ref={reactFlowWrapper}>
+          <ReactFlow
+            nodes={nodes} edges={edges}
+            onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
+            onConnect={onConnect} onNodeClick={onNodeClick} onPaneClick={onPaneClick}
+            onInit={setReactFlowInstance} onDrop={onDrop} onDragOver={onDragOver}
+            nodeTypes={nodeTypes} edgeTypes={edgeTypes}
+            defaultEdgeOptions={{ type: 'flowEdge', data: { onDelete: handleDeleteEdge } }}
+            fitView proOptions={{ hideAttribution: true }}
+            className="bg-slate-950" style={{ backgroundColor: '#020617' }}
+          >
+            <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="rgba(148, 163, 184, 0.1)" />
+            <Controls className="!bg-slate-800/80 !border-white/10 !shadow-xl [&>button]:!bg-slate-800 [&>button]:!border-white/10 [&>button]:!text-white/60 [&>button:hover]:!bg-slate-700" position="bottom-right" />
+            <MiniMap
+              nodeColor={(n) => {
+                const cat = n.data?.category
+                if (cat === 'trigger') return '#34d399'
+                if (cat === 'action') return '#60a5fa'
+                if (cat === 'logic') return '#fbbf24'
+                if (cat === 'transform') return '#a78bfa'
+                return '#64748b'
+              }}
+              maskColor="rgba(0, 0, 0, 0.7)"
+              className="!bg-slate-900/80 !border-white/10"
+              position="bottom-left"
+            />
+            {nodes.length === 0 && (
+              <Panel position="top-center">
+                <div className="mt-32 text-center animate-fade-in-up">
+                  <div className="text-white/20 text-lg font-medium mb-2">
+                    Arraste um nó da paleta para começar
                   </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  <div className="text-white/10 text-sm">
+                    ou clique com botão direito no canvas
+                  </div>
+                </div>
+              </Panel>
+            )}
+          </ReactFlow>
+        </div>
+
+        {selectedNode && (
+          <div className="w-[280px] flex-shrink-0">
+            <NodeConfigPanel
+              nodeId={selectedNode.id} nodeLabel={(selectedNode.data as any).label}
+              nodeType={(selectedNode.data as any).nodeType} category={(selectedNode.data as any).category}
+              config={(selectedNode.data as any).config || {}}
+              configFields={CONFIG_FIELDS[(selectedNode.data as any).nodeType] || []}
+              onUpdate={handleNodeConfigUpdate} onDelete={handleDeleteNode}
+              onClose={() => setSelectedNodeId(null)}
+            />
+          </div>
+        )}
       </div>
 
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="text-white">Metadados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-lg bg-white/5">
-              <p className="text-sm text-white/60">Criado por</p>
-              <p className="text-white mt-1">{workflow.creator.name}</p>
-              <p className="text-xs text-white/40">{workflow.creator.email}</p>
-            </div>
-            <div className="p-4 rounded-lg bg-white/5">
-              <p className="text-sm text-white/60">Criado em</p>
-              <p className="text-white mt-1">{formatDate(workflow.createdAt)}</p>
-            </div>
-            <div className="p-4 rounded-lg bg-white/5">
-              <p className="text-sm text-white/60">Última atualização</p>
-              <p className="text-white mt-1">{formatDate(workflow.updatedAt)}</p>
-            </div>
-            <div className="p-4 rounded-lg bg-white/5">
-              <p className="text-sm text-white/60">ID do Workflow</p>
-              <p className="text-xs text-white/60 mt-1 font-mono">{workflow.id}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* ── Variables Panel ─────────────────────────────── */}
+      {showVariablesPanel && (
+        <FlowVariablesPanel
+          variables={flowVariables}
+          onUpdate={(vars) => {
+            setFlowVariables(vars)
+            setShowVariablesPanel(false)
+          }}
+          onClose={() => setShowVariablesPanel(false)}
+        />
+      )}
+
+      {/* ── Execution History ─────────────────────────────── */}
+      {showHistory && flowId !== 'new' && (
+        <ExecutionHistoryPanel
+          flowId={flowId}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
     </div>
+  )
+}
+
+// ── Helpers ──────────────────────────────────────────────
+function getIconForType(type: string): string {
+  return NODE_CATALOG.find(n => n.type === type)?.icon || 'Zap'
+}
+function getOutputsForType(type: string) {
+  return NODE_CATALOG.find(n => n.type === type)?.outputs || [{ name: 'main' }]
+}
+function getInputsForType(type: string) {
+  return NODE_CATALOG.find(n => n.type === type)?.inputs || [{ name: 'main' }]
+}
+
+// ── Page wrapper ─────────────────────────────────────────
+export default function FlowBuilderPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  return (
+    <ReactFlowProvider>
+      <FlowBuilderInner flowId={id} />
+    </ReactFlowProvider>
   )
 }

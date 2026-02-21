@@ -54,6 +54,7 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
   const [agent, setAgent] = useState<Agent | null>(null)
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([])
   const [whatsappInstances, setWhatsappInstances] = useState<WhatsappInstance[]>([])
+  const [models, setModels] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -69,6 +70,9 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
       whatsappInstance: '',
       webchat: false,
       email: false
+    },
+    config: {
+      workingDirectory: ''
     }
   })
 
@@ -76,7 +80,20 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
     fetchAgent()
     fetchKnowledgeBases()
     fetchWhatsappInstances()
+    fetchModels()
   }, [resolvedParams.id])
+
+  const fetchModels = async () => {
+    try {
+      const response = await fetch('/api/models')
+      const result = await response.json()
+      if (result.success) {
+        setModels(result.data)
+      }
+    } catch (error) {
+      console.error('Error fetching models:', error)
+    }
+  }
 
   const fetchAgent = async () => {
     try {
@@ -101,6 +118,9 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
             whatsappInstance: whatsappChannel?.config?.instanceName || '',
             webchat: agentData.channels.some((ch: any) => ch.channel === 'webchat'),
             email: agentData.channels.some((ch: any) => ch.channel === 'email')
+          },
+          config: {
+            workingDirectory: agentData.config?.workingDirectory || ''
           }
         })
       }
@@ -170,6 +190,10 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
           temperature: formData.temperature,
           status: formData.status,
           knowledgeBaseId: formData.knowledgeBaseId || null,
+          config: {
+            ...formData.config,
+            workingDirectory: formData.config.workingDirectory
+          },
           channels
         })
       })
@@ -291,9 +315,31 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-[#0a0a0b] border-white/10">
-                    <SelectItem value="llama-3.3-70b-versatile">Llama 3.3 70B (Versatile)</SelectItem>
-                    <SelectItem value="llama-3.3-70b-specdec">Llama 3.3 70B (SpecDec)</SelectItem>
-                    <SelectItem value="mixtral-8x7b-32768">Mixtral 8x7B</SelectItem>
+                    {/* Group models by provider */}
+                    {Array.from(new Set(models.map(m => m.provider))).map(provider => (
+                      <div key={provider}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-white/40 uppercase tracking-wider">
+                          {provider}
+                        </div>
+                        {models
+                          .filter(m => m.provider === provider)
+                          .map(model => (
+                            <SelectItem key={model.id} value={model.id}>
+                              {model.name}
+                            </SelectItem>
+                          ))}
+                      </div>
+                    ))}
+                    {models.length === 0 && (
+                      <>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-white/40 uppercase tracking-wider">
+                          Groq (Padrão)
+                        </div>
+                        <SelectItem value="llama-3.3-70b-versatile">Llama 3.3 70B (Versatile)</SelectItem>
+                        <SelectItem value="llama-3.3-70b-specdec">Llama 3.3 70B (SpecDec)</SelectItem>
+                        <SelectItem value="mixtral-8x7b-32768">Mixtral 8x7B</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -331,6 +377,30 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
                 </Select>
                 <p className="text-xs text-white/40">
                   Base de conhecimento para contextualizar respostas do agente
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="text-white">Diretório de Trabalho (Workspace)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="workingDirectory" className="text-white">Caminho da Pasta do Projeto</Label>
+                <Input
+                  id="workingDirectory"
+                  placeholder="Ex: C:\Users\jeanz\Projetos\MeuApp"
+                  value={formData.config.workingDirectory}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    config: { ...formData.config, workingDirectory: e.target.value }
+                  })}
+                  className="bg-white/5 border-white/10 text-white font-mono text-sm"
+                />
+                <p className="text-xs text-white/40">
+                  Defina onde o Agente CLI deve ser executado. Deixe em branco para usar a pasta atual da Sofia.
                 </p>
               </div>
             </CardContent>
@@ -465,6 +535,6 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
           </Card>
         </div>
       </div>
-    </div>
+    </div >
   )
 }

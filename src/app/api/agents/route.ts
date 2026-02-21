@@ -92,6 +92,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Log payload for debugging
+    console.log('Creating agent with payload:', {
+      name,
+      description,
+      systemPrompt,
+      model,
+      temperature,
+      status,
+      channels,
+      userId: user.id
+    });
+
     // Create agent
     const agent = await prisma.agent.create({
       data: {
@@ -129,10 +141,10 @@ export async function POST(request: NextRequest) {
       message: 'Agent created successfully'
     }, { status: 201 });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating agent:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create agent' },
+      { success: false, error: 'Failed to create agent', details: error.message },
       { status: 500 }
     );
   }

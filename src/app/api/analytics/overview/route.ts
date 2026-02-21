@@ -124,7 +124,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     prisma.agent.count({
       where: { status: 'active' },
     }),
-    prisma.workflow.count({
+    prisma.flow.count({
       where: { status: 'active' },
     }),
   ]);

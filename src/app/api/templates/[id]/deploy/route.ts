@@ -65,14 +65,31 @@ export async function POST(
       }
     } else if (template.type === 'workflow') {
       const workflowData: any = template.config
-      createdResource = await prisma.workflow.create({
+      createdResource = await prisma.flow.create({
         data: {
           name: workflowData.name || template.name,
           description: workflowData.description || template.description,
-          trigger: workflowData.trigger || {},
-          conditions: workflowData.conditions || [],
-          actions: workflowData.actions || [],
-          status: 'inactive',
+          nodes: workflowData.nodes || [],
+          edges: workflowData.edges || [],
+          variables: workflowData.variables || {},
+          triggerType: workflowData.triggerType || 'manual',
+          cronExpression: workflowData.cronExpression || null,
+          tags: workflowData.tags || [],
+          icon: workflowData.icon || template.icon || null,
+          color: workflowData.color || null,
+          status: 'draft',
+          createdBy: userId
+        }
+      })
+    } else if (template.type === 'orchestration') {
+      const orchData: any = template.config
+      createdResource = await prisma.agentOrchestration.create({
+        data: {
+          name: orchData.name || template.name,
+          description: orchData.description || template.description,
+          agents: orchData.agents || [],
+          strategy: orchData.strategy || 'sequential',
+          config: orchData.config || {},
           createdBy: userId
         }
       })

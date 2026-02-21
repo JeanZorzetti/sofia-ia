@@ -353,7 +353,7 @@ export default function OrchestrationsPage() {
                 value={newOrchestration.name}
                 onChange={(e) => setNewOrchestration({ ...newOrchestration, name: e.target.value })}
                 className="bg-white/5 border-white/10 text-white"
-                placeholder="Ex: Análise de Lead Completa"
+                placeholder="Ex: Processamento de Dados Complexos"
               />
             </div>
 
@@ -436,7 +436,7 @@ export default function OrchestrationsPage() {
                           value={step.role}
                           onChange={(e) => updateAgentStep(index, 'role', e.target.value)}
                           className="bg-white/5 border-white/10 text-white h-8 text-xs"
-                          placeholder="Ex: Qualificador"
+                          placeholder="Ex: Pesquisador"
                         />
                       </div>
                     </div>

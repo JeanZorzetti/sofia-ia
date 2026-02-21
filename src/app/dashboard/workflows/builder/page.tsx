@@ -6,8 +6,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { WorkflowCanvas } from '@/components/workflow-canvas'
-import { ArrowLeft, Save } from 'lucide-react'
+import { PredictiveWorkflowBuilder } from '@/components/orchestrations/predictive/predictive-workflow-builder'
+import { ArrowLeft, Save, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface NodeData {
@@ -120,9 +120,12 @@ export default function WorkflowBuilderPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-white">Visual Workflow Builder</h1>
+            <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+              <Sparkles className="h-8 w-8 text-yellow-400" />
+              Visual Workflow Builder (Sugestões Preditivas)
+            </h1>
             <p className="text-white/60 mt-1">
-              Arraste e conecte nós para criar seu workflow
+              Arraste e conecte nós para criar seu workflow com sugestões inteligentes
             </p>
           </div>
         </div>
@@ -183,6 +186,10 @@ export default function WorkflowBuilderPage() {
                   <span className="text-purple-400 mt-0.5">→</span>
                   <span>Verde = Triggers, Azul = Ações, Amarelo = Condições</span>
                 </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400 mt-0.5">→</span>
+                  <span>Panel direito mostra sugestões preditivas</span>
+                </li>
               </ul>
             </div>
 
@@ -229,7 +236,7 @@ export default function WorkflowBuilderPage() {
             <CardTitle className="text-white">Canvas do Workflow</CardTitle>
           </CardHeader>
           <CardContent>
-            <WorkflowCanvas
+            <PredictiveWorkflowBuilder
               initialNodes={nodes}
               initialConnections={connections}
               onChange={handleCanvasChange}

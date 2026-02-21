@@ -1,519 +1,390 @@
 'use client'
 
+// ─────────────────────────────────────────────────────────
+// Workflows List Page — N8N-style flows dashboard
+// ─────────────────────────────────────────────────────────
+
 import { useState, useEffect } from 'react'
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Switch } from '@/components/ui/switch'
-import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import {
-  Target,
-  Clock,
-  AlertCircle,
-  MessageSquare,
-  TrendingUp,
-  CheckCircle,
-  Activity,
-  Plus,
-  Play,
-  Eye,
-  Sparkles,
-  Workflow as WorkflowIcon
+  Plus, Search, Play, Eye, Copy, Trash2, MoreVertical, Activity,
+  TrendingUp, CheckCircle, Clock, Zap, Workflow as WorkflowIcon,
+  Globe, Bot, Power, PowerOff, Filter, LayoutTemplate,
 } from 'lucide-react'
+import { FlowTemplateGallery } from '@/components/flows/flow-template-gallery'
 
-interface Workflow {
+interface Flow {
   id: string
   name: string
   description: string | null
-  trigger: any
-  conditions: any[]
-  actions: any[]
   status: string
-  lastRun: string | null
+  triggerType: string
+  tags: string[]
+  icon: string | null
+  color: string | null
   runCount: number
   successCount: number
+  lastRunAt: string | null
   createdAt: string
-  creator: {
-    id: string
-    name: string
-    email: string
-  }
-  _count: {
-    executions: number
-  }
+  updatedAt: string
+  creator: { id: string; name: string; email: string }
+  _count: { executions: number }
+}
+
+const TRIGGER_ICONS: Record<string, React.ReactNode> = {
+  manual: <Play className="h-3.5 w-3.5" />,
+  webhook: <Globe className="h-3.5 w-3.5" />,
+  cron: <Clock className="h-3.5 w-3.5" />,
+  event: <Zap className="h-3.5 w-3.5" />,
+}
+
+const TRIGGER_LABELS: Record<string, string> = {
+  manual: 'Manual',
+  webhook: 'Webhook',
+  cron: 'Agendado',
+  event: 'Evento',
 }
 
 export default function WorkflowsPage() {
   const router = useRouter()
-  const [workflows, setWorkflows] = useState<Workflow[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
-  const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false)
-  const [newWorkflow, setNewWorkflow] = useState({
-    name: '',
-    description: '',
-    triggerType: 'event',
-    triggerEvent: 'message.received',
-    actionType: 'send_whatsapp',
-    actionMessage: ''
-  })
+  const [flows, setFlows] = useState<Flow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [showTemplates, setShowTemplates] = useState(false)
 
-  useEffect(() => {
-    fetchWorkflows()
-  }, [])
+  useEffect(() => { fetchFlows() }, [])
 
-  const fetchWorkflows = async () => {
+  const fetchFlows = async () => {
     try {
-      const response = await fetch('/api/workflows')
-      const data = await response.json()
-      if (data.success) {
-        setWorkflows(data.data)
-      }
-    } catch (error) {
-      console.error('Error fetching workflows:', error)
+      const res = await fetch('/api/flows')
+      const { data, error } = await res.json()
+      if (error) throw new Error(error)
+      setFlows(data || [])
+    } catch (error: any) {
+      console.error('Error fetching flows:', error)
+      toast.error('Erro ao carregar workflows')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleToggle = async (workflowId: string, currentStatus: string) => {
+  const handleToggle = async (flowId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'active' ? 'inactive' : 'active'
-
     try {
-      const response = await fetch(`/api/workflows/${workflowId}`, {
+      const res = await fetch(`/api/flows/${flowId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: newStatus })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
       })
-
-      if (response.ok) {
-        setWorkflows(prev =>
-          prev.map(workflow =>
-            workflow.id === workflowId
-              ? { ...workflow, status: newStatus }
-              : workflow
-          )
-        )
-      }
-    } catch (error) {
-      console.error('Error toggling workflow:', error)
+      const { error } = await res.json()
+      if (error) throw new Error(error)
+      setFlows(prev => prev.map(f => f.id === flowId ? { ...f, status: newStatus } : f))
+      toast.success(newStatus === 'active' ? 'Workflow ativado' : 'Workflow desativado')
+    } catch (error: any) {
+      toast.error('Erro: ' + error.message)
     }
   }
 
-  const handleRunWorkflow = async (workflowId: string) => {
+  const handleRun = async (flowId: string) => {
     try {
-      const response = await fetch(`/api/workflows/${workflowId}/run`, {
+      const res = await fetch(`/api/flows/${flowId}/execute`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ context: {} })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ triggerData: {} }),
       })
-
-      if (response.ok) {
-        alert('Workflow executado com sucesso!')
-        fetchWorkflows()
+      const { data, error } = await res.json()
+      if (error) throw new Error(error)
+      if (data?.status === 'success') {
+        toast.success(`Executado com sucesso (${data.duration}ms)`)
+      } else if (data?.status === 'failed') {
+        toast.error(`Falhou: ${data.error}`)
       } else {
-        const data = await response.json()
-        alert(`Erro ao executar workflow: ${data.error}`)
+        toast.info('Execução em andamento...')
       }
-    } catch (error) {
-      console.error('Error running workflow:', error)
-      alert('Erro ao executar workflow')
+      fetchFlows()
+    } catch (error: any) {
+      toast.error('Erro ao executar: ' + error.message)
     }
   }
 
-  const handleCreateWorkflow = async () => {
-    if (!newWorkflow.name || !newWorkflow.actionMessage) {
-      alert('Preencha os campos obrigatórios')
-      return
-    }
-
+  const handleDuplicate = async (flowId: string) => {
     try {
-      const response = await fetch('/api/workflows', {
+      const res = await fetch(`/api/flows/${flowId}/duplicate`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: newWorkflow.name,
-          description: newWorkflow.description,
-          trigger: {
-            type: newWorkflow.triggerType,
-            config: {
-              event: newWorkflow.triggerEvent
-            }
-          },
-          conditions: [],
-          actions: [
-            {
-              type: newWorkflow.actionType,
-              config: {
-                message: newWorkflow.actionMessage,
-                instance: 'sofia'
-              }
-            }
-          ],
-          status: 'inactive'
-        })
       })
-
-      if (response.ok) {
-        setCreateDialogOpen(false)
-        setNewWorkflow({
-          name: '',
-          description: '',
-          triggerType: 'event',
-          triggerEvent: 'message.received',
-          actionType: 'send_whatsapp',
-          actionMessage: ''
-        })
-        fetchWorkflows()
-      }
-    } catch (error) {
-      console.error('Error creating workflow:', error)
+      const { error } = await res.json()
+      if (error) throw new Error(error)
+      toast.success('Workflow duplicado!')
+      fetchFlows()
+    } catch (error: any) {
+      toast.error('Erro ao duplicar: ' + error.message)
     }
   }
 
-  const getWorkflowIcon = (workflow: Workflow) => {
-    if (workflow.name.toLowerCase().includes('qualifica')) return Target
-    if (workflow.name.toLowerCase().includes('follow')) return Clock
-    if (workflow.name.toLowerCase().includes('alerta')) return AlertCircle
-    return MessageSquare
+  const handleDelete = async (flowId: string, name: string) => {
+    if (!confirm(`Tem certeza que deseja excluir "${name}"?`)) return
+    try {
+      const res = await fetch(`/api/flows/${flowId}`, { method: 'DELETE' })
+      const { error } = await res.json()
+      if (error) throw new Error(error)
+      setFlows(prev => prev.filter(f => f.id !== flowId))
+      toast.success('Workflow excluído')
+    } catch (error: any) {
+      toast.error('Erro ao excluir: ' + error.message)
+    }
   }
 
-  const getWorkflowColor = (workflow: Workflow) => {
-    if (workflow.name.toLowerCase().includes('qualifica')) return 'text-blue-400'
-    if (workflow.name.toLowerCase().includes('follow')) return 'text-purple-400'
-    if (workflow.name.toLowerCase().includes('alerta')) return 'text-red-400'
-    return 'text-green-400'
-  }
+  // Filter flows
+  const filteredFlows = flows.filter(f => {
+    if (statusFilter !== 'all' && f.status !== statusFilter) return false
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      return f.name.toLowerCase().includes(q) || f.description?.toLowerCase().includes(q)
+    }
+    return true
+  })
 
-  const totalExecutions = workflows.reduce((sum, w) => sum + w.runCount, 0)
-  const avgSuccessRate = workflows.length > 0
-    ? Math.round(workflows.reduce((sum, w) => {
-        const rate = w.runCount > 0 ? (w.successCount / w.runCount) * 100 : 0
-        return sum + rate
-      }, 0) / workflows.length)
+  // Stats
+  const activeCount = flows.filter(f => f.status === 'active').length
+  const totalExecutions = flows.reduce((s, f) => s + f.runCount, 0)
+  const avgSuccess = flows.length > 0
+    ? Math.round(flows.reduce((s, f) => s + (f.runCount > 0 ? (f.successCount / f.runCount) * 100 : 0), 0) / flows.length)
     : 0
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-6">
         <div className="flex items-center justify-between">
-          <div>
-            <Skeleton className="h-9 w-48" />
-            <Skeleton className="h-5 w-64 mt-2" />
-          </div>
-          <Skeleton className="h-10 w-32" />
+          <div><Skeleton className="h-9 w-48" /><Skeleton className="h-5 w-64 mt-2" /></div>
+          <Skeleton className="h-10 w-40" />
         </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-48 rounded-xl" />)}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="space-y-6 p-6 animate-fade-in-up">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Automações</h1>
-          <p className="text-white/60 mt-1">Workflows automatizados com IA</p>
+          <h1 className="text-3xl font-bold text-white">Workflows</h1>
+          <p className="text-white/60 mt-1">Automatize processos com o engine visual</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={() => router.push('/dashboard/workflows/builder')} variant="outline" className="gap-2">
-            <WorkflowIcon className="h-4 w-4" />
-            Visual Builder
+        <div className="flex gap-2">
+          <Button onClick={() => setShowTemplates(true)} variant="outline" className="gap-2 border-white/10 text-white/70 hover:text-white hover:bg-white/10">
+            <LayoutTemplate className="h-4 w-4" />
+            Templates
           </Button>
-          <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+          <Button onClick={() => router.push('/dashboard/workflows/new')} className="gap-2 bg-white/10 hover:bg-white/20 text-white">
             <Plus className="h-4 w-4" />
             Novo Workflow
           </Button>
         </div>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="glass-card">
+        <Card className="bg-gradient-to-br from-white/5 to-white/[0.02] border-white/10 backdrop-blur-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-white/60">Workflows Ativos</p>
-                <p className="text-3xl font-bold text-white mt-2">
-                  {workflows.filter(w => w.status === 'active').length}/{workflows.length}
-                </p>
+                <p className="text-3xl font-bold text-white mt-2">{activeCount}<span className="text-lg text-white/40">/{flows.length}</span></p>
               </div>
-              <Activity className="h-12 w-12 text-blue-400" />
+              <Activity className="h-10 w-10 text-blue-400/80" />
             </div>
           </CardContent>
         </Card>
-
-        <Card className="glass-card">
+        <Card className="bg-gradient-to-br from-white/5 to-white/[0.02] border-white/10 backdrop-blur-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-white/60">Execuções Totais</p>
-                <p className="text-3xl font-bold text-white mt-2">
-                  {totalExecutions}
-                </p>
+                <p className="text-3xl font-bold text-white mt-2">{totalExecutions}</p>
               </div>
-              <TrendingUp className="h-12 w-12 text-purple-400" />
+              <TrendingUp className="h-10 w-10 text-violet-400/80" />
             </div>
           </CardContent>
         </Card>
-
-        <Card className="glass-card">
+        <Card className="bg-gradient-to-br from-white/5 to-white/[0.02] border-white/10 backdrop-blur-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-white/60">Taxa de Sucesso</p>
-                <p className="text-3xl font-bold text-white mt-2">
-                  {avgSuccessRate}%
-                </p>
+                <p className="text-3xl font-bold text-white mt-2">{avgSuccess}%</p>
               </div>
-              <CheckCircle className="h-12 w-12 text-green-400" />
+              <CheckCircle className="h-10 w-10 text-emerald-400/80" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {workflows.length === 0 && !loading && (
-        <Card className="glass-card border-dashed">
+      {/* Filters */}
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-white/40" />
+          <Input
+            placeholder="Buscar workflows..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30"
+          />
+        </div>
+        <div className="flex items-center gap-1 bg-white/5 rounded-lg p-1 border border-white/10">
+          {['all', 'active', 'inactive', 'draft'].map(s => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${statusFilter === s ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/60'
+                }`}
+            >
+              {s === 'all' ? 'Todos' : s === 'active' ? 'Ativos' : s === 'inactive' ? 'Inativos' : 'Rascunho'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Empty state */}
+      {filteredFlows.length === 0 && (
+        <Card className="border-dashed border-white/20 bg-white/[0.02]">
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="mb-4 rounded-full bg-muted/50 p-6">
-              <Sparkles className="h-12 w-12 text-muted-foreground" />
+            <div className="mb-4 rounded-full bg-white/5 p-6 border border-white/10">
+              <WorkflowIcon className="h-12 w-12 text-white/20" />
             </div>
-            <h3 className="mb-2 text-2xl font-semibold text-white">Nenhum workflow criado</h3>
-            <p className="mb-6 text-center text-white/60 max-w-md">
-              Workflows automatizam processos e economizam tempo. Crie seu primeiro workflow ou use um template pronto.
+            <h3 className="mb-2 text-xl font-semibold text-white">
+              {search ? 'Nenhum resultado encontrado' : 'Nenhum workflow criado'}
+            </h3>
+            <p className="mb-6 text-center text-white/50 max-w-md text-sm">
+              {search ? 'Tente buscar com outros termos' : 'Crie seu primeiro workflow arrastando nós no canvas visual'}
             </p>
-            <div className="flex gap-3">
-              <Button onClick={() => setCreateDialogOpen(true)} size="lg">
+            {!search && (
+              <Button onClick={() => router.push('/dashboard/workflows/new')} size="lg" className="bg-white/10 hover:bg-white/20 text-white">
                 <Plus className="mr-2 h-4 w-4" />
                 Criar Workflow
               </Button>
-              <Button variant="outline" size="lg" onClick={() => router.push('/dashboard/templates?type=workflow')}>
-                Ver Templates
-              </Button>
-            </div>
+            )}
           </CardContent>
         </Card>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {workflows.map((workflow) => {
-          const Icon = getWorkflowIcon(workflow)
-          const color = getWorkflowColor(workflow)
-          const successRate = workflow.runCount > 0
-            ? Math.round((workflow.successCount / workflow.runCount) * 100)
-            : 0
+      {/* Flow cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {filteredFlows.map((flow) => {
+          const successRate = flow.runCount > 0 ? Math.round((flow.successCount / flow.runCount) * 100) : 0
 
           return (
-            <Card key={workflow.id} className="glass-card hover-scale">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-lg bg-white/5`}>
-                      <Icon className={`h-6 w-6 ${color}`} />
+            <Card
+              key={flow.id}
+              className="group bg-gradient-to-br from-white/5 to-white/[0.02] border-white/10 hover:border-white/20 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-white/5 cursor-pointer"
+              onClick={() => router.push(`/dashboard/workflows/${flow.id}`)}
+            >
+              <CardContent className="p-5">
+                {/* Top row: name, status, trigger */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-base font-semibold text-white truncate">{flow.name}</h3>
+                      <Badge className={`text-[10px] px-1.5 py-0 ${flow.status === 'active' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                        flow.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                          'bg-white/10 text-white/40 border-white/10'
+                        }`}>
+                        {flow.status === 'active' ? 'Ativo' : flow.status === 'draft' ? 'Rascunho' : 'Inativo'}
+                      </Badge>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-white text-lg">
-                          {workflow.name}
-                        </CardTitle>
-                        {workflow.status === 'active' && (
-                          <Badge variant="default" className="bg-green-500 text-white text-xs">
-                            Ativo
-                          </Badge>
-                        )}
-                      </div>
-                      <CardDescription className="text-white/60 mt-2">
-                        {workflow.description || 'Sem descrição'}
-                      </CardDescription>
-                    </div>
+                    <p className="text-xs text-white/40 truncate">{flow.description || 'Sem descrição'}</p>
                   </div>
-                  <Switch
-                    checked={workflow.status === 'active'}
-                    onCheckedChange={() => handleToggle(workflow.id, workflow.status)}
-                  />
+
+                  {/* Actions (stop propagation to avoid navigating) */}
+                  <div className="flex items-center gap-1 ml-3 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => handleToggle(flow.id, flow.status)}
+                      className={`p-1.5 rounded-md hover:bg-white/10 ${flow.status === 'active' ? 'text-emerald-400' : 'text-white/30'}`}
+                      title={flow.status === 'active' ? 'Desativar' : 'Ativar'}
+                    >
+                      {flow.status === 'active' ? <PowerOff className="h-3.5 w-3.5" /> : <Power className="h-3.5 w-3.5" />}
+                    </button>
+                    <button
+                      onClick={() => handleRun(flow.id)}
+                      className="p-1.5 rounded-md hover:bg-white/10 text-blue-400"
+                      title="Executar"
+                    >
+                      <Play className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDuplicate(flow.id)}
+                      className="p-1.5 rounded-md hover:bg-white/10 text-white/30 hover:text-white/60"
+                      title="Duplicar"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(flow.id, flow.name)}
+                      className="p-1.5 rounded-md hover:bg-red-500/20 text-white/30 hover:text-red-400"
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 rounded-lg bg-white/5">
-                      <p className="text-xs text-white/60">Execuções</p>
-                      <p className="text-2xl font-bold text-white mt-1">
-                        {workflow.runCount}
-                      </p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-white/5">
-                      <p className="text-xs text-white/60">Taxa de Sucesso</p>
-                      <p className="text-2xl font-bold text-white mt-1">
-                        {successRate}%
-                      </p>
-                    </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-white/60">Performance</span>
-                      <span className="text-white font-medium">
-                        {successRate}%
-                      </span>
-                    </div>
-                    <Progress value={successRate} className="h-2" />
+                {/* Stats row */}
+                <div className="flex items-center gap-4 text-xs text-white/50">
+                  <div className="flex items-center gap-1.5">
+                    {TRIGGER_ICONS[flow.triggerType] || <Zap className="h-3 w-3" />}
+                    <span>{TRIGGER_LABELS[flow.triggerType] || flow.triggerType}</span>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => router.push(`/dashboard/workflows/${workflow.id}`)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      Detalhes
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleRunWorkflow(workflow.id)}
-                    >
-                      <Play className="h-4 w-4 mr-2" />
-                      Executar
-                    </Button>
+                  <div className="flex items-center gap-1">
+                    <Activity className="h-3 w-3" />
+                    <span>{flow.runCount} execuções</span>
                   </div>
-
-                  {workflow.status === 'active' && (
-                    <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10 border border-green-500/20">
-                      <CheckCircle className="h-4 w-4 text-green-400" />
-                      <span className="text-xs text-green-400">
-                        Workflow em execução
-                      </span>
+                  <div className="flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    <span>{successRate}% sucesso</span>
+                  </div>
+                  {flow.lastRunAt && (
+                    <div className="flex items-center gap-1 ml-auto">
+                      <Clock className="h-3 w-3" />
+                      <span>{new Date(flow.lastRunAt).toLocaleDateString('pt-BR')}</span>
                     </div>
                   )}
                 </div>
+
+                {/* Tags */}
+                {flow.tags.length > 0 && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    {flow.tags.slice(0, 3).map(tag => (
+                      <Badge key={tag} variant="outline" className="text-[10px] px-1.5 py-0 border-white/10 text-white/40">
+                        {tag}
+                      </Badge>
+                    ))}
+                    {flow.tags.length > 3 && (
+                      <span className="text-[10px] text-white/30">+{flow.tags.length - 3}</span>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )
         })}
       </div>
 
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="bg-zinc-900 border-white/10">
-          <DialogHeader>
-            <DialogTitle className="text-white">Criar Novo Workflow</DialogTitle>
-            <DialogDescription className="text-white/60">
-              Configure um workflow de automação
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name" className="text-white">Nome *</Label>
-              <Input
-                id="name"
-                value={newWorkflow.name}
-                onChange={(e) => setNewWorkflow({ ...newWorkflow, name: e.target.value })}
-                className="bg-white/5 border-white/10 text-white"
-                placeholder="Ex: Follow-up Automático"
-              />
-            </div>
-            <div>
-              <Label htmlFor="description" className="text-white">Descrição</Label>
-              <Textarea
-                id="description"
-                value={newWorkflow.description}
-                onChange={(e) => setNewWorkflow({ ...newWorkflow, description: e.target.value })}
-                className="bg-white/5 border-white/10 text-white"
-                placeholder="Descreva o que este workflow faz"
-              />
-            </div>
-            <div>
-              <Label htmlFor="triggerEvent" className="text-white">Trigger (Gatilho)</Label>
-              <Select
-                value={newWorkflow.triggerEvent}
-                onValueChange={(value) => setNewWorkflow({ ...newWorkflow, triggerEvent: value })}
-              >
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-white/10">
-                  <SelectItem value="message.received">Nova mensagem recebida</SelectItem>
-                  <SelectItem value="conversation.created">Nova conversa criada</SelectItem>
-                  <SelectItem value="lead.qualified">Lead qualificado</SelectItem>
-                  <SelectItem value="lead.score_updated">Score do lead atualizado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="actionType" className="text-white">Ação</Label>
-              <Select
-                value={newWorkflow.actionType}
-                onValueChange={(value) => setNewWorkflow({ ...newWorkflow, actionType: value })}
-              >
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-white/10">
-                  <SelectItem value="send_whatsapp">Enviar mensagem WhatsApp</SelectItem>
-                  <SelectItem value="update_lead">Atualizar lead</SelectItem>
-                  <SelectItem value="notify_webhook">Notificar via webhook</SelectItem>
-                  <SelectItem value="call_agent">Chamar agente IA</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="actionMessage" className="text-white">Mensagem *</Label>
-              <Textarea
-                id="actionMessage"
-                value={newWorkflow.actionMessage}
-                onChange={(e) => setNewWorkflow({ ...newWorkflow, actionMessage: e.target.value })}
-                className="bg-white/5 border-white/10 text-white"
-                placeholder="Ex: Olá {{lead.nome}}! Como posso ajudar?"
-              />
-              <p className="text-xs text-white/40 mt-1">
-                Use variáveis: {`{{lead.nome}}, {{lead.telefone}}, {{message.content}}`}
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreateWorkflow}>
-              Criar Workflow
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Template Gallery Modal */}
+      {showTemplates && (
+        <FlowTemplateGallery onClose={() => setShowTemplates(false)} />
+      )}
     </div>
   )
 }

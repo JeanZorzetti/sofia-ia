@@ -565,10 +565,10 @@ async function handleMessageUpsert(instance: string, data: unknown) {
 function getAutomatedResponse(text: string): string | null {
   const lower = text.toLowerCase()
   if (lower.includes('olá') || lower.includes('oi') || lower.includes('ola')) {
-    return 'Olá! Sou a Sofia, assistente virtual da imobiliária. Como posso te ajudar?'
+    return 'Olá! Sou a Sofia, sua assistente virtual. Como posso te ajudar?'
   }
   if (lower.includes('preço') || lower.includes('valor') || lower.includes('preco')) {
-    return 'Para te informar os valores, preciso saber mais sobre o tipo de imóvel e a região que você procura. Pode me dar mais detalhes?'
+    return 'Para te ajudar com valores, preciso saber mais detalhes sobre o que você procura. Pode me contar mais?'
   }
   return null
 }

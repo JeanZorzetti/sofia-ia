@@ -24,7 +24,7 @@ model User {
   leads     Lead[]
   campaigns Campaign[]
   agents    Agent[]
-  workflows Workflow[]
+  flows     Flow[]
 
   @@index([workspaceId])
   @@map("users")
@@ -95,7 +95,7 @@ model Message {
   id                String    @id @default(uuid()) @db.Uuid
   conversationId    String    @map("conversation_id") @db.Uuid
   leadId            String    @map("lead_id") @db.Uuid
-  whatsappMessageId String?   @unique @map("whatsapp_message_id") @db.VarChar(255)
+  whatsappMessageId String?   @map("whatsapp_message_id") @db.VarChar(255)
   sender            String    @db.VarChar(20)
   messageType       String    @default("text") @map("message_type") @db.VarChar(20)
   content           String    @db.Text
@@ -212,6 +212,7 @@ model Agent {
 
   creator  User           @relation(fields: [createdBy], references: [id])
   channels AgentChannel[]
+  devSessions DevSession[]
 
   @@index([status])
   @@index([createdBy])
@@ -278,7 +279,7 @@ model DocumentEmbedding {
   chunkText   String   @map("chunk_text") @db.Text
   /// Vetor de 1536 dimensões (OpenAI text-embedding-3-small)
   /// ou 768 dimensões (Hugging Face all-MiniLM-L6-v2)
-  embedding   Unsupported("vector(1536)")
+  // embedding   Unsupported("vector(1536)")
   metadata    Json     @default("{}")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
@@ -290,47 +291,110 @@ model DocumentEmbedding {
   @@map("document_embeddings")
 }
 
-model Workflow {
-  id           String   @id @default(uuid()) @db.Uuid
-  name         String   @db.VarChar(255)
-  description  String?  @db.Text
-  trigger      Json     @default("{}")
-  conditions   Json     @default("[]")
-  actions      Json     @default("[]")
-  status       String   @default("inactive") @db.VarChar(20)
-  lastRun      DateTime? @map("last_run") @db.Timestamptz()
-  runCount     Int      @default(0) @map("run_count")
-  successCount Int      @default(0) @map("success_count")
-  createdBy    String   @map("created_by") @db.Uuid
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+// ─────────────────────────────────────────────────────────
+// Flow — N8N-style visual workflow automation
+// ─────────────────────────────────────────────────────────
+model Flow {
+  id              String    @id @default(uuid()) @db.Uuid
+  name            String    @db.VarChar(255)
+  description     String?   @db.Text
 
-  creator    User                @relation(fields: [createdBy], references: [id])
-  executions WorkflowExecution[]
+  // Visual graph (React Flow nodes + edges)
+  nodes           Json      @default("[]")           // FlowNode[]
+  edges           Json      @default("[]")           // FlowEdge[]
+
+  // Global config
+  settings        Json      @default("{}")           // { timezone, errorHandling, retryPolicy }
+  variables       Json      @default("{}")           // user-defined key-value pairs
+
+  // Status & metadata
+  status          String    @default("draft") @db.VarChar(20) // draft | active | inactive | error
+  version         Int       @default(1)
+  tags            String[]  @default([])
+  icon            String?   @db.VarChar(50)
+  color           String?   @db.VarChar(20)
+
+  // Trigger configuration
+  triggerType     String    @default("manual") @map("trigger_type") @db.VarChar(30) // manual | webhook | cron | event
+  cronExpression  String?   @map("cron_expression") @db.VarChar(100)
+  webhookId       String?   @unique @map("webhook_id") @db.VarChar(100)
+
+  // Execution stats (denormalized for perf)
+  lastRunAt       DateTime? @map("last_run_at") @db.Timestamptz()
+  runCount        Int       @default(0) @map("run_count")
+  successCount    Int       @default(0) @map("success_count")
+
+  // Relations
+  createdBy       String    @map("created_by") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  creator         User            @relation(fields: [createdBy], references: [id])
+  executions      FlowExecution[]
+  versions        FlowVersion[]
 
   @@index([status])
   @@index([createdBy])
-  @@map("workflows")
+  @@index([triggerType])
+  @@index([webhookId])
+  @@map("flows")
 }
 
-model WorkflowExecution {
-  id          String    @id @default(uuid()) @db.Uuid
-  workflowId  String    @map("workflow_id") @db.Uuid
-  status      String    @default("pending") @db.VarChar(20)
-  input       Json      @default("{}")
-  output      Json?
-  error       String?   @db.Text
-  duration    Int?
-  startedAt   DateTime  @default(now()) @map("started_at") @db.Timestamptz()
-  completedAt DateTime? @map("completed_at") @db.Timestamptz()
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+model FlowExecution {
+  id            String    @id @default(uuid()) @db.Uuid
+  flowId        String    @map("flow_id") @db.Uuid
 
-  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  status        String    @default("pending") @db.VarChar(20) // pending | running | success | failed | cancelled
+  mode          String    @default("manual") @db.VarChar(20)  // manual | webhook | cron | trigger
 
-  @@index([workflowId])
+  // Input/Output
+  triggerData   Json?     @map("trigger_data")
+
+  // Per-node tracking: { nodeId: { status, input, output, startedAt, duration, error } }
+  nodeResults   Json      @default("{}") @map("node_results")
+
+  // Timing
+  startedAt     DateTime  @default(now()) @map("started_at") @db.Timestamptz()
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz()
+  duration      Int?                                          // total ms
+
+  // Error tracking
+  error         String?   @db.Text
+  errorNodeId   String?   @map("error_node_id") @db.VarChar(100)
+
+  // Retry
+  retryOf       String?   @map("retry_of") @db.Uuid
+  retryCount    Int       @default(0) @map("retry_count")
+
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  flow          Flow      @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@index([flowId])
   @@index([status])
   @@index([startedAt(sort: Desc)])
-  @@map("workflow_executions")
+  @@map("flow_executions")
+}
+
+// ─────────────────────────────────────────────────────────
+// Flow Versioning — Snapshots for rollback
+// ─────────────────────────────────────────────────────────
+model FlowVersion {
+  id         String   @id @default(uuid()) @db.Uuid
+  flowId     String   @map("flow_id") @db.Uuid
+  version    Int
+  label      String?  @db.VarChar(255)
+  nodes      Json     @default("[]")
+  edges      Json     @default("[]")
+  settings   Json     @default("{}")
+  variables  Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  flow Flow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@unique([flowId, version])
+  @@index([flowId])
+  @@map("flow_versions")
 }
 
 model Integration {
@@ -353,6 +417,7 @@ model Template {
   name        String   @db.VarChar(255)
   description String   @db.Text
   category    String   @db.VarChar(100)
+  subcategory String?  @db.VarChar(100)
   type        String   @db.VarChar(50)
   icon        String?  @db.VarChar(50)
   config      Json     @default("{}")
@@ -362,6 +427,7 @@ model Template {
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@index([category])
+  @@index([subcategory])
   @@index([type])
   @@index([isOfficial])
   @@map("templates")
@@ -428,6 +494,9 @@ model OrchestrationExecution {
   input            Json      @default("{}")
   output           Json?
   error            String?   @db.Text
+  durationMs       Int?      @map("duration_ms")
+  tokensUsed       Int?      @map("tokens_used")
+  estimatedCost    Float?    @map("estimated_cost")
   startedAt        DateTime  @default(now()) @map("started_at") @db.Timestamptz()
   completedAt      DateTime? @map("completed_at") @db.Timestamptz()
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
@@ -540,4 +609,26 @@ model ComplianceLog {
   @@index([category])
   @@index([createdAt(sort: Desc)])
   @@map("compliance_logs")
+}
+
+model DevSession {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(255)
+  agentId   String   @map("agent_id") @db.Uuid
+  messages  Json     @default("[]") // Stores array of {role, content, ...}
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  // Optional: Link to user if we want multi-user dev sessions later
+  userId    String?  @map("user_id") @db.Uuid
+  
+  // Relation to Agent (optional constraint, can be loose if needed)
+  // For now, let's make it a loose reference or real relation? 
+  // Real relation ensures integrity but constraints deletion.
+  // Let's use loose for flexibility or real for safety? Real is better for standard apps.
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([updatedAt(sort: Desc)])
+  @@map("dev_sessions")
 }

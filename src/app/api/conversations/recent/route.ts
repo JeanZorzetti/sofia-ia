@@ -10,14 +10,14 @@ function generateSimulatedConversations(instances: any[]): any[] {
 
   const statuses = ['cold', 'warm', 'hot', 'immediate'];
   const sampleMessages = [
-    'Olá, gostaria de mais informações sobre imóveis',
-    'Tenho interesse em agendar uma visita',
-    'Qual o valor do imóvel?',
-    'Vocês trabalham com financiamento?',
-    'Estou procurando um apartamento de 2 quartos',
-    'Pode me enviar mais fotos?',
+    'Olá, gostaria de mais informações',
+    'Tenho interesse em agendar uma reunião',
+    'Qual o valor do serviço?',
+    'Vocês trabalham com planos mensais?',
+    'Estou procurando uma solução para minha empresa',
+    'Pode me enviar mais detalhes?',
     'Gostaria de negociar o valor',
-    'Quando posso visitar?'
+    'Quando podemos conversar?'
   ];
 
   const sampleNames = [

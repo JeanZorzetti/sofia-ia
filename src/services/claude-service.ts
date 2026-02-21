@@ -127,6 +127,31 @@ export class ClaudeService {
         };
     }
 
+    private static mapToWebModel(apiModel: string): string {
+        // Map public API model names to internal Web API model names
+        // Web interface is stricter with model names. 
+        // We map "future" or "beta" models to the latest stable equivalent to ensure it works.
+        const map: Record<string, string> = {
+            // Stable / Known
+            'claude-3-5-sonnet-20241022': 'claude-3-5-sonnet-20241022',
+            'claude-3-5-haiku-20241022': 'claude-3-5-haiku-20241022',
+            'claude-3-5-sonnet-20240620': 'claude-3-5-sonnet-20240620',
+            'claude-3-opus-20240229': 'claude-3-opus-20240229',
+            'claude-3-sonnet-20240229': 'claude-3-sonnet-20240229',
+            'claude-3-haiku-20240307': 'claude-3-haiku-20240307',
+
+            // Future/Beta Mappings (Fallback to 3.5 Sonnet Latest)
+            'claude-opus-4-6': 'claude-3-opus-20240229',
+            'claude-sonnet-5-20260203': 'claude-3-5-sonnet-20241022',
+            'claude-opus-4-5-20251101': 'claude-3-opus-20240229',
+            'claude-sonnet-4-5-20251001': 'claude-3-5-sonnet-20241022',
+            'claude-haiku-4-5-20251001': 'claude-3-5-haiku-20241022',
+            'claude-3-7-sonnet-20250219': 'claude-3-5-sonnet-20241022',
+        };
+
+        return map[apiModel] || 'claude-3-5-sonnet-20241022'; // Default safety fallback
+    }
+
     private static async generateUnofficial(
         sessionKey: string,
         messages: ClaudeMessage[],
@@ -136,7 +161,16 @@ export class ClaudeService {
         // 1. Get Organization ID
         const orgs = await this.getOrganizations(sessionKey);
         if (!orgs.length) throw new Error('No organization found for this Session Key');
-        const orgId = orgs[0].id;
+
+        // Prefer organization with 'chat' capability
+        const chatOrg = orgs.find(o => o.capabilities?.includes('chat')) || orgs[0];
+        const orgId = chatOrg.uuid || chatOrg.id;
+
+        console.log(`Using Org: ${chatOrg.name} (${orgId})`);
+
+        // Map model
+        const webModel = this.mapToWebModel(model);
+        console.log(`Mapping model ${model} -> ${webModel}`);
 
         // 2. Start new conversation (or append if we tracked conversation IDs, but for now specific to agent call we might just start new)
         // Note: Use a new uuid for conversation
@@ -158,7 +192,7 @@ export class ClaudeService {
             body: JSON.stringify({
                 uuid: uuid,
                 name: 'Sofia Agent Gen',
-                model: model, // might need mapping to specific internal model names
+                model: webModel, // Use mapped model
                 timezone: 'America/Sao_Paulo',
                 attachments: [],
                 files: []

@@ -35,7 +35,7 @@ interface Lead {
   valorMin?: number
   valorMax?: number
   regiao?: string
-  tipoImovel?: string
+  segmento?: string
 }
 
 interface Message {
@@ -343,11 +343,10 @@ export default function ConversationsPage() {
                     <button
                       key={conv.id}
                       onClick={() => setSelectedConversation(conv)}
-                      className={`w-full rounded-lg p-3 text-left transition-colors ${
-                        selectedConversation?.id === conv.id
+                      className={`w-full rounded-lg p-3 text-left transition-colors ${selectedConversation?.id === conv.id
                           ? 'bg-white/10'
                           : 'hover:bg-white/5'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-blue-500 text-white">
@@ -470,16 +469,14 @@ export default function ConversationsPage() {
                 {messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className={`flex ${
-                      msg.sender === 'user' ? 'justify-start' : 'justify-end'
-                    }`}
+                    className={`flex ${msg.sender === 'user' ? 'justify-start' : 'justify-end'
+                      }`}
                   >
                     <div
-                      className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                        msg.sender === 'user'
+                      className={`max-w-[70%] rounded-lg px-4 py-2 ${msg.sender === 'user'
                           ? 'bg-white/10 text-white'
                           : 'bg-gradient-to-br from-purple-500 to-blue-500 text-white'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2">
                         {msg.sender === 'user' ? (
@@ -493,8 +490,8 @@ export default function ConversationsPage() {
                           {msg.sender === 'user'
                             ? selectedConversation.lead.nome
                             : msg.isAiGenerated
-                            ? 'IA'
-                            : 'Humano'}
+                              ? 'IA'
+                              : 'Humano'}
                         </span>
                       </div>
                       <p className="mt-1 text-sm">{msg.content}</p>
@@ -626,11 +623,11 @@ export default function ConversationsPage() {
                   </p>
                 </div>
               )}
-              {selectedConversation.lead.tipoImovel && (
+              {selectedConversation.lead.segmento && (
                 <div>
-                  <label className="text-xs text-white/60">Tipo de Imóvel</label>
+                  <label className="text-xs text-white/60">Segmento</label>
                   <p className="text-sm text-white">
-                    {selectedConversation.lead.tipoImovel}
+                    {selectedConversation.lead.segmento}
                   </p>
                 </div>
               )}
@@ -644,19 +641,19 @@ export default function ConversationsPage() {
               )}
               {(selectedConversation.lead.valorMin ||
                 selectedConversation.lead.valorMax) && (
-                <div>
-                  <label className="text-xs text-white/60">Faixa de Valor</label>
-                  <p className="text-sm text-white">
-                    {selectedConversation.lead.valorMin
-                      ? `R$ ${selectedConversation.lead.valorMin.toLocaleString()}`
-                      : 'N/A'}{' '}
-                    -{' '}
-                    {selectedConversation.lead.valorMax
-                      ? `R$ ${selectedConversation.lead.valorMax.toLocaleString()}`
-                      : 'N/A'}
-                  </p>
-                </div>
-              )}
+                  <div>
+                    <label className="text-xs text-white/60">Faixa de Valor</label>
+                    <p className="text-sm text-white">
+                      {selectedConversation.lead.valorMin
+                        ? `R$ ${selectedConversation.lead.valorMin.toLocaleString()}`
+                        : 'N/A'}{' '}
+                      -{' '}
+                      {selectedConversation.lead.valorMax
+                        ? `R$ ${selectedConversation.lead.valorMax.toLocaleString()}`
+                        : 'N/A'}
+                    </p>
+                  </div>
+                )}
             </CardContent>
           </Card>
 

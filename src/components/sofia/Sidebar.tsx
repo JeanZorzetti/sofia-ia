@@ -21,6 +21,8 @@ import {
   FlaskConical,
   Activity,
   Store,
+  FolderOpen,
+  Terminal
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -57,6 +59,11 @@ const menuItems = [
     href: '/dashboard/orchestrations',
     label: 'Orquestrações',
     icon: Users,
+  },
+  {
+    href: '/dashboard/files',
+    label: 'IDE',
+    icon: Terminal,
   },
   {
     href: '/dashboard/integrations',
@@ -102,6 +109,11 @@ const menuItems = [
     href: '/dashboard/settings',
     label: 'Configurações',
     icon: Settings,
+  },
+  {
+    href: '/dashboard/dev-chat',
+    label: 'Dev Playground',
+    icon: Terminal,
   },
 ]
 

@@ -101,7 +101,7 @@ export default function MarketplacePage() {
     }
   }
 
-  const categories = ['all', 'Imobiliario', 'Vendas', 'Atendimento', 'RH', 'Financeiro', 'Juridico', 'Outros'];
+  const categories = ['all', 'Marketing', 'Vendas', 'Atendimento', 'RH', 'Financeiro', 'Juridico', 'Outros'];
   const types = ['all', 'agent', 'workflow', 'integration'];
 
   if (loading) {

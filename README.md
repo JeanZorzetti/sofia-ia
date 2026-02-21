@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🤖 Sofia — Plataforma de Agentes IA
 
-## Getting Started
+Plataforma multi-agente para automação de atendimento via WhatsApp, com IDE integrada, orquestrações visuais e knowledge base vetorial.
 
-First, run the development server:
+## Stack
+
+| Camada | Tecnologia |
+|---|---|
+| **Frontend** | Next.js 16.1 (App Router), React 19, TailwindCSS 4, Radix UI |
+| **Backend** | Next.js API Routes, Prisma 5, PostgreSQL + pgvector |
+| **Desktop** | Electron 40 |
+| **AI** | Groq (Llama 3.3), OpenRouter (Claude, GPT, Gemini, DeepSeek) |
+| **Messaging** | Evolution API (WhatsApp), Telegram Bot API |
+| **Cache** | Redis / Upstash Redis |
+| **Visual** | XY Flow (graph editor), Recharts, Monaco Editor |
+
+## Quick Start
 
 ```bash
+# 1. Instalar dependências
+npm install
+
+# 2. Copiar variáveis de ambiente
+cp .env.example .env.local
+
+# 3. Configurar o banco de dados
+npx prisma generate
+npx prisma db push
+
+# 4. Seed (dados iniciais)
+npm run db:seed
+
+# 5. Rodar em modo web
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# 6. Rodar em modo desktop (Electron)
+npm run dev:desktop
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Comando | Descrição |
+|---|---|
+| `npm run dev` | Inicia o servidor Next.js (web) |
+| `npm run dev:desktop` | Inicia web + Electron |
+| `npm run build` | Build de produção (web) |
+| `npm run build:desktop` | Build de produção (Electron) |
+| `npm run db:seed` | Seed do banco de dados |
+| `npm run lint` | Lint com ESLint |
+| `npm test` | Testes unitários (Jest) |
+| `npm run test:e2e` | Testes E2E (Playwright) |
 
-## Learn More
+## Estrutura do Projeto
 
-To learn more about Next.js, take a look at the following resources:
+```
+sofia-next/
+├── src/
+│   ├── app/                    # Next.js App Router
+│   │   ├── api/                # 27 domínios de API
+│   │   │   ├── agents/         # CRUD de agentes IA
+│   │   │   ├── conversations/  # Gerenciamento de conversas
+│   │   │   ├── flows/          # Flows visuais
+│   │   │   ├── orchestrations/ # Orquestrações multi-agente
+│   │   │   ├── knowledge/      # Knowledge base + RAG
+│   │   │   ├── templates/      # Templates de agentes
+│   │   │   ├── webhook/        # Webhooks (Evolution, Telegram)
+│   │   │   └── ...
+│   │   └── dashboard/          # 16 páginas do dashboard
+│   ├── components/
+│   │   ├── ui/                 # Primitivos (shadcn/ui)
+│   │   ├── ide/                # IDE integrada
+│   │   ├── flows/              # Editor visual de flows
+│   │   ├── orchestrations/     # Orquestrações
+│   │   ├── dashboard/          # Componentes do dashboard
+│   │   └── sofia/              # Navbar, Sidebar
+│   ├── lib/
+│   │   ├── ai/                 # Providers de IA (Groq, OpenRouter, embeddings)
+│   │   ├── flow-engine/        # Motor de execução de flows
+│   │   ├── auth.ts             # Autenticação JWT
+│   │   ├── prisma.ts           # Cliente Prisma
+│   │   └── ...
+│   ├── hooks/                  # React hooks customizados
+│   ├── services/               # Integrações externas (Claude CLI, APIs)
+│   └── electron/               # Electron main/preload
+├── prisma/
+│   ├── schema.prisma           # Schema do banco
+│   └── seed.ts                 # Dados iniciais
+├── docs/                       # Documentação técnica
+└── public/                     # Assets estáticos
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Documentação
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Arquitetura](docs/architecture.md) — Visão geral da arquitetura e decisões técnicas
+- [Referência de API](docs/api-reference.md) — Endpoints, autenticação, payloads
+- [Modelos de IA](docs/ai-models.md) — Providers e modelos disponíveis
+- [Roadmap de Orquestrações](docs/orchestrations-roadmap.md) — Plano de desenvolvimento
 
-## Deploy on Vercel
+## Variáveis de Ambiente
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Veja [`.env.example`](.env.example) para todas as variáveis necessárias.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+As essenciais são:
+- `DATABASE_URL` — PostgreSQL com pgvector
+- `GROQ_API_KEY` — Para modelos Llama/DeepSeek
+- `OPENROUTER_API_KEY` — Para Claude/GPT/Gemini
+- `JWT_SECRET` — Segredo para tokens JWT

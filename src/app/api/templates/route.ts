@@ -5,12 +5,17 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
+    const subcategory = searchParams.get('subcategory')
     const type = searchParams.get('type')
 
     const where: any = {}
 
     if (category && category !== 'all') {
       where.category = category
+    }
+
+    if (subcategory && subcategory !== 'all') {
+      where.subcategory = subcategory
     }
 
     if (type && type !== 'all') {
@@ -47,7 +52,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, description, category, type, icon, config } = body
+    const { name, description, category, subcategory, type, icon, config } = body
 
     if (!name || !description || !category || !type) {
       return NextResponse.json(
@@ -64,6 +69,7 @@ export async function POST(request: NextRequest) {
         name,
         description,
         category,
+        subcategory: subcategory || null,
         type,
         icon: icon || null,
         config: config || {},

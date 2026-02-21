@@ -3,77 +3,76 @@ import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 interface RouteParams {
-  params: Promise<{
-    id: string;
-  }>;
+  params: Promise<{ id: string }>;
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+// ─────────────────────────────────────────────────────────
+// LEGACY: /api/workflows/[id]/executions
+// Now uses FlowExecution model
+// ─────────────────────────────────────────────────────────
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
-    // Auth check
     const user = await getAuthFromRequest(request);
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { data: null, error: { code: 'UNAUTHORIZED', message: 'Autenticação necessária' } },
         { status: 401 }
       );
     }
 
     const { id } = await params;
 
-    // Check if workflow exists
-    const workflow = await prisma.workflow.findUnique({
-      where: { id }
+    const flow = await prisma.flow.findUnique({
+      where: { id },
+      select: { id: true, createdBy: true },
     });
 
-    if (!workflow) {
+    if (!flow) {
       return NextResponse.json(
-        { success: false, error: 'Workflow not found' },
+        { data: null, error: { code: 'NOT_FOUND', message: 'Workflow não encontrado' } },
         { status: 404 }
       );
     }
 
-    // Get query params for pagination
+    if (flow.createdBy !== user.id) {
+      return NextResponse.json(
+        { data: null, error: { code: 'FORBIDDEN', message: 'Acesso negado' } },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50')));
+    const offset = (page - 1) * limit;
     const status = searchParams.get('status');
 
-    // Build where clause
-    const where: any = { workflowId: id };
+    const where: Record<string, unknown> = { flowId: id };
     if (status) where.status = status;
 
-    // Fetch executions
-    const executions = await prisma.workflowExecution.findMany({
-      where,
-      orderBy: {
-        startedAt: 'desc'
-      },
-      take: limit,
-      skip: offset
-    });
-
-    // Get total count
-    const total = await prisma.workflowExecution.count({ where });
+    const [executions, total] = await Promise.all([
+      prisma.flowExecution.findMany({
+        where,
+        orderBy: { startedAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.flowExecution.count({ where }),
+    ]);
 
     return NextResponse.json({
-      success: true,
       data: executions,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + executions.length < total
-      }
+      error: null,
+      meta: {
+        page, limit, total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: offset + executions.length < total,
+      },
     });
-
   } catch (error) {
-    console.error('Error fetching workflow executions:', error);
+    console.error('[GET /api/workflows/[id]/executions] Error:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch workflow executions' },
+      { data: null, error: { code: 'INTERNAL_ERROR', message: 'Erro ao buscar execuções' } },
       { status: 500 }
     );
   }

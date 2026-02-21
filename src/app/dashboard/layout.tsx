@@ -3,8 +3,8 @@
 import { useAuth } from '@/hooks/use-auth'
 import { Navbar } from '@/components/sofia/Navbar'
 import { Sidebar } from '@/components/sofia/Sidebar'
-import { CommandPalette } from '@/components/command-palette'
-import { Breadcrumb } from '@/components/breadcrumb'
+import { CommandPalette } from '@/components/ide/command-palette'
+import { Breadcrumb } from '@/components/dashboard/breadcrumb'
 import { Toaster } from 'sonner'
 
 function LoadingScreen() {

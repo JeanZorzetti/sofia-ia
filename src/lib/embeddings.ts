@@ -30,7 +30,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     }
 
     // Feature 11-20: Densidade de palavras-chave comuns
-    const commonWords = ['imóvel', 'casa', 'apartamento', 'venda', 'aluguel', 'cliente', 'preço', 'região', 'quarto', 'vaga'];
+    const commonWords = ['produto', 'serviço', 'empresa', 'venda', 'contato', 'cliente', 'preço', 'solução', 'projeto', 'resultado'];
     for (const word of commonWords) {
       const count = (normalizedText.match(new RegExp(word, 'g')) || []).length;
       features.push(Math.min(count / 10, 1));

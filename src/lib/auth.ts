@@ -20,13 +20,13 @@ export interface JWTPayload {
 // Temporary users (same as original project)
 const USERS = [
   {
-    id: 1,
+    id: '123e4567-e89b-12d3-a456-426614174000', // Valid UUID
     username: 'admin',
     passwordHash: '$2a$10$5nHSoyKgmnNQzIY9nkuYIOL/P.yUB7AB.vzhP475OitOtRmuTG.fC', // SofiaAI2024#Admin
     role: 'admin' as const,
   },
   {
-    id: 2,
+    id: '123e4567-e89b-12d3-a456-426614174001', // Valid UUID
     username: 'sofia',
     passwordHash: '$2a$10$5nHSoyKgmnNQzIY9nkuYIOL/P.yUB7AB.vzhP475OitOtRmuTG.fC', // SofiaAI2024#Admin
     role: 'user' as const,
@@ -98,13 +98,13 @@ export async function authenticateUser(
   if (!valid) return null
 
   // Tenta buscar UUID real do banco para manter consistência
-  let userId = user.id.toString()
+  let userId = user.id
   try {
     const fallbackDbUser = await prisma.user.findFirst({
       where: { email: `${user.username}@roilabs.com.br` }
     })
     if (fallbackDbUser) userId = fallbackDbUser.id
-  } catch { /* DB indisponível, usa ID numérico */ }
+  } catch { /* DB indisponível, usa ID do mock */ }
 
   const payload: JWTPayload = {
     id: userId,

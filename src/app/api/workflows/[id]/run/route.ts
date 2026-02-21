@@ -1,67 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { WorkflowExecutor } from '@/lib/workflow-engine';
+import { executeFlow } from '@/lib/flow-engine';
 
 interface RouteParams {
-  params: Promise<{
-    id: string;
-  }>;
+  params: Promise<{ id: string }>;
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+// ─────────────────────────────────────────────────────────
+// LEGACY: /api/workflows/[id]/run — Redirects to Flow engine
+// ─────────────────────────────────────────────────────────
+export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    // Auth check
     const user = await getAuthFromRequest(request);
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
+        { data: null, error: { code: 'UNAUTHORIZED', message: 'Autenticação necessária' } },
         { status: 401 }
       );
     }
 
     const { id } = await params;
 
-    // Check if workflow exists
-    const workflow = await prisma.workflow.findUnique({
-      where: { id }
+    const flow = await prisma.flow.findUnique({
+      where: { id },
+      select: { id: true, createdBy: true, status: true },
     });
 
-    if (!workflow) {
+    if (!flow) {
       return NextResponse.json(
-        { success: false, error: 'Workflow not found' },
+        { data: null, error: { code: 'NOT_FOUND', message: 'Workflow não encontrado' } },
         { status: 404 }
       );
     }
 
-    // Parse request body for context
-    const body = await request.json().catch(() => ({}));
-    const context = body.context || {};
-
-    // Execute workflow
-    const executor = new WorkflowExecutor(id, context);
-    const result = await executor.execute();
-
-    if (result.success) {
-      return NextResponse.json({
-        success: true,
-        message: 'Workflow executed successfully',
-        data: result.output
-      });
-    } else {
+    if (flow.createdBy !== user.id) {
       return NextResponse.json(
-        { success: false, error: result.error },
-        { status: 500 }
+        { data: null, error: { code: 'FORBIDDEN', message: 'Acesso negado' } },
+        { status: 403 }
       );
     }
 
-  } catch (error: any) {
-    console.error('Error running workflow:', error);
+    // Parse input
+    let triggerData = {};
+    try {
+      const body = await request.json();
+      triggerData = body || {};
+    } catch {
+      // Empty body OK
+    }
+
+    // Execute using new flow engine
+    const result = await executeFlow(id, { triggerData, mode: 'manual' });
+
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to run workflow' },
+      { data: { executionId: result.executionId, status: result.status }, error: null },
+      { status: 202 }
+    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Erro interno';
+    console.error('[POST /api/workflows/[id]/run] Error:', error);
+    return NextResponse.json(
+      { data: null, error: { code: 'INTERNAL_ERROR', message } },
       { status: 500 }
     );
   }
