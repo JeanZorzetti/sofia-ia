@@ -19,7 +19,7 @@ interface AgentStep {
 }
 
 // Allow up to 30 minutes for orchestration execution (multiple agent calls, each up to 20 min)
-export const maxDuration = 1800
+export const maxDuration = 300
 
 // POST /api/orchestrations/[id]/execute - Execute orchestration
 export async function POST(
