@@ -3,7 +3,7 @@
  * Permite consultas em linguagem natural aos dados analíticos
  */
 
-import { prisma } from './prisma';
+import { prisma } from '@/lib/prisma';
 import { getGroqClient } from './groq';
 
 export interface NLQueryRequest {
