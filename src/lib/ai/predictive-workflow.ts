@@ -27,7 +27,7 @@ interface WorkflowNodeSuggestion {
 // Schemas Zod para validação
 const WorkflowBuildContextSchema = z.object({
   triggerType: z.enum(['lead_created', 'message_sent', 'property_viewed', 'contract_signed']),
-  userData: z.record(z.any()),
+  userData: z.record(z.string(), z.any()),
   companySize: z.enum(['small', 'medium', 'enterprise']),
   industry: z.string(),
 });
@@ -65,23 +65,23 @@ export class PredictiveWorkflowEngine {
   async suggestNextNode(context: WorkflowBuildContext): Promise<WorkflowNodeSuggestion> {
     // Validação do contexto
     WorkflowBuildContextSchema.parse(context);
-    
+
     // Simulação de análise de padrões
-    const relevantPatterns = this.workflowPatterns.filter(pattern => 
-      pattern.trigger === context.triggerType && 
+    const relevantPatterns = this.workflowPatterns.filter(pattern =>
+      pattern.trigger === context.triggerType &&
       pattern.industry === context.industry
     );
-    
+
     // Seleciona o próximo nó mais provável baseado em padrões históricos
-    const nextNodeType = relevantPatterns.length > 0 
-      ? relevantPatterns[0].sequence[0] 
+    const nextNodeType = relevantPatterns.length > 0
+      ? relevantPatterns[0].sequence[0]
       : 'notification'; // fallback
-    
+
     // Calcula confiança baseada na taxa de sucesso
-    const confidence = relevantPatterns.length > 0 
-      ? relevantPatterns[0].successRate 
+    const confidence = relevantPatterns.length > 0
+      ? relevantPatterns[0].successRate
       : 0.5;
-    
+
     // Retorna sugestão formatada
     return {
       nodeId: `suggested-${Date.now()}`,
@@ -121,7 +121,7 @@ export class PredictiveWorkflowEngine {
   }
 
   private getNodeExample(nodeType: NodeType, trigger: TriggerType): string {
-    const examples: Record<NodeType, Record<TriggerType, string>> = {
+    const examples: Partial<Record<NodeType, Record<TriggerType, string>>> = {
       notification: {
         lead_created: 'Enviar mensagem de boas-vindas para o novo lead',
         message_sent: 'Notificar equipe sobre nova mensagem do lead',
@@ -141,7 +141,7 @@ export class PredictiveWorkflowEngine {
         contract_signed: 'Aguardar confirmação bancária por 2 dias'
       }
     };
-    
+
     // Para tipos sem exemplos específicos, usar genérico
     return examples[nodeType]?.[trigger] || 'Exemplo não disponível para este tipo';
   }
