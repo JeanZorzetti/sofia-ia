@@ -164,8 +164,8 @@
 ### Comunidade (Longo Prazo — Mês 4, atrasado)
 - ✅ **P0** — Página pública `/comunidade` (Discord, GitHub, Early Access, newsletter)
 - ✅ **P0** — Links de comunidade no footer e navbar do site
-- ⬜ **P1** — Discord server ativo com canais: #geral, #ajuda, #showcase, #feedback
-- ⬜ **P1** — Atualizar CONTRIBUTING.md com guia para primeiros contributors
+- ✅ **P1** — Discord server ativo com canais: #avisos, #geral, #ajuda, #showcase, #feedback, #contribute, #bug-reports, #ideias
+- ✅ **P1** — Atualizar CONTRIBUTING.md com guia para primeiros contributors
 
 ### Produto — Diferencial Técnico (Longuíssimo Prazo Antecipado)
 - ✅ **P0** — AI-Assisted Orchestration Creator: UI "Descreva seu processo" → gera orquestração automaticamente via LLM
@@ -182,3 +182,69 @@
 - ✅ **P0** — Case: Agência de Marketing (+400% produção conteúdo)
 - ✅ **P1** — Case: E-commerce (atendimento 24h, -70% tickets humanos)
 - ✅ **P1** — Case: Escritório Jurídico (revisão contratos 15min vs 4h)
+
+---
+
+## Sprint 8 — White-label + Enterprise (Semana 21-24)
+
+**Objetivo**: Abrir canal B2B2C via programa de revendas e formalizar oferta Enterprise
+
+### Modelo Comercial White-label
+
+O white-label permite que agências, consultorias e ISVs distribuam Sofia com sua própria marca para seus clientes, operando como um canal de vendas indireto da ROI Labs.
+
+#### Estrutura de Planos White-label
+
+| Plano | Preço | Sub-tenants | Indicado para |
+|---|---|---|---|
+| **WL Starter** | R$ 497/mês | Até 5 clientes | Agências pequenas, consultores |
+| **WL Agency** | R$ 1.297/mês | Até 25 clientes | Agências médias, integradores |
+| **WL Scale** | R$ 2.497/mês | Ilimitado | Agências grandes, ISVs, SaaS |
+| **WL Enterprise** | Custom | Ilimitado + self-hosted | Grandes integradores, franquias |
+
+#### O que está incluído em todos os planos WL
+- Branding customizado (logo, cores, domínio próprio)
+- Painel de gestão de clientes (criar/suspender sub-tenants)
+- Cada sub-tenant tem isolamento total de dados
+- Billing centralizado (integrador paga ROI Labs, cobra seus clientes como quiser)
+- Suporte técnico ao integrador (não aos clientes finais)
+- Acesso antecipado a novas features
+
+#### Itens por tier
+- **WL Starter**: branding básico (logo + cores), suporte por email, cada cliente no plano Pro equivalente
+- **WL Agency**: domínio próprio (sofia.agencia.com.br), onboarding guiado (2h call), painel de gestão, SLA 99.5%
+- **WL Scale**: self-hosted opcional, treinamento da equipe, gerente de parceria, SLA 99.9%, co-marketing
+- **WL Enterprise**: contrato anual, NDA, integração SSO/SAML, compliance, revenue share negociável
+
+#### Modelo de precificação para clientes finais (recomendado ao integrador)
+O integrador tem liberdade total de precificação. Referência de markup sugerido:
+- WL Starter → cobrar clientes R$ 297-497/mês → margem bruta ~40-60%
+- WL Agency → cobrar clientes R$ 297-697/mês × 10+ clientes → margem bruta 50-70%
+- WL Scale → cobrar clientes acima de R$ 197/mês × N clientes → economics escalável
+
+#### Processo comercial
+1. Interessado preenche formulário em `/whitelabel` → CTA "Falar com Vendas"
+2. Call de qualificação (30min) → entende caso de uso e número de clientes
+3. Trial de 14 dias do painel de gestão (sandbox)
+4. Contrato + onboarding técnico (setup de domínio, branding, primeiros clientes)
+5. Acompanhamento mensal nos primeiros 3 meses
+
+### Tarefas Técnicas — Sprint 8
+
+#### White-label (produto)
+- ⬜ **P0** — Modelo de dados: tabela `WhitelabelTenant` (organizationId, branding, customDomain, planId, ownerId)
+- ⬜ **P0** — Painel do integrador: `/dashboard/whitelabel` (criar/listar/suspender sub-tenants)
+- ⬜ **P1** — Middleware de custom domain (sofia.agencia.com.br → injeta brandingConfig no contexto)
+- ⬜ **P1** — API de provisionamento de sub-tenants (POST /api/whitelabel/tenants)
+- ⬜ **P2** — Tema customizável (logo URL, primary color, nome da plataforma)
+
+#### Enterprise (comercial)
+- ⬜ **P0** — Plano Enterprise na Home (`/`) — grid 4 colunas com Free/Pro/Business/Enterprise ✅ (feito nesta iteração)
+- ⬜ **P0** — Página `/contato` com formulário qualificado (segmenta Enterprise vs White-label vs Geral)
+- ⬜ **P1** — Página `/enterprise` com landing dedicada (SSO, compliance, self-hosted, SLA)
+- ⬜ **P1** — CRM simples: salvar leads do `/contato` no banco (tabela `SalesLead`)
+
+#### Conteúdo
+- ⬜ **P1** — Artigo: "Como Criar uma Plataforma de IA White-label para Seus Clientes"
+- ⬜ **P1** — Artigo: "O que é White-label de IA e Como Funciona"
+- ⬜ **P2** — Página `/parceiros` (programa de parceiros com tiers: Bronze/Silver/Gold)
