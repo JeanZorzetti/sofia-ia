@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { trackEvent } from '@/lib/analytics';
 
 export async function GET(request: NextRequest) {
   try {
@@ -99,6 +100,9 @@ export async function POST(request: NextRequest) {
         details: { email, name, role },
       },
     });
+
+    // Track signup event (fire and forget)
+    trackEvent('signup', user.id, { email, role }).catch(() => {})
 
     return NextResponse.json({
       user,

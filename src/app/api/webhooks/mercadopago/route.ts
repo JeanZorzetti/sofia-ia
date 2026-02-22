@@ -9,6 +9,7 @@ import {
   getPayment,
 } from '@/lib/mercadopago'
 import { PreApproval, MercadoPagoConfig } from 'mercadopago'
+import { trackEvent } from '@/lib/analytics'
 
 export const dynamic = 'force-dynamic'
 
@@ -137,6 +138,9 @@ async function handlePaymentEvent(paymentId: string) {
       },
     })
 
+    // Track plan upgrade event (fire and forget)
+    trackEvent('plan_upgrade_completed', userId, { plan, paymentId, source: 'payment' }).catch(() => {})
+
     console.log(`[MP Webhook] Subscription atualizada: user=${userId} plan=${plan}`)
   } catch (err) {
     console.error('[MP Webhook] Erro ao processar payment:', err)
@@ -201,6 +205,9 @@ async function handleSubscriptionEvent(subscriptionId: string) {
         currentPeriodEnd: periodEnd,
       },
     })
+
+    // Track plan upgrade event (fire and forget)
+    trackEvent('plan_upgrade_completed', userId, { plan, subscriptionId, source: 'subscription_preapproval' }).catch(() => {})
 
     console.log(`[MP Webhook] Assinatura ativada: user=${userId} plan=${plan}`)
   } catch (err) {

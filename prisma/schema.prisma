@@ -637,6 +637,38 @@ model DevSession {
 }
 
 // ─────────────────────────────────────────────────────────
+// Analytics Events — Product event tracking
+// ─────────────────────────────────────────────────────────
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  userId     String?
+  event      String   @db.VarChar(100)
+  properties Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([userId])
+  @@index([event])
+  @@index([createdAt(sort: Desc)])
+  @@map("analytics_events")
+}
+
+// ─────────────────────────────────────────────────────────
+// NPS Feedback — Net Promoter Score surveys
+// ─────────────────────────────────────────────────────────
+model NpsFeedback {
+  id        String   @id @default(cuid())
+  userId    String?
+  score     Int
+  comment   String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([userId])
+  @@index([score])
+  @@index([createdAt(sort: Desc)])
+  @@map("nps_feedback")
+}
+
+// ─────────────────────────────────────────────────────────
 // Subscription — Mercado Pago billing (Free / Pro / Business)
 // ─────────────────────────────────────────────────────────
 model Subscription {

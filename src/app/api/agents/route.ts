@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { checkPlanLimit } from '@/lib/plan-limits';
+import { trackEvent, isFirstEvent } from '@/lib/analytics';
 
 export async function GET(request: NextRequest) {
   try {
@@ -144,6 +145,13 @@ export async function POST(request: NextRequest) {
         }
       }
     });
+
+    // Track first agent creation (fire and forget)
+    isFirstEvent('first_agent_created', user.id).then((isFirst) => {
+      if (isFirst) {
+        trackEvent('first_agent_created', user.id, { agentId: agent.id, agentName: agent.name }).catch(() => {})
+      }
+    }).catch(() => {})
 
     return NextResponse.json({
       success: true,

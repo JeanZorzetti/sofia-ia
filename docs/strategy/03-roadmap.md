@@ -129,9 +129,9 @@
 - ✅ **P1** — Email de boas-vindas com Resend (HTML responsivo)
 
 ### Analytics de Produto
-- ⬜ **P1** — Tracking de eventos (signup, first-orchestration, first-agent)
-- ⬜ **P1** — Funil de conversão (free → trial → paid)
-- ⬜ **P2** — NPS / feedback loop
+- ✅ **P1** — Tracking de eventos (signup, first-orchestration, first-agent)
+- ✅ **P1** — Funil de conversão (free → trial → paid)
+- ✅ **P2** — NPS / feedback loop
 
 ---
 

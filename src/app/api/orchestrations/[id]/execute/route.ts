@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
 import { chatWithAgent } from '@/lib/groq'
 import { parseTasks, buildTaskPrompt, consolidateResults, TaskResult } from '@/lib/orchestration/task-parser'
+import { trackEvent, isFirstEvent } from '@/lib/analytics'
 
 interface AgentStep {
   agentId: string
@@ -727,6 +728,13 @@ export async function POST(
           estimatedCost
         }
       })
+
+      // Track first orchestration execution (fire and forget)
+      isFirstEvent('first_orchestration_executed', auth.id).then((isFirst) => {
+        if (isFirst) {
+          trackEvent('first_orchestration_executed', auth.id, { orchestrationId: id, executionId: execution.id }).catch(() => {})
+        }
+      }).catch(() => {})
 
       return NextResponse.json({
         success: true,

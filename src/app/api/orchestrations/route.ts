@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
+import { trackEvent, isFirstEvent } from '@/lib/analytics'
 
 // GET /api/orchestrations - List all orchestrations
 export async function GET(request: NextRequest) {
@@ -69,6 +70,13 @@ export async function POST(request: NextRequest) {
         }
       })
 
+      // Track first orchestration creation (fire and forget)
+      isFirstEvent('first_orchestration_created', auth.id).then((isFirst) => {
+        if (isFirst) {
+          trackEvent('first_orchestration_created', auth.id, { orchestrationId: orchestration.id, fromTemplate: template.id }).catch(() => {})
+        }
+      }).catch(() => {})
+
       return NextResponse.json({ success: true, data: orchestration })
     }
 
@@ -90,6 +98,13 @@ export async function POST(request: NextRequest) {
         createdBy: auth.id
       }
     })
+
+    // Track first orchestration creation (fire and forget)
+    isFirstEvent('first_orchestration_created', auth.id).then((isFirst) => {
+      if (isFirst) {
+        trackEvent('first_orchestration_created', auth.id, { orchestrationId: orchestration.id }).catch(() => {})
+      }
+    }).catch(() => {})
 
     return NextResponse.json({ success: true, data: orchestration })
   } catch (error: any) {

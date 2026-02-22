@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendWelcomeEmail } from '@/lib/email'
+import { trackEvent } from '@/lib/analytics'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,6 +45,9 @@ export async function POST(request: NextRequest) {
     sendWelcomeEmail(dbUser.email, dbUser.name).catch((err) =>
       console.error('[onboarding/complete] Failed to send welcome email:', err)
     )
+
+    // 4. Track onboarding complete event (fire and forget)
+    trackEvent('onboarding_complete', user.id, { useCase: useCase || 'other' }).catch(() => {})
 
     return NextResponse.json({ success: true })
   } catch (error) {
