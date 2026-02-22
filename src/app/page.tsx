@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
+  BookOpen,
   ArrowRight,
   Bot,
   GitBranch,
@@ -227,6 +228,10 @@ export default function LandingPage() {
             <a href="#comparativo" className="text-foreground-secondary hover:text-white transition-colors text-sm">Comparativo</a>
             <a href="#pricing" className="text-foreground-secondary hover:text-white transition-colors text-sm">Pricing</a>
             <a href="#templates" className="text-foreground-secondary hover:text-white transition-colors text-sm">Templates</a>
+            <Link href="/blog" className="text-foreground-secondary hover:text-white transition-colors text-sm flex items-center gap-1">
+              <BookOpen className="w-3.5 h-3.5" />
+              Blog
+            </Link>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-sm text-foreground-secondary hover:text-white transition-colors">
@@ -647,7 +652,7 @@ export default function LandingPage() {
                 <ul className="space-y-2">
                   {[
                     { label: 'ROI Labs', href: 'https://roilabs.com.br' },
-                    { label: 'Blog', href: '#' },
+                    { label: 'Blog', href: '/blog' },
                     { label: 'Contato', href: 'mailto:contato@roilabs.com.br' },
                     { label: 'GitHub', href: 'https://github.com/JeanZorzetti/sofia-ia' }
                   ].map(item => (

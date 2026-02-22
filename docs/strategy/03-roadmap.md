@@ -98,18 +98,18 @@
 **Objetivo**: Primeiros artigos rankando
 
 ### Blog (SEO Camada 1 — captura de demanda)
-- ⬜ **P0** — Setup do blog (Next.js MDX ou CMS headless)
-- ⬜ **P0** — Artigo pilar: "O que é Orquestração de Agentes IA"
+- ✅ **P0** — Setup do blog (Next.js MDX ou CMS headless)
+- ✅ **P0** — Artigo pilar: "O que é Orquestração de Agentes IA"
   - Formato GEO: answer-first, tabelas, schema FAQ
-- ⬜ **P0** — Artigo comparativo: "Sofia vs CrewAI vs AutoGen vs LangFlow"
-- ⬜ **P1** — "Como Criar uma Equipe de Agentes IA sem Código"
-- ⬜ **P1** — "Knowledge Base com RAG: O que é e Como Usar"
-- ⬜ **P2** — "5 Orquestrações Prontas para sua Empresa"
+- ✅ **P0** — Artigo comparativo: "Sofia vs CrewAI vs AutoGen vs LangFlow"
+- ✅ **P1** — "Como Criar uma Equipe de Agentes IA sem Código"
+- ✅ **P1** — "Knowledge Base com RAG: O que é e Como Usar"
+- ✅ **P2** — "5 Orquestrações Prontas para sua Empresa"
 
 ### SEO Técnico
-- ⬜ **P0** — Internal linking (pilar → clusters)
-- ⬜ **P0** — Meta descriptions otimizadas (GEO-friendly)
-- ⬜ **P1** — Core Web Vitals otimizados
+- ✅ **P0** — Internal linking (pilar → clusters)
+- ✅ **P0** — Meta descriptions otimizadas (GEO-friendly)
+- ✅ **P1** — Core Web Vitals otimizados
 
 ---
 
