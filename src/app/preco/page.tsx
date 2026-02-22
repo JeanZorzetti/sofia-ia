@@ -88,7 +88,7 @@ const plans = [
       'Suporte dedicado',
     ],
     cta: 'Falar com Vendas',
-    ctaHref: 'mailto:contato@roilabs.com.br?subject=Plano Business Sofia AI',
+    ctaHref: '/contato',
   },
 ]
 
