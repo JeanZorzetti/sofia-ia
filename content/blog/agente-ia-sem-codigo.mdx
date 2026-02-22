@@ -1,0 +1,224 @@
+---
+title: "Agente IA Sem Código: Como Criar um Agente de IA Sem Programar"
+slug: "agente-ia-sem-codigo"
+description: "Aprenda como criar um agente de IA sem código em 2026. Passo a passo completo para configurar, treinar e publicar seu primeiro agente IA sem precisar de programação."
+date: "2026-02-22"
+author: "Equipe Sofia"
+tags: ["agente ia sem código", "criar agente ia", "no-code ia", "automação sem programação"]
+readTime: "7 min"
+---
+
+**Criar um agente IA sem código é possível em 2026.** Você não precisa de Python, JavaScript ou qualquer linguagem de programação para ter um agente que atende clientes, gera conteúdo ou qualifica leads de forma autônoma.
+
+Este guia mostra o processo completo — do zero ao agente em produção — usando o Sofia AI.
+
+---
+
+## O que você vai criar
+
+Ao final deste guia, você terá um agente IA que:
+
+- ✅ Responde perguntas dos clientes com base nos documentos da sua empresa
+- ✅ Funciona 24h por dia no WhatsApp, site ou chat
+- ✅ Escala automaticamente para um humano quando necessário
+- ✅ Aprender com novos documentos que você adicionar
+
+Tempo estimado: **30-60 minutos**
+
+---
+
+## Por que criar agentes IA sem código é diferente de 2023
+
+Em 2023, criar um agente IA exigia:
+- Conta na OpenAI + configuração de API key
+- Código Python para integração
+- Servidor para hospedar
+- Banco de dados vetorial separado
+- Interface customizada para uso
+
+**Em 2026, com plataformas no-code como Sofia AI:**
+- Crie conta → Configure → Publique
+- Sem código, sem servidor, sem banco de dados
+- WhatsApp e canais já incluídos
+- UI profissional pronta
+
+---
+
+## Passo a passo: crie seu agente IA sem código
+
+### Etapa 1: Crie sua conta no Sofia AI
+
+Acesse [sofiaia.roilabs.com.br](/login) e crie uma conta gratuita. O plano Free inclui 5 agentes — suficiente para começar.
+
+Não precisa de cartão de crédito.
+
+### Etapa 2: Crie um novo agente
+
+No dashboard, clique em **"Agentes"** no menu lateral → **"Novo Agente"**.
+
+Preencha:
+- **Nome:** Como o agente se identifica (ex: "Sofia Atendimento")
+- **Descrição:** Para sua referência interna
+
+### Etapa 3: Defina o papel do agente (o prompt)
+
+Este é o passo mais importante. O **system prompt** diz ao agente quem ele é e como deve se comportar.
+
+**Estrutura de um bom prompt:**
+
+```
+PAPEL:
+Você é [nome], assistente de [função] da [empresa].
+
+OBJETIVO:
+Seu objetivo é [o que o agente deve fazer].
+
+COMPORTAMENTO:
+- Use um tom [profissional/amigável/formal]
+- Sempre responda em português brasileiro
+- Quando não souber a resposta, diga: "Vou verificar isso para você"
+- Nunca invente informações
+
+LIMITAÇÕES:
+- Não discuta concorrentes
+- Para assuntos de pagamento, transfira para um humano
+- Máximo de [X] respostas por conversa antes de escalar
+```
+
+**Exemplo pronto para loja de e-commerce:**
+
+```
+Você é Sofia, assistente virtual da [Nome da Loja].
+
+Seu objetivo é ajudar clientes com dúvidas sobre produtos,
+rastreamento de pedidos, trocas e devoluções.
+
+Use um tom amigável e profissional. Responda sempre em
+português brasileiro. Use emojis com moderação.
+
+Quando o cliente quiser fazer uma reclamação formal ou
+solicitar reembolso acima de R$500, transfira para o
+atendimento humano.
+```
+
+### Etapa 4: Adicione uma Knowledge Base
+
+A KB é onde você carrega os documentos que o agente vai usar para responder:
+
+1. Em **"Knowledge Bases"**, clique em **"Nova KB"**
+2. Dê um nome (ex: "FAQ e Produtos")
+3. Faça upload dos seus documentos:
+   - FAQ em PDF
+   - Catálogo de produtos em CSV
+   - Políticas de troca e devolução
+   - Manual de instruções
+
+O Sofia AI vectoriza automaticamente — o agente encontra as informações relevantes em cada resposta usando RAG (Retrieval Augmented Generation).
+
+4. Volte ao agente e, em **"Knowledge Base"**, selecione a KB criada.
+
+### Etapa 5: Escolha o modelo de IA
+
+Na aba **"Configurações"** do agente, selecione o modelo:
+
+| Modelo | Melhor para | Velocidade |
+|---|---|---|
+| **Groq - Llama 3.3** | Atendimento, volume alto | Muito rápido |
+| **GPT-4o Mini** | Equilíbrio qualidade/custo | Rápido |
+| **Claude 3.5 Haiku** | Textos, análise | Médio |
+
+Para atendimento ao cliente comum: **Groq Llama 3.3** (mais rápido e barato).
+Para tarefas que exigem análise profunda: **GPT-4o** ou **Claude 3.5**.
+
+### Etapa 6: Teste o agente
+
+Clique em **"Testar Agente"** e faça as perguntas que um cliente real faria:
+
+- ✅ Perguntas que estão na KB → o agente deve responder com precisão
+- ✅ Perguntas que não estão na KB → o agente deve admitir que não sabe
+- ✅ Pedidos para falar com humano → deve escalar corretamente
+
+Se o agente errar, ajuste o prompt ou adicione mais documentos na KB.
+
+**Dica:** Faça pelo menos 20 perguntas de teste antes de publicar.
+
+### Etapa 7: Conecte ao canal de atendimento
+
+**WhatsApp Business:**
+1. Em **"Integrações" → "WhatsApp"**, clique em conectar
+2. Escaneie o QR code com o número que vai receber os clientes
+3. Pronto — o agente já responde pelo WhatsApp
+
+**Widget no site:**
+1. Em **"Integrações" → "Widget"**, copie o código HTML
+2. Cole no `<head>` do seu site
+3. Um chat flutuante aparece automaticamente
+
+**Telegram:**
+1. Crie um bot no @BotFather do Telegram
+2. Cole o token em **"Integrações" → "Telegram"**
+
+---
+
+## Erros comuns ao criar agentes IA sem código
+
+### ❌ Prompt muito vago
+
+**Ruim:** "Você é um assistente. Ajude os usuários."
+
+**Bom:** "Você é Sofia, assistente de vendas da Loja XYZ. Seu objetivo é ajudar clientes a encontrar o produto ideal com base nas suas necessidades, consultando o catálogo disponível."
+
+### ❌ KB sem estrutura
+
+Documentos desorganizados geram respostas imprecisas. Antes de fazer upload:
+- Remova informações desatualizadas
+- Adicione títulos claros em cada seção
+- Separe por categoria (Produtos, Políticas, FAQ)
+
+### ❌ Não testar antes de publicar
+
+Teste com o pior cenário possível: perguntas ambíguas, solicitações fora do escopo, erros ortográficos. O agente precisa lidar com isso graciosamente.
+
+### ❌ Esquecer dos limites
+
+Configure sempre:
+- **Quando escalar para humano:** Defina critérios claros
+- **O que NÃO falar:** Informações que não devem ser divulgadas
+- **Tom adequado ao contexto:** B2B formal é diferente de B2C descontraído
+
+---
+
+## Avançando: agente IA sem código em orquestração
+
+Quando um agente não é suficiente, você pode criar uma **orquestração** — múltiplos agentes trabalhando em série, sem código.
+
+**Exemplo:** Agente de suporte que ao não resolver, passa para agente de especialista técnico, que ao não resolver, escala para humano com o histórico completo.
+
+O editor visual de orquestrações do Sofia AI permite montar esses pipelines com drag & drop.
+
+---
+
+## Quanto custa manter um agente IA sem código?
+
+| Situação | Custo estimado |
+|---|---|
+| Testar e aprender (Free) | R$0/mês |
+| 1 agente em produção (Pro) | R$297/mês |
+| Múltiplos agentes + WhatsApp (Pro) | R$297/mês |
+| Empresa com alto volume (Business) | R$997/mês |
+
+Compare: um atendente CLT custa R$2.000-4.000/mês. Um agente IA no plano Pro custa R$297/mês e não tira férias.
+
+---
+
+## Próximos passos
+
+Você aprendeu como criar um agente IA sem código. Agora:
+
+1. **[Crie sua conta gratuita no Sofia AI](/login)** — 5 minutos
+2. Configure seu primeiro agente com os passos deste guia
+3. Teste com 20 perguntas reais
+4. Conecte ao WhatsApp ou site
+5. Monitore os primeiros dias e ajuste conforme necessário
+
+**→ [Começar agora — é grátis.](/login)**

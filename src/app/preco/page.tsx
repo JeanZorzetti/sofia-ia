@@ -12,15 +12,15 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Preços — Planos Sofia AI | Free, Pro e Business',
-  description: 'Conheça os planos do Sofia AI. Free para começar, Pro por R$297/mês para times, Business por R$997/mês para empresas. Sem surpresas na fatura.',
+  title: 'Preços — Planos Sofia AI | Free, Pro, Business e Enterprise',
+  description: 'Conheça os planos do Sofia AI. Free para começar, Pro por R$297/mês, Business por R$997/mês e Enterprise custom para grandes empresas. Sem surpresas na fatura.',
   keywords: [
     'preço sofia ai',
     'planos sofia ai',
     'quanto custa sofia ai',
     'plataforma agentes ia preço',
     'orquestração ia gratis',
-    'sofia pro business',
+    'sofia pro business enterprise',
   ],
   openGraph: {
     title: 'Preços — Sofia AI | Free, Pro e Business',
@@ -38,6 +38,7 @@ const plans = [
     period: '/mês',
     description: 'Para experimentar e explorar',
     highlight: false,
+    badge: null,
     features: [
       '3 orquestrações',
       '5 agentes',
@@ -49,6 +50,7 @@ const plans = [
     ],
     cta: 'Começar Grátis',
     ctaHref: '/login',
+    ctaVariant: 'outline' as const,
   },
   {
     name: 'Pro',
@@ -56,6 +58,7 @@ const plans = [
     period: '/mês',
     description: 'Para times e pequenas empresas',
     highlight: true,
+    badge: 'Mais Popular',
     features: [
       'Orquestrações ilimitadas',
       '20 agentes',
@@ -68,7 +71,8 @@ const plans = [
       'Suporte prioritário',
     ],
     cta: 'Assinar Pro',
-    ctaHref: '/login',
+    ctaHref: '/dashboard/billing',
+    ctaVariant: 'primary' as const,
   },
   {
     name: 'Business',
@@ -76,6 +80,7 @@ const plans = [
     period: '/mês',
     description: 'Para empresas com alta demanda',
     highlight: false,
+    badge: null,
     features: [
       'Tudo do Pro',
       'Agentes ilimitados',
@@ -87,8 +92,30 @@ const plans = [
       'Onboarding personalizado',
       'Suporte dedicado',
     ],
+    cta: 'Assinar Business',
+    ctaHref: '/dashboard/billing',
+    ctaVariant: 'outline' as const,
+  },
+  {
+    name: 'Enterprise',
+    price: 'Custom',
+    period: '',
+    description: 'Para grandes organizações',
+    highlight: false,
+    badge: null,
+    features: [
+      'Tudo do Business',
+      'Self-hosted (LGPD)',
+      'SSO / SAML 2.0',
+      'SLA personalizado',
+      'Compliance e auditoria',
+      'Treinamento da equipe',
+      'Gerente de conta dedicado',
+      'Contrato e NDA',
+    ],
     cta: 'Falar com Vendas',
     ctaHref: '/contato',
+    ctaVariant: 'outline' as const,
   },
 ]
 
@@ -148,6 +175,7 @@ export default function PrecosPage() {
               { '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'BRL', availability: 'https://schema.org/InStock' },
               { '@type': 'Offer', name: 'Pro', price: '297', priceCurrency: 'BRL', availability: 'https://schema.org/InStock' },
               { '@type': 'Offer', name: 'Business', price: '997', priceCurrency: 'BRL', availability: 'https://schema.org/InStock' },
+              { '@type': 'Offer', name: 'Enterprise', priceCurrency: 'BRL', availability: 'https://schema.org/InStock', description: 'Plano Enterprise com preço customizado para grandes empresas — self-hosted, SLA e suporte dedicado.' },
             ],
           }),
         }}
@@ -201,29 +229,29 @@ export default function PrecosPage() {
 
       {/* Planos */}
       <section className="px-6 pb-20">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {plans.map((plan) => (
               <div
                 key={plan.name}
-                className={`rounded-2xl p-8 relative ${plan.highlight
+                className={`rounded-2xl p-7 relative flex flex-col ${plan.highlight
                   ? 'bg-gradient-to-b from-blue-500/20 to-purple-500/20 border-2 border-blue-500/40'
                   : 'glass-card'}`}
               >
-                {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-3 py-1 bg-blue-500 rounded-full text-xs font-medium text-white">
-                    <Star className="w-3 h-3" /> Mais Popular
+                {plan.badge && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1 px-3 py-1 bg-blue-500 rounded-full text-xs font-medium text-white whitespace-nowrap">
+                    <Star className="w-3 h-3" /> {plan.badge}
                   </div>
                 )}
                 <div className="mb-6">
                   <h2 className="text-lg font-semibold text-white mb-1">{plan.name}</h2>
                   <p className="text-white/50 text-sm mb-4">{plan.description}</p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-4xl font-bold text-white">{plan.price}</span>
-                    <span className="text-white/40 text-sm">{plan.period}</span>
+                    <span className={`font-bold text-white ${plan.price === 'Custom' ? 'text-3xl' : 'text-4xl'}`}>{plan.price}</span>
+                    {plan.period && <span className="text-white/40 text-sm">{plan.period}</span>}
                   </div>
                 </div>
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-center gap-2 text-sm text-foreground-secondary">
                       <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
