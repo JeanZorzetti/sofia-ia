@@ -29,7 +29,7 @@
 ### Multi-tenancy
 - ✅ **P0** — Verificar isolamento de dados entre usuários
 - ✅ **P0** — Audit de queries Prisma (todas filtram por userId/orgId?) → OK para single-tenant, P0 para SaaS
-- ⬜ **P1** — Implementar middleware de tenant isolation (para SaaS launch)
+- ✅ **P1** — Implementar middleware de tenant isolation (para SaaS launch)
 
 ### Testes
 - ⬜ **P1** — Testes unitários para `lib/ai/` (groq, openrouter, embeddings)
