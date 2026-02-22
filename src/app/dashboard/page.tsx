@@ -54,10 +54,22 @@ export default function DashboardPage() {
       const parsedUser = JSON.parse(user)
       setUserId(parsedUser.id)
 
-      const onboardingCompleted = localStorage.getItem('onboarding_completed')
-      if (!onboardingCompleted) {
-        setTimeout(() => setShowOnboarding(true), 1000)
-      }
+      // Check onboarding status from API (authoritative source)
+      fetch('/api/auth/profile')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.success && data.user?.onboardingCompleted === false) {
+            // Redirect to dedicated onboarding page
+            window.location.href = '/onboarding'
+          }
+        })
+        .catch(() => {
+          // Fallback: check localStorage
+          const onboardingCompleted = localStorage.getItem('onboarding_completed')
+          if (!onboardingCompleted) {
+            setTimeout(() => setShowOnboarding(true), 1000)
+          }
+        })
     }
   }, [])
 

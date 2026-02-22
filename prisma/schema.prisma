@@ -8,23 +8,26 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(uuid()) @db.Uuid
-  email        String    @unique @db.VarChar(255)
-  passwordHash String    @map("password_hash") @db.VarChar(255)
-  name         String    @db.VarChar(255)
-  role         String    @default("agent") @db.VarChar(50)
-  status       String    @default("active") @db.VarChar(20)
-  permissions  Json      @default("{}")
-  workspaceId  String?   @map("workspace_id") @db.Uuid
-  lastLogin    DateTime? @map("last_login") @db.Timestamptz()
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id                   String    @id @default(uuid()) @db.Uuid
+  email                String    @unique @db.VarChar(255)
+  passwordHash         String    @map("password_hash") @db.VarChar(255)
+  name                 String    @db.VarChar(255)
+  role                 String    @default("agent") @db.VarChar(50)
+  status               String    @default("active") @db.VarChar(20)
+  permissions          Json      @default("{}")
+  workspaceId          String?   @map("workspace_id") @db.Uuid
+  lastLogin            DateTime? @map("last_login") @db.Timestamptz()
+  onboardingCompleted  Boolean   @default(false) @map("onboarding_completed")
+  onboardingData       Json      @default("{}") @map("onboarding_data")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  workspace Workspace?    @relation(fields: [workspaceId], references: [id])
-  leads     Lead[]
-  campaigns Campaign[]
-  agents    Agent[]
-  flows     Flow[]
+  workspace     Workspace?     @relation(fields: [workspaceId], references: [id])
+  leads         Lead[]
+  campaigns     Campaign[]
+  agents        Agent[]
+  flows         Flow[]
+  subscription  Subscription?
 
   @@index([workspaceId])
   @@map("users")
@@ -631,4 +634,33 @@ model DevSession {
   @@index([agentId])
   @@index([updatedAt(sort: Desc)])
   @@map("dev_sessions")
+}
+
+// ─────────────────────────────────────────────────────────
+// Subscription — AbacatePay billing (Free / Pro / Business)
+// ─────────────────────────────────────────────────────────
+model Subscription {
+  id                    String    @id @default(uuid()) @db.Uuid
+  userId                String    @unique @map("user_id") @db.Uuid
+  plan                  String    @default("free") @db.VarChar(50)  // free | pro | business
+  status                String    @default("active") @db.VarChar(50) // active | canceled | past_due | trialing
+  abacatePayCustomerId  String?   @map("abacatepay_customer_id") @db.VarChar(255)
+  abacatePaySubId       String?   @map("abacatepay_sub_id") @db.VarChar(255)
+  abacatePayBillingId   String?   @map("abacatepay_billing_id") @db.VarChar(255)
+  currentPeriodStart    DateTime? @map("current_period_start") @db.Timestamptz()
+  currentPeriodEnd      DateTime? @map("current_period_end") @db.Timestamptz()
+  canceledAt            DateTime? @map("canceled_at") @db.Timestamptz()
+  // Usage tracking (reset monthly)
+  messagesUsedMonth     Int       @default(0) @map("messages_used_month")
+  usagePeriodStart      DateTime  @default(now()) @map("usage_period_start") @db.Timestamptz()
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([plan])
+  @@index([status])
+  @@index([abacatePaySubId])
+  @@map("subscriptions")
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { checkPlanLimit } from '@/lib/plan-limits';
 
 export async function GET(request: NextRequest) {
   try {
@@ -82,6 +83,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'name is required and must be a string' },
         { status: 400 }
+      );
+    }
+
+    // Check plan limits
+    const limitCheck = await checkPlanLimit(user.id, 'agents');
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { success: false, error: limitCheck.message || 'Limite de agentes atingido para seu plano.' },
+        { status: 403 }
       );
     }
 

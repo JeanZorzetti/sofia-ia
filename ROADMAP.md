@@ -300,6 +300,36 @@ ROI Labs Platform
 
 ---
 
+## SPRINT 5 - Monetizacao (Semana 9-12)
+
+### 5.1 Billing com AbacatePay
+- [x] Integracao AbacatePay (checkout PIX/Cartao, webhooks) - substituiu Stripe
+- [x] Planos: Free / Pro (R$ 297/mes) / Business (R$ 997/mes)
+- [x] Tabela `Subscription` no schema Prisma (plano, status, datas, usage)
+- [x] Webhook handler `/api/webhooks/abacatepay` para confirmacao de pagamento
+- [x] Dashboard `/dashboard/billing` com plano atual, uso real, botao upgrade
+
+### 5.2 Limites por plano
+- [x] Free: 2 agentes, 100 msgs/mes, 1 KB
+- [x] Pro: 20 agentes, 5.000 msgs/mes, 10 KBs
+- [x] Business: ilimitado
+- [x] Helper `checkPlanLimit()` em `src/lib/plan-limits.ts`
+- [x] Enforcement na rota POST `/api/agents`
+
+### 5.3 Onboarding wizard
+- [x] Pagina `/onboarding` com wizard 4-steps full-page
+- [x] Steps: caso de uso → criar agente → criar orquestracao → concluir
+- [x] Campo `onboardingCompleted` no modelo User
+- [x] Detecção de primeiro login e redirect para `/onboarding`
+- [x] Endpoint `/api/onboarding/complete` (marca completo + envia email)
+
+### 5.4 Email de boas-vindas
+- [x] Servico de email via Resend API em `src/lib/email.ts`
+- [x] Template HTML responsivo com primeiros passos
+- [x] Disparado no final do onboarding
+
+---
+
 ## Navegacao Final da Sidebar
 
 ```

@@ -21,6 +21,20 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Protect /onboarding routes (must be logged in)
+  if (pathname.startsWith('/onboarding')) {
+    const token = request.cookies.get('sofia_token')?.value
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    const user = await verifyToken(token)
+    if (!user) {
+      const response = NextResponse.redirect(new URL('/login', request.url))
+      response.cookies.delete('sofia_token')
+      return response
+    }
+  }
+
   // Redirect authenticated users away from login
   if (pathname === '/login') {
     const token = request.cookies.get('sofia_token')?.value
@@ -36,5 +50,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
+  matcher: ['/dashboard/:path*', '/onboarding/:path*', '/onboarding', '/login'],
 }

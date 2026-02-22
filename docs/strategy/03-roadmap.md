@@ -118,15 +118,15 @@
 **Objetivo**: Primeiros usuários pagantes
 
 ### Billing
-- ⬜ **P0** — Integração Stripe (checkout, portal, webhooks)
-- ⬜ **P0** — Planos: Free / Pro (R$ 297) / Business (R$ 997)
-- ⬜ **P0** — Limites por plano (agentes, msgs, KBs)
-- ⬜ **P1** — Dashboard de uso e consumo
+- ✅ **P0** — Integração AbacatePay (checkout PIX/cartão, webhooks) — substituiu Stripe
+- ✅ **P0** — Planos: Free / Pro (R$ 297) / Business (R$ 997)
+- ✅ **P0** — Limites por plano (agentes, msgs, KBs) + helper `checkPlanLimit()`
+- ✅ **P1** — Dashboard de uso e consumo em `/dashboard/billing`
 
 ### Onboarding
-- ⬜ **P0** — Wizard funcional (escolher template → configurar → executar)
-- ⬜ **P0** — Demo automática na primeira login (tour guiado)
-- ⬜ **P1** — Email de boas-vindas com primeiros passos
+- ✅ **P0** — Wizard funcional full-page `/onboarding` (4 steps: use case → agente → orquestração → concluir)
+- ✅ **P0** — Detecção de primeiro login + redirect para `/onboarding`
+- ✅ **P1** — Email de boas-vindas com Resend (HTML responsivo)
 
 ### Analytics de Produto
 - ⬜ **P1** — Tracking de eventos (signup, first-orchestration, first-agent)
