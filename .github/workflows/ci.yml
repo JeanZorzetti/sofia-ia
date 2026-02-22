@@ -7,7 +7,8 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  build-and-test:
+  ci:
+    name: Type Check, Lint & Build
     runs-on: ubuntu-latest
 
     strategy:
@@ -30,11 +31,21 @@ jobs:
     - name: Generate Prisma Client
       run: npx prisma generate
 
-    - name: Run linter
+    - name: Type check (tsc --noEmit)
+      run: npx tsc --noEmit
+      env:
+        DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+        JWT_SECRET: ci-test-secret
+        GROQ_API_KEY: dummy-key
+        EVOLUTION_API_URL: https://dummy.example.com
+        EVOLUTION_API_KEY: dummy-key
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+    - name: Lint
       run: npm run lint
       continue-on-error: true
 
-    - name: Build project
+    - name: Build
       run: npm run build
       env:
         DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy

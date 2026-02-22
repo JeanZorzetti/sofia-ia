@@ -74,8 +74,8 @@
   - ✅ CTA para signup/waitlist
 - ✅ **P0** — SEO técnico (meta tags, OG, sitemap, robots.txt)
 - ✅ **P0** — Schema markup (SoftwareApplication, FAQ)
-- ⬜ **P1** — Página /features/orchestrations/ (deep dive)
-- ⬜ **P1** — Página /templates/ (orquestrações prontas)
+- ✅ **P1** — Página /features/orchestrations/ (deep dive)
+- ✅ **P1** — Página /templates/ (orquestrações prontas)
 
 ### GitHub (GEO)
 - ✅ **P0** — Preparar repositório público
@@ -84,12 +84,12 @@
   - ✅ LICENSE (MIT ou AGPL)
   - ✅ .github/ (issue templates, PR template)
 - ✅ **P0** — Docker Compose para self-hosted
-- ⬜ **P1** — GitHub Actions (CI/CD, testes automáticos)
+- ✅ **P1** — GitHub Actions (CI/CD, testes automáticos)
 
 ### Diretórios e Listings (GEO)
-- ⬜ **P1** — ProductHunt launch
-- ⬜ **P1** — Registro em: There's An AI For That, Futurepedia, AlternativeTo
-- ⬜ **P2** — Dev.to article de lançamento
+- ✅ **P1** — ProductHunt launch (assets e copy prontos em docs/listings/)
+- ✅ **P1** — Registro em: There's An AI For That, Futurepedia, AlternativeTo (textos prontos em docs/listings/)
+- ✅ **P2** — Dev.to article de lançamento (rascunho em docs/listings/directory-descriptions.md)
 
 ---
 
