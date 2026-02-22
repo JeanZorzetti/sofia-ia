@@ -82,8 +82,11 @@ export default function LoginPage() {
                 {loading ? 'Entrando...' : 'Entrar'}
               </Button>
 
-              <div className="text-center text-xs text-white/40 pt-2">
-                Teste: admin / SofiaAI2024#Admin
+              <div className="text-center text-sm text-white/40 pt-2">
+                Não tem uma conta?{' '}
+                <a href="/register" className="text-blue-400 hover:text-blue-300 transition-colors">
+                  Criar conta grátis
+                </a>
               </div>
             </form>
           </CardContent>
