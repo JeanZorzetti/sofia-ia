@@ -32,7 +32,7 @@
 - ✅ **P1** — Implementar middleware de tenant isolation (para SaaS launch)
 
 ### Testes
-- ⬜ **P1** — Testes unitários para `lib/ai/` (groq, openrouter, embeddings)
+- ✅ **P1** — Testes unitários para `lib/ai/` (groq, openrouter, embeddings)
 - ⬜ **P1** — Testes de integração para rotas críticas (auth, agents, conversations)
 - ⬜ **P2** — E2E com Playwright para fluxos principais
 
