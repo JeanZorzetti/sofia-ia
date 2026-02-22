@@ -267,6 +267,11 @@ export default function PrecosPage() {
                 >
                   {plan.cta}
                 </Link>
+                {plan.name === 'Enterprise' && (
+                  <Link href="/enterprise" className="block text-center mt-3 text-xs text-white/40 hover:text-white/70 transition-colors">
+                    Saiba mais sobre Enterprise →
+                  </Link>
+                )}
               </div>
             ))}
           </div>

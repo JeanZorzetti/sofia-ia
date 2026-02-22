@@ -22,7 +22,8 @@ import {
   Activity,
   Store,
   FolderOpen,
-  Terminal
+  Terminal,
+  Layers
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -104,6 +105,11 @@ const menuItems = [
     href: '/dashboard/billing',
     label: 'Billing',
     icon: CreditCard,
+  },
+  {
+    href: '/dashboard/whitelabel',
+    label: 'White-label',
+    icon: Layers,
   },
   {
     href: '/dashboard/settings',

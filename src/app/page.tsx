@@ -666,6 +666,8 @@ export default function LandingPage() {
                     { label: 'Marketplace', href: '/marketplace' },
                     { label: 'Templates', href: '/templates' },
                     { label: 'Preço', href: '/preco' },
+                    { label: 'Enterprise', href: '/enterprise' },
+                    { label: 'White-label B2B', href: '/whitelabel' },
                     { label: 'Changelog', href: '/changelog' },
                   ].map(item => (
                     <li key={item.label}>
