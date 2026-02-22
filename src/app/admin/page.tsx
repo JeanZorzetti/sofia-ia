@@ -137,7 +137,7 @@ export default async function AdminPage() {
             <span className="text-white/60 text-sm">Admin</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/dashboard/admin/analytics" className="text-sm text-white/50 hover:text-white transition-colors flex items-center gap-1">
+            <Link href="/admin/analytics" className="text-sm text-white/50 hover:text-white transition-colors flex items-center gap-1">
               Analytics <ArrowRight className="w-3 h-3" />
             </Link>
             <Link href="/dashboard" className="text-sm text-white/50 hover:text-white transition-colors flex items-center gap-1">
@@ -275,7 +275,7 @@ export default async function AdminPage() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-white/70 uppercase tracking-wider">Eventos Recentes</h2>
             <Link
-              href="/dashboard/admin/analytics"
+              href="/admin/analytics"
               className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
             >
               Ver analytics completo <ArrowRight className="w-3 h-3" />
