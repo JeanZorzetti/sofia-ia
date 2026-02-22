@@ -67,6 +67,25 @@ export async function middleware(request: NextRequest) {
   }
 
   // ------------------------------------------------------------------
+  // Protect /admin — browser navigation, redirect to /login
+  // ------------------------------------------------------------------
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    const token = request.cookies.get('sofia_token')?.value
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    const user = await verifyToken(token)
+    if (!user) {
+      const response = NextResponse.redirect(new URL('/login', request.url))
+      response.cookies.delete('sofia_token')
+      return response
+    }
+    const next = NextResponse.next()
+    const orgId = (user as any).orgId || user.id
+    return withTenantHeaders(next, user.id, orgId)
+  }
+
+  // ------------------------------------------------------------------
   // Protect /onboarding/* — browser navigation, redirect to /login
   // ------------------------------------------------------------------
   if (pathname.startsWith('/onboarding')) {
@@ -134,6 +153,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
+    '/admin',
+    '/admin/:path*',
     '/onboarding/:path*',
     '/onboarding',
     '/login',
