@@ -217,12 +217,12 @@ export default function LandingPage() {
       {/* Navbar */}
       <nav className="navbar-glass sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link href="https://sofiaia.roilabs.com.br/" className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
               <BrainCircuit className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-white text-lg tracking-tight">Sofia AI</span>
-          </div>
+          </Link>
           <div className="hidden md:flex items-center gap-8">
             <Link href="/features" className="text-foreground-secondary hover:text-white transition-colors text-sm">Features</Link>
             <Link href="/comparativo" className="text-foreground-secondary hover:text-white transition-colors text-sm">Comparativo</Link>
@@ -280,9 +280,9 @@ export default function LandingPage() {
               <Play className="w-4 h-4" />
               Começar Grátis — sem cartão
             </Link>
-            <a href="#features" className="px-8 py-3.5 rounded-full border border-white/10 hover:bg-white/5 transition-colors text-base text-center flex items-center gap-2 justify-center">
+            <Link href="/como-funciona" className="px-8 py-3.5 rounded-full border border-white/10 hover:bg-white/5 transition-colors text-base text-center flex items-center gap-2 justify-center">
               Ver como funciona <ChevronRight className="w-4 h-4" />
-            </a>
+            </Link>
           </div>
 
           {/* Stats */}
@@ -558,13 +558,10 @@ export default function LandingPage() {
             <Link href="/login" className="button-luxury px-10 py-4 text-base inline-flex items-center gap-2 justify-center">
               Criar Conta Grátis <ArrowRight className="w-5 h-5" />
             </Link>
-            <a
-              href="mailto:contato@roilabs.com.br?subject=Demo Sofia AI"
-              className="px-10 py-4 rounded-full border border-white/10 hover:bg-white/5 transition-colors text-base inline-flex items-center gap-2 justify-center"
-            >
+            <Link href="/contato" className="px-10 py-4 rounded-full border border-white/10 hover:bg-white/5 transition-colors text-base inline-flex items-center gap-2 justify-center">
               <Users className="w-5 h-5" />
               Falar com Especialista
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -626,11 +623,16 @@ export default function LandingPage() {
               <div>
                 <h4 className="text-white font-medium text-sm mb-3">Produto</h4>
                 <ul className="space-y-2">
-                  {['Features', 'Templates', 'Pricing', 'Changelog'].map(item => (
-                    <li key={item}>
-                      <a href={`#${item.toLowerCase()}`} className="text-foreground-tertiary hover:text-white text-sm transition-colors">
-                        {item}
-                      </a>
+                  {[
+                    { label: 'Features', href: '/features' },
+                    { label: 'Templates', href: '/templates' },
+                    { label: 'Preço', href: '/preco' },
+                    { label: 'Changelog', href: '/changelog' },
+                  ].map(item => (
+                    <li key={item.label}>
+                      <Link href={item.href} className="text-foreground-tertiary hover:text-white text-sm transition-colors">
+                        {item.label}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -638,11 +640,16 @@ export default function LandingPage() {
               <div>
                 <h4 className="text-white font-medium text-sm mb-3">Recursos</h4>
                 <ul className="space-y-2">
-                  {['Documentação', 'API Reference', 'Self-hosted', 'Status'].map(item => (
-                    <li key={item}>
-                      <a href="#" className="text-foreground-tertiary hover:text-white text-sm transition-colors">
-                        {item}
-                      </a>
+                  {[
+                    { label: 'Documentação', href: '/documentacao' },
+                    { label: 'API Reference', href: '/api-reference' },
+                    { label: 'Self-hosted', href: '/self-hosted' },
+                    { label: 'Status', href: '/status' },
+                  ].map(item => (
+                    <li key={item.label}>
+                      <Link href={item.href} className="text-foreground-tertiary hover:text-white text-sm transition-colors">
+                        {item.label}
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -672,9 +679,9 @@ export default function LandingPage() {
               &copy; 2026 ROI Labs. Sofia AI — Plataforma de Orquestração de Agentes IA.
             </p>
             <div className="flex gap-6">
-              <a href="#" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Termos</a>
-              <a href="#" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Privacidade</a>
-              <a href="mailto:contato@roilabs.com.br" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Contato</a>
+              <Link href="/termos" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Termos</Link>
+              <Link href="/privacidade" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Privacidade</Link>
+              <Link href="/contato" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Contato</Link>
             </div>
           </div>
         </div>
