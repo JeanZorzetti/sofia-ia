@@ -174,26 +174,6 @@ export default function EarlyAccessPage() {
               ))}
             </div>
 
-            {/* Social proof */}
-            <div className="mt-8 p-5 rounded-xl bg-gradient-to-br from-yellow-500/5 to-orange-500/5 border border-yellow-500/20">
-              <div className="flex items-center gap-3 mb-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 border-2 border-[#0a0a0f] flex items-center justify-center text-xs font-bold"
-                  >
-                    {String.fromCharCode(64 + i)}
-                  </div>
-                ))}
-                <span className="text-sm text-white/50">+23 early adopters</span>
-              </div>
-              <p className="text-sm text-white/60">
-                &ldquo;Automatizamos a criação de conteúdo de 3 dias para 20 minutos com o pipeline de marketing da Sofia AI.&rdquo;
-              </p>
-              <p className="text-xs text-white/30 mt-2">— Early Adopter, Agência de Marketing</p>
-            </div>
-          </div>
-
           {/* Right: Form */}
           <div>
             {status === 'success' ? (

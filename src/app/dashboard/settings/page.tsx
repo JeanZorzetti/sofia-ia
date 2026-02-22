@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Settings, Users, Building2, Key, Shield, Lock, Scale, Palette } from 'lucide-react';
+import { Settings, Users, Building2, Key, Shield, Lock, Scale, Palette, Webhook } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function SettingsPage() {
@@ -54,6 +54,13 @@ export default function SettingsPage() {
       icon: Palette,
       href: '/dashboard/settings/whitelabel',
       color: 'text-pink-500',
+    },
+    {
+      title: 'Webhooks',
+      description: 'Receba notificações no Slack, Discord, email ou HTTP',
+      icon: Webhook,
+      href: '/dashboard/settings/webhooks',
+      color: 'text-orange-500',
     },
   ];
 
