@@ -187,7 +187,6 @@ export async function createSubscription(
       back_url: `${returnUrl}?success=1&plan=${plan}`,
       status: 'pending',
       external_reference: `${user.id}:${plan}`,
-      notification_url: getWebhookUrl(),
     },
   })
 
