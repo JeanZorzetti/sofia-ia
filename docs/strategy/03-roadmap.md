@@ -138,19 +138,19 @@
 ## Sprint 6+ — Crescimento (Semana 13+)
 
 ### Produto
-- ⬜ Marketplace de templates de orquestração
-- ⬜ API pública para integrações externas
-- ⬜ Multi-language (EN)
+- ✅ Marketplace de templates de orquestração
+- ✅ API pública para integrações externas
+- ✅ Multi-language (EN)
 - ⬜ Mobile companion app
-- ⬜ Webhooks de output (Slack, Discord, email)
+- ✅ Webhooks de output (Slack, Discord, email)
 
 ### Conteúdo (SEO Camada 2 e 3)
-- ⬜ Conteúdo por vertical (marketing, jurídico, e-commerce)
-- ⬜ Casos de uso com resultados
+- ✅ Conteúdo por vertical (marketing, jurídico, e-commerce)
+- ✅ Casos de uso com resultados
 - ⬜ YouTube (demos, tutoriais)
-- ⬜ Newsletter
+- ✅ Newsletter
 
 ### Comunidade
 - ⬜ Discord/Slack para usuários
-- ⬜ Documentação open-source (docs.sofia.ai)
-- ⬜ Program de early adopters
+- ✅ Documentação open-source (docs.sofia.ai)
+- ✅ Program de early adopters

@@ -21,6 +21,7 @@ import {
   Globe,
   Lock
 } from 'lucide-react'
+import NewsletterForm from '@/components/NewsletterForm'
 
 export const metadata: Metadata = {
   title: 'Sofia — Plataforma de Orquestração de Agentes IA | ROI Labs',
@@ -225,7 +226,7 @@ export default function LandingPage() {
           </Link>
           <div className="hidden md:flex items-center gap-8">
             <Link href="/features" className="text-foreground-secondary hover:text-white transition-colors text-sm">Features</Link>
-            <Link href="/comparativo" className="text-foreground-secondary hover:text-white transition-colors text-sm">Comparativo</Link>
+            <Link href="/marketplace" className="text-foreground-secondary hover:text-white transition-colors text-sm">Marketplace</Link>
             <Link href="/preco" className="text-foreground-secondary hover:text-white transition-colors text-sm">Preço</Link>
             <Link href="/templates" className="text-foreground-secondary hover:text-white transition-colors text-sm">Templates</Link>
             <Link href="/blog" className="text-foreground-secondary hover:text-white transition-colors text-sm flex items-center gap-1">
@@ -603,6 +604,17 @@ export default function LandingPage() {
         }}
       />
 
+      {/* Newsletter */}
+      <section className="px-6 py-16 border-t border-white/5">
+        <div className="max-w-xl mx-auto">
+          <NewsletterForm
+            source="landing"
+            title="Newsletter de IA toda semana"
+            description="Templates prontos, casos de uso reais e novidades sobre orquestração de agentes IA. Sem spam."
+          />
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="px-6 py-12 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
@@ -625,6 +637,7 @@ export default function LandingPage() {
                 <ul className="space-y-2">
                   {[
                     { label: 'Features', href: '/features' },
+                    { label: 'Marketplace', href: '/marketplace' },
                     { label: 'Templates', href: '/templates' },
                     { label: 'Preço', href: '/preco' },
                     { label: 'Changelog', href: '/changelog' },
@@ -660,8 +673,10 @@ export default function LandingPage() {
                   {[
                     { label: 'ROI Labs', href: 'https://roilabs.com.br' },
                     { label: 'Blog', href: '/blog' },
+                    { label: 'Early Access', href: '/early-access' },
                     { label: 'Contato', href: 'mailto:contato@roilabs.com.br' },
-                    { label: 'GitHub', href: 'https://github.com/JeanZorzetti/sofia-ia' }
+                    { label: 'GitHub', href: 'https://github.com/JeanZorzetti/sofia-ia' },
+                    { label: 'English', href: '/en' }
                   ].map(item => (
                     <li key={item.label}>
                       <a href={item.href} className="text-foreground-tertiary hover:text-white text-sm transition-colors">

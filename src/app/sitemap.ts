@@ -16,6 +16,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     // Home
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
+    // International
+    { url: `${baseUrl}/en`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.95 },
     // Marketing — produto
     { url: `${baseUrl}/features`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/features/orchestrations`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
@@ -23,6 +25,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/preco`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/como-funciona`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/templates`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${baseUrl}/marketplace`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
+    // Comunidade
+    { url: `${baseUrl}/early-access`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.85 },
     // Conteúdo
     { url: `${baseUrl}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
     { url: `${baseUrl}/changelog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },

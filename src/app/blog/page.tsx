@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getAllPosts, formatDate } from '@/lib/blog'
 import { BrainCircuit, ArrowRight, Clock, Tag } from 'lucide-react'
+import NewsletterForm from '@/components/NewsletterForm'
 
 export const metadata: Metadata = {
   title: 'Blog — Sofia AI | Orquestração de Agentes IA, RAG e Automação',
@@ -142,6 +143,17 @@ export default function BlogPage() {
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Newsletter */}
+      <section className="px-6 py-12 border-t border-white/5">
+        <div className="max-w-md mx-auto">
+          <NewsletterForm
+            source="blog"
+            title="Receba novos artigos por email"
+            description="Todo novo artigo sobre IA, automação e orquestração direto na sua caixa de entrada."
+          />
         </div>
       </section>
 

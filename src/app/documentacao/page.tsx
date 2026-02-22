@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, ArrowRight, BrainCircuit, BookOpen, Code2, GitBranch, Database, MessageSquare, Settings, Zap, ExternalLink } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BrainCircuit, BookOpen, Code2, GitBranch, Database, MessageSquare, Settings, Zap, ExternalLink, Github, Users, Star } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Documentação — Sofia AI',
@@ -130,7 +130,68 @@ export default function DocumentacaoPage() {
           ))}
         </div>
 
-        <div className="max-w-5xl mx-auto mt-10">
+        {/* Open Source Section */}
+        <div className="max-w-5xl mx-auto mt-10 mb-8">
+          <div className="glass-card p-6 rounded-xl border border-green-500/20 bg-gradient-to-br from-green-500/5 to-emerald-500/5">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                <Github className="w-4 h-4 text-green-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white text-sm">Sofia AI e Open Source</h3>
+                <p className="text-[10px] text-white/40">MIT License — livre para usar, modificar e distribuir</p>
+              </div>
+              <span className="ml-auto flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
+                <Star className="w-3 h-3" /> Open Source
+              </span>
+            </div>
+            <p className="text-sm text-white/50 mb-4">
+              O codigo-fonte completo da Sofia AI esta disponivel no GitHub. Contribua com features,
+              reporte bugs, ou faca o fork para criar sua propria versao.
+            </p>
+            <div className="grid sm:grid-cols-3 gap-3 mb-4">
+              {[
+                { icon: Code2, label: 'Codigo-fonte completo', desc: 'Next.js, Prisma, TypeScript' },
+                { icon: GitBranch, label: 'CONTRIBUTING.md', desc: 'Guia para contribuicoes' },
+                { icon: Users, label: 'Issues abertas', desc: 'Participe das discussoes' },
+              ].map((item) => (
+                <a
+                  key={item.label}
+                  href="https://github.com/JeanZorzetti/sofia-ia"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-3 p-3 rounded-lg bg-white/3 border border-white/5 hover:border-white/10 transition-colors group"
+                >
+                  <item.icon className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-medium text-white group-hover:text-green-300 transition-colors">{item.label}</p>
+                    <p className="text-[10px] text-white/40">{item.desc}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <a
+                href="https://github.com/JeanZorzetti/sofia-ia"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-sm text-white"
+              >
+                <Github className="w-4 h-4" /> Ver no GitHub
+              </a>
+              <a
+                href="https://github.com/JeanZorzetti/sofia-ia/blob/main/CONTRIBUTING.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-green-500/20 hover:bg-green-500/5 transition-colors text-sm text-green-400"
+              >
+                <ExternalLink className="w-4 h-4" /> Como Contribuir
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-5xl mx-auto">
           <div className="glass-card p-6 rounded-xl border border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <ExternalLink className="w-5 h-5 text-white/40" />

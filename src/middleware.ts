@@ -115,7 +115,10 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/api/auth') ||
       pathname.startsWith('/api/health') ||
       pathname.startsWith('/api/webhooks') ||
-      pathname.startsWith('/api/mercadopago') // payment gateway callbacks
+      pathname.startsWith('/api/mercadopago') || // payment gateway callbacks
+      pathname.startsWith('/api/crm') || // CRM leads (public form submissions)
+      pathname.startsWith('/api/newsletter') || // newsletter subscriptions
+      pathname.startsWith('/api/public/') // public API (auth via api_key header)
 
     if (!isPublicApi) {
       const user = await resolveUser()
