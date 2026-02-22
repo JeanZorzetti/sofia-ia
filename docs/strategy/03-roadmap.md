@@ -24,7 +24,7 @@
 - ✅ **P0** — Adicionar error boundaries em todas as páginas
 - ✅ **P0** — Implementar loading states consistentes
 - ✅ **P1** — Adicionar rate limiting nas rotas de API críticas
-- ⬜ **P1** — Ativar Sentry para monitoramento de erros
+- ✅ **P1** — Ativar Sentry para monitoramento de erros
 
 ### Multi-tenancy
 - ✅ **P0** — Verificar isolamento de dados entre usuários

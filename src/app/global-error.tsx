@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import * as Sentry from '@sentry/nextjs'
 
 export default function GlobalError({
     error,
@@ -10,7 +11,12 @@ export default function GlobalError({
     reset: () => void
 }) {
     useEffect(() => {
-        console.error('[Sofia Global Error]', error)
+        // Report to Sentry when DSN is configured; otherwise log to console
+        if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
+            Sentry.captureException(error)
+        } else {
+            console.error('[Sofia Global Error]', error)
+        }
     }, [error])
 
     return (
@@ -31,7 +37,7 @@ export default function GlobalError({
                         </p>
                         {error.digest && (
                             <p className="text-xs text-gray-500">
-                                Código: {error.digest}
+                                Codigo: {error.digest}
                             </p>
                         )}
                     </div>
