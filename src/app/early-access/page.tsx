@@ -173,6 +173,7 @@ export default function EarlyAccessPage() {
                 </div>
               ))}
             </div>
+          </div>
 
           {/* Right: Form */}
           <div>
