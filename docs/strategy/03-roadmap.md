@@ -232,19 +232,19 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 ### Tarefas Técnicas — Sprint 8
 
 #### White-label (produto)
-- ⬜ **P0** — Modelo de dados: tabela `WhitelabelTenant` (organizationId, branding, customDomain, planId, ownerId)
-- ⬜ **P0** — Painel do integrador: `/dashboard/whitelabel` (criar/listar/suspender sub-tenants)
+- ✅ **P0** — Modelo de dados: tabela `WhitelabelTenant` (organizationId, branding, customDomain, planId, ownerId)
+- ✅ **P0** — Painel do integrador: `/dashboard/whitelabel` (criar/listar/suspender sub-tenants)
 - ⬜ **P1** — Middleware de custom domain (sofia.agencia.com.br → injeta brandingConfig no contexto)
-- ⬜ **P1** — API de provisionamento de sub-tenants (POST /api/whitelabel/tenants)
+- ✅ **P1** — API de provisionamento de sub-tenants (POST /api/whitelabel/tenants)
 - ⬜ **P2** — Tema customizável (logo URL, primary color, nome da plataforma)
 
 #### Enterprise (comercial)
-- ⬜ **P0** — Plano Enterprise na Home (`/`) — grid 4 colunas com Free/Pro/Business/Enterprise ✅ (feito nesta iteração)
-- ⬜ **P0** — Página `/contato` com formulário qualificado (segmenta Enterprise vs White-label vs Geral)
-- ⬜ **P1** — Página `/enterprise` com landing dedicada (SSO, compliance, self-hosted, SLA)
-- ⬜ **P1** — CRM simples: salvar leads do `/contato` no banco (tabela `SalesLead`)
+- ✅ **P0** — Plano Enterprise na Home (`/`) — grid 4 colunas com Free/Pro/Business/Enterprise ✅ (feito nesta iteração)
+- ✅ **P0** — Página `/contato` com formulário qualificado (segmenta Enterprise vs White-label vs Geral)
+- ✅ **P1** — Página `/enterprise` com landing dedicada (SSO, compliance, self-hosted, SLA)
+- ✅ **P1** — CRM simples: salvar leads do `/contato` no banco (tabela `SalesLead`)
 
 #### Conteúdo
-- ⬜ **P1** — Artigo: "Como Criar uma Plataforma de IA White-label para Seus Clientes"
-- ⬜ **P1** — Artigo: "O que é White-label de IA e Como Funciona"
+- ✅ **P1** — Artigo: "Como Criar uma Plataforma de IA White-label para Seus Clientes"
+- ✅ **P1** — Artigo: "O que é White-label de IA e Como Funciona"
 - ⬜ **P2** — Página `/parceiros` (programa de parceiros com tiers: Bronze/Silver/Gold)

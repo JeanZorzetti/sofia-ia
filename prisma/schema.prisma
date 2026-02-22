@@ -28,6 +28,7 @@ model User {
   agents        Agent[]
   flows         Flow[]
   subscription  Subscription?
+  whitelabelAccount WhitelabelAccount?
 
   @@index([workspaceId])
   @@map("users")
@@ -731,4 +732,72 @@ model NewsletterSubscriber {
   @@index([confirmed])
   @@index([createdAt(sort: Desc)])
   @@map("newsletter_subscribers")
+}
+
+// ─────────────────────────────────────────────────────────
+// WhitelabelAccount — Conta do integrador/revendedor
+// ─────────────────────────────────────────────────────────
+model WhitelabelAccount {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @unique @map("user_id") @db.Uuid
+  plan          String    @default("starter") @db.VarChar(50) // starter | agency | scale | enterprise
+  status        String    @default("trial") @db.VarChar(20)   // trial | active | suspended | canceled
+  maxSubTenants Int       @default(5) @map("max_sub_tenants")
+  customDomain  String?   @map("custom_domain") @db.VarChar(255)
+  branding      Json      @default("{}") // { logoUrl, primaryColor, platformName, faviconUrl }
+  trialEndsAt   DateTime? @map("trial_ends_at") @db.Timestamptz()
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user       User               @relation(fields: [userId], references: [id])
+  subTenants WhitelabelTenant[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("whitelabel_accounts")
+}
+
+// ─────────────────────────────────────────────────────────
+// WhitelabelTenant — Sub-tenant gerenciado pelo integrador
+// ─────────────────────────────────────────────────────────
+model WhitelabelTenant {
+  id                  String   @id @default(uuid()) @db.Uuid
+  whitelabelAccountId String   @map("whitelabel_account_id") @db.Uuid
+  name                String   @db.VarChar(255)
+  email               String   @db.VarChar(255)
+  status              String   @default("active") @db.VarChar(20) // active | suspended | canceled
+  workspaceId         String?  @unique @map("workspace_id") @db.Uuid
+  notes               String?  @db.Text
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  account WhitelabelAccount @relation(fields: [whitelabelAccountId], references: [id], onDelete: Cascade)
+
+  @@index([whitelabelAccountId])
+  @@index([status])
+  @@map("whitelabel_tenants")
+}
+
+// ─────────────────────────────────────────────────────────
+// SalesLead — Leads do formulário /contato
+// ─────────────────────────────────────────────────────────
+model SalesLead {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(255)
+  email     String   @db.VarChar(255)
+  company   String?  @db.VarChar(255)
+  phone     String?  @db.VarChar(50)
+  type      String   @default("general") @db.VarChar(50) // enterprise | whitelabel | general
+  message   String   @db.Text
+  employees String?  @db.VarChar(50) // "1-10" | "11-50" | "51-200" | "200+"
+  useCase   String?  @map("use_case") @db.VarChar(255)
+  status    String   @default("new") @db.VarChar(20) // new | contacted | qualified | closed_won | closed_lost
+  source    String   @default("contato") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([type])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("sales_leads")
 }
