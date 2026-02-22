@@ -1,34 +1,29 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowLeft, BrainCircuit, Mail, MessageSquare, ArrowRight, MapPin, Clock } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BrainCircuit, Clock, MapPin, MessageSquare, Users, Zap } from 'lucide-react'
+import { ContactForm } from './ContactForm'
 
 export const metadata: Metadata = {
-  title: 'Contato — Sofia AI | ROI Labs',
-  description: 'Entre em contato com a equipe Sofia AI. Suporte técnico, vendas, parcerias ou dúvidas gerais. Respondemos em até 24 horas.',
+  title: 'Contato — Sofia AI | Fale com nossa equipe',
+  description: 'Entre em contato com a equipe Sofia AI para vendas, demonstrações, suporte técnico ou parcerias. Respondemos em até 24 horas úteis.',
   alternates: { canonical: 'https://sofiaia.roilabs.com.br/contato' },
 }
 
-const contacts = [
+const reasons = [
   {
-    icon: Mail,
-    title: 'Email Geral',
-    desc: 'Para dúvidas, sugestões e parcerias.',
-    value: 'contato@roilabs.com.br',
-    href: 'mailto:contato@roilabs.com.br',
+    icon: Zap,
+    title: 'Contratar um plano',
+    desc: 'Quer começar com Pro ou Business? Nossa equipe te ajuda a escolher o melhor plano.',
+  },
+  {
+    icon: Users,
+    title: 'Demo personalizada',
+    desc: 'Agende uma demonstração da plataforma com um especialista em 30 minutos.',
   },
   {
     icon: MessageSquare,
-    title: 'Suporte Técnico',
-    desc: 'Problemas com a plataforma ou integração.',
-    value: 'suporte@roilabs.com.br',
-    href: 'mailto:suporte@roilabs.com.br',
-  },
-  {
-    icon: ArrowRight,
-    title: 'Vendas & Plano Business',
-    desc: 'Negociação de contratos corporativos e SLA.',
-    value: 'vendas@roilabs.com.br',
-    href: 'mailto:vendas@roilabs.com.br?subject=Plano Business Sofia AI',
+    title: 'Suporte técnico',
+    desc: 'Problemas com integração, webhooks ou configuração? Resolveremos juntos.',
   },
 ]
 
@@ -55,51 +50,76 @@ export default function ContatoPage() {
         </div>
       </nav>
 
-      <section className="px-6 pt-20 pb-16 text-center">
-        <div className="max-w-3xl mx-auto">
+      <section className="px-6 pt-20 pb-6">
+        <div className="max-w-5xl mx-auto">
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-white/70 transition-colors mb-8">
             <ArrowLeft className="w-4 h-4" /> Voltar para home
           </Link>
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            Fale com a{' '}
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">equipe Sofia</span>
-          </h1>
-          <p className="text-lg text-foreground-tertiary">Respondemos em até 24 horas úteis.</p>
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+              Fale com a{' '}
+              <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                equipe Sofia
+              </span>
+            </h1>
+            <p className="text-lg text-foreground-tertiary max-w-xl mx-auto">
+              Preencha o formulário e nossa equipe entrará em contato em até 24 horas úteis.
+            </p>
+          </div>
         </div>
       </section>
 
-      <section className="px-6 pb-16">
-        <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-6">
-          {contacts.map((c) => (
-            <a key={c.title} href={c.href} className="glass-card p-6 rounded-xl hover-scale block">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-4">
-                <c.icon className="w-5 h-5 text-blue-400" />
-              </div>
-              <h3 className="font-semibold text-white mb-1">{c.title}</h3>
-              <p className="text-xs text-foreground-tertiary mb-3">{c.desc}</p>
-              <span className="text-sm text-blue-400">{c.value}</span>
-            </a>
-          ))}
-        </div>
-      </section>
+      <section className="px-6 pb-20">
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-5 gap-10">
 
-      <section className="px-6 pb-16 border-t border-white/5 pt-12">
-        <div className="max-w-2xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="glass-card p-5 rounded-xl flex items-start gap-3">
-              <Clock className="w-5 h-5 text-white/40 mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="font-medium text-white text-sm mb-1">Horário de Atendimento</h4>
-                <p className="text-xs text-foreground-tertiary">Segunda a Sexta, 9h–18h (BRT)</p>
+          {/* Sidebar esquerda */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Motivos de contato */}
+            <div className="space-y-4">
+              {reasons.map((r) => (
+                <div key={r.title} className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <r.icon className="w-4 h-4 text-blue-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-white text-sm mb-0.5">{r.title}</h3>
+                    <p className="text-xs text-foreground-tertiary leading-relaxed">{r.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Info adicional */}
+            <div className="glass-card p-5 rounded-xl space-y-4">
+              <div className="flex items-center gap-3">
+                <Clock className="w-4 h-4 text-white/30 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-white font-medium">Tempo de resposta</p>
+                  <p className="text-xs text-foreground-tertiary">Até 24h úteis (Seg–Sex, 9h–18h BRT)</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <MapPin className="w-4 h-4 text-white/30 flex-shrink-0" />
+                <div>
+                  <p className="text-sm text-white font-medium">ROI Labs</p>
+                  <p className="text-xs text-foreground-tertiary">Brasil — Atendimento 100% remoto</p>
+                </div>
               </div>
             </div>
-            <div className="glass-card p-5 rounded-xl flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-white/40 mt-0.5 flex-shrink-0" />
-              <div>
-                <h4 className="font-medium text-white text-sm mb-1">ROI Labs</h4>
-                <p className="text-xs text-foreground-tertiary">Brasil — Atendimento remoto</p>
-              </div>
+
+            {/* Link para docs */}
+            <div className="glass-card p-5 rounded-xl border border-white/5">
+              <p className="text-sm text-white font-medium mb-1">Prefere se virar?</p>
+              <p className="text-xs text-foreground-tertiary mb-3">Nossa documentação cobre a maioria das dúvidas técnicas.</p>
+              <Link href="/documentacao" className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
+                Acessar documentação <ArrowRight className="w-3 h-3" />
+              </Link>
             </div>
+          </div>
+
+          {/* Formulário */}
+          <div className="lg:col-span-3">
+            <ContactForm />
           </div>
         </div>
       </section>
