@@ -1,0 +1,263 @@
+---
+title: "Como Criar uma Equipe de Agentes IA sem Código"
+slug: "como-criar-equipe-agentes-ia-sem-codigo"
+description: "Tutorial passo a passo para criar sua própria equipe de agentes IA no Sofia sem escrever uma linha de código. Do zero à primeira orquestração em produção em menos de 30 minutos."
+date: "2025-02-22"
+author: "Equipe Sofia"
+tags: ["tutorial", "no-code", "agentes ia", "orquestração"]
+readTime: "8 min"
+---
+
+Criar uma equipe de agentes IA que trabalha junta para resolver tarefas complexas — sem escrever uma linha de código — é possível hoje. Neste tutorial, você vai aprender exatamente como fazer isso no Sofia IA, do zero até uma orquestração funcional em produção.
+
+Ao final, você vai ter uma equipe de três agentes (Pesquisador, Analista e Redator) que transforma um tema em um relatório completo automaticamente.
+
+---
+
+## Por que criar equipes de agentes IA sem código
+
+A barreira de entrada para automações com IA sempre foi a necessidade de programar. Ferramentas como CrewAI e AutoGen exigem Python — o que torna impossível para equipes de marketing, RH, operações e vendas implementarem suas próprias automações sem depender do time de TI.
+
+O Sofia IA muda isso. Com uma interface visual e intuitiva, qualquer pessoa da equipe pode criar, testar e colocar orquestrações em produção. Você não precisa saber o que é JSON, Python ou API para criar automações sofisticadas.
+
+---
+
+## Passo 1: Criar agentes com papéis diferentes
+
+O primeiro passo é definir quem são os "funcionários" da sua equipe de IA.
+
+### Acesse o painel de Agentes
+
+Faça login no Sofia IA e vá até **Agentes** no menu lateral. Clique em **Novo Agente**.
+
+### Configure o primeiro agente: Pesquisador
+
+Preencha as informações:
+
+**Nome**: Pesquisador de Tendências
+
+**Prompt de Sistema**:
+> Você é um pesquisador especialista em análise de mercado e tendências. Sua função é investigar temas em profundidade, coletar dados relevantes, identificar padrões e tendências, e organizar as informações de forma estruturada. Você prioriza dados concretos, fontes confiáveis e insights acionáveis. Responda sempre em português.
+
+**Modelo**: Você pode escolher entre Groq (mais rápido e econômico), GPT-4 (mais preciso) ou outros. Para pesquisas, Groq com o modelo Llama-3.3 funciona muito bem.
+
+**Knowledge Base** (opcional): Se você tiver documentos internos relevantes — relatórios de mercado, dados da empresa, base de clientes — conecte aqui. O agente vai usar esses documentos como contexto.
+
+Clique em **Salvar**.
+
+### Configure o segundo agente: Analista
+
+**Nome**: Analista Estratégico
+
+**Prompt de Sistema**:
+> Você é um analista de negócios sênior. Você recebe dados brutos e pesquisas e transforma em insights estratégicos claros. Seu trabalho é identificar oportunidades, ameaças, pontos críticos e recomendações práticas. Organize suas análises com seções bem definidas: Contexto, Insights Principais, Oportunidades, Riscos e Recomendações. Seja objetivo e direto. Responda sempre em português.
+
+### Configure o terceiro agente: Redator
+
+**Nome**: Redator Executivo
+
+**Prompt de Sistema**:
+> Você é um redator executivo especialista em comunicação empresarial. Você transforma análises e dados técnicos em textos claros, persuasivos e bem estruturados. Você sabe adaptar o tom para diferentes públicos — desde relatórios executivos até conteúdos de marketing. Use linguagem profissional mas acessível. Responda sempre em português.
+
+Com os três agentes criados, você tem a base da sua equipe.
+
+---
+
+## Passo 2: Montar a orquestração no editor visual
+
+Agora é hora de definir como esses agentes vão trabalhar juntos.
+
+### Crie uma nova orquestração
+
+Vá em **Orquestrações** no menu lateral e clique em **Nova Orquestração**.
+
+Dê um nome descritivo, como "Relatório de Pesquisa Automatizado".
+
+### Adicione os agentes em sequência
+
+O editor visual mostra um canvas onde você pode arrastar os agentes. Adicione:
+
+1. **Pesquisador de Tendências** — será o primeiro a executar
+2. **Analista Estratégico** — recebe o output do Pesquisador
+3. **Redator Executivo** — recebe o output do Analista e produz o resultado final
+
+As setas entre os agentes indicam o fluxo de dados. O Sofia automaticamente passa o resultado de cada agente para o próximo como contexto.
+
+### Configure o input inicial
+
+Defina o **prompt de entrada** que será passado para o primeiro agente. Exemplo:
+
+> "Pesquise as principais tendências em [TEMA] para empresas brasileiras em 2025. Foque em dados práticos e oportunidades concretas."
+
+O `[TEMA]` será substituído pelo input real quando você executar a orquestração.
+
+### Defina a estratégia de execução
+
+O Sofia suporta três estratégias:
+
+- **Sequencial**: Os agentes executam um após o outro (recomendado para este exemplo)
+- **Paralela**: Múltiplos agentes executam ao mesmo tempo
+- **Consenso**: Vários agentes analisam o mesmo problema e um árbitro decide
+
+Para nosso caso, **Sequencial** é a escolha correta.
+
+---
+
+## Passo 3: Escolher um template pronto
+
+Se você prefere começar mais rápido, o Sofia oferece templates pré-configurados que você pode customizar:
+
+### Templates disponíveis
+
+**Pipeline de Marketing** — Pesquisador → Copywriter → Revisor
+Ideal para: Criação de conteúdo, artigos de blog, newsletters, posts para redes sociais.
+
+**Triagem de Suporte** — Triagem → Atendente → Escalação
+Ideal para: Automação de atendimento ao cliente, resolução de tickets, qualificação de leads.
+
+**Pesquisa e Síntese** — Coletor → Analista → Sintetizador
+Ideal para: Relatórios de mercado, análise competitiva, pesquisa de produtos.
+
+### Como usar um template
+
+1. Em **Orquestrações**, clique em **Usar Template**
+2. Escolha o template que mais se encaixa no seu caso
+3. O Sofia cria automaticamente os agentes e o pipeline configurado
+4. Você pode editar qualquer agente ou configuração antes de usar
+
+Usar um template economiza 15-20 minutos de configuração e garante que você começa com boas práticas já aplicadas.
+
+---
+
+## Passo 4: Executar e monitorar em tempo real
+
+Com a orquestração configurada, hora de executar.
+
+### Execute a orquestração
+
+Na tela da orquestração, clique em **Executar** e insira o input:
+> "Pesquise as principais tendências em inteligência artificial generativa para pequenas e médias empresas brasileiras em 2025."
+
+### Monitore o progresso em tempo real
+
+O Sofia mostra um live view com:
+
+- **Status de cada agente**: Aguardando, Processando ou Concluído
+- **Streaming de output**: Você vê o texto sendo gerado em tempo real, como se estivesse assistindo o agente "pensar"
+- **Tempo de execução**: Quanto tempo cada agente está levando
+- **Tokens utilizados**: Para controle de custo
+
+Ao final da execução, você tem o resultado completo do último agente — no nosso caso, um relatório executivo completo produzido pelo Redator.
+
+### Analise as métricas
+
+Após cada execução, o Sofia exibe:
+- **Custo total**: Soma do custo de todos os agentes em USD/BRL
+- **Tempo total**: Do início ao fim da orquestração
+- **Tokens**: Input e output de cada agente
+- **Taxa de sucesso**: Histórico de execuções bem-sucedidas vs. com erro
+
+---
+
+## Dicas avançadas
+
+### Use a Knowledge Base para contexto específico
+
+A grande vantagem do Sofia sobre outras ferramentas é a Knowledge Base integrada. Você pode fazer upload de:
+- Documentos internos da empresa (PDF, DOCX, CSV)
+- Base de conhecimento de produtos
+- Histórico de atendimento
+- Relatórios e pesquisas
+
+Os agentes vão usar esses documentos como contexto adicional, tornando as respostas muito mais relevantes para seu negócio específico.
+
+### Ajuste o temperatura dos modelos
+
+Para tarefas criativas (copywriting, geração de ideias), use temperatura alta (0.8-1.0). Para tarefas analíticas (classificação, extração de dados), use temperatura baixa (0.1-0.3). No Sofia, você configura isso nas configurações avançadas de cada agente.
+
+### Crie checkpoints de qualidade
+
+Adicione um agente "Revisor" no final de qualquer pipeline criativo. Configure-o com um prompt que lista critérios de qualidade específicos para o seu caso — o revisor vai garantir que o output final atende ao padrão antes de ser entregue.
+
+### Use variáveis dinâmicas
+
+Nos prompts dos agentes, você pode usar variáveis entre chaves `{variavel}` que serão preenchidas dinamicamente. Por exemplo: `{empresa}`, `{setor}`, `{data}`. Isso permite reutilizar o mesmo pipeline para diferentes inputs.
+
+### Monitore o custo por caso de uso
+
+Nas configurações do plano, você pode definir alertas de custo. Se uma orquestração começar a custar mais do que o esperado, você é notificado. Isso é especialmente útil quando você escala para centenas de execuções por dia.
+
+---
+
+## Casos de uso por área
+
+**Marketing e Conteúdo**
+- Geração de artigos de blog completos (Pesquisador → Copywriter → Editor SEO)
+- Criação de posts para redes sociais em lote
+- Análise de concorrência e relatório de posicionamento
+
+**Atendimento ao Cliente**
+- Triagem e categorização de tickets
+- Resposta automática para perguntas frequentes via WhatsApp
+- Escalação inteligente para humanos quando necessário
+
+**Operações e RH**
+- Análise e triagem de currículos
+- Geração de relatórios de performance
+- Síntese de feedbacks de equipe
+
+**Jurídico e Compliance**
+- Análise de contratos com base em KB de precedentes
+- Identificação de cláusulas de risco
+- Elaboração de pareceres iniciais
+
+**Business Intelligence**
+- Coleta paralela de dados de múltiplas fontes
+- Síntese de relatórios executivos
+- Monitoramento de tendências do setor
+
+---
+
+## FAQ
+
+**Preciso saber programar para criar orquestrações no Sofia?**
+
+Não. A interface é 100% visual e em português. Você configura tudo por formulários e um editor que funciona como arrastar e soltar. Se quiser algo mais avançado, existe uma API disponível, mas não é necessária para os casos de uso mais comuns.
+
+**Quantos agentes posso ter em uma orquestração?**
+
+No plano Free, até 5 agentes por conta. No plano Pro, 20 agentes. No Business, ilimitado. Uma orquestração pode usar quantos agentes você tiver disponíveis.
+
+**Posso usar a mesma orquestração para diferentes clientes?**
+
+Sim. Usando variáveis dinâmicas nos prompts, a mesma orquestração pode ser executada com parâmetros diferentes para cada cliente. Por exemplo: `"Analise o mercado para a empresa {nome_empresa} no setor {setor}"`.
+
+**E se um agente produzir um resultado ruim?**
+
+O histórico completo fica disponível para análise. Você pode identificar qual agente gerou o problema, ajustar o prompt de sistema e reexecutar. Com o replay de execuções, você vê exatamente o que cada agente recebeu como input e o que produziu como output.
+
+**O Sofia funciona com WhatsApp?**
+
+Sim. No plano Pro e acima, você pode conectar um número de WhatsApp e fazer com que orquestrações respondam automaticamente mensagens de clientes. O agente de triagem lê a mensagem, o especialista elabora a resposta, e o agente de controle de qualidade revisa antes de enviar.
+
+---
+
+## Próximos passos
+
+Você já tem o conhecimento para criar sua primeira equipe de agentes IA. O caminho mais rápido:
+
+1. [Crie sua conta grátis no Sofia IA](/login)
+2. Use um dos templates prontos como ponto de partida
+3. Personalize os prompts de sistema para seu caso de uso
+4. Execute a orquestração com um input de teste
+5. Ajuste e refine com base nos resultados
+
+A primeira orquestração vai levar menos de 30 minutos. As seguintes, muito menos — você vai reutilizar agentes e adaptar fluxos existentes.
+
+---
+
+*Veja também:*
+- [O que é Orquestração de Agentes IA: Guia Completo](/blog/o-que-e-orquestracao-de-agentes-ia)
+- [Knowledge Base com RAG: O que é e Como Usar](/blog/knowledge-base-com-rag)
+- [5 Orquestrações Prontas para sua Empresa](/blog/5-orquestracoes-prontas-para-sua-empresa)
+- [Explore todos os Templates](/templates)
