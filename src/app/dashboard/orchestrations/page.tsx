@@ -18,7 +18,11 @@ import {
   Trash2,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  Sparkles,
+  ArrowRight,
+  Loader2,
+  Zap
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -48,12 +52,31 @@ interface AgentStep {
   prompt?: string
 }
 
+interface TemplateInfo {
+  id: string
+  name: string
+  description: string
+  category: string
+  icon: string
+  strategy: string
+  agentCount: number
+  agentRoles: string[]
+  exampleInput: string
+  expectedOutput: string
+  estimatedDuration: string
+  tags: string[]
+}
+
 export default function OrchestrationsPage() {
   const router = useRouter()
   const [orchestrations, setOrchestrations] = useState<Orchestration[]>([])
   const [agents, setAgents] = useState<Agent[]>([])
+  const [templates, setTemplates] = useState<TemplateInfo[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [createDialogOpen, setCreateDialogOpen] = useState<boolean>(false)
+  const [templateDialogOpen, setTemplateDialogOpen] = useState<boolean>(false)
+  const [creatingFromTemplate, setCreatingFromTemplate] = useState<string | null>(null)
+  const [createMode, setCreateMode] = useState<'template' | 'manual'>('template')
   const [newOrchestration, setNewOrchestration] = useState<{
     name: string
     description: string
@@ -69,6 +92,7 @@ export default function OrchestrationsPage() {
   useEffect(() => {
     fetchOrchestrations()
     fetchAgents()
+    fetchTemplates()
   }, [])
 
   const fetchOrchestrations = async () => {
@@ -94,6 +118,46 @@ export default function OrchestrationsPage() {
       }
     } catch (error) {
       console.error('Error fetching agents:', error)
+    }
+  }
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await fetch('/api/orchestrations/templates')
+      const data = await response.json()
+      if (data.success) {
+        setTemplates(data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error)
+    }
+  }
+
+  const handleCreateFromTemplate = async (templateId: string) => {
+    try {
+      setCreatingFromTemplate(templateId)
+      const response = await fetch('/api/orchestrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fromTemplate: templateId })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast.success('Orquestração criada a partir do template!')
+        setTemplateDialogOpen(false)
+        fetchOrchestrations()
+        // Navigate to the new orchestration
+        router.push(`/dashboard/orchestrations/${data.data.id}`)
+      } else {
+        toast.error(data.error || 'Erro ao criar orquestração')
+      }
+    } catch (error) {
+      console.error('Error creating from template:', error)
+      toast.error('Erro ao criar orquestração')
+    } finally {
+      setCreatingFromTemplate(null)
     }
   }
 
@@ -203,10 +267,54 @@ export default function OrchestrationsPage() {
     }
   }
 
+  const getLastExecutionBadge = (orchestration: Orchestration) => {
+    const lastExec = orchestration.executions?.[0]
+    if (!lastExec) return null
+
+    if (lastExec.status === 'completed') {
+      const duration = lastExec.completedAt && lastExec.startedAt
+        ? Math.round((new Date(lastExec.completedAt).getTime() - new Date(lastExec.startedAt).getTime()) / 1000)
+        : null
+      return (
+        <Badge variant="outline" className="text-green-400 border-green-400/30 text-xs gap-1">
+          <CheckCircle className="w-3 h-3" />
+          {duration ? `${duration}s` : 'Sucesso'}
+        </Badge>
+      )
+    }
+    if (lastExec.status === 'failed') {
+      return (
+        <Badge variant="outline" className="text-red-400 border-red-400/30 text-xs gap-1">
+          <XCircle className="w-3 h-3" />
+          Falhou
+        </Badge>
+      )
+    }
+    if (lastExec.status === 'running') {
+      return (
+        <Badge variant="outline" className="text-yellow-400 border-yellow-400/30 text-xs gap-1 animate-pulse">
+          <Loader2 className="w-3 h-3 animate-spin" />
+          Executando
+        </Badge>
+      )
+    }
+    return null
+  }
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'marketing': return 'from-pink-500/20 to-purple-500/20 border-pink-500/30'
+      case 'suporte': return 'from-blue-500/20 to-cyan-500/20 border-blue-500/30'
+      case 'pesquisa': return 'from-emerald-500/20 to-teal-500/20 border-emerald-500/30'
+      case 'vendas': return 'from-orange-500/20 to-amber-500/20 border-orange-500/30'
+      default: return 'from-gray-500/20 to-gray-500/20 border-gray-500/30'
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="text-white">Carregando orquestrações...</div>
+        <Loader2 className="w-8 h-8 animate-spin text-white/40" />
       </div>
     )
   }
@@ -223,10 +331,16 @@ export default function OrchestrationsPage() {
             Configure múltiplos agentes para colaborar em tarefas complexas
           </p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Orquestração
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setTemplateDialogOpen(true)} className="gap-2">
+            <Sparkles className="h-4 w-4" />
+            Usar Template
+          </Button>
+          <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nova Orquestração
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -267,76 +381,193 @@ export default function OrchestrationsPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {orchestrations.map((orchestration) => (
-          <Card key={orchestration.id} className="glass-card hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-white mb-2">{orchestration.name}</CardTitle>
-                  <CardDescription className="text-white/60">
-                    {orchestration.description || 'Sem descrição'}
-                  </CardDescription>
+      {/* Empty State with Template Suggestions */}
+      {orchestrations.length === 0 ? (
+        <div className="space-y-6">
+          <Card className="glass-card border-white/10 overflow-hidden">
+            <CardContent className="py-12">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="h-8 w-8 text-blue-400" />
                 </div>
-                {getStrategyBadge(orchestration.strategy)}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="h-4 w-4 text-blue-400" />
-                <span className="text-white/60">{orchestration.agents.length} agentes</span>
+                <h2 className="text-xl font-semibold text-white mb-2">Comece com um Template</h2>
+                <p className="text-white/60 max-w-md mx-auto">
+                  Escolha um template pré-configurado e tenha sua primeira orquestração rodando em segundos
+                </p>
               </div>
 
-              <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-purple-400" />
-                <span className="text-white/60">{orchestration._count.executions} execuções</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+                {templates.map(template => (
+                  <button
+                    key={template.id}
+                    onClick={() => handleCreateFromTemplate(template.id)}
+                    disabled={!!creatingFromTemplate}
+                    className={`group relative p-5 rounded-xl bg-gradient-to-br ${getCategoryColor(template.category)} border text-left transition-all hover:scale-[1.02] hover:shadow-lg disabled:opacity-50`}
+                  >
+                    <div className="text-2xl mb-3">{template.icon}</div>
+                    <h3 className="font-semibold text-white mb-1">{template.name}</h3>
+                    <p className="text-white/50 text-sm mb-3 line-clamp-2">{template.description}</p>
+                    <div className="flex items-center gap-2 text-xs text-white/40">
+                      <Users className="w-3 h-3" />
+                      <span>{template.agentCount} agentes</span>
+                      <span>·</span>
+                      <Clock className="w-3 h-3" />
+                      <span>{template.estimatedDuration}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {template.agentRoles.map((role, i) => (
+                        <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/60">
+                          {role}
+                        </span>
+                      ))}
+                    </div>
+                    {creatingFromTemplate === template.id && (
+                      <div className="absolute inset-0 rounded-xl bg-black/50 flex items-center justify-center">
+                        <Loader2 className="w-6 h-6 animate-spin text-white" />
+                      </div>
+                    )}
+                    <ArrowRight className="absolute top-5 right-5 w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors" />
+                  </button>
+                ))}
               </div>
 
-              <div className="flex items-center gap-2 text-sm">
-                {orchestration.status === 'active' ? (
-                  <CheckCircle className="h-4 w-4 text-green-400" />
-                ) : (
-                  <XCircle className="h-4 w-4 text-gray-400" />
-                )}
-                <span className="text-white/60">
-                  {orchestration.status === 'active' ? 'Ativo' : 'Inativo'}
-                </span>
-              </div>
-
-              <div className="pt-4 border-t border-white/20 flex gap-2">
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => router.push(`/dashboard/orchestrations/${orchestration.id}`)}
-                >
-                  Ver Detalhes
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleDeleteOrchestration(orchestration.id)}
-                >
-                  <Trash2 className="h-4 w-4" />
+              <div className="text-center mt-6">
+                <Button variant="ghost" onClick={() => setCreateDialogOpen(true)} className="text-white/40 hover:text-white/60">
+                  ou criar manualmente do zero
                 </Button>
               </div>
             </CardContent>
           </Card>
-        ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {orchestrations.map((orchestration) => (
+            <Card key={orchestration.id} className="glass-card hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-white mb-2">{orchestration.name}</CardTitle>
+                    <CardDescription className="text-white/60">
+                      {orchestration.description || 'Sem descrição'}
+                    </CardDescription>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    {getStrategyBadge(orchestration.strategy)}
+                    {getLastExecutionBadge(orchestration)}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <Users className="h-4 w-4 text-blue-400" />
+                  <span className="text-white/60">{orchestration.agents.length} agentes</span>
+                </div>
 
-        {orchestrations.length === 0 && (
-          <Card className="glass-card col-span-full">
-            <CardContent className="py-12 text-center">
-              <GitBranch className="h-12 w-12 text-white/40 mx-auto mb-4" />
-              <p className="text-white/60 mb-4">Nenhuma orquestração criada ainda</p>
-              <Button onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Primeira Orquestração
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-purple-400" />
+                  <span className="text-white/60">{orchestration._count.executions} execuções</span>
+                </div>
 
+                <div className="flex items-center gap-2 text-sm">
+                  {orchestration.status === 'active' ? (
+                    <CheckCircle className="h-4 w-4 text-green-400" />
+                  ) : (
+                    <XCircle className="h-4 w-4 text-gray-400" />
+                  )}
+                  <span className="text-white/60">
+                    {orchestration.status === 'active' ? 'Ativo' : 'Inativo'}
+                  </span>
+                </div>
+
+                <div className="pt-4 border-t border-white/20 flex gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => router.push(`/dashboard/orchestrations/${orchestration.id}`)}
+                  >
+                    Ver Detalhes
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleDeleteOrchestration(orchestration.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Template Picker Dialog */}
+      <Dialog open={templateDialogOpen} onOpenChange={setTemplateDialogOpen}>
+        <DialogContent className="bg-gray-900 border-white/20 text-white max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-blue-400" />
+              Templates de Orquestração
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              Escolha um template pré-configurado para começar rapidamente
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 max-h-[60vh] overflow-y-auto">
+            {templates.map(template => (
+              <div
+                key={template.id}
+                className={`relative p-5 rounded-xl bg-gradient-to-br ${getCategoryColor(template.category)} border transition-all hover:scale-[1.02]`}
+              >
+                <div className="text-2xl mb-2">{template.icon}</div>
+                <h3 className="font-semibold text-white mb-1">{template.name}</h3>
+                <p className="text-white/50 text-sm mb-3">{template.description}</p>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-xs text-white/40">
+                    <Users className="w-3 h-3" />
+                    <span>{template.agentRoles.join(' → ')}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-white/40">
+                    <Clock className="w-3 h-3" />
+                    <span>{template.estimatedDuration}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-white/40">
+                    <Zap className="w-3 h-3" />
+                    <span className="capitalize">{template.strategy}</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-white/5 mb-4">
+                  <p className="text-xs text-white/40 mb-1">Exemplo de entrada:</p>
+                  <p className="text-xs text-white/60 italic">&ldquo;{template.exampleInput}&rdquo;</p>
+                </div>
+
+                <Button
+                  size="sm"
+                  className="w-full gap-2"
+                  onClick={() => handleCreateFromTemplate(template.id)}
+                  disabled={!!creatingFromTemplate}
+                >
+                  {creatingFromTemplate === template.id ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Criando...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      Usar Template
+                    </>
+                  )}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual Creation Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="bg-gray-900 border-white/20 text-white max-w-2xl">
           <DialogHeader>

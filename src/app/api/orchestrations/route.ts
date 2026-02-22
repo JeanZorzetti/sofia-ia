@@ -44,8 +44,35 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, agents, strategy, config } = body
+    const { name, description, agents, strategy, config, fromTemplate } = body
 
+    // If creating from template, load template data
+    if (fromTemplate) {
+      const { getTemplateById } = await import('@/lib/orchestration/orchestration-templates')
+      const template = getTemplateById(fromTemplate)
+
+      if (!template) {
+        return NextResponse.json(
+          { success: false, error: `Template "${fromTemplate}" not found` },
+          { status: 404 }
+        )
+      }
+
+      const orchestration = await prisma.agentOrchestration.create({
+        data: {
+          name: name || template.name,
+          description: description || template.description,
+          agents: template.agents as any,
+          strategy: template.strategy,
+          config: { fromTemplate: template.id, ...config },
+          createdBy: auth.id
+        }
+      })
+
+      return NextResponse.json({ success: true, data: orchestration })
+    }
+
+    // Manual creation
     if (!name || !agents || !Array.isArray(agents) || agents.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Name and agents array are required' },

@@ -2,11 +2,11 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useExecutionStream, ExecutionUpdate } from '@/hooks/use-execution-stream'
+import { useExecutionStream, ExecutionUpdate, AgentEvent } from '@/hooks/use-execution-stream'
 import { AnimatedStepTimeline } from './animated-step-timeline'
 import { OrchestrationFlowCanvas } from './flow-canvas'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Activity, AlertCircle, CheckCircle2, Wifi, WifiOff, Network } from 'lucide-react'
+import { Activity, AlertCircle, CheckCircle2, Wifi, WifiOff, Network, Clock, Zap, Coins, Bot } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface Agent {
@@ -39,15 +39,29 @@ export function ExecutionLiveView({
   strategy = 'sequential'
 }: ExecutionLiveViewProps) {
   const [executionState, setExecutionState] = useState<ExecutionUpdate | null>(null)
+  const [liveAgentEvents, setLiveAgentEvents] = useState<AgentEvent[]>([])
+  const [activeAgentId, setActiveAgentId] = useState<string | null>(null)
 
-  const { latestUpdate, isConnected, connectionError } = useExecutionStream({
+  const { latestUpdate, agentEvents, isConnected, connectionError } = useExecutionStream({
     orchestrationId,
     enabled: true,
     onUpdate: (update) => {
       setExecutionState(update)
     },
+    onAgentEvent: (event) => {
+      setLiveAgentEvents(prev => [...prev, event])
+      if (event.type === 'started' && event.agentId) {
+        setActiveAgentId(event.agentId)
+      }
+      if (event.type === 'completed') {
+        setActiveAgentId(null)
+      }
+    },
     onError: (error) => {
       console.error('Execution stream error:', error)
+    },
+    onDone: (summary) => {
+      console.log('Execution done:', summary)
     }
   })
 
@@ -65,6 +79,18 @@ export function ExecutionLiveView({
     ...step,
     agentName: agents.find(a => a.id === step.agentId)?.name || 'Unknown Agent'
   }))
+
+  const formatDuration = (ms: number) => {
+    if (ms < 1000) return `${ms}ms`
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
+    return `${(ms / 60000).toFixed(1)}min`
+  }
+
+  const formatTokens = (tokens: number) => {
+    if (tokens >= 1000000) return `${(tokens / 1000000).toFixed(1)}M`
+    if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}k`
+    return String(tokens)
+  }
 
   const getStatusBadge = () => {
     if (!currentExecution) {
@@ -95,6 +121,20 @@ export function ExecutionLiveView({
           <Badge className="bg-red-500 gap-1">
             <AlertCircle className="h-3 w-3" />
             Falhou
+          </Badge>
+        )
+      case 'cancelled':
+        return (
+          <Badge className="bg-yellow-500 gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Cancelado
+          </Badge>
+        )
+      case 'rate_limited':
+        return (
+          <Badge className="bg-orange-500 gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Rate Limited
           </Badge>
         )
       default:
@@ -163,6 +203,91 @@ export function ExecutionLiveView({
           </div>
         )}
 
+        {/* Per-Agent Live Feedback Bars */}
+        {isRunning && agentResults.length > 0 && (
+          <div className="mb-4 space-y-2">
+            <h4 className="text-xs font-medium text-white/50 uppercase tracking-wider mb-2">
+              Feedback por Agente
+            </h4>
+            {agentResults.map((result, i) => (
+              <div
+                key={i}
+                className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all ${activeAgentId === result.agentId
+                    ? 'bg-blue-500/10 border-blue-500/30 animate-pulse'
+                    : result.status === 'rejected'
+                      ? 'bg-red-500/5 border-red-500/20'
+                      : 'bg-white/5 border-white/10'
+                  }`}
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${activeAgentId === result.agentId
+                    ? 'bg-blue-500/20 text-blue-300'
+                    : result.status === 'rejected'
+                      ? 'bg-red-500/20 text-red-300'
+                      : 'bg-green-500/20 text-green-300'
+                  }`}>
+                  <Bot className="w-4 h-4" />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-white truncate">
+                      {result.agentName || `Step ${i + 1}`}
+                    </span>
+                    <span className="text-xs text-white/40">{result.role}</span>
+                  </div>
+                  {result.outputPreview && (
+                    <p className="text-xs text-white/40 truncate mt-0.5">
+                      {result.output?.slice(0, 80)}...
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3 text-xs text-white/40 shrink-0">
+                  {result.durationMs != null && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {formatDuration(result.durationMs)}
+                    </span>
+                  )}
+                  {result.tokensUsed > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Zap className="w-3 h-3" />
+                      {formatTokens(result.tokensUsed)}
+                    </span>
+                  )}
+                  {result.status === 'rejected' ? (
+                    <Badge variant="outline" className="text-red-400 border-red-400/30 text-[10px] h-5">
+                      Rejeitado
+                    </Badge>
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4 text-green-400" />
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* Currently running agent indicator */}
+            {activeAgentId && (
+              <div className="flex items-center gap-3 p-2.5 rounded-lg border border-blue-500/30 bg-blue-500/5">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                  <Activity className="w-4 h-4 text-blue-400 animate-spin" />
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm text-blue-300">
+                    {agents.find(a => a.id === activeAgentId)?.name || 'Processando...'}
+                  </span>
+                  <p className="text-xs text-blue-300/50">Gerando resposta...</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tabs: Timeline vs Flow */}
         <Tabs defaultValue="timeline" className="mt-4">
           <TabsList className="bg-white/5 border border-white/10">
@@ -211,26 +336,36 @@ export function ExecutionLiveView({
         {/* Progress Summary */}
         {currentExecution && (
           <div className="mt-6 pt-4 border-t border-white/10">
-            <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-4 gap-4 text-center">
               <div>
                 <p className="text-xs text-white/40">Progresso</p>
                 <p className="text-lg font-semibold text-white">
-                  {agentResults.length}/{enrichedSteps.length}
+                  {agentResults.filter(r => r.status !== 'rejected').length}/{enrichedSteps.length}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-white/40">Tokens Usados</p>
                 <p className="text-lg font-semibold text-white">
-                  {agentResults.reduce((sum, r) => sum + (r.tokensUsed || 0), 0).toLocaleString()}
+                  {formatTokens(agentResults.reduce((sum, r) => sum + (r.tokensUsed || 0), 0))}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-white/40">Duração</p>
                 <p className="text-lg font-semibold text-white">
-                  {currentExecution.completedAt && currentExecution.startedAt
-                    ? `${((new Date(currentExecution.completedAt).getTime() - new Date(currentExecution.startedAt).getTime()) / 1000).toFixed(1)}s`
-                    : isRunning
-                    ? 'Em andamento...'
+                  {currentExecution.durationMs
+                    ? formatDuration(currentExecution.durationMs)
+                    : currentExecution.completedAt && currentExecution.startedAt
+                      ? formatDuration(new Date(currentExecution.completedAt).getTime() - new Date(currentExecution.startedAt).getTime())
+                      : isRunning
+                        ? 'Em andamento...'
+                        : '-'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/40">Custo Est.</p>
+                <p className="text-lg font-semibold text-white">
+                  {currentExecution.estimatedCost
+                    ? `$${currentExecution.estimatedCost.toFixed(4)}`
                     : '-'}
                 </p>
               </div>

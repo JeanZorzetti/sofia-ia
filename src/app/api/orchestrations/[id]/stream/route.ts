@@ -31,6 +31,11 @@ export async function GET(
     let intervalId: NodeJS.Timeout | null = null
     let isClosed = false
 
+    // Track state for diff-based agent events
+    let lastAgentCount = 0
+    let lastCurrentAgentId: string | null = null
+    let lastStatus: string | null = null
+
     const stream = new ReadableStream({
       async start(controller) {
         // Function to send SSE event
@@ -73,20 +78,88 @@ export async function GET(
 
             if (latestExecution) {
               pollErrors = 0 // Reset error counter on success
+
+              const agentResults = (latestExecution.agentResults as any[]) || []
+              const currentAgentCount = agentResults.length
+              const currentAgentId = latestExecution.currentAgentId
+
+              // ── AGENT-LEVEL EVENTS ──
+
+              // Detect new agent started (currentAgentId changed)
+              if (currentAgentId && currentAgentId !== lastCurrentAgentId) {
+                sendEvent('agent-started', {
+                  executionId: latestExecution.id,
+                  agentId: currentAgentId,
+                  stepIndex: currentAgentCount,
+                  totalSteps: (orchestration.agents as any[])?.length || 0,
+                  timestamp: new Date().toISOString()
+                })
+                lastCurrentAgentId = currentAgentId
+              }
+
+              // Detect agent completed (new results appeared)
+              if (currentAgentCount > lastAgentCount) {
+                for (let i = lastAgentCount; i < currentAgentCount; i++) {
+                  const result = agentResults[i]
+                  sendEvent('agent-completed', {
+                    executionId: latestExecution.id,
+                    stepIndex: i,
+                    agentId: result.agentId,
+                    agentName: result.agentName,
+                    role: result.role,
+                    status: result.status || 'completed',
+                    durationMs: result.durationMs || 0,
+                    tokensUsed: result.tokensUsed || 0,
+                    outputPreview: (result.output || '').slice(0, 300),
+                    timestamp: result.completedAt || new Date().toISOString()
+                  })
+                }
+                lastAgentCount = currentAgentCount
+              }
+
+              // ── Task splitter progress ──
+              const splitterResult = agentResults.find(
+                (r: any) => r.agentId === 'task-splitter' && r.status === 'splitting'
+              )
+              if (splitterResult) {
+                sendEvent('task-progress', {
+                  executionId: latestExecution.id,
+                  totalTasks: splitterResult.totalTasks,
+                  completedTasks: splitterResult.completedTasks,
+                  timestamp: new Date().toISOString()
+                })
+              }
+
+              // ── GENERAL EXECUTION UPDATE ──
               sendEvent('execution-update', {
                 executionId: latestExecution.id,
                 status: latestExecution.status,
                 currentAgentId: latestExecution.currentAgentId,
-                agentResults: latestExecution.agentResults,
+                agentResults: agentResults,
                 output: latestExecution.output,
                 error: latestExecution.error,
                 startedAt: latestExecution.startedAt,
-                completedAt: latestExecution.completedAt
+                completedAt: latestExecution.completedAt,
+                durationMs: latestExecution.durationMs,
+                tokensUsed: latestExecution.tokensUsed,
+                estimatedCost: latestExecution.estimatedCost
               })
 
-              // Auto-close stream once execution is done
-              if (latestExecution.status === 'completed' || latestExecution.status === 'failed') {
-                sendEvent('done', { status: latestExecution.status })
+              // ── Auto-close stream on terminal states ──
+              if (
+                latestExecution.status !== lastStatus &&
+                (latestExecution.status === 'completed' ||
+                  latestExecution.status === 'failed' ||
+                  latestExecution.status === 'cancelled' ||
+                  latestExecution.status === 'rate_limited')
+              ) {
+                sendEvent('done', {
+                  status: latestExecution.status,
+                  durationMs: latestExecution.durationMs,
+                  tokensUsed: latestExecution.tokensUsed,
+                  estimatedCost: latestExecution.estimatedCost,
+                  agentCount: currentAgentCount
+                })
                 isClosed = true
                 if (intervalId) {
                   clearInterval(intervalId)
@@ -94,6 +167,8 @@ export async function GET(
                 }
                 try { controller.close() } catch (e) { /* already closed */ }
               }
+
+              lastStatus = latestExecution.status
             }
           } catch (error) {
             pollErrors++
@@ -109,7 +184,7 @@ export async function GET(
               try { controller.close() } catch (e) { /* already closed */ }
             }
           }
-        }, 3000) // Poll every 3 seconds (avoids connection pool exhaustion)
+        }, 2000) // Poll every 2 seconds (slightly faster for better UX)
 
         // Handle client disconnect
         request.signal.addEventListener('abort', () => {
