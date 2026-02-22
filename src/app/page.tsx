@@ -224,10 +224,10 @@ export default function LandingPage() {
             <span className="font-bold text-white text-lg tracking-tight">Sofia AI</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-foreground-secondary hover:text-white transition-colors text-sm">Features</a>
-            <a href="#comparativo" className="text-foreground-secondary hover:text-white transition-colors text-sm">Comparativo</a>
-            <a href="#pricing" className="text-foreground-secondary hover:text-white transition-colors text-sm">Pricing</a>
-            <a href="#templates" className="text-foreground-secondary hover:text-white transition-colors text-sm">Templates</a>
+            <Link href="/features" className="text-foreground-secondary hover:text-white transition-colors text-sm">Features</Link>
+            <Link href="/comparativo" className="text-foreground-secondary hover:text-white transition-colors text-sm">Comparativo</Link>
+            <Link href="/preco" className="text-foreground-secondary hover:text-white transition-colors text-sm">Preço</Link>
+            <Link href="/templates" className="text-foreground-secondary hover:text-white transition-colors text-sm">Templates</Link>
             <Link href="/blog" className="text-foreground-secondary hover:text-white transition-colors text-sm flex items-center gap-1">
               <BookOpen className="w-3.5 h-3.5" />
               Blog
@@ -394,7 +394,7 @@ export default function LandingPage() {
 
           <div className="text-center mt-8">
             <Link
-              href="/login"
+              href="/templates"
               className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors"
             >
               Ver todos os templates <ArrowRight className="w-4 h-4" />
