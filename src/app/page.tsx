@@ -668,13 +668,13 @@ export default function LandingPage() {
                 </ul>
               </div>
               <div>
-                <h4 className="text-white font-medium text-sm mb-3">Empresa</h4>
+                <h4 className="text-white font-medium text-sm mb-3">Comunidade</h4>
                 <ul className="space-y-2">
                   {[
-                    { label: 'ROI Labs', href: 'https://roilabs.com.br' },
+                    { label: 'Comunidade', href: '/comunidade' },
                     { label: 'Blog', href: '/blog' },
                     { label: 'Early Access', href: '/early-access' },
-                    { label: 'Contato', href: 'mailto:contato@roilabs.com.br' },
+                    { label: 'White-label', href: '/whitelabel' },
                     { label: 'GitHub', href: 'https://github.com/JeanZorzetti/sofia-ia' },
                     { label: 'English', href: '/en' }
                   ].map(item => (

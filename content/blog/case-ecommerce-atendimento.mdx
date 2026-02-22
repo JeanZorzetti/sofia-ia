@@ -1,0 +1,144 @@
+---
+title: "Case: E-commerce Reduziu 70% dos Tickets Humanos com Agente IA no WhatsApp"
+slug: "case-ecommerce-atendimento"
+description: "Como um e-commerce de moda com 800 pedidos/mês automatizou 70% do atendimento via WhatsApp usando um agente IA treinado com Knowledge Base. Números reais e implementação passo a passo."
+date: "2026-02-22"
+author: "Equipe Sofia"
+tags: ["case de uso ia", "ecommerce ia", "atendimento whatsapp ia", "resultados ia"]
+readTime: "6 min"
+---
+
+> **Resultado:** 70% dos atendimentos resolvidos sem toque humano, tempo médio de primeira resposta de 4 horas para 12 segundos.
+
+---
+
+## Contexto
+
+**Empresa:** E-commerce de moda feminina, Belo Horizonte
+**Volume:** ~800 pedidos/mês, 600-800 mensagens de WhatsApp/mês
+**Equipe de atendimento:** 2 pessoas (antes da IA), depois 1 pessoa
+
+---
+
+## O problema
+
+Com 600-800 mensagens por mês no WhatsApp, a equipe de atendimento estava sobrecarregada. As mensagens chegavam principalmente:
+
+- Fora do horário comercial (45% das mensagens chegavam entre 19h-23h)
+- Durante fins de semana (30% chegavam no sábado e domingo)
+- Sobre as mesmas questões repetidas: rastreamento, prazo, troca, tamanho
+
+**As 5 perguntas mais comuns representavam 73% do volume total:**
+1. "Cadê meu pedido?" (32%)
+2. "Qual o prazo de entrega?" (18%)
+3. "Como faço a troca?" (12%)
+4. "Tem esse produto no tamanho X?" (8%)
+5. "Como é a tabela de medidas?" (3%)
+
+O custo: 2 atendentes × R$2.000/mês = R$4.000/mês para responder perguntas que seguiam um padrão claro.
+
+---
+
+## A solução
+
+### Knowledge Base configurada
+
+Documentos carregados no Sofia AI:
+
+1. **Catálogo de produtos** (CSV): ID, nome, descrição, tamanhos disponíveis, preço
+2. **Tabela de medidas** (PDF): medidas por tamanho para cada categoria de produto
+3. **Política de trocas e devoluções** (DOCX): regras, prazo, processo
+4. **FAQ** (DOCX): 80 pares de pergunta-resposta dos atendimentos mais comuns
+5. **Prazos de entrega por estado** (CSV): prazo médio por região e transportadora
+
+### Configuração do agente
+
+**Nome:** Sofia (Atendimento)
+
+**System prompt:**
+```
+Você é Sofia, assistente de atendimento da [Loja].
+Responda com simpatia e objetividade.
+Use as informações da base de conhecimento para responder com precisão.
+Para perguntas sobre status de pedido específico, peça o número do pedido
+e informe que vai verificar (transfira para atendente humano).
+Para perguntas sobre tamanho, sempre consulte a tabela de medidas.
+Tom: descontraído, acolhedor, como uma amiga que entende de moda.
+Nunca invente informações que não estão na KB.
+```
+
+**Modelo:** Groq Llama 3.3 (velocidade de resposta < 2 segundos)
+
+**Canal:** WhatsApp Business (Evolution API)
+
+### Regra de escalonamento
+
+O agente transfere para humano quando:
+- Cliente menciona "reclamação", "chateada", "decepcionada"
+- Pedido com prazo vencido (>2 dias além do prometido)
+- Solicitação de reembolso
+- Pergunta que não está na KB após 2 tentativas
+
+---
+
+## Resultados após 45 dias
+
+| Métrica | Antes | Depois |
+|---|---|---|
+| Mensagens respondidas/dia | 20-27 | 20-27 (mesmo volume) |
+| % resolvidas sem humano | 0% | **71%** |
+| Tempo de 1ª resposta | 4h (média) | **12 segundos** |
+| Atendimentos fora do horário | 0 (não respondidos) | **100% respondidos** |
+| Equipe de atendimento | 2 pessoas | 1 pessoa |
+| Satisfação do cliente (CSAT) | 3.8/5 | **4.4/5** |
+| Custo mensal de atendimento | R$4.000 | R$1.297 (1 atendente + Sofia AI) |
+
+---
+
+## O que surpreendeu
+
+**1. CSAT melhorou mesmo com IA**
+
+A expectativa era que clientes resistiriam ao atendimento automatizado. O oposto aconteceu: a resposta imediata (em segundos) aumentou a satisfação. Clientes que enviavam mensagem às 22h e recebiam resposta em 12 segundos ficavam impressionados.
+
+**2. A atendente ficou mais satisfeita**
+
+Com 70% dos casos resolvidos pela IA, a atendente humana passou a lidar apenas com casos complexos e clientes que precisavam de atenção especial. Ela relatou que o trabalho ficou mais interessante e menos estressante.
+
+**3. A tabela de medidas virou o maior hit**
+
+O agente respondendo com precisão sobre medidas — "Para o vestido X, o tamanho M tem 40cm de busto, 32cm de cintura e 46cm de quadril" — reduziu as trocas por tamanho incorreto em 35%.
+
+---
+
+## O que não funcionou inicialmente
+
+**Problema:** O agente às vezes "inventava" informações sobre estoque quando o CSV estava desatualizado.
+
+**Solução:** Automatizou a atualização do CSV de catálogo toda segunda-feira de madrugada. O arquivo é exportado do sistema de gestão e substituído na KB.
+
+**Problema:** Clientes insatisfeitos eram escalados para humano, mas a atendente recebia sem contexto.
+
+**Solução:** O agente foi configurado para incluir no escalonamento: "Resumo para o atendente: [resumo da conversa]". Isso reduziu o tempo de resolução dos casos humanos em 40%.
+
+---
+
+## Replicando este case
+
+O setup completo para um e-commerce similar:
+
+**Documentos necessários:**
+- Catálogo de produtos (pode ser exportado de qualquer plataforma)
+- Tabela de medidas
+- FAQ com as 50 perguntas mais comuns
+- Política de trocas e prazos
+
+**Tempo de configuração:** 3-4 horas (incluindo upload e testes)
+
+**Plano recomendado:** Sofia AI Pro (R$297/mês) — 10 Knowledge Bases + WhatsApp + 2.000 execuções/mês.
+
+**Retorno do investimento:** A partir do mês 1. Uma atendente a menos = R$2.000/mês economizados vs R$297/mês de investimento.
+
+---
+
+**→ [Crie seu agente de atendimento para e-commerce gratuitamente.](/login)**

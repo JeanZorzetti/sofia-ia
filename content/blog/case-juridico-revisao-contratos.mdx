@@ -1,0 +1,147 @@
+---
+title: "Case: Escritório Jurídico Reduziu Revisão de Contratos de 4h para 15 Minutos"
+slug: "case-juridico-revisao-contratos"
+description: "Como um escritório de advocacia corporativa automatizou a revisão de contratos usando um agente IA treinado com legislação e jurisprudência. De 4 horas para 15 minutos por contrato."
+date: "2026-02-22"
+author: "Equipe Sofia"
+tags: ["case de uso ia", "ia para juridico", "revisão contratos ia", "resultados ia"]
+readTime: "6 min"
+---
+
+> **Resultado:** Revisão de contratos de 4h para 15 minutos. Advogados júniors liberados para trabalho de maior valor. ROI positivo no primeiro mês.
+
+---
+
+## Contexto
+
+**Escritório:** Advocacia corporativa com foco em contratos empresariais, 8 advogados, Curitiba
+**Volume:** ~40 contratos revisados por mês (fornecimento, prestação de serviços, NDA, locação comercial)
+**Desafio:** Advogados júniors gastavam 60-70% do tempo em revisão de contratos padrão, deixando pouco tempo para estratégia e relacionamento com clientes
+
+---
+
+## O problema
+
+Revisar um contrato de prestação de serviços típico levava:
+- Leitura completa: 30-45 minutos
+- Verificação de cláusulas obrigatórias: 45-60 minutos
+- Pesquisa de jurisprudência relevante: 60-90 minutos
+- Redação do parecer: 60-90 minutos
+- **Total: 3-5 horas por contrato**
+
+Com 40 contratos por mês e 3 advogados júniors dedicados, eram 120-200 horas mensais só em revisão padrão.
+
+Custo: 3 advogados júniors × R$5.000/mês = R$15.000/mês para revisão de contratos.
+
+---
+
+## A solução implementada
+
+### Knowledge Base configurada
+
+**KB 1: Legislação Base**
+- Código Civil Brasileiro (partes relevantes para contratos)
+- Lei de Proteção de Dados (LGPD) — cláusulas de proteção de dados
+- Consolidação das Leis Trabalhistas (terceirização, pejotização)
+- Código de Defesa do Consumidor (quando aplicável)
+
+**KB 2: Jurisprudência**
+- Súmulas do STJ sobre contratos
+- Jurisprudência do TJSP, TJRJ e TJRS sobre cláusulas abusivas
+- Decisões relevantes sobre inadimplemento contratual
+
+**KB 3: Templates e Modelos Internos**
+- 15 modelos de contrato aprovados pelo sócio-sênior
+- Lista de cláusulas que o escritório considera abusivas ou inadequadas
+- Checklist interno de revisão por tipo de contrato
+
+### Orquestração configurada
+
+**Agente 1: Analisador de Estrutura**
+- Recebe o contrato em PDF/DOCX
+- Identifica: tipo de contrato, partes, objeto, prazo, valor, foro, lei aplicável
+- Entrega: ficha resumo do contrato
+
+**Agente 2: Verificador de Cláusulas**
+- Recebe a ficha resumo + o contrato
+- Consulta a KB de templates internos
+- Verifica: presença de cláusulas obrigatórias, ausência de cláusulas vedadas
+- Entrega: lista de conformidades e não-conformidades
+
+**Agente 3: Pesquisador Jurídico**
+- Recebe as não-conformidades identificadas
+- Consulta KB de legislação e jurisprudência
+- Identifica os fundamentos legais relevantes
+- Entrega: fundamentos jurídicos para cada ponto de atenção
+
+**Agente 4: Redator de Parecer**
+- Recebe tudo anterior
+- Gera o parecer jurídico estruturado: resumo executivo, pontos de atenção, riscos classificados (alto/médio/baixo), sugestões de cláusulas substitutivas
+- Entrega: parecer em formato DOCX pronto para revisão do advogado
+
+**Tempo total da orquestração:** 8-12 minutos
+
+---
+
+## Resultados
+
+| Métrica | Antes | Depois |
+|---|---|---|
+| Tempo médio por revisão | 4 horas | **15 minutos de revisão** (+ 10 min orquestração) |
+| Contratos revisados/mês | 40 | **110** (+175%) |
+| Horas em revisão/mês | 160h | 41h |
+| Advogados júniors em revisão | 3 | 1 |
+| 2 advogados liberados para | — | Estratégia e novos clientes |
+| Receita mensal | R$80.000 | R$145.000 (+81%) |
+| Custo de revisão | R$15.000 | R$6.300 (1 advogado + plano) |
+
+---
+
+## A mudança no papel do advogado
+
+O que mudou no dia a dia dos advogados júniors:
+
+**Antes:**
+- Ler o contrato do zero
+- Procurar artigos e jurisprudência manualmente
+- Redigir o parecer do zero
+
+**Depois:**
+- Receber o parecer da IA
+- Validar os pontos de atenção (1-2 minutos cada)
+- Adicionar o raciocínio estratégico e o contexto do cliente
+- Assinar e enviar
+
+> *"Passei de redigir pareceres para revisar e aprimorar pareceres. É como ter um assistente que faz o trabalho operacional e me deixa focar no que realmente exige experiência."*
+> — Advogada sênior
+
+---
+
+## Limites e cuidados éticos
+
+O escritório estabeleceu regras claras sobre o uso do agente:
+
+1. **Nenhum parecer é enviado ao cliente sem revisão de advogado habilitado**
+2. **O agente aponta riscos — o advogado avalia a materialidade**
+3. **Contratos com cláusulas altamente incomuns são escalados para sócio-sênior**
+4. **KB atualizada mensalmente** com novos precedentes e mudanças legislativas
+5. **Logs de todas as revisões mantidos** para controle de qualidade e responsabilidade
+
+---
+
+## Como implementar
+
+**Pré-requisito:** Ter os documentos base organizados (legislação relevante + modelos internos)
+
+**Tempo de setup:** 2-3 dias (1 dia de organização de documentos, 1 dia de configuração, 1 dia de calibração)
+
+**Plano recomendado:** Sofia AI Business (R$997/mês) — KBs ilimitadas + orquestrações ilimitadas
+
+**ROI no 1° mês:**
+- 2 advogados júniors liberados × R$5.000 = R$10.000/mês economizados
+- Custo: R$997/mês
+- ROI: 900% ao mês
+
+---
+
+**→ [Configure seu agente jurídico no Sofia AI.](/login)**

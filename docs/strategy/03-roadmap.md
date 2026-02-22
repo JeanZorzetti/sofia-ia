@@ -154,3 +154,31 @@
 - ⬜ Discord/Slack para usuários
 - ✅ Documentação open-source (docs.sofia.ai)
 - ✅ Program de early adopters
+
+---
+
+## Sprint 7 — Comunidade + Diferencial Técnico (Semana 17-20)
+
+**Objetivo**: Atingir KPIs de Mês 6-12 — Discord ativo, 50+ artigos, AI-Assisted Orchestration como diferencial técnico central
+
+### Comunidade (Longo Prazo — Mês 4, atrasado)
+- ✅ **P0** — Página pública `/comunidade` (Discord, GitHub, Early Access, newsletter)
+- ✅ **P0** — Links de comunidade no footer e navbar do site
+- ⬜ **P1** — Discord server ativo com canais: #geral, #ajuda, #showcase, #feedback
+- ⬜ **P1** — Atualizar CONTRIBUTING.md com guia para primeiros contributors
+
+### Produto — Diferencial Técnico (Longuíssimo Prazo Antecipado)
+- ✅ **P0** — AI-Assisted Orchestration Creator: UI "Descreva seu processo" → gera orquestração automaticamente via LLM
+- ✅ **P1** — Página pública `/whitelabel` (landing para agências e resellers)
+
+### Conteúdo SEO — Camada 2 (criar demanda, 5 artigos)
+- ✅ **P0** — "Melhores Ferramentas de IA para Pequenas Empresas em 2026"
+- ✅ **P0** — "Como Reduzir Custos Operacionais com Inteligência Artificial"
+- ✅ **P0** — "Plataforma Multi-Agente: O que É e Como Escolher a Certa"
+- ✅ **P1** — "IA para Agências: Como Escalar Sem Contratar" (vertical)
+- ✅ **P1** — "Como Implementar RAG na Sua Empresa (sem código)"
+
+### Cases de Uso Documentados (1/mês — Mês 6+)
+- ✅ **P0** — Case: Agência de Marketing (+400% produção conteúdo)
+- ✅ **P1** — Case: E-commerce (atendimento 24h, -70% tickets humanos)
+- ✅ **P1** — Case: Escritório Jurídico (revisão contratos 15min vs 4h)

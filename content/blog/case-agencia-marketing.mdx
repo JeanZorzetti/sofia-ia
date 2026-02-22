@@ -1,0 +1,168 @@
+---
+title: "Case: Como uma Agência de Marketing Aumentou a Produção em 400% com Agentes IA"
+slug: "case-agencia-marketing"
+description: "Como uma agência de marketing com 6 pessoas multiplicou a produção de conteúdo em 4x sem contratar usando orquestração de agentes IA com Sofia AI. Números reais, implementação detalhada e resultados."
+date: "2026-02-22"
+author: "Equipe Sofia"
+tags: ["case de uso ia", "agência marketing ia", "resultados ia", "orquestração agentes"]
+readTime: "7 min"
+---
+
+> **Resultado:** +400% de produção de conteúdo, mesma equipe, mesma qualidade — em 60 dias.
+
+---
+
+## Contexto
+
+**Empresa:** Agência de marketing de conteúdo B2B, 6 pessoas, São Paulo
+**Clientes:** 12 empresas de médio porte (tecnologia, indústria, serviços)
+**Desafio:** Crescer a carteira sem escalar proporcionalmente os custos de produção
+
+---
+
+## O problema antes da IA
+
+Com 3 redatores, a agência produzia ~40 peças por mês para 12 clientes:
+- 2 artigos de blog por cliente/mês
+- 8 posts de LinkedIn por cliente/mês
+- 2 emails para base por cliente/mês
+
+Para crescer para 20 clientes, precisariam de 5-6 redatores — custo de R$15.000-18.000/mês só em salários.
+
+Além disso, o processo tinha gargalos:
+- Pesquisa de briefing: 2-3h por artigo
+- Primeiro rascunho: 3-4h por artigo
+- Revisão e aprovação: 1-2h por artigo
+- **Total por artigo: 6-9 horas**
+
+---
+
+## A solução implementada
+
+### Orquestração 1: Pipeline de Blog Posts
+
+**Agentes configurados no Sofia AI:**
+
+1. **Pesquisador**
+   - Recebe: tema, setor do cliente, palavra-chave alvo
+   - Faz: busca referências, dados e tendências relevantes
+   - Entrega: relatório de pesquisa estruturado (300-500 palavras)
+
+2. **Especialista de Setor**
+   - Recebe: relatório de pesquisa + perfil do cliente
+   - Faz: enriquece com dados do setor e perspectiva especializada
+   - Entrega: outline detalhado do artigo
+
+3. **Copywriter**
+   - Recebe: outline + persona do leitor + tom de voz da marca
+   - Faz: escreve o artigo completo
+   - Entrega: artigo de 800-1200 palavras
+
+4. **Revisor SEO**
+   - Recebe: artigo completo + palavra-chave alvo
+   - Faz: ajusta densidade de keywords, legibilidade e estrutura de headings
+   - Entrega: artigo publicável com meta description
+
+**Tempo total da orquestração:** 4-7 minutos
+**Tempo humano necessário:** 15-20 minutos de revisão e ajuste fino
+
+### Orquestração 2: Pipeline de Social Media
+
+**Agentes:**
+1. **Extrator de insights** — lê o artigo e extrai os 5 principais insights
+2. **Redator de posts** — transforma cada insight em um post de LinkedIn com gancho e CTA
+3. **Revisor de tom** — ajusta para o tom da marca específica do cliente
+
+**Tempo total:** 2-3 minutos
+**Output:** 5 posts prontos por artigo
+
+---
+
+## Os números antes e depois
+
+| Métrica | Antes | Depois | Variação |
+|---|---|---|---|
+| Artigos produzidos/mês | 24 | 96 | **+300%** |
+| Posts LinkedIn/mês | 96 | 480 | **+400%** |
+| Tempo por artigo (total) | 6-9h | 20-30min | **-85%** |
+| Clientes atendidos | 12 | 22 | **+83%** |
+| Receita mensal | R$36.000 | R$66.000 | **+83%** |
+| Custo de produção | R$12.000 | R$13.500 | **+12%** |
+| Margem líquida | 27% | 41% | **+14pp** |
+
+---
+
+## Como foi a implementação
+
+**Semana 1:** Configuração dos agentes e KBs
+
+Cada cliente tem uma Knowledge Base com:
+- Guia de tom de voz
+- Glossário de termos do setor
+- Exemplos de conteúdo aprovado anteriormente
+- Persona dos leitores
+
+**Semana 2:** Teste e calibração
+
+Rodaram as orquestrações em paralelo com o processo manual para comparar. Ajustaram os prompts dos agentes com base nos feedbacks dos redatores.
+
+**Semana 3-4:** Rollout e treinamento da equipe
+
+Redatores passaram de "escrever do zero" para "revisar e aprovar". Resistência inicial — depois de 1 semana usando, aprovação foi unânime.
+
+**Semana 5-8:** Escala e novos clientes
+
+Com a capacidade liberada, o time comercial fechou 10 novos contratos em 60 dias.
+
+---
+
+## O que os redatores acharam
+
+> *"No início fiquei com medo de ser substituído. Depois de 2 semanas usando, percebi que meu trabalho ficou mais interessante — eu foco na estratégia e na qualidade, não em preencher o artigo com palavras."*
+> — Redatora sênior
+
+> *"Antes eu passava o dia todo escrevendo o mesmo tipo de coisa. Agora reviso 5 artigos em 2 horas e gasto o resto do tempo em estratégia de conteúdo."*
+> — Redator pleno
+
+---
+
+## Lições aprendidas
+
+**O que funcionou bem:**
+- Pipeline sequencial (cada agente tem uma função específica)
+- Knowledge Base por cliente (tom de voz consistente)
+- Revisão humana obrigatória antes da publicação
+
+**O que não funcionou:**
+- Tentar usar um único agente para tudo (resultado mediano)
+- Publicar sem revisão humana nos primeiros dias (alguns artigos precisavam de ajuste de contexto)
+- Prompts genéricos sem contexto do setor do cliente
+
+**Ajuste principal:** Adicionar o "Especialista de Setor" entre o Pesquisador e o Copywriter aumentou a qualidade dos artigos de forma significativa. Um agente especializado em tecnologia escreve diferente de um especializado em indústria.
+
+---
+
+## Configuração no Sofia AI
+
+**Plano utilizado:** Business (R$997/mês)
+
+**Setup:**
+- 22 Knowledge Bases (1 por cliente)
+- 4 agentes no pipeline de blog
+- 3 agentes no pipeline de social
+- 2 orquestrações ativas
+
+**Custo por artigo produzido:** R$997 / 96 artigos = R$10,38 por artigo vs R$150-300 de freelancer.
+
+---
+
+## Você pode replicar?
+
+Sim. A orquestração usada neste case está disponível como template no Sofia AI:
+
+1. Acesse [Templates de Orquestração](/templates)
+2. Selecione "Pipeline de Marketing de Conteúdo"
+3. Conecte sua Knowledge Base com o guia de tom de voz
+4. Execute com o primeiro briefing
+
+**→ [Crie sua conta e use o template gratuitamente.](/login)**
