@@ -57,7 +57,7 @@
 - ✅ **P0** — Upload drag-and-drop funcional (já implementado na auditoria Sprint 1)
 - ✅ **P0** — Indicador visual de progresso de vectorização (já implementado)
 - ✅ **P1** — Suporte a mais formatos (PDF, DOCX, CSV)
-- ⬜ **P2** — Interface de preview dos chunks
+- ✅ **P2** — Interface de preview dos chunks
 
 ---
 
