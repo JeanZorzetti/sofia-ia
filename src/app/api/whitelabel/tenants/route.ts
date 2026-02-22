@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
   const account = await prisma.whitelabelAccount.findUnique({
-    where: { userId: auth.userId },
+    where: { userId: auth.id },
     include: { subTenants: { orderBy: { createdAt: 'desc' } } },
   })
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   }
 
   const account = await prisma.whitelabelAccount.findUnique({
-    where: { userId: auth.userId },
+    where: { userId: auth.id },
     include: { _count: { select: { subTenants: { where: { status: 'active' } } } } },
   })
 

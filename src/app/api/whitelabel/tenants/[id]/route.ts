@@ -20,7 +20,7 @@ export async function PATCH(
   }
 
   const account = await prisma.whitelabelAccount.findUnique({
-    where: { userId: auth.userId },
+    where: { userId: auth.id },
   })
   if (!account) return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
 
