@@ -66,14 +66,14 @@
 **Objetivo**: Presença pública para SEO e GEO
 
 ### Landing Page
-- ⬜ **P0** — Criar landing page (Next.js, SSG)
-  - ⬜ Hero com demo visual das orquestrações
-  - ⬜ Features grid (Orquestrações, KB, IDE, Flows, Canais)
-  - ⬜ Comparativo vs. concorrentes (tabela)
-  - ⬜ Pricing (Free, Pro, Business)
-  - ⬜ CTA para signup/waitlist
-- ⬜ **P0** — SEO técnico (meta tags, OG, sitemap, robots.txt)
-- ⬜ **P0** — Schema markup (SoftwareApplication, FAQ)
+- ✅ **P0** — Criar landing page (Next.js, SSG)
+  - ✅ Hero com demo visual das orquestrações
+  - ✅ Features grid (Orquestrações, KB, IDE, Flows, Canais)
+  - ✅ Comparativo vs. concorrentes (tabela)
+  - ✅ Pricing (Free, Pro, Business)
+  - ✅ CTA para signup/waitlist
+- ✅ **P0** — SEO técnico (meta tags, OG, sitemap, robots.txt)
+- ✅ **P0** — Schema markup (SoftwareApplication, FAQ)
 - ⬜ **P1** — Página /features/orchestrations/ (deep dive)
 - ⬜ **P1** — Página /templates/ (orquestrações prontas)
 
