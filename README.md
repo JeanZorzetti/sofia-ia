@@ -1,109 +1,277 @@
-# 🤖 Sofia — Plataforma de Agentes IA
+# Sofia AI — Multi-Agent Orchestration Platform
 
-Plataforma multi-agente para automação de atendimento via WhatsApp, com IDE integrada, orquestrações visuais e knowledge base vetorial.
+> Build AI agent teams that collaborate to solve complex tasks. More powerful than CrewAI. Simpler than AutoGen.
 
-## Stack
+[![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16.1-black)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://typescriptlang.org)
+[![PostgreSQL + pgvector](https://img.shields.io/badge/PostgreSQL-pgvector-336791)](https://github.com/pgvector/pgvector)
+[![Deploy on Vercel](https://img.shields.io/badge/Deploy-Vercel-black)](https://vercel.com)
 
-| Camada | Tecnologia |
-|---|---|
-| **Frontend** | Next.js 16.1 (App Router), React 19, TailwindCSS 4, Radix UI |
-| **Backend** | Next.js API Routes, Prisma 5, PostgreSQL + pgvector |
-| **Desktop** | Electron 40 |
-| **AI** | Groq (Llama 3.3), OpenRouter (Claude, GPT, Gemini, DeepSeek) |
-| **Messaging** | Evolution API (WhatsApp), Telegram Bot API |
+**[Live Demo](https://sofiaia.roilabs.com.br)** | **[Documentation](#quick-start)** | **[Discord](#community)**
+
+---
+
+## What is Sofia AI?
+
+Sofia is an open-source platform for orchestrating multiple AI agents to work together on complex tasks. Think of it as a visual workflow builder where each "step" is an intelligent agent with a specific role.
+
+**Example pipeline:**
+```
+User Input → [Researcher Agent] → [Analyst Agent] → [Writer Agent] → Final Output
+```
+
+Each agent receives the accumulated context from all previous agents, creating a powerful collaborative intelligence.
+
+---
+
+## Key Features
+
+### Multi-Agent Orchestration
+- **Visual pipeline editor** — drag & drop agents, set roles and prompts
+- **3 execution strategies**: Sequential (pipeline), Parallel (fan-out), Consensus (voting)
+- **Rejection protocol** — agents can reject previous outputs and trigger retries
+- **Real-time streaming** with per-agent progress events (SSE)
+- **Execution history** with full replay and re-execute from any step
+
+### Knowledge Base with RAG
+- **Semantic search** powered by pgvector (real vector similarity, not keyword matching)
+- **Hybrid search** — vector similarity + BM25 text ranking combined
+- **Multi-format upload**: PDF (pdf-parse), DOCX (mammoth), CSV, TXT, MD, JSON
+- **Chunk preview** with semantic search testing UI
+- Background vectorization (non-blocking)
+
+### Multi-Model IDE
+- Test and compare 50+ models: Groq (Llama), OpenAI, Anthropic, Gemini, DeepSeek
+- Real-time streaming with token usage and cost metrics
+- Prompt history and session management
+- Monaco editor with syntax highlighting
+
+### Unified Inbox
+- WhatsApp integration via Evolution API
+- Multi-channel: web chat widget, WhatsApp, email (planned)
+- AI agents auto-respond with intelligent human escalation
+- Conversation history and CRM-like contact management
+
+### Analytics & Observability
+- Cost per execution (estimated in USD)
+- Token usage per agent step
+- Success rate, average duration, execution trends
+- Gantt timeline view per execution
+- Compare two executions side by side
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Framework** | Next.js 16.1 (App Router), React 19 |
+| **Language** | TypeScript 5 |
+| **Styling** | TailwindCSS 4, Radix UI, shadcn/ui |
+| **Database** | PostgreSQL + pgvector (semantic search) |
+| **ORM** | Prisma 5 |
+| **AI Providers** | Groq SDK, OpenRouter (50+ models), Hugging Face (embeddings) |
+| **Messaging** | Evolution API (WhatsApp) |
 | **Cache** | Redis / Upstash Redis |
-| **Visual** | XY Flow (graph editor), Recharts, Monaco Editor |
+| **Auth** | JWT + bcrypt (custom, no NextAuth) |
+| **Deploy** | Vercel (cloud) or Docker (self-hosted) |
+| **Visuals** | XY Flow (graph editor), Recharts, Monaco Editor |
+
+---
 
 ## Quick Start
 
+### Option 1: Cloud (Vercel)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/JeanZorzetti/sofia-ia)
+
+### Option 2: Self-hosted (Docker)
+
 ```bash
-# 1. Instalar dependências
+# Clone the repository
+git clone https://github.com/JeanZorzetti/sofia-ia.git
+cd sofia-ia
+
+# Copy environment variables
+cp .env.example .env
+
+# Edit .env with your API keys (see Environment Variables section)
+nano .env
+
+# Start with Docker Compose
+docker compose up -d
+```
+
+Open http://localhost:3000
+
+### Option 3: Local Development
+
+```bash
+# Prerequisites: Node.js 20+, PostgreSQL 15+ with pgvector, Redis
+
+# Install dependencies
 npm install
 
-# 2. Copiar variáveis de ambiente
+# Set up environment
 cp .env.example .env.local
+# Edit .env.local with your credentials
 
-# 3. Configurar o banco de dados
+# Set up database
 npx prisma generate
 npx prisma db push
 
-# 4. Seed (dados iniciais)
-npm run db:seed
+# Install pgvector extension (if not already installed)
+# In PostgreSQL: CREATE EXTENSION IF NOT EXISTS vector;
 
-# 5. Rodar em modo web
+# Seed initial data
+npx prisma db seed
+
+# Start development server
 npm run dev
-
-# 6. Rodar em modo desktop (Electron)
-npm run dev:desktop
 ```
 
-Acesse [http://localhost:3000](http://localhost:3000)
+Open http://localhost:3000
 
-## Scripts
+---
 
-| Comando | Descrição |
-|---|---|
-| `npm run dev` | Inicia o servidor Next.js (web) |
-| `npm run dev:desktop` | Inicia web + Electron |
-| `npm run build` | Build de produção (web) |
-| `npm run build:desktop` | Build de produção (Electron) |
-| `npm run db:seed` | Seed do banco de dados |
-| `npm run lint` | Lint com ESLint |
-| `npm test` | Testes unitários (Jest) |
-| `npm run test:e2e` | Testes E2E (Playwright) |
+## Environment Variables
 
-## Estrutura do Projeto
+```env
+# Database (PostgreSQL + pgvector)
+DATABASE_URL=postgresql://user:password@localhost:5432/sofia
+
+# Authentication
+JWT_SECRET=your-random-secret-here
+
+# AI Providers (at least one required)
+GROQ_API_KEY=gsk_...          # https://console.groq.com
+OPENROUTER_API_KEY=sk-or-...  # https://openrouter.ai (50+ models)
+
+# Embeddings (for Knowledge Base RAG)
+HUGGINGFACE_API_KEY=hf_...    # https://huggingface.co (free tier available)
+
+# Cache (optional but recommended)
+REDIS_URL=redis://localhost:6379
+# OR Upstash Redis:
+# UPSTASH_REDIS_REST_URL=...
+# UPSTASH_REDIS_REST_TOKEN=...
+
+# WhatsApp (optional)
+EVOLUTION_API_URL=https://your-evolution-instance.com
+EVOLUTION_API_KEY=your-key
+
+# Public URL (for webhooks)
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+---
+
+## Database Setup
+
+Sofia requires PostgreSQL 15+ with the `pgvector` extension for semantic search.
+
+```sql
+-- Enable pgvector extension
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- The Prisma schema handles the rest
+```
+
+For cloud PostgreSQL, we recommend:
+- **Neon** (free tier, supports pgvector)
+- **Supabase** (free tier, supports pgvector)
+- **Railway** (supports pgvector)
+
+---
+
+## Orchestration Strategies
+
+| Strategy | Description | Best For |
+|----------|-------------|----------|
+| **Sequential** | Agents run in order; each receives all previous outputs | Writing pipelines, research workflows |
+| **Parallel** | All agents run simultaneously with the same input | Getting multiple perspectives, fact-checking |
+| **Consensus** | Agents vote; most common answer wins | Classification, decision-making |
+
+---
+
+## Pre-built Templates
+
+| Template | Pipeline | Time |
+|----------|----------|------|
+| **Marketing Pipeline** | Researcher → Copywriter → Reviewer | ~45s |
+| **Support Triage** | Triage → Agent → Escalation | ~30s |
+| **Research & Synthesis** | Collector → Analyst → Synthesizer | ~60s |
+
+---
+
+## Architecture
 
 ```
 sofia-next/
 ├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── api/                # 27 domínios de API
-│   │   │   ├── agents/         # CRUD de agentes IA
-│   │   │   ├── conversations/  # Gerenciamento de conversas
-│   │   │   ├── flows/          # Flows visuais
-│   │   │   ├── orchestrations/ # Orquestrações multi-agente
-│   │   │   ├── knowledge/      # Knowledge base + RAG
-│   │   │   ├── templates/      # Templates de agentes
-│   │   │   ├── webhook/        # Webhooks (Evolution, Telegram)
-│   │   │   └── ...
-│   │   └── dashboard/          # 16 páginas do dashboard
-│   ├── components/
-│   │   ├── ui/                 # Primitivos (shadcn/ui)
-│   │   ├── ide/                # IDE integrada
-│   │   ├── flows/              # Editor visual de flows
-│   │   ├── orchestrations/     # Orquestrações
-│   │   ├── dashboard/          # Componentes do dashboard
-│   │   └── sofia/              # Navbar, Sidebar
+│   ├── app/
+│   │   ├── api/              # REST API routes
+│   │   │   ├── agents/       # Agent CRUD + chat
+│   │   │   ├── orchestrations/ # Orchestration CRUD + execute + stream
+│   │   │   ├── knowledge/    # Knowledge Base + RAG
+│   │   │   ├── conversations/ # Inbox conversations
+│   │   │   └── auth/         # Authentication
+│   │   ├── dashboard/        # Main app UI
+│   │   └── page.tsx          # Landing page
+│   ├── components/           # React components
+│   │   └── orchestrations/   # Execution live view, history, flow canvas
 │   ├── lib/
-│   │   ├── ai/                 # Providers de IA (Groq, OpenRouter, embeddings)
-│   │   ├── flow-engine/        # Motor de execução de flows
-│   │   ├── auth.ts             # Autenticação JWT
-│   │   ├── prisma.ts           # Cliente Prisma
-│   │   └── ...
-│   ├── hooks/                  # React hooks customizados
-│   ├── services/               # Integrações externas (Claude CLI, APIs)
-│   └── electron/               # Electron main/preload
+│   │   ├── ai/               # AI providers (groq, openrouter, embeddings)
+│   │   ├── prisma.ts         # Prisma singleton
+│   │   └── auth.ts           # JWT auth
+│   └── hooks/                # Custom React hooks
 ├── prisma/
-│   ├── schema.prisma           # Schema do banco
-│   └── seed.ts                 # Dados iniciais
-├── docs/                       # Documentação técnica
-└── public/                     # Assets estáticos
+│   └── schema.prisma         # Database schema
+├── docker-compose.yml        # Self-hosted setup
+└── docs/                     # Architecture docs
 ```
 
-## Documentação
+---
 
-- [Arquitetura](docs/architecture.md) — Visão geral da arquitetura e decisões técnicas
-- [Referência de API](docs/api-reference.md) — Endpoints, autenticação, payloads
-- [Modelos de IA](docs/ai-models.md) — Providers e modelos disponíveis
-- [Roadmap de Orquestrações](docs/orchestrations-roadmap.md) — Plano de desenvolvimento
+## Contributing
 
-## Variáveis de Ambiente
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-Veja [`.env.example`](.env.example) para todas as variáveis necessárias.
+**Ways to contribute:**
+- Bug reports and feature requests via [GitHub Issues](https://github.com/JeanZorzetti/sofia-ia/issues)
+- Pull requests for bug fixes and features
+- Documentation improvements
+- Share your orchestration templates
 
-As essenciais são:
-- `DATABASE_URL` — PostgreSQL com pgvector
-- `GROQ_API_KEY` — Para modelos Llama/DeepSeek
-- `OPENROUTER_API_KEY` — Para Claude/GPT/Gemini
-- `JWT_SECRET` — Segredo para tokens JWT
+---
+
+## Roadmap
+
+- [x] Multi-agent orchestration (sequential, parallel, consensus)
+- [x] Knowledge Base with pgvector RAG
+- [x] Multi-model IDE (Groq, OpenRouter)
+- [x] WhatsApp integration
+- [x] Execution history with replay
+- [x] Analytics dashboard
+- [x] PDF/DOCX/CSV support in KB
+- [x] Landing page with SEO
+- [ ] Stripe billing (Free/Pro/Business)
+- [ ] Onboarding wizard
+- [ ] API public access
+- [ ] Marketplace of community templates
+- [ ] Multi-language (EN)
+
+---
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+## Made by ROI Labs
+
+Sofia AI is built and maintained by [ROI Labs](https://roilabs.com.br), a Brazilian AI consulting firm.
+
+**Need help deploying or customizing?** [Contact us](mailto:contato@roilabs.com.br)

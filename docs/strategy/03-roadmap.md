@@ -78,12 +78,12 @@
 - ⬜ **P1** — Página /templates/ (orquestrações prontas)
 
 ### GitHub (GEO)
-- ⬜ **P0** — Preparar repositório público
-  - ⬜ README em inglês com badges, GIFs, quick start
-  - ⬜ CONTRIBUTING.md
-  - ⬜ LICENSE (MIT ou AGPL)
-  - ⬜ .github/ (issue templates, PR template)
-- ⬜ **P0** — Docker Compose para self-hosted
+- ✅ **P0** — Preparar repositório público
+  - ✅ README em inglês com badges, GIFs, quick start
+  - ✅ CONTRIBUTING.md
+  - ✅ LICENSE (MIT ou AGPL)
+  - ✅ .github/ (issue templates, PR template)
+- ✅ **P0** — Docker Compose para self-hosted
 - ⬜ **P1** — GitHub Actions (CI/CD, testes automáticos)
 
 ### Diretórios e Listings (GEO)

@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # Sofia AI Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      # Database
+      DATABASE_URL: postgresql://sofia:sofia_password@postgres:5432/sofia
+
+      # Auth
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+
+      # AI Providers (configure at least one)
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+
+      # Embeddings for Knowledge Base RAG
+      HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY}
+
+      # Cache
+      REDIS_URL: redis://redis:6379
+
+      # App URL
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+
+      # WhatsApp (optional)
+      EVOLUTION_API_URL: ${EVOLUTION_API_URL}
+      EVOLUTION_API_KEY: ${EVOLUTION_API_KEY}
+
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - sofia_network
+
+  # PostgreSQL with pgvector
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: sofia
+      POSTGRES_PASSWORD: sofia_password
+      POSTGRES_DB: sofia
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./prisma/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sofia -d sofia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - sofia_network
+
+  # Redis for caching and rate limiting
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    networks:
+      - sofia_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  sofia_network:
+    driver: bridge
