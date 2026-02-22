@@ -255,7 +255,7 @@ export default function WhitelabelDashboardPage() {
             <p className="text-white/40 text-sm">Nenhum cliente ainda. Crie o primeiro clicando em &quot;Novo Cliente&quot;.</p>
           </div>
         ) : (
-          <div className="glass-card rounded-xl overflow-hidden">
+          <div className="glass-card rounded-xl">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10">
@@ -294,7 +294,7 @@ export default function WhitelabelDashboardPage() {
                           <MoreVertical className="w-4 h-4" />
                         </button>
                         {actionMenu === tenant.id && (
-                          <div className="absolute right-4 top-12 z-10 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-xl py-1 min-w-36">
+                          <div className="absolute right-4 top-10 z-50 bg-[#1a1a2e] border border-white/10 rounded-xl shadow-2xl py-1 min-w-36">
                             {tenant.status === 'active' && (
                               <button
                                 onClick={() => handleStatusChange(tenant.id, 'suspended')}
