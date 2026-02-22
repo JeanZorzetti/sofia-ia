@@ -1,6 +1,6 @@
 # Sofia — Roadmap Executável
 
-> Última atualização: 21/02/2026
+> Última atualização: 22/02/2026
 > Status: Em execução
 
 ## Legenda
@@ -43,19 +43,19 @@
 **Objetivo**: Orquestrações polidas e demonstráveis
 
 ### Orquestrações (Estrela)
-- ⬜ **P0** — UX review do editor de orquestrações
-- ⬜ **P0** — Templates de orquestração pré-configurados (3-5 templates)
-  - ⬜ Marketing: Pesquisador → Copywriter → Revisor
-  - ⬜ Suporte: Triagem → Atendente → Escalação
-  - ⬜ Pesquisa: Coletor → Analista → Sintetizador
-- ⬜ **P0** — Melhorar streaming SSE (feedback visual por agente)
-- ⬜ **P1** — Analytics por orquestração (custo, tempo, tokens)
+- ✅ **P0** — UX review do editor de orquestrações (template picker, empty state, badges de execução)
+- ✅ **P0** — Templates de orquestração pré-configurados (3 templates)
+  - ✅ Marketing: Pesquisador → Copywriter → Revisor
+  - ✅ Suporte: Triagem → Atendente → Escalação
+  - ✅ Pesquisa: Coletor → Analista → Sintetizador
+- ✅ **P0** — Melhorar streaming SSE (feedback visual por agente, events granulares)
+- ✅ **P1** — Analytics por orquestração (custo, tempo, tokens) — integrado no live view
 - ⬜ **P1** — Histórico de execuções com replay
 - ⬜ **P2** — Export de resultados (PDF, Markdown)
 
 ### Knowledge Base
-- ⬜ **P0** — Upload drag-and-drop funcional
-- ⬜ **P0** — Indicador visual de progresso de vectorização
+- ✅ **P0** — Upload drag-and-drop funcional (já implementado na auditoria Sprint 1)
+- ✅ **P0** — Indicador visual de progresso de vectorização (já implementado)
 - ⬜ **P1** — Suporte a mais formatos (PDF, DOCX, CSV)
 - ⬜ **P2** — Interface de preview dos chunks
 
