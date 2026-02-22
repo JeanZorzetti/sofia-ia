@@ -22,7 +22,8 @@ import {
   Sparkles,
   ArrowRight,
   Loader2,
-  Zap
+  Zap,
+  History
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -332,6 +333,10 @@ export default function OrchestrationsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => router.push('/dashboard/orchestrations/history')} className="gap-2">
+            <History className="h-4 w-4" />
+            Histórico
+          </Button>
           <Button variant="outline" onClick={() => setTemplateDialogOpen(true)} className="gap-2">
             <Sparkles className="h-4 w-4" />
             Usar Template

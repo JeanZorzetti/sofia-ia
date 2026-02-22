@@ -50,8 +50,8 @@
   - ✅ Pesquisa: Coletor → Analista → Sintetizador
 - ✅ **P0** — Melhorar streaming SSE (feedback visual por agente, events granulares)
 - ✅ **P1** — Analytics por orquestração (custo, tempo, tokens) — integrado no live view
-- ⬜ **P1** — Histórico de execuções com replay
-- ⬜ **P2** — Export de resultados (PDF, Markdown)
+- ✅ **P1** — Histórico de execuções com replay
+- ✅ **P2** — Export de resultados (PDF, Markdown)
 
 ### Knowledge Base
 - ✅ **P0** — Upload drag-and-drop funcional (já implementado na auditoria Sprint 1)

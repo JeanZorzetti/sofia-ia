@@ -32,7 +32,8 @@ import {
   FileJson,
   FileSpreadsheet,
   FileText,
-  Scissors
+  Scissors,
+  Printer
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -67,7 +68,7 @@ interface StepResult {
 
 interface Execution {
   id: string
-  status: 'pending' | 'running' | 'completed' | 'failed' | 'rate_limited'
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'rate_limited' | 'cancelled'
   input: any
   output: any
   error: string | null
@@ -149,6 +150,159 @@ export function ExecutionDetailDrawer({
     a.click()
     URL.revokeObjectURL(url)
     toast.success('CSV exportado com sucesso')
+  }
+
+  const downloadPDF = () => {
+    const mdContent = `# Execução ${execution.id}
+
+**Status:** ${execution.status}
+**Início:** ${formatDate(execution.startedAt)}
+**Término:** ${execution.completedAt ? formatDate(execution.completedAt) : 'Em andamento'}
+**Duração:** ${formatDuration(totalDuration || undefined)}
+**Tokens Totais:** ${totalTokens.toLocaleString()}
+
+## Input
+
+${typeof execution.input === 'string' ? execution.input : JSON.stringify(execution.input, null, 2)}
+
+## Resultados por Agente
+
+${execution.agentResults.map((step, index) => `
+### Step ${index + 1}: ${step.role}
+
+- **Agente:** ${step.agentName}
+- **Duração:** ${formatDuration(step.durationMs)}
+- **Tokens:** ${step.tokensUsed || 0}
+
+**Output:**
+
+${step.output}
+`).join('\n')}
+
+## Output Final
+
+${typeof execution.output === 'string' ? execution.output : JSON.stringify(execution.output, null, 2)}
+`
+
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      toast.error('Permissão para abrir nova janela foi bloqueada pelo navegador')
+      return
+    }
+
+    printWindow.document.write(`
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Execução ${execution.id}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; line-height: 1.6; color: #1a1a1a; padding: 32px; max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #111; }
+    h2 { font-size: 16px; font-weight: 600; margin-top: 24px; margin-bottom: 12px; padding-bottom: 4px; border-bottom: 1px solid #e5e7eb; color: #374151; }
+    h3 { font-size: 14px; font-weight: 600; margin-top: 16px; margin-bottom: 8px; color: #4b5563; }
+    .meta { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 16px 0; padding: 16px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; }
+    .meta-item { display: flex; flex-direction: column; gap: 2px; }
+    .meta-label { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+    .meta-value { font-size: 13px; font-weight: 600; color: #111; }
+    .step { margin: 16px 0; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; page-break-inside: avoid; }
+    .step-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .step-num { width: 24px; height: 24px; border-radius: 50%; background: #dbeafe; color: #1d4ed8; font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .step-title { font-weight: 600; font-size: 13px; }
+    .step-agent { font-size: 11px; color: #6b7280; }
+    .step-meta { display: flex; gap: 16px; margin-bottom: 12px; }
+    .step-meta span { font-size: 11px; color: #6b7280; }
+    .label { font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .content-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-bottom: 12px; white-space: pre-wrap; word-break: break-word; font-size: 11px; font-family: 'Courier New', monospace; max-height: 200px; overflow: hidden; }
+    .output-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 12px; white-space: pre-wrap; word-break: break-word; font-size: 11px; }
+    .final-output { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin-top: 12px; white-space: pre-wrap; word-break: break-word; font-size: 12px; }
+    .error-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 12px; color: #b91c1c; font-size: 11px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 600; }
+    .badge-success { background: #dcfce7; color: #15803d; }
+    .badge-failed { background: #fee2e2; color: #b91c1c; }
+    .badge-running { background: #dbeafe; color: #1d4ed8; }
+    .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #9ca3af; }
+    @media print {
+      body { padding: 20px; }
+      .step { break-inside: avoid; }
+      h2 { break-before: auto; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Relatório de Execução</h1>
+  <p style="color: #6b7280; font-size: 11px; margin-bottom: 4px;">ID: ${execution.id}</p>
+  <span class="badge ${execution.status === 'completed' ? 'badge-success' : execution.status === 'failed' ? 'badge-failed' : 'badge-running'}">
+    ${execution.status === 'completed' ? 'Sucesso' : execution.status === 'failed' ? 'Falha' : execution.status}
+  </span>
+
+  <div class="meta">
+    <div class="meta-item">
+      <span class="meta-label">Início</span>
+      <span class="meta-value">${formatDate(execution.startedAt)}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Término</span>
+      <span class="meta-value">${execution.completedAt ? formatDate(execution.completedAt) : 'Em andamento'}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Duração Total</span>
+      <span class="meta-value">${formatDuration(totalDuration || undefined)}</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Tokens Totais</span>
+      <span class="meta-value">${totalTokens.toLocaleString()}</span>
+    </div>
+  </div>
+
+  <h2>Input da Execução</h2>
+  <div class="content-box">${typeof execution.input === 'string' ? execution.input : JSON.stringify(execution.input, null, 2)}</div>
+
+  <h2>Steps por Agente (${execution.agentResults.length})</h2>
+  ${execution.agentResults.map((step, index) => `
+    <div class="step">
+      <div class="step-header">
+        <div class="step-num">${index + 1}</div>
+        <div>
+          <div class="step-title">${step.role}</div>
+          <div class="step-agent">${step.agentName}${step.model ? ` • ${step.model}` : ''}</div>
+        </div>
+      </div>
+      <div class="step-meta">
+        <span>Duração: <strong>${formatDuration(step.durationMs)}</strong></span>
+        <span>Tokens: <strong>${step.tokensUsed || 0}</strong></span>
+      </div>
+      <div class="label">Output:</div>
+      <div class="output-box">${step.output}</div>
+    </div>
+  `).join('')}
+
+  ${execution.output ? `
+    <h2>Output Final</h2>
+    <div class="final-output">${typeof execution.output === 'string' ? execution.output : JSON.stringify(execution.output, null, 2)}</div>
+  ` : ''}
+
+  ${execution.error ? `
+    <h2>Erro</h2>
+    <div class="error-box">${execution.error}</div>
+  ` : ''}
+
+  <div class="footer">
+    Gerado em ${new Date().toLocaleString('pt-BR')} • Sofia AI Platform
+  </div>
+
+  <script>
+    window.onload = function() {
+      window.print();
+      setTimeout(function() { window.close(); }, 1000);
+    }
+  </script>
+</body>
+</html>
+    `)
+    printWindow.document.close()
+    toast.success('PDF pronto para impressão/download')
   }
 
   const downloadMarkdown = () => {
@@ -272,6 +426,10 @@ ${typeof execution.output === 'string' ? execution.output : JSON.stringify(execu
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-gray-800 border-white/20">
+                  <DropdownMenuItem onClick={downloadPDF} className="gap-2 cursor-pointer">
+                    <Printer className="h-4 w-4" />
+                    <span>PDF (imprimir)</span>
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={downloadMarkdown} className="gap-2 cursor-pointer">
                     <FileText className="h-4 w-4" />
                     <span>Markdown (.md)</span>
