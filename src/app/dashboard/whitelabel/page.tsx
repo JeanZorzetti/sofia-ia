@@ -45,15 +45,24 @@ export default function WhitelabelDashboardPage() {
   const [form, setForm] = useState({ name: '', email: '', notes: '' })
   const [formError, setFormError] = useState('')
   const [actionMenu, setActionMenu] = useState<string | null>(null)
+  const [activating, setActivating] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/whitelabel/tenants')
-      const data = await res.json()
-      if (data.success) {
-        setAccount(data.data.account)
-        setTenants(data.data.tenants)
+      const [wlRes, meRes] = await Promise.all([
+        fetch('/api/whitelabel/tenants'),
+        fetch('/api/auth/me'),
+      ])
+      const wlData = await wlRes.json()
+      if (wlData.success) {
+        setAccount(wlData.data.account)
+        setTenants(wlData.data.tenants)
+      }
+      if (meRes.ok) {
+        const meData = await meRes.json()
+        setIsAdmin(meData.data?.role === 'admin')
       }
     } finally {
       setLoading(false)
@@ -61,6 +70,17 @@ export default function WhitelabelDashboardPage() {
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  async function handleActivate() {
+    setActivating(true)
+    try {
+      const res = await fetch('/api/whitelabel/account', { method: 'POST' })
+      const data = await res.json()
+      if (data.success) fetchData()
+    } finally {
+      setActivating(false)
+    }
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
@@ -111,11 +131,23 @@ export default function WhitelabelDashboardPage() {
           <Building2 className="w-12 h-12 text-white/20 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-white mb-3">Conta White-label não ativada</h2>
           <p className="text-foreground-tertiary text-sm mb-6">
-            Para acessar o painel white-label, você precisa de uma conta ativa. Fale com nossa equipe.
+            {isAdmin
+              ? 'Ative sua conta white-label como administrador para acessar o painel.'
+              : 'Para acessar o painel white-label, você precisa de uma conta ativa. Fale com nossa equipe.'}
           </p>
-          <Link href="/contato?type=whitelabel" className="button-luxury px-8 py-3 inline-flex items-center gap-2">
-            Solicitar acesso
-          </Link>
+          {isAdmin ? (
+            <button
+              onClick={handleActivate}
+              disabled={activating}
+              className="button-luxury px-8 py-3 inline-flex items-center gap-2 disabled:opacity-50"
+            >
+              {activating ? 'Ativando...' : 'Ativar conta (Admin)'}
+            </button>
+          ) : (
+            <Link href="/contato?type=whitelabel" className="button-luxury px-8 py-3 inline-flex items-center gap-2">
+              Solicitar acesso
+            </Link>
+          )}
         </div>
       </div>
     )
