@@ -17,7 +17,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { PLANS } from '@/lib/abacatepay'
+import { PLANS } from '@/lib/mercadopago'
 
 interface UsageSummary {
   plan: string
@@ -34,7 +34,7 @@ interface UsageSummary {
   subscription: {
     status: string
     currentPeriodEnd: string | null
-    abacatePayBillingId: string | null
+    mercadoPagoPaymentId: string | null
   } | null
 }
 
@@ -339,11 +339,11 @@ export default function BillingPage() {
               <CreditCard className="h-5 w-5 text-green-400" />
             </div>
             <div>
-              <h3 className="text-white font-semibold">Pagamento seguro via AbacatePay</h3>
+              <h3 className="text-white font-semibold">Pagamento seguro via Mercado Pago</h3>
               <p className="text-white/60 text-sm mt-1">
-                Aceitamos PIX e cartao de credito. O pagamento e processado de forma segura pela
-                AbacatePay. Ao clicar em "Assinar Agora", voce sera redirecionado para a pagina de
-                checkout.
+                Aceitamos PIX, cartao de credito e boleto. O pagamento e processado de forma segura
+                pelo Mercado Pago. Ao clicar em "Assinar Agora", voce sera redirecionado para a
+                pagina de checkout.
               </p>
             </div>
           </div>

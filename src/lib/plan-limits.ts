@@ -8,7 +8,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
-import { PLANS, type PlanId } from '@/lib/abacatepay'
+import { PLANS, type PlanId } from '@/lib/mercadopago'
 
 export type LimitType = 'agents' | 'messages' | 'knowledge_bases'
 
@@ -201,7 +201,7 @@ export async function getUsageSummary(userId: string) {
         currentPeriodEnd: true,
         usagePeriodStart: true,
         status: true,
-        abacatePayBillingId: true,
+        mercadoPagoPaymentId: true,
       },
     }),
   ])

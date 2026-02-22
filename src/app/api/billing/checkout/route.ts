@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
-import { createBilling, PLANS, type PlanId } from '@/lib/abacatepay'
+import { createSubscription, PLANS, type PlanId } from '@/lib/mercadopago'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * POST /api/billing/checkout
- * Creates an AbacatePay checkout URL for upgrading to a paid plan.
+ * Cria uma assinatura recorrente no Mercado Pago (PreApproval) para upgrade de plano.
  *
  * Body: { plan: 'pro' | 'business' }
- * Returns: { checkoutUrl: string }
+ * Returns: { checkoutUrl: string, paymentId: string }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get full user info for customer name
+    // Buscar dados completos do usuario
     const dbUser = await prisma.user.findUnique({
       where: { id: user.id },
       select: { name: true, email: true },
@@ -47,34 +47,35 @@ export async function POST(request: NextRequest) {
         ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`
         : 'https://sofiaia.roilabs.com.br/dashboard/billing'
 
-    const billing = await createBilling(
+    const subscription = await createSubscription(
       plan as Exclude<PlanId, 'free'>,
-      dbUser?.email || user.email,
-      dbUser?.name || user.name,
-      returnUrl,
-      `${returnUrl}?success=1&plan=${plan}`
+      {
+        id: user.id,
+        email: dbUser?.email || user.email,
+        name: dbUser?.name || user.name,
+      },
+      returnUrl
     )
 
-    // Save the pending billing ID to the subscription record
+    // Salvar ID da assinatura pendente no DB
     await prisma.subscription.upsert({
       where: { userId: user.id },
       update: {
-        abacatePayBillingId: billing.id,
+        mercadoPagoSubscriptionId: subscription.id,
       },
       create: {
         userId: user.id,
         plan: 'free',
         status: 'pending',
-        abacatePayBillingId: billing.id,
+        mercadoPagoSubscriptionId: subscription.id,
       },
     })
 
     return NextResponse.json({
       success: true,
       data: {
-        checkoutUrl: billing.url,
-        billingId: billing.id,
-        amount: billing.amount,
+        checkoutUrl: subscription.checkoutUrl,
+        paymentId: subscription.id,
       },
     })
   } catch (error: unknown) {

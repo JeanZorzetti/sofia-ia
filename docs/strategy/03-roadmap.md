@@ -118,7 +118,7 @@
 **Objetivo**: Primeiros usuários pagantes
 
 ### Billing
-- ✅ **P0** — Integração AbacatePay (checkout PIX/cartão, webhooks) — substituiu Stripe
+- ✅ **P0** — Integração Mercado Pago (checkout PIX/cartão/boleto, webhooks, assinaturas recorrentes) — substituiu AbacatePay
 - ✅ **P0** — Planos: Free / Pro (R$ 297) / Business (R$ 997)
 - ✅ **P0** — Limites por plano (agentes, msgs, KBs) + helper `checkPlanLimit()`
 - ✅ **P1** — Dashboard de uso e consumo em `/dashboard/billing`
