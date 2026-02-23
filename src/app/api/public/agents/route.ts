@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   }
 
   const agents = await prisma.agent.findMany({
-    where: { userId: user.id, status: 'active' },
+    where: { createdBy: user.id, status: 'active' },
     select: {
       id: true,
       name: true,
