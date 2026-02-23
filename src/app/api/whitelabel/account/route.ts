@@ -29,3 +29,35 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ success: true, data: account }, { status: 201 })
 }
+
+// PATCH /api/whitelabel/account — atualiza branding e customDomain
+export async function PATCH(request: NextRequest) {
+  const auth = await getAuthFromRequest(request)
+  if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+
+  const body = await request.json()
+  const { platformName, logoUrl, primaryColor, customDomain } = body
+
+  const account = await prisma.whitelabelAccount.findUnique({ where: { userId: auth.id } })
+  if (!account) {
+    return NextResponse.json({ success: false, error: 'Conta white-label não encontrada' }, { status: 404 })
+  }
+
+  const currentBranding = (account.branding as Record<string, string>) || {}
+  const updatedBranding = {
+    ...currentBranding,
+    ...(platformName !== undefined && { platformName }),
+    ...(logoUrl !== undefined && { logoUrl }),
+    ...(primaryColor !== undefined && { primaryColor }),
+  }
+
+  const updated = await prisma.whitelabelAccount.update({
+    where: { id: account.id },
+    data: {
+      branding: updatedBranding,
+      ...(customDomain !== undefined && { customDomain: customDomain || null }),
+    },
+  })
+
+  return NextResponse.json({ success: true, data: updated })
+}

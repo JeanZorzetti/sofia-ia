@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft, Plus, Users, RefreshCw, MoreVertical,
-  CheckCircle, XCircle, AlertCircle, Building2, Mail
+  CheckCircle, XCircle, AlertCircle, Building2, Mail, Palette, Save
 } from 'lucide-react'
 
 interface WhitelabelTenant {
@@ -47,6 +47,10 @@ export default function WhitelabelDashboardPage() {
   const [actionMenu, setActionMenu] = useState<string | null>(null)
   const [activating, setActivating] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [showBranding, setShowBranding] = useState(false)
+  const [branding, setBranding] = useState({ platformName: '', logoUrl: '', primaryColor: '', customDomain: '' })
+  const [brandingSaving, setBrandingSaving] = useState(false)
+  const [brandingMsg, setBrandingMsg] = useState('')
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -59,6 +63,15 @@ export default function WhitelabelDashboardPage() {
       if (wlData.success) {
         setAccount(wlData.data.account)
         setTenants(wlData.data.tenants)
+        if (wlData.data.account) {
+          const b = wlData.data.account.branding || {}
+          setBranding({
+            platformName: b.platformName || '',
+            logoUrl: b.logoUrl || '',
+            primaryColor: b.primaryColor || '',
+            customDomain: wlData.data.account.customDomain || '',
+          })
+        }
       }
       if (meRes.ok) {
         const meData = await meRes.json()
@@ -101,6 +114,28 @@ export default function WhitelabelDashboardPage() {
       setFormError(err instanceof Error ? err.message : 'Erro ao criar cliente')
     } finally {
       setCreating(false)
+    }
+  }
+
+  async function handleSaveBranding(e: React.FormEvent) {
+    e.preventDefault()
+    setBrandingSaving(true)
+    setBrandingMsg('')
+    try {
+      const res = await fetch('/api/whitelabel/account', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(branding),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setBrandingMsg('Salvo com sucesso!')
+        fetchData()
+      } else {
+        setBrandingMsg(data.error || 'Erro ao salvar')
+      }
+    } finally {
+      setBrandingSaving(false)
     }
   }
 
@@ -166,7 +201,13 @@ export default function WhitelabelDashboardPage() {
             <p className="text-foreground-tertiary text-sm">Gerencie seus clientes</p>
           </div>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={() => { setShowBranding(!showBranding); setShowForm(false) }}
+            className="px-5 py-2.5 text-sm flex items-center gap-2 border border-white/10 rounded-xl hover:bg-white/5 text-white transition-colors"
+          >
+            <Palette className="w-4 h-4" /> Branding
+          </button>
+          <button
+            onClick={() => { setShowForm(true); setShowBranding(false) }}
             className="button-luxury px-5 py-2.5 text-sm flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> Novo Cliente
@@ -195,6 +236,74 @@ export default function WhitelabelDashboardPage() {
               Conta em período trial. Encerra em {new Date(account.trialEndsAt).toLocaleDateString('pt-BR')}.{' '}
               <Link href="/contato?type=whitelabel" className="underline">Ativar conta</Link>.
             </p>
+          </div>
+        )}
+
+        {/* Branding */}
+        {showBranding && (
+          <div className="glass-card p-6 rounded-xl mb-6">
+            <h3 className="font-semibold text-white mb-1">Customização de Marca</h3>
+            <p className="text-xs text-white/40 mb-5">Configure como sua plataforma aparece para clientes.</p>
+            <form onSubmit={handleSaveBranding} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-white/60 mb-1.5">Nome da plataforma</label>
+                  <input
+                    value={branding.platformName}
+                    onChange={e => setBranding(b => ({ ...b, platformName: e.target.value }))}
+                    placeholder="Ex: Minha IA"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-blue-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-white/60 mb-1.5">Cor primária (hex)</label>
+                  <div className="flex gap-2">
+                    <input
+                      value={branding.primaryColor}
+                      onChange={e => setBranding(b => ({ ...b, primaryColor: e.target.value }))}
+                      placeholder="#6366f1"
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-blue-500/50"
+                    />
+                    {branding.primaryColor && /^#[0-9a-fA-F]{6}$/.test(branding.primaryColor) && (
+                      <div className="w-10 rounded-lg border border-white/10 flex-shrink-0" style={{ backgroundColor: branding.primaryColor }} />
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-white/60 mb-1.5">URL do logo</label>
+                <input
+                  value={branding.logoUrl}
+                  onChange={e => setBranding(b => ({ ...b, logoUrl: e.target.value }))}
+                  placeholder="https://meusite.com/logo.png"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-blue-500/50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/60 mb-1.5">Domínio customizado</label>
+                <input
+                  value={branding.customDomain}
+                  onChange={e => setBranding(b => ({ ...b, customDomain: e.target.value }))}
+                  placeholder="ia.minhaempresa.com.br"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-blue-500/50"
+                />
+                <p className="text-xs text-white/30 mt-1">Aponte um CNAME para sofiaia.roilabs.com.br no seu DNS.</p>
+              </div>
+              {brandingMsg && (
+                <p className={`text-sm ${brandingMsg.includes('sucesso') ? 'text-green-400' : 'text-red-400'}`}>
+                  {brandingMsg}
+                </p>
+              )}
+              <div className="flex gap-3">
+                <button type="submit" disabled={brandingSaving} className="button-luxury px-6 py-2 text-sm flex items-center gap-2 disabled:opacity-50">
+                  <Save className="w-3.5 h-3.5" />
+                  {brandingSaving ? 'Salvando...' : 'Salvar branding'}
+                </button>
+                <button type="button" onClick={() => setShowBranding(false)} className="px-6 py-2 text-sm border border-white/10 rounded-lg hover:bg-white/5 text-white transition-colors">
+                  Fechar
+                </button>
+              </div>
+            </form>
           </div>
         )}
 

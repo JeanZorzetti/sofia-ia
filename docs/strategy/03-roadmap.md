@@ -1,6 +1,6 @@
 # Sofia — Roadmap Executável
 
-> Última atualização: 22/02/2026
+> Última atualização: 23/02/2026
 > Status: Em execução
 
 ## Legenda
@@ -234,9 +234,9 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 #### White-label (produto)
 - ✅ **P0** — Modelo de dados: tabela `WhitelabelTenant` (organizationId, branding, customDomain, planId, ownerId)
 - ✅ **P0** — Painel do integrador: `/dashboard/whitelabel` (criar/listar/suspender sub-tenants)
-- ⬜ **P1** — Middleware de custom domain (sofia.agencia.com.br → injeta brandingConfig no contexto)
+- ✅ **P1** — Middleware de custom domain (sofia.agencia.com.br → injeta x-custom-domain header no contexto)
 - ✅ **P1** — API de provisionamento de sub-tenants (POST /api/whitelabel/tenants)
-- ⬜ **P2** — Tema customizável (logo URL, primary color, nome da plataforma)
+- ✅ **P2** — Tema customizável (logo URL, primary color, nome da plataforma, custom domain via PATCH /api/whitelabel/account)
 
 #### Enterprise (comercial)
 - ✅ **P0** — Plano Enterprise na Home (`/`) — grid 4 colunas com Free/Pro/Business/Enterprise ✅ (feito nesta iteração)
@@ -247,4 +247,4 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 #### Conteúdo
 - ✅ **P1** — Artigo: "Como Criar uma Plataforma de IA White-label para Seus Clientes"
 - ✅ **P1** — Artigo: "O que é White-label de IA e Como Funciona"
-- ⬜ **P2** — Página `/parceiros` (programa de parceiros com tiers: Bronze/Silver/Gold)
+- ✅ **P2** — Página `/parceiros` (programa de parceiros com tiers: Bronze/Silver/Gold)

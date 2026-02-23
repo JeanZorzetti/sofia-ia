@@ -2,18 +2,34 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 
+const PRIMARY_DOMAIN = process.env.NEXT_PUBLIC_DOMAIN || 'sofiaia.roilabs.com.br'
+
 /**
- * Middleware de autenticacao e tenant isolation
+ * Middleware de autenticação, tenant isolation e custom domain white-label
  *
  * Responsabilidades:
  * 1. Proteger rotas /dashboard/* e /onboarding — redirecionar para /login se nao autenticado
  * 2. Proteger rotas /api/* — retornar 401 se nao autenticado
  * 3. Injetar headers x-user-id e x-org-id em todas as requests autenticadas
- *    para que API routes possam filtrar dados sem reler o token
- * 4. Bloquear acesso cruzado (single-tenant por enquanto, preparado para SaaS)
+ * 4. Detectar custom domains white-label e injetar header x-custom-domain
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const host = request.headers.get('host') || ''
+
+  // Detecta custom domain (white-label)
+  const isCustomDomain =
+    host !== '' &&
+    !host.includes('localhost') &&
+    !host.includes('127.0.0.1') &&
+    !host.includes('vercel.app') &&
+    host !== PRIMARY_DOMAIN
+
+  // Headers base — propaga x-custom-domain para Server Components fazerem lookup de branding
+  const baseHeaders = new Headers(request.headers)
+  if (isCustomDomain) {
+    baseHeaders.set('x-custom-domain', host)
+  }
 
   // ------------------------------------------------------------------
   // Helper: resolve user from token (cookie ou Authorization header)
@@ -39,7 +55,13 @@ export async function middleware(request: NextRequest) {
   ): NextResponse {
     response.headers.set('x-user-id', userId)
     response.headers.set('x-org-id', orgId)
+    if (isCustomDomain) response.headers.set('x-custom-domain', host)
     return response
+  }
+
+  // Helper: NextResponse.next() propagando custom domain no request
+  function nextWithBaseHeaders() {
+    return NextResponse.next({ request: { headers: baseHeaders } })
   }
 
   // ------------------------------------------------------------------
@@ -59,9 +81,7 @@ export async function middleware(request: NextRequest) {
       return response
     }
 
-    // Inject tenant headers for downstream use
-    const next = NextResponse.next()
-    // orgId: for single-tenant systems, orgId = userId; prepared for SaaS
+    const next = nextWithBaseHeaders()
     const orgId = (user as any).orgId || user.id
     return withTenantHeaders(next, user.id, orgId)
   }
@@ -80,7 +100,7 @@ export async function middleware(request: NextRequest) {
       response.cookies.delete('sofia_token')
       return response
     }
-    const next = NextResponse.next()
+    const next = nextWithBaseHeaders()
     const orgId = (user as any).orgId || user.id
     return withTenantHeaders(next, user.id, orgId)
   }
@@ -100,7 +120,7 @@ export async function middleware(request: NextRequest) {
       return response
     }
 
-    const next = NextResponse.next()
+    const next = nextWithBaseHeaders()
     const orgId = (user as any).orgId || user.id
     return withTenantHeaders(next, user.id, orgId)
   }
@@ -131,7 +151,7 @@ export async function middleware(request: NextRequest) {
       }
 
       // Inject tenant headers for API route handlers
-      const next = NextResponse.next()
+      const next = nextWithBaseHeaders()
       const orgId = (user as any).orgId || user.id
       return withTenantHeaders(next, user.id, orgId)
     }
@@ -150,7 +170,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next()
+  return nextWithBaseHeaders()
 }
 
 export const config = {
