@@ -274,3 +274,23 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ⬜ **P0** — LinkedIn: estratégia founder brand (3 posts/semana)
 - ⬜ **P1** — YouTube: setup canal + 1 vídeo demo (orquestração ao vivo)
 - ⬜ **P2** — Submeter para 2 eventos de IA no Brasil (palestras/workshops)
+
+---
+
+## Sprint 10 — Retenção + Visibilidade (Semana 29-32)
+
+**Objetivo**: Desbloquear adoção da API, dar visibilidade interna de KPIs e alcançar 50+ artigos publicados
+
+### Produto (desbloqueia Sprint 9)
+- ✅ **P0** — Página `/dashboard/api-keys` — criar, listar, revogar API Keys (sem isso a API pública é inutilizável)
+- ✅ **P0** — APIs de suporte: `GET/POST /api/user/api-keys`, `DELETE /api/user/api-keys/:id`
+
+### Painel Admin (KPIs do fundador)
+- ✅ **P0** — `/admin/metrics` — signups/dia, plano de cada usuário, MRR estimado, últimos logins
+
+### Newsletter
+- ✅ **P1** — Template HTML responsivo Sofia AI (pronto para Resend)
+- ✅ **P1** — `POST /api/admin/newsletter/send` — envio para lista de assinantes (admin only)
+
+### Conteúdo SEO (atingir 50+ artigos)
+- ✅ **P1** — 11 artigos SEO novos (verticais: varejo, turismo, agro, construção, RH avançado, e mais)
