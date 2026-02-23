@@ -1,7 +1,7 @@
 # Sofia AI — ProductHunt Launch Kit
 
 > Lançamento planejado para: TBD (alvo: terça-feira, manhã horário PT)
-> Última atualização: 22/02/2026
+> Última atualização: 23/02/2026
 
 ---
 
@@ -59,6 +59,11 @@ We built Sofia because we were frustrated with every AI orchestration tool out t
 **The results:** Our beta users are generating marketing content, triaging support tickets, and doing competitive analysis in 30-90 seconds with 3-agent pipelines.
 
 **Free plan includes:** 3 orchestrations, 5 agents, 1 Knowledge Base, 100 executions/month. No credit card.
+
+**Recent additions:**
+- Public REST API with API Keys — integrate Sofia with Zapier, n8n, Make or any system
+- White-label program — agencies can resell Sofia under their own brand
+- 55+ blog articles covering AI use cases across 15+ industries
 
 We'd love your feedback on what use cases matter most to you. Drop a comment 👇
 
@@ -127,3 +132,23 @@ Escolher até 5 dos seguintes (ordem de prioridade):
 | Screenshot 2: Analytics | PNG 1270x760 | Pendente |
 | Screenshot 3: Knowledge Base | PNG 1270x760 | Pendente |
 | Screenshot 4: Streaming view | PNG 1270x760 | Pendente |
+| Screenshot 5: API Keys (/dashboard/api-keys) | PNG 1270x760 | Pendente |
+| Screenshot 6: /integrations page | PNG 1270x760 | Pendente |
+
+---
+
+## Links para preparar antes do launch
+
+- **Site:** https://sofiaia.roilabs.com.br
+- **GitHub:** https://github.com/JeanZorzetti/sofia-ia
+- **Docs:** https://sofiaia.roilabs.com.br/docs
+- **Integrações:** https://sofiaia.roilabs.com.br/integrations
+- **OpenAPI spec:** https://sofiaia.roilabs.com.br/api/docs/openapi.json
+- **Planos:** https://sofiaia.roilabs.com.br/#pricing
+
+## Notas para o dia do launch
+
+- Publicar no X/Twitter com thread mostrando o pipeline em execução
+- Postar em: Hacker News (Show HN), Indie Hackers, Reddit r/artificial, r/MachineLearning
+- Notificar lista de early access no Discord e newsletter
+- Responder todos os comentários no PH nas primeiras 4h (crucial para ranking)

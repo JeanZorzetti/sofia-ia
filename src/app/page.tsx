@@ -259,6 +259,7 @@ export default function LandingPage() {
               <BookOpen className="w-3.5 h-3.5" />
               Blog
             </Link>
+            <Link href="/integrations" className="text-foreground-secondary hover:text-white transition-colors text-sm">Integrações</Link>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-sm text-foreground-secondary hover:text-white transition-colors">
@@ -682,8 +683,9 @@ export default function LandingPage() {
                 <h4 className="text-white font-medium text-sm mb-3">Recursos</h4>
                 <ul className="space-y-2">
                   {[
-                    { label: 'Documentação', href: '/documentacao' },
-                    { label: 'API Reference', href: '/api-reference' },
+                    { label: 'Documentação', href: '/docs' },
+                    { label: 'API Reference', href: '/docs' },
+                    { label: 'Integrações', href: '/integrations' },
                     { label: 'Self-hosted', href: '/self-hosted' },
                     { label: 'Status', href: '/status' },
                   ].map(item => (

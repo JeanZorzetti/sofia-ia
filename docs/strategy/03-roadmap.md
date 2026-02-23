@@ -294,3 +294,20 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 
 ### Conteúdo SEO (atingir 50+ artigos)
 - ✅ **P1** — 11 artigos SEO novos (verticais: varejo, turismo, agro, construção, RH avançado, e mais)
+
+---
+
+## Sprint 11 — Launch + Integrações Externas (Semana 33-36)
+
+**Objetivo**: Converter produto maduro em tração real — ProductHunt launch, página de integrações, OpenAPI spec e posicionamento nos canais de distribuição
+
+### Produto
+- ✅ **P2** — OpenAPI 3.0 spec em `GET /api/docs/openapi.json` (documentação da API pública v1)
+- ✅ **P1** — Página pública `/integrations` (Zapier, n8n, Make, API direta — guia de como conectar)
+
+### Distribuição
+- ✅ **P0** — Assets ProductHunt: copy completo, tagline, descrição, FAQ, imagens-guia em `docs/listings/producthunt-launch.md`
+- ⬜ **P0** — Submeter e lançar no ProductHunt (tarefa manual)
+- ⬜ **P0** — Newsletter: enviar 2 primeiras edições reais via Resend (tarefa manual)
+- ⬜ **P1** — LinkedIn: estratégia founder brand — 3 posts/semana (tarefa manual)
+- ⬜ **P2** — YouTube: setup canal + 1 vídeo demo (tarefa manual)
