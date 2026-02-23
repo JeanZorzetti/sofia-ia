@@ -14,13 +14,15 @@ export interface ApiKeyUser {
 export async function authenticateApiKey(apiKey: string | null): Promise<ApiKeyUser | null> {
   if (!apiKey) return null
 
-  const record = await prisma.apiKey.findUnique({
-    where: { key: apiKey },
-    include: { user: { select: { id: true, email: true, name: true, role: true, status: true } } },
-  })
-
+  // ApiKey não tem relação explícita com User no schema — duas queries
+  const record = await prisma.apiKey.findUnique({ where: { key: apiKey } })
   if (!record || record.status !== 'active') return null
-  if (record.user.status !== 'active') return null
+
+  const user = await prisma.user.findUnique({
+    where: { id: record.userId },
+    select: { id: true, email: true, name: true, role: true, status: true },
+  })
+  if (!user || user.status !== 'active') return null
 
   // Atualiza lastUsedAt sem bloquear a resposta
   prisma.apiKey.update({
@@ -28,12 +30,7 @@ export async function authenticateApiKey(apiKey: string | null): Promise<ApiKeyU
     data: { lastUsedAt: new Date() },
   }).catch(() => {})
 
-  return {
-    id: record.user.id,
-    email: record.user.email,
-    name: record.user.name,
-    role: record.user.role,
-  }
+  return { id: user.id, email: user.email, name: user.name, role: user.role }
 }
 
 export function getApiKeyFromRequest(req: Request): string | null {
