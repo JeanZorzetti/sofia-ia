@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Zap,
   Code2,
@@ -162,8 +163,8 @@ export default function IntegrationsPage() {
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-white">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500" />
+          <Link href="/" className="flex items-center gap-2.5 font-bold text-white">
+            <Image src="/logo-icon.svg" alt="Sofia AI" width={28} height={28} />
             Sofia AI
           </Link>
           <div className="flex items-center gap-6 text-sm text-white/50">

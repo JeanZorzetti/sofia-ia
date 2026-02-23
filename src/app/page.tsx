@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   BookOpen,
   ArrowRight,
@@ -244,10 +245,8 @@ export default function LandingPage() {
       {/* Navbar */}
       <nav className="navbar-glass sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="https://sofiaia.roilabs.com.br/" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-              <BrainCircuit className="w-4 h-4 text-white" />
-            </div>
+          <Link href="https://sofiaia.roilabs.com.br/" className="flex items-center gap-2.5">
+            <Image src="/logo-icon.svg" alt="Sofia AI" width={28} height={28} />
             <span className="font-bold text-white text-lg tracking-tight">Sofia AI</span>
           </Link>
           <div className="hidden md:flex items-center gap-8">
@@ -647,10 +646,8 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-start justify-between gap-8 mb-12">
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                  <BrainCircuit className="w-4 h-4 text-white" />
-                </div>
+              <div className="flex items-center gap-2.5 mb-3">
+                <Image src="/logo-icon.svg" alt="Sofia AI" width={28} height={28} />
                 <span className="font-bold text-white">Sofia AI</span>
               </div>
               <p className="text-foreground-tertiary text-sm max-w-xs">
