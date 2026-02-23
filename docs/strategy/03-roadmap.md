@@ -151,7 +151,7 @@
 - ✅ Newsletter
 
 ### Comunidade
-- ⬜ Discord/Slack para usuários
+- ✅ Discord/Slack para usuários (feito no Sprint 7)
 - ✅ Documentação open-source (docs.sofia.ai)
 - ✅ Program de early adopters
 
@@ -248,3 +248,29 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P1** — Artigo: "Como Criar uma Plataforma de IA White-label para Seus Clientes"
 - ✅ **P1** — Artigo: "O que é White-label de IA e Como Funciona"
 - ✅ **P2** — Página `/parceiros` (programa de parceiros com tiers: Bronze/Silver/Gold)
+
+---
+
+## Sprint 9 — Distribuição + API Pública (Semana 25-28)
+
+**Objetivo**: Converter produto maduro em tráfego e integrações — conteúdo Camada 3, API REST pública, docs e canais de distribuição ativos
+
+### Conteúdo SEO Camada 3 — Verticais específicas (5 artigos)
+- ✅ **P0** — "IA para o Mercado Imobiliário: Como Corretores Estão Usando em 2026"
+- ✅ **P0** — "Inteligência Artificial na Saúde: Casos de Uso Reais sem Risco"
+- ✅ **P1** — "IA para Finanças e Contabilidade: Automatize sem Substituir o Contador"
+- ✅ **P1** — "IA na Educação: Como Escolas e EdTechs Estão Usando Agentes IA"
+- ✅ **P1** — "IA para Logística e Supply Chain: Reduza Erros e Ganhe Velocidade"
+
+### API Pública v1 (produto)
+- ✅ **P0** — `GET /api/public/orchestrations` — lista orquestrações do usuário (auth: X-API-Key)
+- ✅ **P0** — `POST /api/public/orchestrations/:id/run` — executa orquestração via API
+- ✅ **P0** — `GET /api/public/agents` — lista agentes do usuário (auth: X-API-Key)
+- ✅ **P1** — Página `/docs` — quick start + API reference (MDX, server component)
+- ⬜ **P2** — OpenAPI/Swagger spec em `/api/docs/openapi.json`
+
+### Distribuição (não-técnico — tarefas manuais)
+- ⬜ **P0** — Newsletter semanal: template HTML + primeiras 2 edições via Resend
+- ⬜ **P0** — LinkedIn: estratégia founder brand (3 posts/semana)
+- ⬜ **P1** — YouTube: setup canal + 1 vídeo demo (orquestração ao vivo)
+- ⬜ **P2** — Submeter para 2 eventos de IA no Brasil (palestras/workshops)
