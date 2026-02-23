@@ -11,6 +11,7 @@ import {
   Activity,
   TrendingUp,
   ArrowRight,
+  BrainCircuit,
   Clock,
   Star,
 } from 'lucide-react'
