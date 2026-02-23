@@ -83,11 +83,52 @@ export async function POST(
       })
     } else if (template.type === 'orchestration') {
       const orchData: any = template.config
+      const rawAgents: any[] = orchData.agents || []
+
+      // Auto-create agents that have agentId === 'auto'
+      const resolvedAgents = await Promise.all(
+        rawAgents.map(async (agentRef: any) => {
+          if (agentRef.agentId !== 'auto') return agentRef
+
+          const agentName: string = agentRef.agentName || agentRef.role || 'Agente'
+
+          // Check if user already has an agent with this name
+          const existing = await prisma.agent.findFirst({
+            where: { name: agentName, createdBy: userId }
+          })
+          if (existing) return { ...agentRef, agentId: existing.id }
+
+          // Try to get system prompt from the corresponding agent template
+          let systemPrompt = `Você é ${agentName}.${agentRef.role ? ` Seu papel nesta orquestração é: ${agentRef.role}.` : ''} Responda de forma clara e profissional.`
+          const agentTemplate = await prisma.template.findFirst({
+            where: { name: agentName, type: 'agent' }
+          })
+          if (agentTemplate) {
+            const tplConfig: any = agentTemplate.config
+            if (tplConfig?.systemPrompt) systemPrompt = tplConfig.systemPrompt
+          }
+
+          const created = await prisma.agent.create({
+            data: {
+              name: agentName,
+              description: agentRef.role ? `Papel: ${agentRef.role}` : null,
+              systemPrompt,
+              model: 'llama-3.3-70b-versatile',
+              temperature: 0.7,
+              status: 'active',
+              createdBy: userId,
+              config: {}
+            }
+          })
+          return { ...agentRef, agentId: created.id }
+        })
+      )
+
       createdResource = await prisma.agentOrchestration.create({
         data: {
           name: orchData.name || template.name,
           description: orchData.description || template.description,
-          agents: orchData.agents || [],
+          agents: resolvedAgents,
           strategy: orchData.strategy || 'sequential',
           config: orchData.config || {},
           createdBy: userId

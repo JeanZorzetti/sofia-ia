@@ -26,6 +26,7 @@ model User {
   leads         Lead[]
   campaigns     Campaign[]
   agents        Agent[]
+  agentFolders  AgentFolder[]
   flows         Flow[]
   subscription  Subscription?
   whitelabelAccount WhitelabelAccount?
@@ -200,6 +201,21 @@ model WhatsappInstance {
   @@map("whatsapp_instances")
 }
 
+model AgentFolder {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(255)
+  color     String   @default("#3b82f6") @db.VarChar(20)
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agents Agent[]
+
+  @@index([userId])
+  @@map("agent_folders")
+}
+
 model Agent {
   id              String   @id @default(uuid()) @db.Uuid
   name            String   @db.VarChar(255)
@@ -208,6 +224,7 @@ model Agent {
   model           String   @default("llama-3.3-70b-versatile") @db.VarChar(100)
   temperature     Float    @default(0.7)
   knowledgeBaseId String?  @map("knowledge_base_id") @db.Uuid
+  folderId        String?  @map("folder_id")
   status          String   @default("active") @db.VarChar(20)
   createdBy       String   @map("created_by") @db.Uuid
   config          Json     @default("{}")
@@ -215,11 +232,13 @@ model Agent {
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   creator  User           @relation(fields: [createdBy], references: [id])
+  folder   AgentFolder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
   channels AgentChannel[]
   devSessions DevSession[]
 
   @@index([status])
   @@index([createdBy])
+  @@index([folderId])
   @@map("agents")
 }
 

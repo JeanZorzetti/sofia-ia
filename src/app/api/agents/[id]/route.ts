@@ -99,6 +99,7 @@ export async function PUT(
       status,
       config,
       knowledgeBaseId,
+      folderId,
       channels
     } = body;
 
@@ -114,6 +115,7 @@ export async function PUT(
         status: status !== undefined ? status : undefined,
         config: config !== undefined ? config : undefined,
         knowledgeBaseId: knowledgeBaseId !== undefined ? knowledgeBaseId : undefined,
+        folderId: folderId !== undefined ? folderId : undefined,
         updatedAt: new Date()
       },
       include: {
