@@ -32,6 +32,8 @@ model User {
   flows         Flow[]
   subscription  Subscription?
   whitelabelAccount WhitelabelAccount?
+  scheduledExecutions ScheduledExecution[]
+  agentMemories AgentMemory[]
 
   @@index([workspaceId])
   @@map("users")
@@ -233,10 +235,13 @@ model Agent {
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
+  memoryEnabled   Boolean  @default(false) @map("memory_enabled")
+
   creator  User           @relation(fields: [createdBy], references: [id])
   folder   AgentFolder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
   channels AgentChannel[]
   devSessions DevSession[]
+  memories    AgentMemory[]
 
   @@index([status])
   @@index([createdBy])
@@ -462,14 +467,19 @@ model ApiKey {
   id          String    @id @default(uuid()) @db.Uuid
   name        String    @db.VarChar(255)
   key         String    @unique @db.VarChar(255)
+  keyHash     String?   @unique @map("key_hash") @db.VarChar(64)  // SHA-256 hex do prefixo sk-
+  keyPrefix   String?   @map("key_prefix") @db.VarChar(20)        // primeiros chars para display
+  scopes      String    @default("read,execute") @db.VarChar(255)
   userId      String    @map("user_id") @db.Uuid
   lastUsedAt  DateTime? @map("last_used_at") @db.Timestamptz()
   status      String    @default("active") @db.VarChar(20)
+  revokedAt   DateTime? @map("revoked_at") @db.Timestamptz()
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   @@index([userId])
   @@index([status])
+  @@index([keyHash])
   @@map("api_keys")
 }
 
@@ -502,7 +512,8 @@ model AgentOrchestration {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  executions OrchestrationExecution[]
+  executions          OrchestrationExecution[]
+  scheduledExecutions ScheduledExecution[]
 
   @@index([status])
   @@index([createdBy])
@@ -821,4 +832,52 @@ model SalesLead {
   @@index([status])
   @@index([createdAt(sort: Desc)])
   @@map("sales_leads")
+}
+
+// ─────────────────────────────────────────────────────────
+// ScheduledExecution — Execuções agendadas via cron
+// ─────────────────────────────────────────────────────────
+model ScheduledExecution {
+  id              String    @id @default(cuid())
+  orchestrationId String    @map("orchestration_id") @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  cronExpr        String    @map("cron_expr") @db.VarChar(100)  // "0 8 * * 1" = toda segunda 8h
+  label           String?   @db.VarChar(255)                    // "Relatório semanal"
+  inputTemplate   String?   @map("input_template") @db.Text     // JSON com variáveis
+  nextRunAt       DateTime  @map("next_run_at") @db.Timestamptz()
+  lastRunAt       DateTime? @map("last_run_at") @db.Timestamptz()
+  lastStatus      String?   @map("last_status") @db.VarChar(20) // 'success' | 'failed'
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  orchestration AgentOrchestration @relation(fields: [orchestrationId], references: [id], onDelete: Cascade)
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orchestrationId])
+  @@index([userId])
+  @@index([isActive])
+  @@index([nextRunAt])
+  @@map("scheduled_executions")
+}
+
+// ─────────────────────────────────────────────────────────
+// AgentMemory — Memória persistente por agente + usuário
+// ─────────────────────────────────────────────────────────
+model AgentMemory {
+  id        String   @id @default(cuid())
+  agentId   String   @map("agent_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  key       String   @db.VarChar(255) // ex: "user_name", "preferred_language"
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, userId, key])
+  @@index([agentId])
+  @@index([userId])
+  @@map("agent_memories")
 }
