@@ -10,6 +10,19 @@ export const metadata: Metadata = {
 
 const releases = [
   {
+    version: 'v2.6.0',
+    date: 'Fevereiro 2026',
+    tag: 'Feature',
+    tagColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+    changes: [
+      { type: 'new', text: 'Google Analytics 4 integrado no site público' },
+      { type: 'new', text: 'Barra de uso de plano em tempo real no dashboard (agentes, mensagens, limites)' },
+      { type: 'new', text: '5 templates de orquestração: Análise Jurídica, Pipeline de RH, Lançamento E-commerce, Triagem em Saúde, Análise de Investimento' },
+      { type: 'new', text: 'Onboarding: step 4 "Experimente agora" — templates de orquestração disponíveis logo após criar o agente' },
+      { type: 'new', text: 'Página pública /changelog' },
+    ],
+  },
+  {
     version: 'v2.5.0',
     date: 'Fevereiro 2026',
     tag: 'Major',
