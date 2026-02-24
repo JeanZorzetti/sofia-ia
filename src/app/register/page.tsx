@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ function GoogleIcon() {
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -31,6 +32,14 @@ export default function RegisterPage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  // Captura ?ref= da URL e armazena em cookie para rastrear indicação
+  const ref = searchParams.get('ref')
+  useEffect(() => {
+    if (ref) {
+      document.cookie = `sofia_ref=${ref}; path=/; max-age=${60 * 60 * 24 * 90}; samesite=lax`
+    }
+  }, [ref])
 
   const handleGoogleSignup = async () => {
     setGoogleLoading(true)
@@ -56,7 +65,7 @@ export default function RegisterPage() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, ...(ref && { referredBy: ref }) }),
       })
 
       const data = await res.json()

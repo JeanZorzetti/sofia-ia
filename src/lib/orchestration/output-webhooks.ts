@@ -179,23 +179,40 @@ async function dispatchEmail(
  * Main entry point — read outputWebhooks from orchestration.config and dispatch each enabled output.
  * All errors are caught per-output to avoid blocking the main response.
  */
+export interface DispatchRecord {
+  type: string
+  destination: string
+  status: 'sent' | 'failed'
+  error?: string
+  sentAt: string
+}
+
+/**
+ * Main entry point — read outputWebhooks from orchestration.config and dispatch each enabled output.
+ * Returns an array of dispatch records for persistence.
+ */
 export async function dispatchOutputWebhooks(
   orchestration: OrchestrationSummary & { config: any },
   execution: ExecutionSummary,
   finalOutput: any
-): Promise<void> {
+): Promise<DispatchRecord[]> {
   const config = orchestration.config as Record<string, any> | null
   const outputWebhooks: OutputWebhookConfig[] = config?.outputWebhooks ?? []
 
-  if (!outputWebhooks.length) return
+  if (!outputWebhooks.length) return []
 
   const enabled = outputWebhooks.filter((w) => w.enabled)
-  if (!enabled.length) return
+  if (!enabled.length) return []
 
   console.log(`[OutputWebhooks] Dispatching ${enabled.length} output(s) for orchestration ${orchestration.id}`)
 
-  await Promise.allSettled(
-    enabled.map(async (cfg) => {
+  const results = await Promise.allSettled(
+    enabled.map(async (cfg): Promise<DispatchRecord> => {
+      const sentAt = new Date().toISOString()
+      const destination =
+        cfg.type === 'email' ? (cfg.to ?? '') :
+        cfg.type === 'slack' ? 'slack-webhook' :
+        (cfg.url ?? '')
       try {
         if (cfg.type === 'webhook') {
           await dispatchWebhook(cfg, orchestration, execution, finalOutput)
@@ -207,9 +224,13 @@ export async function dispatchOutputWebhooks(
           await dispatchEmail(cfg, orchestration, execution, finalOutput)
           console.log(`[OutputWebhooks] email → ${cfg.to} ✓`)
         }
-      } catch (err) {
+        return { type: cfg.type, destination, status: 'sent', sentAt }
+      } catch (err: any) {
         console.error(`[OutputWebhooks] Failed to dispatch ${cfg.type}:`, err)
+        return { type: cfg.type, destination, status: 'failed', error: err?.message ?? 'Unknown error', sentAt }
       }
     })
   )
+
+  return results.map((r) => (r.status === 'fulfilled' ? r.value : { type: 'unknown', destination: '', status: 'failed' as const, error: 'Promise rejected', sentAt: new Date().toISOString() }))
 }

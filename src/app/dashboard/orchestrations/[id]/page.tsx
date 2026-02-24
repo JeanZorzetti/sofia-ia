@@ -770,6 +770,36 @@ export default function OrchestrationDetailPage({ params }: { params: Promise<{ 
             <p className="text-xs text-white/30 text-center py-2">Nenhum output configurado.</p>
           )}
 
+          {/* Dispatch history from last executions */}
+          {(() => {
+            const dispatches: any[] = []
+            for (const exec of (orchestration.executions || []).slice(0, 5)) {
+              const wh = exec?.output?.webhookDispatches
+              if (Array.isArray(wh)) {
+                wh.forEach((d: any) => dispatches.push({ ...d, executionId: exec.id }))
+              }
+            }
+            if (!dispatches.length) return null
+            return (
+              <div className="pt-1">
+                <p className="text-[11px] text-white/40 uppercase tracking-wider mb-2">Histórico de disparos</p>
+                <div className="space-y-1 max-h-36 overflow-y-auto">
+                  {dispatches.slice(0, 10).map((d, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs text-white/60">
+                      {d.status === 'sent'
+                        ? <CheckCircle className="h-3.5 w-3.5 text-green-400 flex-shrink-0" />
+                        : <XCircle className="h-3.5 w-3.5 text-red-400 flex-shrink-0" />}
+                      <span className="capitalize text-white/50">{d.type}</span>
+                      <span className="truncate flex-1 font-mono">{d.destination}</span>
+                      {d.error && <span className="text-red-400 truncate max-w-[120px]">{d.error}</span>}
+                      <span className="text-white/30 flex-shrink-0">{d.sentAt ? new Date(d.sentAt).toLocaleTimeString('pt-BR') : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
           {/* Add new output */}
           <div className="flex gap-2 pt-1">
             <Select value={newWebhookType} onValueChange={(v) => setNewWebhookType(v as 'webhook' | 'email' | 'slack')}>

@@ -730,12 +730,19 @@ export async function POST(
         }
       })
 
-      // Dispatch output webhooks (fire and forget)
+      // Dispatch output webhooks and persist dispatch history in execution output
       dispatchOutputWebhooks(
         { id: orchestration.id, name: orchestration.name, config: orchestration.config },
         { id: execution.id, durationMs, tokensUsed },
         finalOutput
-      ).catch((err) => {
+      ).then(async (dispatches) => {
+        if (dispatches.length > 0) {
+          await prisma.orchestrationExecution.update({
+            where: { id: execution.id },
+            data: { output: { ...(finalOutput as object), webhookDispatches: dispatches as any } }
+          }).catch(() => {})
+        }
+      }).catch((err) => {
         console.error('[Orchestration] Output webhook dispatch error:', err)
       })
 

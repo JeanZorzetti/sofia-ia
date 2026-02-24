@@ -1,10 +1,27 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Settings, Users, Building2, Key, Shield, Lock, Scale, Palette, Webhook } from 'lucide-react';
+import { Settings, Users, Building2, Key, Shield, Lock, Scale, Palette, Webhook, Gift, Copy, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function SettingsPage() {
+  const [referrals, setReferrals] = useState<{ count: number; referralLink: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/user/referrals')
+      .then(r => r.json())
+      .then(d => { if (typeof d.count === 'number') setReferrals(d) })
+      .catch(() => {})
+  }, [])
+
+  const handleCopy = () => {
+    if (!referrals?.referralLink) return
+    navigator.clipboard.writeText(referrals.referralLink)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
   const settingsCards = [
     {
       title: 'Gestão de Usuários',
@@ -98,6 +115,47 @@ export default function SettingsPage() {
           );
         })}
       </div>
+
+      {/* Referral card */}
+      <Card className="border-green-500/20 bg-green-500/5">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-green-500/20 text-green-400">
+              <Gift className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Programa de Indicação</CardTitle>
+              <CardDescription>Ganhe 20–40% de comissão recorrente por cada indicado</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="text-center px-4 py-3 rounded-lg bg-zinc-800 border border-zinc-700">
+              <div className="text-3xl font-bold text-green-400">{referrals?.count ?? '—'}</div>
+              <div className="text-xs text-zinc-400 mt-0.5">indicação{referrals?.count !== 1 ? 'ões' : ''} ativa{referrals?.count !== 1 ? 's' : ''}</div>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-zinc-400 mb-2">Seu link de indicação:</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-xs bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-green-300 truncate">
+                  {referrals?.referralLink ?? 'Carregando...'}
+                </code>
+                <button
+                  onClick={handleCopy}
+                  className="flex-shrink-0 p-2 rounded-lg bg-zinc-800 border border-zinc-700 hover:bg-zinc-700 transition-colors"
+                  title="Copiar link"
+                >
+                  {copied ? <CheckCircle className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4 text-zinc-400" />}
+                </button>
+              </div>
+            </div>
+          </div>
+          <Link href="/afiliados" target="_blank" className="inline-flex items-center gap-1.5 text-sm text-green-400 hover:text-green-300 transition-colors">
+            Ver detalhes do programa →
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   );
 }

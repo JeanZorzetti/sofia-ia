@@ -6,7 +6,7 @@ import { signToken, setAuthCookie } from '@/lib/auth'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { name, email, password } = body
+    const { name, email, password, referredBy } = body
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
         passwordHash,
         role: 'user',
         status: 'active',
+        ...(referredBy && { referredBy }),
       },
     })
 

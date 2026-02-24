@@ -347,18 +347,18 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 ### Produto — Auth (conversão de signup)
 - ✅ **P0** — Google OAuth via next-auth: "Entrar com Google" nas páginas de login e cadastro
 - ✅ **P0** — Bridge OAuth → JWT existente (login social cria/encontra user no DB e emite cookie JWT)
-- ⬜ **P1** — Botão "Continuar com Google" no onboarding wizard (step 1)
+- ✅ **P1** — Botão "Continuar com Google" no onboarding wizard (step 1)
 
 ### Produto — Webhooks de Output (retenção + integração)
 - ✅ **P0** — Config de output em orquestrações: webhook URL, email, Slack webhook
 - ✅ **P0** — Disparar webhook/email/Slack ao final de cada execução bem-sucedida
 - ✅ **P1** — UI de configuração de outputs no editor de orquestração
-- ⬜ **P1** — Histórico de disparos (enviado, falhou, retry)
+- ✅ **P1** — Histórico de disparos (enviado, falhou, retry)
 
 ### Produto — Afiliados (aquisição viral)
 - ✅ **P1** — Página pública `/afiliados` (landing com benefícios, comissão e CTA para se inscrever)
 - ✅ **P1** — Link rastreável por usuário (ref=USER_ID nos CTAs do dashboard e sidebar)
-- ⬜ **P2** — Contador de indicações no perfil do usuário
+- ✅ **P2** — Contador de indicações no perfil do usuário
 
 ### SEO — Camada 2/3 (cadência mensal)
 - ✅ **P0** — "Como Integrar Agentes IA com Slack, Email e Webhooks"
