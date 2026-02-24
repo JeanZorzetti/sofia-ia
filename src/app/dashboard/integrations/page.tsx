@@ -26,8 +26,55 @@ import {
   Send,
   Phone,
   Brain,
+  Zap,
+  GitBranch,
+  ArrowRight,
+  Key,
 } from 'lucide-react'
 import Link from 'next/link'
+
+const automationPlatforms = [
+  {
+    id: 'zapier',
+    name: 'Zapier',
+    description: 'Conecte Sofia AI a 6.000+ apps sem código via triggers e actions',
+    icon: Zap,
+    color: 'text-orange-500',
+    bg: 'bg-orange-500/10',
+    badge: 'Popular',
+    href: '/dashboard/integrations/zapier',
+  },
+  {
+    id: 'make',
+    name: 'Make',
+    description: 'Crie cenários visuais complexos com o module HTTP do Make',
+    icon: GitBranch,
+    color: 'text-purple-500',
+    bg: 'bg-purple-500/10',
+    badge: null,
+    href: '/dashboard/integrations/make',
+  },
+  {
+    id: 'n8n',
+    name: 'n8n',
+    description: 'Workflows self-hosted com o HTTP Request node do n8n',
+    icon: GitBranch,
+    color: 'text-green-500',
+    bg: 'bg-green-500/10',
+    badge: 'Open Source',
+    href: '/dashboard/integrations/n8n',
+  },
+  {
+    id: 'api',
+    name: 'API Direta',
+    description: 'Use sua API Key para integrar Sofia AI em qualquer sistema',
+    icon: Key,
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10',
+    badge: null,
+    href: '/dashboard/api-keys',
+  },
+]
 
 interface Integration {
   id: string
@@ -323,6 +370,44 @@ export default function IntegrationsPage() {
             <Plus className="mr-2 h-4 w-4" />
             Nova Integração
           </Button>
+        </div>
+      </div>
+
+      {/* Plataformas de Automação */}
+      <div>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Plataformas de Automação</h2>
+          <Link href="/integrations" className="text-sm text-primary hover:underline flex items-center gap-1">
+            Ver guias públicos <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {automationPlatforms.map((platform) => {
+            const Icon = platform.icon
+            return (
+              <Link key={platform.id} href={platform.href}>
+                <Card className="hover:shadow-lg hover:border-primary/50 transition-all cursor-pointer h-full">
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-2">
+                      <div className={`p-2 rounded-lg ${platform.bg}`}>
+                        <Icon className={`h-6 w-6 ${platform.color}`} />
+                      </div>
+                      {platform.badge && (
+                        <Badge variant="secondary" className="text-xs">{platform.badge}</Badge>
+                      )}
+                    </div>
+                    <CardTitle className="text-base">{platform.name}</CardTitle>
+                    <CardDescription className="text-sm">{platform.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <span className="text-xs text-primary flex items-center gap-1">
+                      Configurar <ArrowRight className="h-3 w-3" />
+                    </span>
+                  </CardContent>
+                </Card>
+              </Link>
+            )
+          })}
         </div>
       </div>
 
