@@ -28,7 +28,8 @@ import {
   Bell,
   Mail,
   Webhook,
-  Hash
+  Hash,
+  Calendar
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ExecutionLiveView } from '@/components/orchestrations/execution-live-view'
@@ -99,6 +100,13 @@ export default function OrchestrationDetailPage({ params }: { params: Promise<{ 
   const [savingWebhooks, setSavingWebhooks] = useState<boolean>(false)
   const [newWebhookType, setNewWebhookType] = useState<WebhookType>('webhook')
   const [newWebhookValue, setNewWebhookValue] = useState<string>('')
+
+  // Schedule State
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState<boolean>(false)
+  const [scheduleCronExpr, setScheduleCronExpr] = useState<string>('0 8 * * *')
+  const [scheduleLabel, setScheduleLabel] = useState<string>('')
+  const [scheduleInput, setScheduleInput] = useState<string>('')
+  const [scheduleSaving, setScheduleSaving] = useState<boolean>(false)
 
   // Edit State
   const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false)
@@ -288,6 +296,38 @@ export default function OrchestrationDetailPage({ params }: { params: Promise<{ 
       toast.error('Erro ao salvar outputs')
     } finally {
       setSavingWebhooks(false)
+    }
+  }
+
+  // Schedule handler
+  const handleCreateSchedule = async () => {
+    if (!orchestration) return
+    setScheduleSaving(true)
+    try {
+      const res = await fetch('/api/dashboard/scheduled-executions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orchestrationId: resolvedParams.id,
+          cronExpr: scheduleCronExpr,
+          label: scheduleLabel.trim() || null,
+          inputTemplate: scheduleInput.trim() ? JSON.stringify({ text: scheduleInput.trim() }) : null,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Agendamento criado com sucesso!')
+        setScheduleDialogOpen(false)
+        setScheduleLabel('')
+        setScheduleInput('')
+        setScheduleCronExpr('0 8 * * *')
+      } else {
+        toast.error(data.error || 'Erro ao criar agendamento')
+      }
+    } catch {
+      toast.error('Erro ao criar agendamento')
+    } finally {
+      setScheduleSaving(false)
     }
   }
 
@@ -574,6 +614,14 @@ export default function OrchestrationDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
         <div className="flex gap-2">
+          <Button
+            onClick={() => setScheduleDialogOpen(true)}
+            variant="outline"
+            className="gap-2 border-purple-500/40 text-purple-300 hover:bg-purple-500/10 hover:text-purple-200"
+          >
+            <Calendar className="h-4 w-4" />
+            Agendar
+          </Button>
           <Button onClick={() => setExecuteDialogOpen(true)} className="gap-2 bg-green-600 hover:bg-green-700">
             <Play className="h-4 w-4" />
             Executar
@@ -1061,6 +1109,105 @@ export default function OrchestrationDetailPage({ params }: { params: Promise<{ 
           </DialogFooter>
         </DialogContent>
       </Dialog >
+      {/* Schedule Dialog */}
+      <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
+        <DialogContent className="bg-gray-900 border-white/20 text-white max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-purple-400" />
+              Agendar Execução
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              Configure quando esta orquestração deve rodar automaticamente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5">
+            {/* Preset buttons */}
+            <div>
+              <Label className="text-white/80 text-sm mb-2 block">Frequência</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: 'Diário 8h', cron: '0 8 * * *' },
+                  { label: 'Semanal Seg', cron: '0 8 * * 1' },
+                  { label: 'Mensal dia 1', cron: '0 8 1 * *' },
+                ].map((preset) => (
+                  <button
+                    key={preset.cron}
+                    type="button"
+                    onClick={() => setScheduleCronExpr(preset.cron)}
+                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-all border ${
+                      scheduleCronExpr === preset.cron
+                        ? 'bg-purple-500/20 border-purple-500/50 text-purple-300'
+                        : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom cron expression */}
+            <div>
+              <Label htmlFor="cron-expr" className="text-white/80 text-sm">
+                Expressão Cron
+              </Label>
+              <Input
+                id="cron-expr"
+                value={scheduleCronExpr}
+                onChange={(e) => setScheduleCronExpr(e.target.value)}
+                className="bg-white/5 border-white/10 text-white font-mono text-sm mt-1"
+                placeholder="0 8 * * *"
+              />
+              <p className="text-xs text-white/30 mt-1">
+                Formato: minuto hora dia-mês mês dia-semana (ex: <code className="text-purple-300">0 8 * * 1</code> = segundas às 8h)
+              </p>
+            </div>
+
+            {/* Label */}
+            <div>
+              <Label htmlFor="sched-label" className="text-white/80 text-sm">
+                Rótulo (opcional)
+              </Label>
+              <Input
+                id="sched-label"
+                value={scheduleLabel}
+                onChange={(e) => setScheduleLabel(e.target.value)}
+                className="bg-white/5 border-white/10 text-white mt-1"
+                placeholder="Ex: Relatório diário de vendas"
+              />
+            </div>
+
+            {/* Input template */}
+            <div>
+              <Label htmlFor="sched-input" className="text-white/80 text-sm">
+                Input padrão (opcional)
+              </Label>
+              <Input
+                id="sched-input"
+                value={scheduleInput}
+                onChange={(e) => setScheduleInput(e.target.value)}
+                className="bg-white/5 border-white/10 text-white mt-1"
+                placeholder="Texto de entrada que será passado à orquestração"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setScheduleDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleCreateSchedule}
+              disabled={scheduleSaving || !scheduleCronExpr.trim()}
+              className="gap-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50"
+            >
+              <Calendar className="h-4 w-4" />
+              {scheduleSaving ? 'Agendando...' : 'Criar Agendamento'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div >
   )
 }

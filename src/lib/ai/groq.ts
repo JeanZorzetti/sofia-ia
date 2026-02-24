@@ -122,6 +122,22 @@ export async function chatWithAgent(
   // Construir prompt do sistema
   let systemPrompt = agent.systemPrompt
 
+  // Injetar memória do agente se memoryEnabled (busca userId do contexto do lead ou da primeira mensagem)
+  if ((agent as any).memoryEnabled) {
+    const userId = leadContext?.userId || leadContext?.leadId || null
+    if (userId) {
+      try {
+        const { buildMemorySystemPromptBlock } = await import('@/lib/tools/memory')
+        const memoryBlock = await buildMemorySystemPromptBlock(agentId, userId)
+        if (memoryBlock) {
+          systemPrompt = memoryBlock + systemPrompt
+        }
+      } catch {
+        // Silently skip memory injection on error
+      }
+    }
+  }
+
   if (leadContext && agent.model !== 'claude-code-cli') {
     systemPrompt += `\n\nContexto do lead:
 - Nome: ${leadContext.leadName || 'Não informado'}

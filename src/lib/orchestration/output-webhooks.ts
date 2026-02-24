@@ -2,19 +2,26 @@
  * Output Webhooks — dispatch notifications after successful orchestration execution.
  *
  * Supported output types:
- *  - webhook: HTTP POST to a custom URL
+ *  - webhook: HTTP POST to a custom URL (with HMAC X-Sofia-Signature: sha256=xxx signing)
  *  - email:   send via Resend (uses the existing email utility)
  *  - slack:   HTTP POST to a Slack Incoming Webhook URL
  *
  * Configuration is stored in AgentOrchestration.config JSON field:
  * {
  *   "outputWebhooks": [
- *     { "type": "webhook", "url": "https://...", "enabled": true },
+ *     { "type": "webhook", "url": "https://...", "enabled": true, "secret": "optional-signing-secret" },
  *     { "type": "email",   "to": "user@example.com", "subject": "Orquestração concluída", "enabled": true },
  *     { "type": "slack",   "webhookUrl": "https://hooks.slack.com/services/...", "enabled": true }
  *   ]
  * }
+ *
+ * HMAC verification example (receiver side):
+ *   const sig = req.headers['x-sofia-signature']  // "sha256=abc123..."
+ *   const computed = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
+ *   if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(computed))) throw new Error('Invalid signature')
  */
+
+import { createHmac } from 'crypto'
 
 export type OutputWebhookConfig =
   | { type: 'webhook'; url: string; enabled: boolean; secret?: string }
@@ -64,13 +71,22 @@ async function dispatchWebhook(
     timestamp: new Date().toISOString(),
   }
 
+  const body = JSON.stringify(payload)
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (cfg.secret) headers['X-Sofia-Secret'] = cfg.secret
+
+  // Sign the payload with HMAC-SHA256 if a secret is configured
+  const signingSecret = cfg.secret || process.env.WEBHOOK_SIGNING_SECRET
+  if (signingSecret) {
+    const hmac = createHmac('sha256', signingSecret)
+    hmac.update(body)
+    const digest = hmac.digest('hex')
+    headers['X-Sofia-Signature'] = `sha256=${digest}`
+  }
 
   const res = await fetch(cfg.url, {
     method: 'POST',
     headers,
-    body: JSON.stringify(payload),
+    body,
     signal: AbortSignal.timeout(15_000),
   })
 

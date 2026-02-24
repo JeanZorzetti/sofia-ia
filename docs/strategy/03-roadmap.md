@@ -386,7 +386,7 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P1** — OG dinâmica para `/afiliados`, `/whitelabel`, `/enterprise` — headline + benefício principal
 
 #### Validação e distribuição
-- ⬜ **P1** — Testar todas as OGs com og:debugger do Facebook e Twitter Card Validator (manual pós-deploy)
+- ✅ **P1** — Testar todas as OGs com og:debugger do Facebook e Twitter Card Validator (manual pós-deploy)
 - ✅ **P1** — Garantir `twitter:card=summary_large_image` em todas as páginas públicas (`layout.tsx` global + páginas individuais)
 - ✅ **P2** — OG personalizada para o `og:image` do `/changelog` (versão + features destaque)
 
@@ -396,3 +396,61 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P1** — "Checklist de SEO Técnico para SaaS em 2026: do sitemap ao OG"
 - ✅ **P1** — "Multi-agente vs RAG: Quando Usar Cada Abordagem de IA"
 - ✅ **P2** — "Como Construir um Pipeline de Geração de Conteúdo com Agentes IA"
+
+---
+
+## Sprint 15 — Developer Platform + Execuções Agendadas + Agent Memory (Semana 49-52)
+
+**Objetivo**: Transformar Sofia AI de web app em plataforma — API pública real com auth por API key, SDK npm, agendamento de orquestrações (cron), e memória persistente de agentes entre sessões. Estes são os três desbloqueadores de enterprise, integrações nativas e retenção de longo prazo.
+
+### Produto — API Pública v1 (developer platform)
+
+#### API Keys
+- ✅ **P0** — Tela `/dashboard/api-keys`: criar, listar, revogar API keys (com scope: read/execute)
+- ✅ **P0** — Middleware de auth por `Authorization: Bearer sk-xxx` nas rotas `/api/v1/*`
+- ✅ **P0** — Rate limiting por API key (plano Free: 100 req/dia, Pro: 1000/dia, Business: 10k/dia)
+- ✅ **P1** — Log de uso por API key (timestamp, endpoint, status) no dashboard
+
+#### Endpoints v1
+- ✅ **P0** — `POST /api/v1/orchestrations/:id/execute` — executar orquestração via API, retorna `{ executionId }`
+- ✅ **P0** — `GET /api/v1/executions/:id` — consultar status/resultado de execução (`pending | running | done | failed`)
+- ✅ **P0** — `POST /api/v1/agents/:id/chat` — enviar mensagem a um agente, retorna resposta completa
+- ✅ **P1** — `GET /api/v1/orchestrations` — listar orquestrações do tenant (para integradores)
+- ✅ **P1** — `GET /api/v1/agents` — listar agentes do tenant
+
+#### HMAC de Webhooks
+- ✅ **P1** — Assinar todos os payloads de webhook de output com `X-Sofia-Signature: sha256=xxx`
+- ✅ **P1** — Documentar verificação de assinatura na página `/docs/api`
+
+### Produto — Execuções Agendadas (cron)
+
+- ✅ **P0** — Campo "Agendar execução" no editor de orquestração (cron expression ou preset: diário/semanal/mensal)
+- ✅ **P0** — Schema Prisma: `ScheduledExecution` (orchestrationId, cronExpr, nextRunAt, lastRunAt, status)
+- ✅ **P0** — API route `POST /api/cron/scheduled-executions` protegida por `CRON_SECRET` (chamada pelo Vercel Cron)
+- ✅ **P0** — `vercel.json` com cron job `0 * * * *` (a cada hora, dispara execuções pendentes)
+- ✅ **P1** — Histórico de execuções agendadas no dashboard (data, status, output snippet)
+- ✅ **P2** — Notificação por email ao término de execução agendada (Resend)
+
+### Produto — Agent Memory (contexto persistente entre sessões)
+
+- ✅ **P0** — Schema Prisma: `AgentMemory` (agentId, userId, key, value, updatedAt) — armazena fatos sobre o usuário
+- ✅ **P0** — Tool `save_memory(key, value)` disponível para agentes: salva no `AgentMemory` durante a conversa
+- ✅ **P0** — Tool `recall_memory(key?)` disponível para agentes: busca fatos salvos anteriormente
+- ✅ **P0** — Injetar memórias relevantes no system prompt do agente a cada nova conversa (top-5 por recência)
+- ✅ **P1** — Tela `/dashboard/agents/:id/memory` — visualizar e editar memórias do agente por usuário
+- ✅ **P1** — Opção "Habilitar Memory" no editor de agente (on/off por agente)
+- ✅ **P2** — Limite de memórias por plano (Free: 20 fatos, Pro: 200, Business: ilimitado)
+
+### Developer Experience
+
+- ✅ **P0** — Página pública `/docs/api` com exemplos cURL + JavaScript de todos os endpoints v1
+- ✅ **P1** — npm package `sofia-ai`: SDK TypeScript com `SofiaClient.execute()`, `.chat()`, `.getExecution()`
+- ✅ **P1** — Publicar `sofia-ai` no npm (versão 0.1.0) — README com quickstart
+- ✅ **P2** — Snippet de code no dashboard: "Use sua orquestração via API" (copia direto da UI)
+
+### SEO — Camada 2/3 (cadência mensal, 5 artigos)
+- ✅ **P0** — "Como Agendar Execuções de IA: Automatize Relatórios e Conteúdo com Cron Jobs"
+- ✅ **P0** — "Agent Memory: Como Dar Memória Persistente ao Seu Agente IA"
+- ✅ **P1** — "Como Usar a API REST do Sofia AI: Guia Completo com Exemplos"
+- ✅ **P1** — "SDK JavaScript para Agentes IA: Integrando Sofia AI em Qualquer Aplicação"
+- ✅ **P2** — "Webhook Seguro com HMAC: Verificando Assinaturas de Notificações IA"
