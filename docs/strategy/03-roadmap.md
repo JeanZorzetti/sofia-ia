@@ -321,9 +321,9 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 ### Produto (desbloqueadores de conversão)
 - ✅ **P0** — Google Analytics 4 no site público (medir tráfego orgânico real)
 - ✅ **P0** — Barra de uso de plano visível no dashboard (agentes, msgs, KBs usados vs limite)
-- ⬜ **P1** — Melhoria no onboarding: step "Experimente agora" com orquestração de demo pré-carregada
+- ✅ **P1** — Melhoria no onboarding: step "Experimente agora" com orquestração de demo pré-carregada
 - ✅ **P1** — 5 novos templates de orquestração (verticais: jurídico, RH, e-commerce, saúde, finanças)
-- ⬜ **P2** — Página `/changelog` pública (histórico de features — gera conteúdo SEO e credibilidade)
+- ✅ **P2** — Página `/changelog` pública (histórico de features — gera conteúdo SEO e credibilidade)
 
 ### SEO — Camada 2 (criar demanda, intenção comercial)
 - ✅ **P0** — "Como Automatizar Atendimento ao Cliente com IA em 2026"
@@ -336,4 +336,4 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ⬜ **P0** — Newsletter: enviar edições 1 e 2 reais (Resend + lista de assinantes)
 - ⬜ **P0** — LinkedIn: primeiros 10 posts do founder brand (estratégia + execução)
 - ⬜ **P1** — YouTube: setup canal + 1 vídeo demo de orquestração ao vivo
-- ⬜ **P2** — Google Search Console + Bing Webmaster Tools configurados
+- ✅ **P2** — Google Search Console + Bing Webmaster Tools configurados
