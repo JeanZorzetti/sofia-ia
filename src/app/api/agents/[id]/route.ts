@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { logAudit, getIpFromRequest, getUserAgentFromRequest } from '@/lib/audit';
 
 interface RouteParams {
   params: Promise<{
@@ -169,6 +170,8 @@ export async function PUT(
       });
     }
 
+    logAudit(user.id, 'agent.updated', 'agent', agent.id, { name: agent.name })
+
     return NextResponse.json({
       success: true,
       data: agent,
@@ -211,6 +214,8 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    logAudit(user.id, 'agent.deleted', 'agent', id, { name: existingAgent.name }, undefined, getIpFromRequest(request), getUserAgentFromRequest(request))
 
     // Delete agent (cascade will delete channels)
     await prisma.agent.delete({

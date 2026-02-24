@@ -3,6 +3,7 @@ import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { checkPlanLimit } from '@/lib/plan-limits';
 import { trackEvent, isFirstEvent } from '@/lib/analytics';
+import { logAudit, getIpFromRequest, getUserAgentFromRequest } from '@/lib/audit';
 
 export async function GET(request: NextRequest) {
   try {
@@ -148,6 +149,9 @@ export async function POST(request: NextRequest) {
         }
       }
     });
+
+    // Audit log
+    logAudit(user.id, 'agent.created', 'agent', agent.id, { name: agent.name }, undefined, getIpFromRequest(request), getUserAgentFromRequest(request))
 
     // Track first agent creation (fire and forget)
     isFirstEvent('first_agent_created', user.id).then((isFirst) => {
