@@ -518,3 +518,79 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P1** — "RBAC em SaaS: Por que Controle de Acesso por Papel é Essencial para Enterprise"
 - ✅ **P1** — "Audit Log em Aplicações IA: Compliance, Segurança e Rastreabilidade"
 - ✅ **P2** — "Make vs Zapier vs n8n: Qual Plataforma de Automação Usar com IA em 2026"
+
+---
+
+## Sprint 17 — Plugin Ecosystem + Agent-to-Agent + CRM Integrations (Semana 57-60)
+
+**Objetivo**: Três moats técnicos do macro executados em paralelo — plugin ecosystem (extensibilidade para power users e devs), agent-to-agent protocol (diferencial técnico único no mercado BR) e conectores nativos para HubSpot e Salesforce (integration marketplace, stickiness enterprise). Completa a visão "Longuíssimo Prazo" de plataforma extensível.
+
+### Produto — Plugin Ecosystem (custom tools/nodes)
+
+#### Infraestrutura
+- ⬜ **P0** — Schema Prisma: `AgentPlugin` (id, agentId, name, description, code: String, inputSchema: Json, enabled: Boolean)
+- ⬜ **P0** — Execução sandboxed de plugins via `vm2` ou edge function com timeout de 5s e acesso restrito (sem fs, sem net)
+- ⬜ **P0** — Tool `run_plugin(pluginName, input)` injetada automaticamente em agentes com plugins habilitados
+- ⬜ **P0** — Validação de schema do plugin antes de salvar (código sintaxe JS válida)
+
+#### UI no editor de agente
+- ⬜ **P0** — Aba "Plugins" no editor de agente — lista plugins, botão "Novo Plugin"
+- ⬜ **P0** — Editor de plugin: nome, descrição, input schema (JSON Schema), código JavaScript da função
+- ⬜ **P0** — Botão "Testar Plugin" — executa com input de exemplo, exibe output/erro em tempo real
+- ⬜ **P1** — Templates de plugins prontos: calculadora, buscador de CEP, formatter de data, gerador de slug
+- ⬜ **P1** — Limite de plugins por plano (Free: 2, Pro: 10, Business: ilimitado)
+
+#### Rotas de API
+- ⬜ **P0** — `GET/POST /api/agents/[id]/plugins` — listar e criar plugins
+- ⬜ **P0** — `PATCH/DELETE /api/agents/[id]/plugins/[pluginId]` — editar e remover
+- ⬜ **P1** — `POST /api/agents/[id]/plugins/[pluginId]/test` — testar com input JSON
+
+### Produto — Agent-to-Agent Protocol
+
+#### Conceito e schema
+- ⬜ **P0** — Tool `delegate_to_agent(agentId, message, context?)` disponível em todos os agentes — chama outro agente e retorna resposta
+- ⬜ **P0** — Schema Prisma: `AgentDelegation` (id, fromAgentId, toAgentId, message, response, status, createdAt) — rastreia todas as delegações
+- ⬜ **P0** — Proteção anti-loop: máximo 3 níveis de delegação aninhada por execução (evitar loops infinitos)
+- ⬜ **P0** — A delegação respeita o system prompt e memória do agente chamado
+
+#### Orquestração melhorada
+- ⬜ **P1** — No editor de orquestração, cada nó de agente pode configurar "Sub-agentes disponíveis para delegação"
+- ⬜ **P1** — Histórico de delegações visível no painel de execução (quem delegou para quem, input/output)
+- ⬜ **P1** — Logs de delegação no audit log (`agent.delegated`)
+
+#### Página de docs
+- ⬜ **P2** — Seção em `/docs/api` explicando agent-to-agent: como configurar, exemplos de uso, limites
+
+### Produto — CRM Integrations (HubSpot + Salesforce)
+
+#### HubSpot
+- ⬜ **P0** — `GET/POST /api/integrations/hubspot/connect` — OAuth flow para conectar conta HubSpot
+- ⬜ **P0** — Tool `hubspot_create_contact(email, name, properties?)` injetável em agentes conectados ao HubSpot
+- ⬜ **P0** — Tool `hubspot_get_contact(email)` — busca contato no HubSpot
+- ⬜ **P1** — Tool `hubspot_create_deal(name, stage, amount, contactId)` — cria deal no CRM
+- ⬜ **P1** — Página `/dashboard/integrations/hubspot` — conectar OAuth, status da conexão, testar tools
+
+#### Salesforce
+- ⬜ **P1** — `GET/POST /api/integrations/salesforce/connect` — OAuth 2.0 flow (Connected App)
+- ⬜ **P1** — Tool `salesforce_create_lead(firstName, lastName, email, company)` injetável em agentes
+- ⬜ **P1** — Tool `salesforce_query(soql)` — executa SOQL query (read-only) e retorna resultados
+- ⬜ **P2** — Página `/dashboard/integrations/salesforce` — conectar OAuth, status, testar tools
+
+#### Infraestrutura OAuth shared
+- ⬜ **P0** — Schema Prisma: `OAuthConnection` (id, userId, provider, accessToken, refreshToken, expiresAt, metadata Json)
+- ⬜ **P0** — Helper `getOAuthConnection(userId, provider)` — busca e auto-renova token se expirado
+
+### Produto — Docs & Guides
+
+- ⬜ **P0** — Página `/docs` — hub central com links para todas as seções de documentação
+- ⬜ **P0** — Página `/docs/getting-started` — guia de início rápido: criar agente → orquestração → executar via API
+- ⬜ **P1** — Página `/docs/plugins` — como criar e usar plugins em agentes
+- ⬜ **P1** — Página `/docs/agent-to-agent` — como usar delegação entre agentes
+- ⬜ **P2** — Link "Docs" no menu de navegação público (entre Blog e API)
+
+### SEO — Camada 2/3 (cadência mensal, 5 artigos)
+- ⬜ **P0** — "Plugin Ecosystem: Como Estender Agentes IA com Funções JavaScript Personalizadas"
+- ⬜ **P0** — "Agent-to-Agent: Como Agentes IA se Comunicam e Delegam Tarefas Entre Si"
+- ⬜ **P1** — "HubSpot + IA: Como Automatizar seu CRM com Agentes Inteligentes"
+- ⬜ **P1** — "Salesforce + Agentes IA: Qualificação de Leads e Criação de Deals Automáticos"
+- ⬜ **P2** — "O que é Integration Marketplace: Como Plataformas de IA se Tornam Ecosistemas"
