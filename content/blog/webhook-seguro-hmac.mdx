@@ -1,0 +1,350 @@
+---
+title: "Webhook Seguro com HMAC: Verificando Assinaturas de Notificacoes IA"
+description: "Aprenda a implementar webhooks seguros com assinaturas HMAC-SHA256. Proteja suas integracoes de IA contra chamadas maliciosas e garanta autenticidade das notificacoes."
+date: "2026-02-24"
+author: "Jean Zorzetti"
+tags: ["webhook", "seguranca", "hmac", "integracao", "ia", "sofia-ai", "backend"]
+readTime: "9 min"
+---
+
+Webhooks sao a espinha dorsal das integracoes modernas — eles permitem que sistemas notifiquem sua aplicacao sobre eventos em tempo real. Porem, sem mecanismos de seguranca adequados, qualquer atacante pode enviar requisicoes falsas para seu endpoint e injetar dados maliciosos.
+
+HMAC (Hash-based Message Authentication Code) e a solucao padrao da industria para verificar a autenticidade e integridade das notificacoes de webhook. Neste artigo, vamos implementar um sistema completo de verificacao de assinaturas.
+
+## Por que Webhooks sem Seguranca sao Perigosos?
+
+Um endpoint de webhook sem verificacao e como uma porta aberta:
+
+1. **Injecao de dados falsos**: Qualquer pessoa com a URL pode enviar dados falsos
+2. **Replay attacks**: Atacantes podem re-enviar notificacoes legitimas para causar efeitos duplicados
+3. **Man-in-the-middle**: Notificacoes podem ser interceptadas e modificadas em transito
+4. **Negacao de servico**: Flooding do endpoint com requisicoes maliciosas
+
+## Como o HMAC Funciona
+
+O processo e simples mas eficaz:
+
+```
+1. Remetente: hash = HMAC-SHA256(payload, secret_compartilhado)
+2. Remetente: envia payload + hash no header
+3. Receptor: recalcula hash com o mesmo secret
+4. Receptor: compara os hashes — se iguais, a mensagem e autentica
+```
+
+A seguranca vem do secret compartilhado: sem ele, e impossivel gerar um hash valido.
+
+## Implementando no Lado Receptor (Seu Backend)
+
+### Node.js / Express
+
+```javascript
+const express = require('express');
+const crypto = require('crypto');
+
+const app = express();
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET; // Seu secret compartilhado
+
+// IMPORTANTE: Use raw body, nao parsed JSON, para calcular o hash corretamente
+app.use('/webhook', express.raw({ type: 'application/json' }));
+
+function verifyWebhookSignature(rawBody, signature) {
+  const expectedSig = crypto
+    .createHmac('sha256', WEBHOOK_SECRET)
+    .update(rawBody)
+    .digest('hex');
+
+  // Comparacao em tempo constante (evita timing attacks)
+  return crypto.timingSafeEqual(
+    Buffer.from(signature, 'hex'),
+    Buffer.from(expectedSig, 'hex')
+  );
+}
+
+app.post('/webhook', (req, res) => {
+  const signature = req.headers['x-sofia-signature'];
+
+  if (!signature) {
+    return res.status(400).json({ error: 'Assinatura ausente' });
+  }
+
+  if (!verifyWebhookSignature(req.body, signature)) {
+    console.warn('Assinatura invalida recebida de:', req.ip);
+    return res.status(401).json({ error: 'Assinatura invalida' });
+  }
+
+  // Parse o body apenas apos verificacao
+  const event = JSON.parse(req.body.toString());
+  console.log('Evento recebido:', event.type);
+
+  // Processar o evento...
+  processEvent(event);
+
+  res.json({ received: true });
+});
+```
+
+### Next.js (App Router)
+
+```typescript
+// app/api/webhook/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { createHmac, timingSafeEqual } from 'crypto';
+
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET!;
+
+function verifySignature(body: string, signature: string): boolean {
+  const expected = createHmac('sha256', WEBHOOK_SECRET)
+    .update(body, 'utf-8')
+    .digest('hex');
+
+  try {
+    return timingSafeEqual(
+      Buffer.from(signature, 'hex'),
+      Buffer.from(expected, 'hex')
+    );
+  } catch {
+    return false; // Buffers de tamanho diferente = invalido
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const rawBody = await request.text();
+  const signature = request.headers.get('x-sofia-signature') || '';
+
+  if (!signature) {
+    return NextResponse.json({ error: 'Assinatura ausente' }, { status: 400 });
+  }
+
+  if (!verifySignature(rawBody, signature)) {
+    return NextResponse.json({ error: 'Assinatura invalida' }, { status: 401 });
+  }
+
+  const event = JSON.parse(rawBody);
+
+  // Processar evento por tipo
+  switch (event.type) {
+    case 'orchestration.completed':
+      await handleOrchestrationCompleted(event.data);
+      break;
+    case 'agent.response':
+      await handleAgentResponse(event.data);
+      break;
+    default:
+      console.log('Tipo de evento desconhecido:', event.type);
+  }
+
+  return NextResponse.json({ received: true });
+}
+
+async function handleOrchestrationCompleted(data: any) {
+  console.log(`Orquestracao ${data.orchestrationId} concluida`);
+  console.log(`Output: ${JSON.stringify(data.output).slice(0, 100)}...`);
+  // Sua logica aqui...
+}
+
+async function handleAgentResponse(data: any) {
+  console.log(`Resposta do agente ${data.agentId}: ${data.reply.slice(0, 50)}...`);
+  // Sua logica aqui...
+}
+```
+
+### Python / FastAPI
+
+```python
+from fastapi import FastAPI, Request, HTTPException, Header
+import hmac
+import hashlib
+import json
+import os
+
+app = FastAPI()
+WEBHOOK_SECRET = os.environ['WEBHOOK_SECRET'].encode()
+
+def verify_signature(body: bytes, signature: str) -> bool:
+    expected = hmac.new(WEBHOOK_SECRET, body, hashlib.sha256).hexdigest()
+    try:
+        # Comparacao em tempo constante
+        return hmac.compare_digest(signature, expected)
+    except Exception:
+        return False
+
+@app.post("/webhook")
+async def receive_webhook(
+    request: Request,
+    x_sofia_signature: str = Header(None)
+):
+    raw_body = await request.body()
+
+    if not x_sofia_signature:
+        raise HTTPException(400, "Assinatura ausente")
+
+    if not verify_signature(raw_body, x_sofia_signature):
+        raise HTTPException(401, "Assinatura invalida")
+
+    event = json.loads(raw_body)
+    print(f"Evento recebido: {event['type']}")
+
+    # Processar evento...
+    return {"received": True}
+```
+
+## Configurando Webhooks no Sofia AI
+
+No Sofia AI, configure seu endpoint de webhook em `/dashboard/webhooks`:
+
+1. Adicione a URL do seu endpoint
+2. O sistema gera automaticamente um `WEBHOOK_SECRET`
+3. Copie o secret e configure como variavel de ambiente
+
+O Sofia AI assina todas as notificacoes com o header `X-Sofia-Signature`:
+
+```
+X-Sofia-Signature: sha256=abc123...
+```
+
+**Nota:** O formato inclui o prefixo `sha256=` — remova-o ao comparar:
+
+```javascript
+const rawSignature = req.headers['x-sofia-signature'];
+const signature = rawSignature.replace('sha256=', '');
+```
+
+## Protecao contra Replay Attacks
+
+HMAC verifica autenticidade mas nao protege contra replay attacks (re-envio de notificacoes validas). Adicione verificacao de timestamp:
+
+```typescript
+const MAX_AGE_SECONDS = 300; // 5 minutos
+
+function verifyWebhook(rawBody: string, signature: string, timestamp: string): boolean {
+  // 1. Verificar timestamp (evita replay attacks)
+  const webhookAge = Date.now() / 1000 - parseInt(timestamp);
+  if (webhookAge > MAX_AGE_SECONDS) {
+    console.warn(`Webhook muito antigo: ${webhookAge}s`);
+    return false;
+  }
+
+  // 2. Verificar assinatura (inclui timestamp no payload assinado)
+  const signedPayload = `${timestamp}.${rawBody}`;
+  const expected = createHmac('sha256', WEBHOOK_SECRET)
+    .update(signedPayload)
+    .digest('hex');
+
+  return timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'));
+}
+```
+
+## Idempotencia: Processando Eventos Apenas Uma Vez
+
+Webhooks podem ser entregues mais de uma vez (em caso de falha/timeout). Use o `eventId` para garantir processamento unico:
+
+```typescript
+import { prisma } from '@/lib/prisma';
+
+async function processWebhookEvent(event: any) {
+  const eventId = event.id;
+
+  // Tentar inserir o ID do evento no banco
+  // Se ja existir, e um evento duplicado
+  const existing = await prisma.processedWebhookEvent.findUnique({
+    where: { eventId },
+  });
+
+  if (existing) {
+    console.log(`Evento ${eventId} ja processado, ignorando.`);
+    return;
+  }
+
+  // Marcar como processado
+  await prisma.processedWebhookEvent.create({
+    data: { eventId, processedAt: new Date() },
+  });
+
+  // Processar o evento
+  await handleEvent(event);
+}
+```
+
+## Testando seu Endpoint
+
+### Com cURL
+
+```bash
+# Calcular assinatura
+PAYLOAD='{"type":"test","data":{}}'
+SECRET="seu_webhook_secret"
+SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$SECRET" | cut -d' ' -f2)
+
+# Enviar requisicao
+curl -X POST https://seu-app.com/webhook \
+  -H "Content-Type: application/json" \
+  -H "X-Sofia-Signature: $SIGNATURE" \
+  -d "$PAYLOAD"
+```
+
+### Com Node.js
+
+```javascript
+const crypto = require('crypto');
+const fetch = require('node-fetch');
+
+const payload = JSON.stringify({ type: 'test', data: {} });
+const secret = 'seu_webhook_secret';
+const signature = crypto
+  .createHmac('sha256', secret)
+  .update(payload)
+  .digest('hex');
+
+await fetch('http://localhost:3000/api/webhook', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-Sofia-Signature': signature,
+  },
+  body: payload,
+});
+```
+
+## Monitoramento e Alertas
+
+Configure alertas para falhas de verificacao:
+
+```typescript
+// Registrar tentativas invalidas
+if (!isValid) {
+  await prisma.securityLog.create({
+    data: {
+      event: 'webhook_invalid_signature',
+      ip: request.headers.get('x-forwarded-for') || 'unknown',
+      payload: rawBody.slice(0, 1000), // Limitar tamanho
+      timestamp: new Date(),
+    },
+  });
+
+  // Alerta se muitas tentativas invalidas (possivel ataque)
+  const recentFails = await prisma.securityLog.count({
+    where: {
+      event: 'webhook_invalid_signature',
+      timestamp: { gte: new Date(Date.now() - 60000) }, // ultimo minuto
+    },
+  });
+
+  if (recentFails > 10) {
+    await sendSecurityAlert('Alto numero de assinaturas invalidas detectado');
+  }
+}
+```
+
+## Conclusao
+
+Webhooks seguros com HMAC sao essenciais para qualquer integracao de producao. Os pontos principais:
+
+1. **Sempre verifique assinaturas** antes de processar qualquer payload
+2. **Use comparacao em tempo constante** para evitar timing attacks
+3. **Valide timestamps** para prevenir replay attacks
+4. **Implemente idempotencia** para lidar com entregas duplicadas
+5. **Monitore tentativas invalidas** como indicador de atividade maliciosa
+
+No Sofia AI, todos os webhooks de saida sao assinados automaticamente com HMAC-SHA256. Configure seu endpoint e use os exemplos deste artigo para uma integracao segura e confiavel.
+
+**Configure webhooks agora:** Acesse `/dashboard/webhooks` no [Sofia AI](https://sofiaia.roilabs.com.br) e conecte suas aplicacoes com seguranca total.

@@ -1,0 +1,346 @@
+---
+title: "SDK JavaScript para Agentes IA: Integrando Sofia AI em Qualquer Aplicacao"
+description: "Guia completo do SDK JavaScript do Sofia AI. Instale, configure e integre agentes de IA e orquestracoes em aplicacoes Node.js, React, Next.js e mais."
+date: "2026-02-24"
+author: "Jean Zorzetti"
+tags: ["sdk", "javascript", "typescript", "npm", "integracao", "sofia-ai", "nodejs"]
+readTime: "8 min"
+---
+
+Integrar IA em aplicacoes JavaScript ficou muito mais simples com o SDK oficial do Sofia AI. Em vez de gerenciar chamadas de API, polling e tratamento de erros manualmente, o SDK abstrai toda essa complexidade em uma interface limpa e tipada.
+
+## Instalacao
+
+```bash
+# npm
+npm install sofia-ai
+
+# yarn
+yarn add sofia-ai
+
+# pnpm
+pnpm add sofia-ai
+```
+
+O SDK e compativel com qualquer ambiente JavaScript moderno:
+- Node.js >= 18
+- Navegador moderno (Chrome, Firefox, Safari, Edge)
+- React, Next.js, Vue, Svelte, Angular
+- Deno e Bun
+
+## Configuracao Inicial
+
+```typescript
+import { SofiaClient } from 'sofia-ai';
+
+const client = new SofiaClient({
+  apiKey: process.env.SOFIA_API_KEY, // Nunca exponha a chave no frontend!
+  // baseUrl: 'https://sofiaia.roilabs.com.br' // opcional
+});
+```
+
+**Importante:** Mantenha sua API key segura. Em aplicacoes frontend, use um proxy backend para fazer as chamadas.
+
+## Chat com Agentes
+
+### Envio Basico de Mensagem
+
+```typescript
+const { reply, tokens } = await client.chat(
+  'agent-id',
+  'Quais sao os planos disponíveis?'
+);
+
+console.log(reply);    // Resposta do agente
+console.log(tokens);   // Tokens consumidos
+```
+
+### Conversa com Contexto
+
+Use `conversationId` para manter o contexto entre mensagens:
+
+```typescript
+// Primeira mensagem
+const first = await client.chat('agent-id', 'Meu nome e Carlos');
+// first.conversationId = 'conv_1234...'
+
+// Segunda mensagem (agente "lembra" do contexto da sessao)
+const second = await client.chat('agent-id', 'Como me chamo?', {
+  conversationId: first.conversationId
+});
+// second.reply = "Voce se chama Carlos"
+```
+
+### Em Componente React
+
+```tsx
+import { useState } from 'react';
+import { SofiaClient } from 'sofia-ai';
+
+// IMPORTANTE: Em apps React/frontend, use um proxy backend
+// Nunca inicialize SofiaClient com sua chave no frontend diretamente
+const API_BASE = '/api'; // Seu proxy backend
+
+export function ChatWidget({ agentId }: { agentId: string }) {
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+
+  async function sendMessage() {
+    if (!input.trim()) return;
+
+    const userMessage = input;
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+    setLoading(true);
+
+    try {
+      // Chamar seu proxy backend
+      const res = await fetch(`${API_BASE}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId, message: userMessage, conversationId }),
+      });
+
+      const { reply, conversationId: newConvId } = await res.json();
+      setConversationId(newConvId);
+      setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <div className="messages">
+        {messages.map((m, i) => (
+          <div key={i} className={`message ${m.role}`}>{m.content}</div>
+        ))}
+        {loading && <div className="loading">Pensando...</div>}
+      </div>
+      <input
+        value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={e => e.key === 'Enter' && sendMessage()}
+        placeholder="Digite sua mensagem..."
+      />
+      <button onClick={sendMessage}>Enviar</button>
+    </div>
+  );
+}
+```
+
+## Orquestracoes
+
+### Executar e Aguardar
+
+O metodo mais simples para execucoes sincronas (sob a perspectiva do seu codigo):
+
+```typescript
+const result = await client.executeAndWait(
+  'orchestration-id',
+  'Gere um relatorio de vendas de fevereiro 2026'
+);
+
+console.log(result.output);     // Saida final da orquestracao
+console.log(result.tokensUsed); // Total de tokens
+console.log(result.durationMs); // Tempo em milissegundos
+```
+
+### Controle Total do Polling
+
+Para maior controle sobre o processo:
+
+```typescript
+// 1. Iniciar execucao
+const { executionId } = await client.execute(
+  'orchestration-id',
+  'Analise os dados de vendas',
+  { variables: { periodo: 'Q1-2026', formato: 'executivo' } }
+);
+
+console.log(`Execucao iniciada: ${executionId}`);
+
+// 2. Aguardar com callback de progresso
+const result = await client.waitForExecution(executionId, 3000, 300000);
+console.log('Concluido:', result.output);
+```
+
+### Execucoes em Paralelo
+
+```typescript
+const orchestrationIds = ['orch-relatorio', 'orch-marketing', 'orch-vendas'];
+
+const executions = await Promise.all(
+  orchestrationIds.map(id =>
+    client.execute(id, 'Input padrao para o relatorio mensal')
+  )
+);
+
+// Aguardar todos em paralelo
+const results = await Promise.all(
+  executions.map(({ executionId }) => client.waitForExecution(executionId))
+);
+
+results.forEach((result, i) => {
+  console.log(`Orquestracao ${i + 1}: ${result.status}`);
+});
+```
+
+## Listagem de Recursos
+
+```typescript
+// Listar todos os agentes
+const agents = await client.listAgents();
+console.log(`Total de agentes: ${agents.length}`);
+for (const agent of agents) {
+  console.log(`- ${agent.name} (${agent.model})`);
+}
+
+// Listar todas as orquestracoes
+const orchestrations = await client.listOrchestrations();
+console.log(`Total de orquestracoes: ${orchestrations.length}`);
+```
+
+## Uso em Node.js / Scripts
+
+Ideal para automacoes, scripts de batch e servicos backend:
+
+```typescript
+// scripts/gerar-relatorios.ts
+import { SofiaClient } from 'sofia-ai';
+
+async function main() {
+  const client = new SofiaClient({
+    apiKey: process.env.SOFIA_API_KEY!,
+  });
+
+  const mes = new Date().toLocaleString('pt-BR', { month: 'long' });
+  console.log(`Gerando relatorio de ${mes}...`);
+
+  const result = await client.executeAndWait(
+    process.env.ORCH_RELATORIO_ID!,
+    `Gere o relatorio completo de ${mes}. Inclua: vendas, leads, churn e previsao pro proximo mes.`,
+    {
+      intervalMs: 5000,  // checar a cada 5 segundos
+      timeoutMs: 600000, // timeout de 10 minutos
+    }
+  );
+
+  if (result.status === 'completed') {
+    console.log('Relatorio gerado com sucesso!');
+    console.log(`Tokens usados: ${result.tokensUsed}`);
+    console.log(`Tempo: ${(result.durationMs! / 1000).toFixed(1)}s`);
+
+    // Salvar em arquivo
+    const fs = await import('fs/promises');
+    await fs.writeFile(`relatorio-${mes}.md`, result.output as string);
+  }
+}
+
+main().catch(console.error);
+```
+
+## Tratamento de Erros Tipados
+
+```typescript
+import { SofiaClient } from 'sofia-ai';
+
+const client = new SofiaClient({ apiKey: process.env.SOFIA_API_KEY! });
+
+try {
+  const result = await client.executeAndWait('orch-id', 'input');
+  console.log(result.output);
+} catch (error) {
+  if (error instanceof Error) {
+    if (error.message.includes('401')) {
+      console.error('API key invalida ou expirada');
+    } else if (error.message.includes('404')) {
+      console.error('Orquestracao nao encontrada');
+    } else if (error.message.includes('429')) {
+      console.error('Rate limit atingido. Aguarde e tente novamente.');
+    } else if (error.message.includes('Execution failed')) {
+      console.error('Execucao falhou:', error.message);
+    } else if (error.message.includes('timeout')) {
+      console.error('Timeout: execucao demorou mais que o esperado');
+    } else {
+      console.error('Erro inesperado:', error.message);
+    }
+  }
+}
+```
+
+## Uso em Next.js (App Router)
+
+### Route Handler (Proxy Seguro)
+
+```typescript
+// app/api/chat/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { SofiaClient } from 'sofia-ai';
+
+// Inicializacao lazy para evitar erros de build
+let client: SofiaClient | null = null;
+
+function getClient() {
+  if (!client) {
+    client = new SofiaClient({
+      apiKey: process.env.SOFIA_API_KEY!,
+    });
+  }
+  return client;
+}
+
+export async function POST(request: NextRequest) {
+  const { agentId, message, conversationId } = await request.json();
+
+  // Autenticacao do usuario (sua logica aqui)
+  // const session = await getServerSession()
+  // if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { reply, conversationId: newConvId, tokens } = await getClient().chat(
+    agentId,
+    message,
+    { conversationId }
+  );
+
+  return NextResponse.json({ reply, conversationId: newConvId, tokens });
+}
+```
+
+### Server Component (SSR)
+
+```typescript
+// app/dashboard/relatorio/page.tsx
+import { SofiaClient } from 'sofia-ai';
+
+async function getRelatorio() {
+  const client = new SofiaClient({ apiKey: process.env.SOFIA_API_KEY! });
+  const result = await client.executeAndWait(
+    process.env.ORCH_RELATORIO_ID!,
+    'Gere o relatorio do dia'
+  );
+  return result.output;
+}
+
+export default async function RelatorioPage() {
+  const relatorio = await getRelatorio();
+  return <div>{relatorio as string}</div>;
+}
+```
+
+## Conclusao
+
+O SDK do Sofia AI elimina a complexidade de integrar IA em aplicacoes JavaScript. Com tipagem TypeScript completa, gerenciamento automatico de polling e tratamento elegante de erros, voce pode focar no que importa: construir o seu produto.
+
+**Recursos do SDK:**
+- Compativel com Node.js, browsers e edge runtimes
+- TypeScript-first com tipos completos
+- Zero dependencias externas (apenas `fetch`)
+- Tratamento automatico de retry e backoff
+
+**Comece agora:**
+1. [Instale: `npm install sofia-ai`](https://www.npmjs.com/package/sofia-ai)
+2. [Gere sua API key](https://sofiaia.roilabs.com.br/dashboard/api-keys)
+3. [Veja a documentacao completa da API](https://sofiaia.roilabs.com.br/docs/api)
