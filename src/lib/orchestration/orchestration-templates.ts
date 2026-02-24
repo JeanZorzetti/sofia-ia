@@ -256,7 +256,7 @@ Formato de saída:
 6. Nota: inclua disclaimer sobre limitações dos dados`
             }
         ]
-    }
+    },
     // ─── Vertical: Jurídico ───────────────────────────────
     {
         id: 'juridico-analise-contrato',
