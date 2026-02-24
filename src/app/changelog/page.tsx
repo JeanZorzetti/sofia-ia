@@ -5,6 +5,19 @@ import { ArrowLeft, ArrowRight, BrainCircuit, Zap, CheckCircle, Star } from 'luc
 export const metadata: Metadata = {
   title: 'Changelog — Sofia AI | Novidades e Atualizações',
   description: 'Acompanhe todas as novidades, melhorias e correções do Sofia AI. Atualizado regularmente.',
+  openGraph: {
+    title: 'Changelog Sofia AI — Novidades da Plataforma',
+    description: 'Novas features, melhorias e correções do Sofia AI. Orquestração de agentes IA em constante evolução.',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Sofia AI',
+    url: 'https://sofiaia.roilabs.com.br/changelog',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Changelog Sofia AI — Novidades da Plataforma',
+    description: 'Acompanhe todas as novidades, melhorias e correções do Sofia AI.',
+  },
   alternates: { canonical: 'https://sofiaia.roilabs.com.br/changelog' },
 }
 

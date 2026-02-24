@@ -16,8 +16,17 @@ export const metadata = {
     apple: '/logo-icon.svg',
   },
   openGraph: {
-    images: [{ url: '/logo.svg', width: 180, height: 48, alt: 'Sofia AI' }],
+    type: 'website' as const,
+    locale: 'pt_BR',
+    siteName: 'Sofia AI',
+    url: 'https://sofiaia.roilabs.com.br',
   },
+  twitter: {
+    card: 'summary_large_image' as const,
+    site: '@sofiaai_br',
+    creator: '@sofiaai_br',
+  },
+  metadataBase: new URL('https://sofiaia.roilabs.com.br'),
 }
 
 export default function RootLayout({

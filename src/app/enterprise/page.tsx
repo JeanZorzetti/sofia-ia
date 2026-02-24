@@ -8,6 +8,19 @@ import {
 export const metadata: Metadata = {
   title: 'Enterprise — Sofia AI para Grandes Organizações',
   description: 'Sofia AI Enterprise: self-hosted (LGPD), SSO/SAML 2.0, SLA personalizado, compliance e gerente de conta dedicado. Fale com nossa equipe.',
+  openGraph: {
+    title: 'Sofia AI Enterprise — IA em Escala para Grandes Empresas',
+    description: 'Self-hosted, SSO/SAML, SLA garantido, auditoria completa e suporte dedicado.',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Sofia AI',
+    url: 'https://sofiaia.roilabs.com.br/enterprise',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sofia AI Enterprise — IA em Escala para Grandes Empresas',
+    description: 'Self-hosted, SSO/SAML, SLA garantido e suporte dedicado.',
+  },
   alternates: { canonical: 'https://sofiaia.roilabs.com.br/enterprise' },
 }
 

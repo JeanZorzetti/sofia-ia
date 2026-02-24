@@ -1,0 +1,347 @@
+---
+title: "Checklist de SEO Técnico para SaaS em 2026: do Sitemap ao OG"
+description: "O checklist definitivo de SEO técnico para plataformas SaaS modernas. Cobre Core Web Vitals, metadata, Open Graph, sitemap, robots.txt, Schema.org e otimizações específicas para Next.js App Router."
+date: "2026-02-24"
+author: "Sofia AI — ROI Labs"
+tags: ["seo técnico", "next.js", "core web vitals", "sitemap", "open graph", "saas"]
+readTime: "12 min"
+---
+
+SEO técnico é a base que permite que todo o seu conteúdo seja encontrado, indexado e ranqueado. Para plataformas SaaS modernas construídas com Next.js, há uma série de otimizações que a maioria dos times negligencia.
+
+Este checklist cobre tudo: desde o `robots.txt` até OG images dinâmicas.
+
+---
+
+## 1. Fundação: robots.txt e indexação
+
+### robots.txt
+
+O `robots.txt` deve bloquear páginas privadas e expostas sem valor SEO:
+
+```
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://seusite.com/sitemap.xml
+```
+
+No Next.js App Router, crie `app/robots.ts`:
+
+```typescript
+import type { MetadataRoute } from 'next'
+
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: ['/dashboard/', '/admin/', '/api/', '/login', '/register'],
+    },
+    sitemap: 'https://seusite.com/sitemap.xml',
+  }
+}
+```
+
+- [ ] `robots.txt` bloqueia rotas de dashboard e API
+- [ ] `robots.txt` aponta para o sitemap
+- [ ] Não bloqueia recursos CSS/JS essenciais para renderização
+
+---
+
+## 2. Sitemap dinâmico
+
+Para um SaaS com blog e múltiplas páginas, o sitemap deve ser gerado dinamicamente:
+
+```typescript
+// app/sitemap.ts
+import type { MetadataRoute } from 'next'
+import { getAllSlugs } from '@/lib/blog'
+
+const BASE_URL = 'https://seusite.com'
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const slugs = getAllSlugs()
+
+  const blogUrls = slugs.map((slug) => ({
+    url: `${BASE_URL}/blog/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
+  }))
+
+  const staticPages = [
+    { url: BASE_URL, priority: 1.0, changeFrequency: 'weekly' as const },
+    { url: `${BASE_URL}/features/orchestrations`, priority: 0.9 },
+    { url: `${BASE_URL}/templates`, priority: 0.9 },
+    { url: `${BASE_URL}/blog`, priority: 0.9 },
+    { url: `${BASE_URL}/precos`, priority: 0.8 },
+    { url: `${BASE_URL}/afiliados`, priority: 0.7 },
+    { url: `${BASE_URL}/changelog`, priority: 0.6 },
+  ].map((p) => ({ ...p, lastModified: new Date(), changeFrequency: p.changeFrequency ?? 'monthly' as const }))
+
+  return [...staticPages, ...blogUrls]
+}
+```
+
+- [ ] Sitemap dinâmico gerado com Next.js
+- [ ] Inclui todas as páginas públicas com prioridade correta
+- [ ] Inclui todos os artigos do blog
+- [ ] Submetido no Google Search Console
+- [ ] Submetido no Bing Webmaster Tools
+
+---
+
+## 3. Metadata base e `metadataBase`
+
+A configuração do `metadataBase` no `layout.tsx` raiz é crítica para que todos os caminhos relativos de imagens OG sejam resolvidos corretamente:
+
+```typescript
+// app/layout.tsx
+export const metadata = {
+  metadataBase: new URL('https://seusite.com'),
+  title: {
+    default: 'Sofia AI — Orquestração de Agentes IA',
+    template: '%s | Sofia AI',
+  },
+  description: 'Descrição padrão...',
+  openGraph: {
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Sofia AI',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
+}
+```
+
+**Por que `metadataBase` importa:** sem ele, caminhos como `/opengraph-image` não são resolvidos para URLs absolutas — e rastreadores sociais não conseguem carregar a imagem.
+
+- [ ] `metadataBase` configurado com a URL de produção
+- [ ] Template de título configurado (`%s | Nome do Site`)
+- [ ] `twitter:card: summary_large_image` como padrão global
+- [ ] `og:locale: pt_BR` configurado
+
+---
+
+## 4. Open Graph e OG images
+
+### OG mínimo por página
+
+Toda página pública deve ter:
+
+```typescript
+export const metadata: Metadata = {
+  title: 'Título específico da página',
+  description: 'Descrição informativa de 140-160 caracteres.',
+  openGraph: {
+    title: 'Título OG (pode ser diferente do título SEO)',
+    description: 'Descrição OG...',
+    type: 'website',
+    url: 'https://seusite.com/pagina',
+    locale: 'pt_BR',
+    siteName: 'Sofia AI',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Título Twitter',
+    description: 'Descrição Twitter',
+  },
+  alternates: {
+    canonical: 'https://seusite.com/pagina',
+  },
+}
+```
+
+### OG images dinâmicas com `next/og`
+
+Para cada rota, crie um arquivo `opengraph-image.tsx`:
+
+```tsx
+// app/blog/[slug]/opengraph-image.tsx
+import { ImageResponse } from 'next/og'
+import { getPostBySlug } from '@/lib/blog'
+
+export const size = { width: 1200, height: 630 }
+export const contentType = 'image/png'
+
+export default async function Image({ params }) {
+  const { slug } = await params
+  const post = getPostBySlug(slug)
+
+  return new ImageResponse(
+    <div style={{ /* seu design */ }}>
+      {post.title}
+    </div>,
+    { ...size }
+  )
+}
+```
+
+O Next.js automaticamente injeta `og:image` apontando para esse endpoint.
+
+**Dimensões corretas:**
+- OG Facebook/LinkedIn: 1200×630px (ratio 1.91:1)
+- Twitter large card: 1200×628px (ratio 1.91:1)
+- Limite de tamanho: < 8MB (recomendado < 1MB para performance)
+
+- [ ] OG image estática raiz (`app/opengraph-image.tsx`) para a home
+- [ ] OG image dinâmica para artigos do blog
+- [ ] OG image específica para páginas de features importantes
+- [ ] Todas as imagens têm 1200×630px
+- [ ] Validadas com Facebook Sharing Debugger
+- [ ] Validadas com Twitter Card Validator
+
+---
+
+## 5. Canonical URLs
+
+URL canônica evita conteúdo duplicado (www vs não-www, trailing slash, parâmetros de query):
+
+```typescript
+alternates: {
+  canonical: 'https://seusite.com/pagina',
+}
+```
+
+- [ ] Canonical em todas as páginas públicas
+- [ ] www → não-www redirecionamento (ou vice-versa)
+- [ ] Trailing slash consistente (com ou sem)
+- [ ] Parâmetros de UTM não indexados (verificar via `?utm_*` no Search Console)
+
+---
+
+## 6. Core Web Vitals
+
+### LCP (Largest Contentful Paint)
+Target: < 2.5s
+
+Para Next.js:
+- Use `priority` em imagens above-the-fold
+- Prefetch de fontes críticas com `<link rel="preload">`
+- Static generation (`force-static`) para páginas públicas
+
+```tsx
+<Image src="/hero.webp" alt="Hero" width={1200} height={630} priority />
+```
+
+### CLS (Cumulative Layout Shift)
+Target: < 0.1
+
+- Sempre defina `width` e `height` em `<Image>`
+- Evite inserir conteúdo acima do fold após hydration
+- Use `aspect-ratio` para reservar espaço de elementos dinâmicos
+
+### FID/INP (Interaction to Next Paint)
+Target: < 200ms
+
+- Minimize JS do lado do cliente em páginas estáticas
+- Use `'use client'` apenas quando necessário
+- Lazy-load componentes pesados com `dynamic()`
+
+- [ ] LCP < 2.5s (medido no PageSpeed Insights)
+- [ ] CLS < 0.1
+- [ ] INP < 200ms
+- [ ] Imagens hero com `priority`
+
+---
+
+## 7. Schema.org / JSON-LD
+
+### Para artigos de blog
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Título do artigo",
+  "description": "Descrição...",
+  "datePublished": "2026-02-24",
+  "author": {
+    "@type": "Organization",
+    "name": "Sofia AI",
+    "url": "https://sofiaia.roilabs.com.br"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Sofia AI — ROI Labs"
+  }
+}
+```
+
+### Para a home (SoftwareApplication)
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Sofia AI",
+  "applicationCategory": "BusinessApplication",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "BRL"
+  }
+}
+```
+
+- [ ] JSON-LD `Article` em todos os posts do blog
+- [ ] JSON-LD `Organization` na home
+- [ ] JSON-LD `FAQPage` nas páginas que têm FAQ
+- [ ] JSON-LD `SoftwareApplication` ou `Product` para as páginas de produto
+- [ ] Validado com [Google Rich Results Test](https://search.google.com/test/rich-results)
+
+---
+
+## 8. Internacionalização e hreflang
+
+Se seu SaaS serve múltiplos países:
+
+```typescript
+alternates: {
+  canonical: 'https://seusite.com/pagina',
+  languages: {
+    'pt-BR': 'https://seusite.com.br/pagina',
+    'en': 'https://seusite.com/en/pagina',
+  },
+},
+```
+
+- [ ] `hreflang` configurado se houver múltiplos idiomas
+- [ ] `og:locale:alternate` para idiomas alternativos
+
+---
+
+## 9. Performance técnica
+
+- [ ] Images servidas em WebP/AVIF (Next.js faz isso automaticamente com `<Image>`)
+- [ ] Fontes carregadas com `next/font` (evita FOUT)
+- [ ] Sem recursos de terceiros desnecessários no critical path
+- [ ] Build output verificado: sem warnings de chunks grandes
+- [ ] Gzip/Brotli ativado no servidor (Vercel faz por padrão)
+
+---
+
+## 10. Monitoramento contínuo
+
+- [ ] Google Search Console configurado e verificado
+- [ ] Bing Webmaster Tools configurado
+- [ ] Google Analytics 4 com eventos de conversão
+- [ ] Indexing API (para enviar novas páginas imediatamente)
+- [ ] Core Web Vitals monitorados via Search Console ou PageSpeed Insights API
+
+---
+
+## Conclusão
+
+SEO técnico para SaaS é um trabalho contínuo, não um projeto pontual. A boa notícia: Next.js App Router resolve a maioria dos problemas automaticamente quando configurado corretamente — especialmente com `metadataBase`, `opengraph-image.tsx` e `sitemap.ts`.
+
+Implement este checklist progressivamente. Comece pelos itens P0 (metadataBase, robots.txt, sitemap, canonical) antes de investir tempo em OG images dinâmicas e Schema.org avançado.
+
+O [Sofia AI](https://sofiaia.roilabs.com.br) é um exemplo real de SaaS construído com Next.js 16 seguindo todas essas práticas — open-source no GitHub para quem quiser estudar a implementação.

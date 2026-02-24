@@ -1,0 +1,204 @@
+---
+title: "O que é Open Graph e Por que Importa para SEO e IA Generativa"
+description: "Entenda como as meta tags Open Graph influenciam o CTR em redes sociais, como o ChatGPT e Perplexity usam metadados para selecionar fontes, e como implementar OG images dinâmicas no seu site."
+date: "2026-02-24"
+author: "Sofia AI — ROI Labs"
+tags: ["open graph", "seo técnico", "ia generativa", "geo", "meta tags"]
+readTime: "8 min"
+---
+
+Se você já compartilhou um link no LinkedIn e ficou desapontado com aquela prévia genérica sem imagem — ou pior, sem descrição — você sabe o custo invisível de ignorar as meta tags Open Graph.
+
+Mas em 2026, o problema foi além das redes sociais. O **ChatGPT**, o **Perplexity** e outros assistentes de IA generativa também leem metadados para decidir se vão citar, resumir ou ignorar o seu conteúdo.
+
+Neste artigo você vai entender:
+- O que é Open Graph e como funciona
+- Por que OG images afetam CTR diretamente
+- Como a IA generativa usa metadados na seleção de fontes
+- Como implementar OG dinâmico com Next.js (exemplos práticos)
+
+---
+
+## O que são as meta tags Open Graph?
+
+Open Graph (OG) é um protocolo criado pelo Facebook em 2010 que define como uma página web deve ser apresentada quando compartilhada em redes sociais e outros contextos.
+
+As tags básicas são:
+
+```html
+<meta property="og:title" content="Título da página" />
+<meta property="og:description" content="Descrição para o preview" />
+<meta property="og:image" content="https://site.com/og-image.png" />
+<meta property="og:url" content="https://site.com/pagina" />
+<meta property="og:type" content="website" />
+```
+
+E para o Twitter/X (que usa seu próprio protocolo):
+
+```html
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Título" />
+<meta name="twitter:description" content="Descrição" />
+<meta name="twitter:image" content="https://site.com/og-image.png" />
+```
+
+Quando alguém cola um link no WhatsApp, LinkedIn, Twitter ou qualquer outro app que suporta previews, essas tags determinam o que aparece.
+
+---
+
+## Por que OG images aumentam CTR
+
+Estudos de A/B testing em posts do LinkedIn mostram que posts com imagem customizada têm **200% a 300% mais engajamento** do que posts sem imagem (ou com imagem genérica).
+
+No Twitter/X, tweets com `summary_large_image` (imagem grande) têm em média **2x mais cliques** do que tweets com `summary` (miniatura pequena).
+
+Por que isso acontece? Porque o feed é um ambiente de atenção escassa. Uma OG image bem desenhada comunica:
+
+1. **Do que se trata o conteúdo** (sem precisar ler o título)
+2. **De onde vem** (branding + logo)
+3. **Credibilidade** (design profissional = conteúdo confiável)
+
+Uma OG image genérica (logo da empresa em fundo branco, 180×48px) não faz nenhuma dessas três coisas.
+
+---
+
+## OG images dinâmicas: a diferença entre blogs e SaaS
+
+Sites estáticos podem usar uma única OG image. Mas para blogs, SaaS e plataformas com muito conteúdo, o ideal é gerar OG images **dinâmicas** — uma imagem única para cada página/artigo.
+
+Por que dinâmico?
+
+- Cada artigo do blog merece uma imagem com seu título específico
+- Cada landing page (pricing, features, afiliados) tem uma proposta de valor única
+- Rastreadores sociais (Slackbot, WhatsApp, LinkedIn) cacheiam por URL — então você precisa de URLs únicas por conteúdo
+
+### Como funciona a geração dinâmica
+
+A abordagem moderna (Next.js 13+) usa `ImageResponse` do pacote `next/og`:
+
+```tsx
+// app/blog/[slug]/opengraph-image.tsx
+import { ImageResponse } from 'next/og'
+import { getPostBySlug } from '@/lib/blog'
+
+export const size = { width: 1200, height: 630 }
+export const contentType = 'image/png'
+
+export default async function Image({ params }) {
+  const { slug } = await params
+  const post = getPostBySlug(slug)
+
+  return new ImageResponse(
+    <div style={{ background: '#0A0A0F', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', padding: '60px' }}>
+      <div style={{ fontSize: '52px', fontWeight: '800', color: '#fff' }}>
+        {post.title}
+      </div>
+      <div style={{ fontSize: '20px', color: 'rgba(255,255,255,0.5)', marginTop: '20px' }}>
+        {post.description}
+      </div>
+    </div>,
+    { ...size }
+  )
+}
+```
+
+Next.js automaticamente:
+1. Serve essa imagem em `/blog/[slug]/opengraph-image`
+2. Injeta a meta tag `og:image` apontando para essa URL
+3. Regenera a imagem quando o conteúdo muda (ISR)
+
+---
+
+## IA Generativa e metadados: como o ChatGPT e Perplexity selecionam fontes
+
+Aqui está o ponto que a maioria dos criadores de conteúdo ainda não entendeu em 2026: **assistentes de IA usam metadados para avaliar a relevância e confiabilidade de uma fonte**.
+
+### Como funciona na prática
+
+Quando você faz uma pergunta para o Perplexity ou o ChatGPT com busca ativada, o sistema:
+
+1. Busca páginas com conteúdo relevante via Bing/Google
+2. Acessa o HTML dessas páginas
+3. Lê os metadados (title, description, og:description)
+4. Avalia a densidade de informação útil no conteúdo
+5. Decide se vai citar a fonte
+
+O `og:description` é frequentemente usado como resumo do conteúdo no contexto que o modelo recebe. Se sua description é genérica ("Saiba mais sobre nossos serviços"), o modelo tem menos contexto para avaliar a relevância — e tende a preferir fontes com descriptions mais informativas.
+
+### GEO: Generative Engine Optimization
+
+O campo de **GEO (Generative Engine Optimization)** surgiu para tratar especificamente da otimização de conteúdo para aparecer em respostas de IAs generativas.
+
+As práticas principais de GEO incluem:
+
+**1. Descriptions informativas e densas**
+```html
+<!-- Ruim -->
+<meta name="description" content="Aprenda sobre agentes IA." />
+
+<!-- Bom -->
+<meta name="description" content="Guia completo sobre orquestração de múltiplos agentes IA: sequencial, paralelo, consenso. Com exemplos de código em Python e TypeScript para 2026." />
+```
+
+**2. Schema.org / JSON-LD**
+IAs usam Schema.org para estruturar informações sobre autoria, data de publicação e tipo de conteúdo:
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Título do artigo",
+  "datePublished": "2026-02-24",
+  "author": { "@type": "Organization", "name": "Sofia AI" }
+}
+```
+
+**3. OG title como título de citação**
+Quando o Perplexity cita uma fonte, ele frequentemente usa o `og:title` como título da referência. Um OG title bem escrito aumenta a probabilidade de citação com contexto correto.
+
+---
+
+## Checklist: OG mínimo para um site profissional
+
+Para cada página pública:
+
+- [ ] `og:title` — título específico (não genérico)
+- [ ] `og:description` — 140-160 caracteres, informativo
+- [ ] `og:image` — 1200×630px, png ou jpg
+- [ ] `og:url` — URL canônica absoluta
+- [ ] `og:type` — `website` para páginas, `article` para posts
+- [ ] `twitter:card` — `summary_large_image`
+- [ ] `twitter:image` — mesmo que og:image (ou versão otimizada)
+
+Para artigos de blog, adicionar:
+
+- [ ] `og:type: article`
+- [ ] `article:published_time`
+- [ ] `article:author`
+- [ ] `article:tag`
+- [ ] Schema.org `Article` JSON-LD
+
+---
+
+## Ferramentas para validar suas OG tags
+
+Depois de implementar, valide com:
+
+1. **[Meta for Developers — Sharing Debugger](https://developers.facebook.com/tools/debug/)** — invalida o cache do Facebook/Instagram e mostra o preview
+2. **[Twitter Card Validator](https://cards-dev.twitter.com/validator)** — valida twitter:card
+3. **[OpenGraph.xyz](https://www.opengraph.xyz/)** — preview visual de como fica em diferentes plataformas
+4. **[LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/)** — específico para LinkedIn
+
+---
+
+## Conclusão
+
+Open Graph não é mais apenas uma questão estética para redes sociais. Em 2026, OG tags bem implementadas:
+
+- **Aumentam CTR** em 2-3x nas redes sociais
+- **Melhoram a seleção** por IA generativa (ChatGPT, Perplexity, Gemini)
+- **Fortalecem credibilidade** da marca em qualquer compartilhamento
+
+A boa notícia: implementar OG images dinâmicas com Next.js 13+ é mais simples do que parece — um arquivo `opengraph-image.tsx` por rota resolve automaticamente.
+
+No [Sofia AI](https://sofiaia.roilabs.com.br), implementamos OG images dinâmicas para todas as páginas públicas e artigos do blog usando exatamente essa abordagem. Cada artigo tem sua própria imagem com título, autor e data gerados dinamicamente.

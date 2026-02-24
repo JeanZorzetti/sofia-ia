@@ -366,3 +366,33 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P1** — "Google Login vs Email/Senha: Por que Login Social Aumenta Conversão"
 - ✅ **P1** — "Como Usar a API do Sofia AI: Guia para Desenvolvedores"
 - ✅ **P2** — "Automação com Slack e IA: Notificações Inteligentes para Times"
+
+---
+
+## Sprint 14 — OG Images (Semana 45-48)
+
+**Objetivo**: Maximizar CTR em redes sociais e IA generativa com OG images dinâmicas e visualmente ricas — cada página pública e artigo do blog gera uma imagem de preview única, com branding consistente
+
+### SEO / GEO técnico — OG Images
+
+#### Infraestrutura
+- ✅ **P0** — Setup `next/og` (`ImageResponse`) via `opengraph-image.tsx` por rota — base de toda geração dinâmica
+- ✅ **P0** — OG image padrão do site (`/opengraph-image.tsx`) — 1200×630, branding + tagline + planos
+
+#### Páginas públicas
+- ✅ **P0** — OG dinâmica para a Home (`/`) — título, tagline e branding Sofia AI
+- ✅ **P0** — OG dinâmica para artigos do blog (`/blog/[slug]`) — título do artigo + autor + data + logo
+- ✅ **P1** — OG dinâmica para páginas de feature (`/features/orchestrations`, `/templates`) — ícone + título da feature
+- ✅ **P1** — OG dinâmica para `/afiliados`, `/whitelabel`, `/enterprise` — headline + benefício principal
+
+#### Validação e distribuição
+- ⬜ **P1** — Testar todas as OGs com og:debugger do Facebook e Twitter Card Validator (manual pós-deploy)
+- ✅ **P1** — Garantir `twitter:card=summary_large_image` em todas as páginas públicas (`layout.tsx` global + páginas individuais)
+- ✅ **P2** — OG personalizada para o `og:image` do `/changelog` (versão + features destaque)
+
+### SEO — Camada 2/3 (cadência mensal, 5 artigos)
+- ✅ **P0** — "O que é Open Graph e Por que Importa para SEO e IA Generativa"
+- ✅ **P0** — "Como o ChatGPT e Perplexity Escolhem Fontes: Guia GEO para Fundadores"
+- ✅ **P1** — "Checklist de SEO Técnico para SaaS em 2026: do sitemap ao OG"
+- ✅ **P1** — "Multi-agente vs RAG: Quando Usar Cada Abordagem de IA"
+- ✅ **P2** — "Como Construir um Pipeline de Geração de Conteúdo com Agentes IA"
