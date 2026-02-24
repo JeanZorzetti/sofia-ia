@@ -371,6 +371,48 @@ ROI Labs Platform
 
 ---
 
+## SPRINT 16 — Teams & Organizations + Audit Log + Integracoes Nativas
+
+### 16.1 Organizations & Teams
+- [x] Schema Prisma: Organization, OrganizationMember, OrganizationInvite
+- [x] Helper org-auth.ts: getOrgMembership, canWrite, isAdmin, getUserOrganizations
+- [x] POST /api/organizations — criar org
+- [x] GET /api/organizations — listar orgs do usuario
+- [x] GET/PATCH/DELETE /api/organizations/[slug] — detalhes, editar nome, deletar
+- [x] GET /api/organizations/[slug]/members — listar membros
+- [x] PATCH/DELETE /api/organizations/[slug]/members/[userId] — alterar role, remover membro
+- [x] POST/GET /api/organizations/[slug]/invites — convidar por email, listar pendentes
+- [x] POST/GET /api/organizations/invites/accept — aceitar convite por token
+- [x] Pagina /dashboard/settings/team — gestao de equipe
+- [x] Pagina /dashboard/settings/organization — settings da org
+- [x] Pagina /dashboard/invites/accept — aceitar convite (publica)
+- [x] Seletor de workspace na Sidebar com dropdown
+
+### 16.2 Audit Log
+- [x] Schema Prisma: UserAuditLog
+- [x] Helper audit.ts: logAudit, getIpFromRequest, getUserAgentFromRequest
+- [x] GET /api/dashboard/audit-log — logs paginados com filtros
+- [x] GET /api/dashboard/audit-log/export — export CSV
+- [x] Pagina /dashboard/audit-log — tabela + filtros + paginacao + export
+- [x] logAudit integrado em agents POST, PATCH, DELETE
+- [x] logAudit integrado em organizations (CRUD + invites)
+
+### 16.3 Integracoes Nativas
+- [x] GET /api/v1/integrations/zapier/poll — polling trigger Zapier
+- [x] POST /api/v1/integrations/zapier/execute — action Zapier/Make/n8n
+- [x] Pagina /integrations/zapier — guia passo-a-passo
+- [x] Pagina /integrations/make — guia Make (Integromat)
+- [x] Pagina /integrations/n8n — guia n8n com workflow JSON
+
+### 16.4 SEO (5 artigos)
+- [x] teams-workspace-ia-multi-usuario.mdx
+- [x] zapier-agentes-ia-automacao.mdx
+- [x] rbac-saas-controle-acesso.mdx
+- [x] audit-log-compliance-ia.mdx
+- [x] make-zapier-n8n-comparativo.mdx
+
+---
+
 ## Metricas de Sucesso
 
 - **Fase 1:** Zero dados mockados no dashboard. Todas as conversas e mensagens salvas no banco.
@@ -381,3 +423,4 @@ ROI Labs Platform
 - **Fase 6:** Dashboard com metricas reais e exportacao CSV.
 - **Fase 7:** Pelo menos 2 canais alem do WhatsApp (webchat + email).
 - **Fase 8:** Biblioteca com pelo menos 6 templates por vertical.
+- **Sprint 16:** Organizations & Teams com RBAC, Audit Log com export CSV, endpoints Zapier/Make/n8n, 5 artigos SEO.

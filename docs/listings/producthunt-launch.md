@@ -92,13 +92,13 @@ Escolher até 5 dos seguintes (ordem de prioridade):
 
 ## Checklist de Lançamento
 
-- [ ] Criar conta PH com perfil completo (foto, bio, links)
-- [ ] Preparar GIF animado do pipeline em execução (ideal: 800x450px, < 3MB)
-- [ ] Screenshot da tela de Analytics por execução
-- [ ] Screenshot do pipeline builder visual
-- [ ] Screenshot do Knowledge Base upload + chunks
-- [ ] Confirmar maker do produto no PH
-- [ ] Agendar notificação para hunters (00h01 PT na terça)
+- [x] Criar conta PH com perfil completo (foto, bio, links)
+- [x] Preparar GIF animado do pipeline em execução (ideal: 800x450px, < 3MB)
+- [x] Screenshot da tela de Analytics por execução
+- [x] Screenshot do pipeline builder visual
+- [x] Screenshot do Knowledge Base upload + chunks
+- [x] Confirmar maker do produto no PH
+- [x] Agendar notificação para hunters (00h01 PT na terça)
 - [ ] Preparar lista de early supporters para notificar no dia
 - [ ] Escrever thread no Twitter/X no dia do launch
 - [ ] Post em comunidades: Indie Hackers, Hacker News (Show HN), Reddit r/artificial
