@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
-import { ArrowLeft, Loader2, Save, MessageSquare, Mail, Globe } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, MessageSquare, Mail, Globe, Brain } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AgentChatTester } from '@/components/sofia/AgentChatTester'
@@ -245,19 +245,27 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
           </div>
         </div>
 
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Salvando...
-            </>
-          ) : (
-            <>
-              <Save className="h-4 w-4 mr-2" />
-              Salvar Alterações
-            </>
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href={`/dashboard/agents/${resolvedParams.id}/memory`}>
+            <Button variant="outline" size="sm">
+              <Brain className="h-4 w-4 mr-2" />
+              Memórias
+            </Button>
+          </Link>
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Salvar Alterações
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
