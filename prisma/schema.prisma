@@ -24,16 +24,18 @@ model User {
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  workspace     Workspace?     @relation(fields: [workspaceId], references: [id])
-  leads         Lead[]
-  campaigns     Campaign[]
-  agents        Agent[]
-  agentFolders  AgentFolder[]
-  flows         Flow[]
-  subscription  Subscription?
-  whitelabelAccount WhitelabelAccount?
-  scheduledExecutions ScheduledExecution[]
-  agentMemories AgentMemory[]
+  workspace            Workspace?              @relation(fields: [workspaceId], references: [id])
+  leads                Lead[]
+  campaigns            Campaign[]
+  agents               Agent[]
+  agentFolders         AgentFolder[]
+  flows                Flow[]
+  subscription         Subscription?
+  whitelabelAccount    WhitelabelAccount?
+  scheduledExecutions  ScheduledExecution[]
+  agentMemories        AgentMemory[]
+  orgMemberships       OrganizationMember[]
+  userAuditLogs        UserAuditLog[]
 
   @@index([workspaceId])
   @@map("users")
@@ -880,4 +882,82 @@ model AgentMemory {
   @@index([agentId])
   @@index([userId])
   @@map("agent_memories")
+}
+
+// ─────────────────────────────────────────────────────────
+// Organization — Workspace colaborativo com membros
+// ─────────────────────────────────────────────────────────
+model Organization {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(255)
+  slug      String   @unique @db.VarChar(100)
+  plan      String   @default("free") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  members OrganizationMember[]
+  invites OrganizationInvite[]
+
+  @@index([slug])
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id       String   @id @default(cuid())
+  orgId    String   @map("org_id")
+  userId   String   @map("user_id") @db.Uuid
+  role     String   @default("MEMBER") @db.VarChar(20) // ADMIN | MEMBER | VIEWER
+  joinedAt DateTime @default(now()) @map("joined_at") @db.Timestamptz()
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([orgId])
+  @@index([userId])
+  @@map("organization_members")
+}
+
+model OrganizationInvite {
+  id         String    @id @default(cuid())
+  orgId      String    @map("org_id")
+  email      String    @db.VarChar(255)
+  role       String    @default("MEMBER") @db.VarChar(20)
+  token      String    @unique @default(cuid())
+  invitedBy  String    @map("invited_by") @db.VarChar(255)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz()
+  acceptedAt DateTime? @map("accepted_at") @db.Timestamptz()
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  organization Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([token])
+  @@index([email])
+  @@map("organization_invites")
+}
+
+// ─────────────────────────────────────────────────────────
+// UserAuditLog — Audit log de ações dos usuários
+// ─────────────────────────────────────────────────────────
+model UserAuditLog {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id") @db.Uuid
+  orgId      String?  @map("org_id")
+  action     String   @db.VarChar(100) // ex: "agent.created", "orchestration.executed"
+  resource   String   @db.VarChar(50)  // ex: "agent", "orchestration", "member"
+  resourceId String?  @map("resource_id") @db.VarChar(255)
+  metadata   Json     @default("{}")
+  ip         String?  @db.VarChar(50)
+  userAgent  String?  @map("user_agent") @db.Text
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([orgId])
+  @@index([action])
+  @@index([resource])
+  @@index([createdAt(sort: Desc)])
+  @@map("user_audit_logs")
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   MessageSquare,
@@ -21,16 +21,34 @@ import {
   FlaskConical,
   Activity,
   Store,
-  FolderOpen,
   Terminal,
   Layers,
   Key,
-  Gift
+  Gift,
+  Building2,
+  ChevronDown,
+  Plus,
+  User
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+
+interface OrgItem {
+  id: string
+  name: string
+  slug: string
+  role: string
+}
 
 const menuItems = [
   {
@@ -140,8 +158,11 @@ interface UsageData {
 
 export function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [usage, setUsage] = useState<UsageData | null>(null)
+  const [orgs, setOrgs] = useState<OrgItem[]>([])
+  const [activeWorkspace, setActiveWorkspace] = useState<string>('personal')
 
   useEffect(() => {
     fetch('/api/user/usage')
@@ -150,6 +171,29 @@ export function Sidebar() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    fetch('/api/organizations')
+      .then((r) => r.json())
+      .then((data) => { if (data.success) setOrgs(data.data) })
+      .catch(() => {})
+  }, [])
+
+  const handleWorkspaceChange = (orgSlug: string | 'personal') => {
+    setActiveWorkspace(orgSlug)
+    // Store selection in localStorage for persistence across page loads
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sofia_active_workspace', orgSlug)
+      }
+    } catch { /* ignore */ }
+    router.refresh()
+  }
+
+  const currentWorkspaceName =
+    activeWorkspace === 'personal'
+      ? 'Pessoal'
+      : orgs.find((o) => o.slug === activeWorkspace)?.name || 'Pessoal'
+
   return (
     <TooltipProvider>
       <aside className={cn(
@@ -157,6 +201,64 @@ export function Sidebar() {
         collapsed ? "w-20" : "w-64"
       )}>
         <div className="flex flex-1 flex-col gap-2 p-4">
+          {/* Workspace Selector */}
+          {!collapsed && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-sidebar-accent/30 transition-colors mb-1 group">
+                  <div className="h-6 w-6 rounded bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                    {activeWorkspace === 'personal' ? (
+                      <User className="h-3.5 w-3.5 text-white" />
+                    ) : (
+                      <Building2 className="h-3.5 w-3.5 text-white" />
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-foreground flex-1 text-left truncate">
+                    {currentWorkspaceName}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 text-foreground-tertiary flex-shrink-0" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuLabel className="text-xs text-foreground-tertiary uppercase tracking-wide">
+                  Workspace
+                </DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => handleWorkspaceChange('personal')}
+                  className={cn(activeWorkspace === 'personal' && 'bg-sidebar-accent/50')}
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Pessoal
+                </DropdownMenuItem>
+                {orgs.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs text-foreground-tertiary uppercase tracking-wide">
+                      Organizacoes
+                    </DropdownMenuLabel>
+                    {orgs.map((org) => (
+                      <DropdownMenuItem
+                        key={org.slug}
+                        onClick={() => handleWorkspaceChange(org.slug)}
+                        className={cn(activeWorkspace === org.slug && 'bg-sidebar-accent/50')}
+                      >
+                        <Building2 className="h-4 w-4 mr-2" />
+                        <span className="truncate">{org.name}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard/settings/team" className="flex items-center">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Organizacao
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           <div className="mb-2 flex items-center justify-between">
             {!collapsed && <div className="text-xs font-semibold text-foreground-tertiary">Menu</div>}
             <Tooltip>
