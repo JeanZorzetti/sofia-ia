@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -129,13 +129,24 @@ const menuItems = [
   },
 ]
 
+interface UsageData {
+  plan: string
+  planData: { name: string }
+  agents: { current: number; limit: number; percentage: number }
+  messages: { current: number; limit: number; percentage: number }
+}
+
 export function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [usage, setUsage] = useState<UsageData | null>(null)
 
-  const tokensUsed = 32450
-  const tokensTotal = 50000
-  const tokensPercentage = (tokensUsed / tokensTotal) * 100
+  useEffect(() => {
+    fetch('/api/user/usage')
+      .then((r) => r.json())
+      .then((data) => { if (data.plan) setUsage(data) })
+      .catch(() => {})
+  }, [])
 
   return (
     <TooltipProvider>
@@ -208,17 +219,53 @@ export function Sidebar() {
 
         {!collapsed && (
           <div className="border-t border-sidebar-border p-4">
-            <div className="glass-card rounded-lg p-4">
-              <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="text-foreground-secondary">Tokens Usados</span>
-                <span className="font-medium text-foreground">
-                  {tokensUsed.toLocaleString()} / {tokensTotal.toLocaleString()}
-                </span>
-              </div>
-              <Progress value={tokensPercentage} className="h-2" />
-              <p className="mt-2 text-xs text-foreground-tertiary">
-                {(100 - tokensPercentage).toFixed(1)}% disponível
-              </p>
+            <div className="glass-card rounded-lg p-3 space-y-3">
+              {usage ? (
+                <>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-foreground-tertiary font-medium uppercase tracking-wide">
+                      Plano {usage.planData?.name || usage.plan}
+                    </span>
+                    <Link href="/dashboard/billing" className="text-blue-400 hover:text-blue-300 text-xs">
+                      Upgrade
+                    </Link>
+                  </div>
+                  {/* Agentes */}
+                  {usage.agents.limit !== -1 && (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-foreground-secondary">
+                        <span>Agentes</span>
+                        <span>{usage.agents.current}/{usage.agents.limit}</span>
+                      </div>
+                      <Progress
+                        value={usage.agents.percentage}
+                        className={`h-1.5 ${usage.agents.percentage >= 90 ? '[&>div]:bg-red-500' : usage.agents.percentage >= 70 ? '[&>div]:bg-yellow-500' : ''}`}
+                      />
+                    </div>
+                  )}
+                  {/* Mensagens */}
+                  {usage.messages.limit !== -1 && (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-foreground-secondary">
+                        <span>Mensagens/mês</span>
+                        <span>{usage.messages.current.toLocaleString()}/{usage.messages.limit.toLocaleString()}</span>
+                      </div>
+                      <Progress
+                        value={usage.messages.percentage}
+                        className={`h-1.5 ${usage.messages.percentage >= 90 ? '[&>div]:bg-red-500' : usage.messages.percentage >= 70 ? '[&>div]:bg-yellow-500' : ''}`}
+                      />
+                    </div>
+                  )}
+                  {usage.agents.limit === -1 && usage.messages.limit === -1 && (
+                    <p className="text-xs text-foreground-tertiary">Uso ilimitado ✓</p>
+                  )}
+                </>
+              ) : (
+                <div className="space-y-2">
+                  <div className="h-3 w-24 rounded bg-white/10 animate-pulse" />
+                  <div className="h-1.5 w-full rounded bg-white/10 animate-pulse" />
+                </div>
+              )}
             </div>
           </div>
         )}

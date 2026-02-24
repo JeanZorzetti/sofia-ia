@@ -1,0 +1,187 @@
+---
+title: "Multi-agente vs Single-agente de IA: Quando Usar Cada Abordagem"
+slug: "multi-agente-vs-single-agente"
+description: "Quando usar um único agente de IA vs uma equipe de múltiplos agentes? Entenda as diferenças, vantagens e casos de uso ideais para cada arquitetura em 2026."
+date: "2026-02-23"
+author: "Equipe Sofia"
+tags: ["multi-agente ia", "single-agente", "arquitetura agentes ia", "quando usar multi-agente"]
+readTime: "9 min"
+---
+
+Você está criando seu primeiro agente de IA e a pergunta aparece: **preciso de um agente ou de vários?**
+
+É a pergunta certa. A arquitetura errada pode fazer um processo simples virar um pesadelo de orquestração — ou um processo complexo virar uma caixa preta não confiável.
+
+Vamos deixar claro de uma vez por todas.
+
+---
+
+## O que é um Single-agente
+
+Um único agente de IA com um system prompt, um conjunto de instruções, e acesso a ferramentas (Knowledge Base, APIs, etc.).
+
+**Funciona bem quando:**
+- A tarefa tem um objetivo claro e único
+- O contexto cabe em uma janela de contexto
+- Não há necessidade de especialização por domínio
+- A saída é simples (texto, classificação, resposta)
+
+**Exemplos ideais:**
+- Responder perguntas de FAQ do produto
+- Classificar tickets de suporte
+- Redigir um email de follow-up
+- Resumir um documento
+- Triagem inicial de leads
+
+**Limitação:** Quanto mais você tenta colocar em um único agente, mais ele "dilui" sua performance. Um agente que é jurídico + financeiro + marketing raramente é excelente em nenhum dos três.
+
+---
+
+## O que é Multi-agente
+
+Uma orquestração de agentes especializados que trabalham em sequência, paralelo ou hierarquia para completar um processo complexo.
+
+Cada agente tem:
+- **Um papel específico** (ex: pesquisador, redator, revisor)
+- **Contexto focado** no seu domínio
+- **Entrada** vinda do agente anterior
+- **Saída** que alimenta o próximo
+
+**Funciona bem quando:**
+- O processo tem etapas sequenciais dependentes
+- Diferentes domínios de conhecimento são necessários
+- Qualidade de revisão é crítica (agente revisor separado)
+- O volume de informação excede uma janela de contexto
+- Paralelismo pode reduzir o tempo total
+
+---
+
+## A Regra de Ouro
+
+> **Use single-agente para tarefas. Use multi-agente para processos.**
+
+Uma tarefa é atômica — um input, um output, uma responsabilidade.
+
+Um processo é composto — várias etapas, dependências entre elas, diferentes especialidades necessárias.
+
+Se você precisar usar a palavra "e então" mais de duas vezes para descrever o que o agente faz, provavelmente é um processo — use multi-agente.
+
+---
+
+## Comparativo Visual
+
+| Critério | Single-agente | Multi-agente |
+|---|---|---|
+| Complexidade do setup | Baixa | Média-alta |
+| Qualidade para tarefas simples | Alta | Overhead desnecessário |
+| Qualidade para processos complexos | Mediana | Alta |
+| Custo por execução | Baixo | Médio-alto |
+| Latência | Baixa | Média (paralelizável) |
+| Manutenção | Simples | Modular (cada agente independente) |
+| Especialização | Generalista | Especialista por domínio |
+| Escalabilidade | Limitada | Alta |
+
+---
+
+## Casos de Uso: Single-agente
+
+### Atendimento ao cliente básico
+Um agente com Knowledge Base do produto que responde dúvidas frequentes. 80% dos casos resolvidos sem necessidade de especialização.
+
+### Qualificação de leads
+Recebe informações do formulário, analisa fit com ICP (Ideal Customer Profile) e retorna score + próximo passo.
+
+### Resumo de reuniões
+Recebe transcrição → retorna resumo estruturado com decisões e action items.
+
+### Geração de conteúdo simples
+Email de prospecção, resposta de suporte, legenda de redes sociais.
+
+---
+
+## Casos de Uso: Multi-agente
+
+### Pipeline de conteúdo de marketing
+1. **Agente Pesquisador** — Analisa tópico, concorrentes, tendências
+2. **Agente Redator** — Escreve o artigo com base na pesquisa
+3. **Agente SEO** — Revisa e otimiza para palavras-chave
+4. **Agente Editor** — Corrige tom, gramática e consistência de marca
+
+**Por que multi-agente?** Cada etapa exige habilidade diferente. Um único agente "generalista de conteúdo" produz resultado mediano em todas.
+
+### Análise jurídica de contratos
+1. **Agente Leitor** — Extrai cláusulas relevantes do PDF
+2. **Agente Compliance** — Verifica conformidade com legislação
+3. **Agente de Risco** — Identifica cláusulas problemáticas
+4. **Agente Síntese** — Gera relatório executivo com recomendações
+
+**Por que multi-agente?** O contexto de um contrato longo ultrapassa a janela de um único agente, e cada perspectiva (técnica, legal, estratégica) exige especialização.
+
+### Processo de RH (triagem de currículos)
+1. **Agente Job Designer** — Define perfil ideal da vaga
+2. **Agente Triador** — Analisa currículos vs. requisitos
+3. **Agente Entrevistador** — Gera perguntas personalizadas por candidato
+4. **Agente Ranker** — Compila ranking com justificativas
+
+**Por que multi-agente?** Processo de múltiplas etapas com inputs diferentes em cada fase.
+
+---
+
+## Armadilhas de cada abordagem
+
+### Armadilhas do Single-agente
+
+**System prompt inflado:** Você tenta resolver a limitação adicionando mais e mais instruções. O agente vira uma sopa de regras e a coerência cai.
+
+**Solução:** Se o prompt tem mais de 1.500 palavras, provavelmente você está tentando fazer o trabalho de vários agentes em um.
+
+### Armadilhas do Multi-agente
+
+**Orquestração prematura:** Criar uma equipe de 5 agentes para uma tarefa que um agente resolve bem. Overhead sem benefício.
+
+**Propagação de erro:** Um erro no Agente 1 se propaga e amplifica nos agentes seguintes. Valide a saída de cada etapa.
+
+**Latência acumulada:** Cada agente adiciona latência. Para processos síncronos (chat em tempo real), pense se o pipeline inteiro é tolerável.
+
+---
+
+## Como decidir na prática
+
+Responda estas 3 perguntas:
+
+**1. A tarefa tem mais de uma etapa distinta?**
+- Não → Single-agente
+- Sim → Continue para a próxima
+
+**2. Etapas diferentes exigem especialidades diferentes?**
+- Não → Single-agente com contexto rico
+- Sim → Continue para a próxima
+
+**3. A qualidade da saída é crítica e vale o custo extra?**
+- Não → Single-agente com prompt bem trabalhado
+- Sim → Multi-agente
+
+---
+
+## Iniciando com Multi-agente no Sofia AI
+
+O Sofia AI foi desenhado para tornar a orquestração multi-agente acessível sem código:
+
+1. **Templates prontos** — Pipelines pré-configurados para marketing, jurídico, RH, e-commerce e mais
+2. **Editor visual** — Configure cada agente, defina a ordem e as conexões
+3. **Execução com SSE** — Acompanhe em tempo real a saída de cada agente
+4. **Knowledge Base compartilhada** — Todos os agentes do pipeline têm acesso à mesma base de conhecimento
+
+Você pode começar com um template de 3 agentes e complexificar conforme a necessidade.
+
+---
+
+## Conclusão
+
+Não existe resposta universal. A arquitetura certa depende do seu processo.
+
+**Comece simples.** Um agente bem configurado supera dois agentes mal configurados. Só adicione agentes quando tiver evidência de que a especialização agrega valor.
+
+**Itere.** Os melhores pipelines multi-agente são evoluções de single-agentes que provaram seu valor e foram decompostos naturalmente.
+
+*[Explore os templates multi-agente do Sofia AI](/dashboard/orchestrations) e encontre o ponto de partida ideal para o seu processo.*

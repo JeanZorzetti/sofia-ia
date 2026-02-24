@@ -307,7 +307,33 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 
 ### Distribuição
 - ✅ **P0** — Assets ProductHunt: copy completo, tagline, descrição, FAQ, imagens-guia em `docs/listings/producthunt-launch.md`
-- ⬜ **P0** — Submeter e lançar no ProductHunt (tarefa manual)
+- ✅ **P0** — Submeter e lançar no ProductHunt (tarefa manual)
 - ⬜ **P0** — Newsletter: enviar 2 primeiras edições reais via Resend (tarefa manual)
 - ⬜ **P1** — LinkedIn: estratégia founder brand — 3 posts/semana (tarefa manual)
 - ⬜ **P2** — YouTube: setup canal + 1 vídeo demo (tarefa manual)
+
+---
+
+## Sprint 12 — Crescimento Orgânico + Conversão (Semana 37-40)
+
+**Objetivo**: Transformar produto maduro em crescimento mensurável — analytics real, onboarding mais eficaz, novos templates de orquestração e cadência de distribuição ativa
+
+### Produto (desbloqueadores de conversão)
+- ⬜ **P0** — Google Analytics 4 no site público (medir tráfego orgânico real)
+- ⬜ **P0** — Barra de uso de plano visível no dashboard (agentes, msgs, KBs usados vs limite)
+- ⬜ **P1** — Melhoria no onboarding: step "Experimente agora" com orquestração de demo pré-carregada
+- ⬜ **P1** — 5 novos templates de orquestração (verticais: jurídico, RH, e-commerce, saúde, finanças)
+- ⬜ **P2** — Página `/changelog` pública (histórico de features — gera conteúdo SEO e credibilidade)
+
+### SEO — Camada 2 (criar demanda, intenção comercial)
+- ⬜ **P0** — "Como Automatizar Atendimento ao Cliente com IA em 2026"
+- ⬜ **P0** — "Multi-agente vs Single-agente: Quando Usar Cada Abordagem"
+- ⬜ **P1** — "Como Criar Workflows de IA sem Programar"
+- ⬜ **P1** — "Sofia AI vs n8n vs Zapier: Qual Usar para Automação com IA?"
+- ⬜ **P2** — "10 Prompts de Sistema para Agentes IA de Alta Performance"
+
+### Distribuição (manual)
+- ⬜ **P0** — Newsletter: enviar edições 1 e 2 reais (Resend + lista de assinantes)
+- ⬜ **P0** — LinkedIn: primeiros 10 posts do founder brand (estratégia + execução)
+- ⬜ **P1** — YouTube: setup canal + 1 vídeo demo de orquestração ao vivo
+- ⬜ **P2** — Google Search Console + Bing Webmaster Tools configurados
