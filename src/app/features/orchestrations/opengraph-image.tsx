@@ -73,7 +73,7 @@ export default async function Image() {
                 background: 'rgba(59,130,246,0.08)',
                 fontSize: '13px',
                 color: '#93c5fd',
-                width: 'fit-content',
+                alignSelf: 'flex-start',
               }}
             >
               ⚡ Feature

@@ -67,7 +67,7 @@ export default async function Image() {
                 padding: '6px 14px', borderRadius: '100px',
                 border: '1px solid rgba(168,85,247,0.35)',
                 background: 'rgba(168,85,247,0.08)',
-                fontSize: '13px', color: '#c4b5fd', width: 'fit-content',
+                fontSize: '13px', color: '#c4b5fd', alignSelf: 'flex-start',
               }}
             >
               ✦ Templates Prontos

@@ -54,7 +54,7 @@ export default async function Image() {
                 padding: '6px 14px', borderRadius: '100px',
                 border: '1px solid rgba(245,158,11,0.4)',
                 background: 'rgba(245,158,11,0.08)',
-                fontSize: '13px', color: '#fcd34d', width: 'fit-content',
+                fontSize: '13px', color: '#fcd34d', alignSelf: 'flex-start',
               }}
             >
               🏢 Enterprise

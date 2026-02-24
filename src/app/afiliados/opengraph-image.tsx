@@ -64,7 +64,7 @@ export default async function Image() {
                 padding: '6px 14px', borderRadius: '100px',
                 border: '1px solid rgba(16,185,129,0.4)',
                 background: 'rgba(16,185,129,0.08)',
-                fontSize: '13px', color: '#6ee7b7', width: 'fit-content',
+                fontSize: '13px', color: '#6ee7b7', alignSelf: 'flex-start',
               }}
             >
               💸 Programa de Afiliados

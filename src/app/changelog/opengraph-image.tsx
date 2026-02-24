@@ -61,7 +61,7 @@ export default async function Image() {
                 padding: '6px 14px', borderRadius: '100px',
                 border: '1px solid rgba(59,130,246,0.35)',
                 background: 'rgba(59,130,246,0.08)',
-                fontSize: '13px', color: '#93c5fd', width: 'fit-content',
+                fontSize: '13px', color: '#93c5fd', alignSelf: 'flex-start',
               }}
             >
               📋 Changelog
