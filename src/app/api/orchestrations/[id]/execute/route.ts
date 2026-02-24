@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
 import { chatWithAgent } from '@/lib/groq'
 import { parseTasks, buildTaskPrompt, consolidateResults, TaskResult } from '@/lib/orchestration/task-parser'
+import { dispatchOutputWebhooks } from '@/lib/orchestration/output-webhooks'
 import { trackEvent, isFirstEvent } from '@/lib/analytics'
 
 interface AgentStep {
@@ -727,6 +728,15 @@ export async function POST(
           tokensUsed,
           estimatedCost
         }
+      })
+
+      // Dispatch output webhooks (fire and forget)
+      dispatchOutputWebhooks(
+        { id: orchestration.id, name: orchestration.name, config: orchestration.config },
+        { id: execution.id, durationMs, tokensUsed },
+        finalOutput
+      ).catch((err) => {
+        console.error('[Orchestration] Output webhook dispatch error:', err)
       })
 
       // Track first orchestration execution (fire and forget)

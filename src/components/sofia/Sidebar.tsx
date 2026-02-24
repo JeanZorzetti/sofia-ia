@@ -24,7 +24,8 @@ import {
   FolderOpen,
   Terminal,
   Layers,
-  Key
+  Key,
+  Gift
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -134,6 +135,7 @@ interface UsageData {
   planData: { name: string }
   agents: { current: number; limit: number; percentage: number }
   messages: { current: number; limit: number; percentage: number }
+  userId?: string
 }
 
 export function Sidebar() {
@@ -267,6 +269,19 @@ export function Sidebar() {
                 </div>
               )}
             </div>
+
+            {/* Affiliate referral card */}
+            <Link
+              href={usage?.userId ? `/afiliados?ref=${usage.userId}` : '/afiliados'}
+              target="_blank"
+              className="mt-3 flex items-center gap-2.5 rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-2.5 hover:bg-green-500/20 transition-colors group"
+            >
+              <Gift className="h-4 w-4 text-green-400 flex-shrink-0" />
+              <div>
+                <div className="text-xs font-semibold text-green-400 leading-tight">Indique e Ganhe</div>
+                <div className="text-[10px] text-green-400/60 leading-tight">20–40% de comissão recorrente</div>
+              </div>
+            </Link>
           </div>
         )}
       </aside>

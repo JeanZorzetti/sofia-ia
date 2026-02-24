@@ -700,6 +700,7 @@ export default function LandingPage() {
                   {[
                     { label: 'Comunidade', href: '/comunidade' },
                     { label: 'Blog', href: '/blog' },
+                    { label: 'Afiliados', href: '/afiliados' },
                     { label: 'Early Access', href: '/early-access' },
                     { label: 'White-label', href: '/whitelabel' },
                     { label: 'GitHub', href: 'https://github.com/JeanZorzetti/sofia-ia' },

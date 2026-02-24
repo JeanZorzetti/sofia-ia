@@ -19,6 +19,7 @@ model User {
   lastLogin            DateTime? @map("last_login") @db.Timestamptz()
   onboardingCompleted  Boolean   @default(false) @map("onboarding_completed")
   onboardingData       Json      @default("{}") @map("onboarding_data")
+  googleId             String?   @map("google_id") @db.VarChar(255)
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 

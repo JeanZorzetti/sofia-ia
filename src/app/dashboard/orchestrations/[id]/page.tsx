@@ -24,7 +24,11 @@ import {
   Edit,
   Plus,
   Save,
-  FastForward
+  FastForward,
+  Bell,
+  Mail,
+  Webhook,
+  Hash
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ExecutionLiveView } from '@/components/orchestrations/execution-live-view'
@@ -59,6 +63,17 @@ interface Orchestration {
   executions: any[]
 }
 
+type WebhookType = 'webhook' | 'email' | 'slack'
+interface OutputWebhook {
+  type: WebhookType
+  url?: string
+  webhookUrl?: string
+  to?: string
+  subject?: string
+  secret?: string
+  enabled: boolean
+}
+
 export default function OrchestrationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
   const router = useRouter()
@@ -79,6 +94,12 @@ export default function OrchestrationDetailPage({ params }: { params: Promise<{ 
   const [continueDialogOpen, setContinueDialogOpen] = useState<boolean>(false)
   const [continueFromStepIndex, setContinueFromStepIndex] = useState<number>(0)
 
+  // Output Webhooks State
+  const [outputWebhooks, setOutputWebhooks] = useState<OutputWebhook[]>([])
+  const [savingWebhooks, setSavingWebhooks] = useState<boolean>(false)
+  const [newWebhookType, setNewWebhookType] = useState<WebhookType>('webhook')
+  const [newWebhookValue, setNewWebhookValue] = useState<string>('')
+
   // Edit State
   const [editDialogOpen, setEditDialogOpen] = useState<boolean>(false)
   const [editingOrchestration, setEditingOrchestration] = useState<{
@@ -97,6 +118,13 @@ export default function OrchestrationDetailPage({ params }: { params: Promise<{ 
     fetchOrchestration()
     fetchAgents()
   }, [resolvedParams.id])
+
+  // Initialize output webhooks from config when orchestration loads
+  useEffect(() => {
+    if (orchestration?.config?.outputWebhooks) {
+      setOutputWebhooks(orchestration.config.outputWebhooks)
+    }
+  }, [orchestration?.id])
 
   // Enable execution notifications
   // TEMPORARILY DISABLED - causing performance issues with long-running queries
@@ -214,6 +242,54 @@ export default function OrchestrationDetailPage({ params }: { params: Promise<{ 
 
 
 
+
+  // Output Webhooks handlers
+  const handleAddWebhook = () => {
+    const value = newWebhookValue.trim()
+    if (!value) return
+    const entry: OutputWebhook =
+      newWebhookType === 'webhook'
+        ? { type: 'webhook', url: value, enabled: true }
+        : newWebhookType === 'slack'
+        ? { type: 'slack', webhookUrl: value, enabled: true }
+        : { type: 'email', to: value, enabled: true }
+    setOutputWebhooks((prev) => [...prev, entry])
+    setNewWebhookValue('')
+  }
+
+  const handleRemoveWebhook = (index: number) => {
+    setOutputWebhooks((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const handleToggleWebhook = (index: number) => {
+    setOutputWebhooks((prev) =>
+      prev.map((w, i) => (i === index ? { ...w, enabled: !w.enabled } : w))
+    )
+  }
+
+  const handleSaveWebhooks = async () => {
+    if (!orchestration) return
+    setSavingWebhooks(true)
+    try {
+      const newConfig = { ...(orchestration.config || {}), outputWebhooks }
+      const response = await fetch(`/api/orchestrations/${resolvedParams.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ config: newConfig }),
+      })
+      const data = await response.json()
+      if (data.success) {
+        setOrchestration(data.data)
+        toast.success('Outputs salvos com sucesso!')
+      } else {
+        toast.error(data.error || 'Erro ao salvar outputs')
+      }
+    } catch {
+      toast.error('Erro ao salvar outputs')
+    } finally {
+      setSavingWebhooks(false)
+    }
+  }
 
   // Find agent name helper
   const getAgentName = (id: string) => agents.find(a => a.id === id)?.name || 'Agente Desconhecido'
@@ -632,6 +708,97 @@ export default function OrchestrationDetailPage({ params }: { params: Promise<{ 
 
       {/* Analytics Dashboard */}
       <AnalyticsDashboard orchestrationId={resolvedParams.id} />
+
+      {/* Output Webhooks */}
+      <Card className="bg-gray-900/50 border-white/10">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4 text-primary" />
+              <CardTitle className="text-lg text-white">Outputs & Notificações</CardTitle>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleSaveWebhooks}
+              disabled={savingWebhooks}
+              className="gap-1.5"
+            >
+              <Save className="h-3.5 w-3.5" />
+              {savingWebhooks ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </div>
+          <CardDescription className="text-white/50 text-xs">
+            Envie o resultado da execução para webhook, e-mail ou Slack automaticamente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* List of configured outputs */}
+          {outputWebhooks.length > 0 ? (
+            <div className="space-y-2">
+              {outputWebhooks.map((wh, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-3 rounded-lg bg-white/5 border border-white/10 px-3 py-2"
+                >
+                  <div className="flex-shrink-0">
+                    {wh.type === 'email' ? (
+                      <Mail className="h-4 w-4 text-blue-400" />
+                    ) : wh.type === 'slack' ? (
+                      <Hash className="h-4 w-4 text-purple-400" />
+                    ) : (
+                      <Webhook className="h-4 w-4 text-green-400" />
+                    )}
+                  </div>
+                  <span className="flex-1 text-sm text-white/80 truncate font-mono">
+                    {wh.type === 'email' ? wh.to : wh.type === 'slack' ? wh.webhookUrl : wh.url}
+                  </span>
+                  <Switch
+                    checked={wh.enabled}
+                    onCheckedChange={() => handleToggleWebhook(idx)}
+                    className="flex-shrink-0"
+                  />
+                  <button
+                    onClick={() => handleRemoveWebhook(idx)}
+                    className="flex-shrink-0 text-white/30 hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-white/30 text-center py-2">Nenhum output configurado.</p>
+          )}
+
+          {/* Add new output */}
+          <div className="flex gap-2 pt-1">
+            <Select value={newWebhookType} onValueChange={(v) => setNewWebhookType(v as 'webhook' | 'email' | 'slack')}>
+              <SelectTrigger className="w-32 bg-white/5 border-white/10 text-white text-xs h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-white/10">
+                <SelectItem value="webhook">Webhook</SelectItem>
+                <SelectItem value="email">E-mail</SelectItem>
+                <SelectItem value="slack">Slack</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              className="flex-1 bg-white/5 border-white/10 text-white text-xs h-8 placeholder:text-white/30"
+              placeholder={
+                newWebhookType === 'email'
+                  ? 'email@exemplo.com'
+                  : 'https://...'
+              }
+              value={newWebhookValue}
+              onChange={(e) => setNewWebhookValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddWebhook()}
+            />
+            <Button size="sm" variant="outline" onClick={handleAddWebhook} className="h-8 px-3">
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Execution History with Filters */}
       <ExecutionHistory orchestrationId={resolvedParams.id} />

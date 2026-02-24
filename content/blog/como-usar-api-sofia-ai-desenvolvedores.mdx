@@ -1,0 +1,297 @@
+---
+title: "Como Usar a API do Sofia AI: Guia para Desenvolvedores"
+slug: "como-usar-api-sofia-ai-desenvolvedores"
+description: "Guia completo para desenvolvedores integrarem o Sofia AI via API REST. Autenticação por API Key, endpoints de orquestrações e agentes, exemplos em curl e JavaScript com casos de uso práticos."
+date: "2026-02-24"
+author: "Equipe Sofia"
+tags: ["api sofia ai", "api ia", "integração api", "desenvolvedores ia", "rest api ia"]
+readTime: "10 min"
+---
+
+A API pública do Sofia AI permite que desenvolvedores executem orquestrações de agentes IA diretamente de qualquer aplicação — sem precisar abrir o dashboard. Com ela, você pode disparar pipelines de IA a partir do seu CRM, app mobile, backend Node.js ou qualquer linguagem que faça requisições HTTP.
+
+Este guia cobre tudo que você precisa para começar.
+
+---
+
+## Pré-requisitos
+
+- Conta no [Sofia AI](https://sofiaia.roilabs.com.br)
+- Plano ativo (Free inclui acesso à API com limites reduzidos)
+- API Key gerada em `/dashboard/api-keys`
+
+---
+
+## 1. Gerando sua API Key
+
+Acesse `Dashboard → API Keys` e clique em **"Nova API Key"**. Dê um nome descritivo (ex: `prod-backend`, `n8n-integration`) e copie o token gerado — ele não será exibido novamente.
+
+A autenticação é feita pelo header `X-API-Key` em todas as requisições.
+
+---
+
+## 2. Endpoints disponíveis
+
+### Base URL
+
+```
+https://sofiaia.roilabs.com.br/api/public
+```
+
+### Lista de endpoints
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `GET` | `/orchestrations` | Lista todas as orquestrações do usuário |
+| `POST` | `/orchestrations/:id/run` | Executa uma orquestração |
+| `GET` | `/agents` | Lista todos os agentes do usuário |
+
+---
+
+## 3. Listando suas orquestrações
+
+```bash
+curl https://sofiaia.roilabs.com.br/api/public/orchestrations \
+  -H "X-API-Key: sua_api_key_aqui"
+```
+
+**Resposta:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-da-orquestracao",
+      "name": "Pipeline de Marketing",
+      "strategy": "sequential",
+      "status": "active",
+      "agentCount": 3
+    }
+  ]
+}
+```
+
+Use o campo `id` para executar a orquestração.
+
+---
+
+## 4. Executando uma orquestração
+
+```bash
+curl -X POST \
+  https://sofiaia.roilabs.com.br/api/public/orchestrations/SEU_ID/run \
+  -H "X-API-Key: sua_api_key_aqui" \
+  -H "Content-Type: application/json" \
+  -d '{"input": "Analise o seguinte produto e crie uma campanha de lançamento: Software de gestão para clínicas odontológicas."}'
+```
+
+**Resposta:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "executionId": "uuid-da-execucao",
+    "output": {
+      "result": "Campanha de lançamento...",
+      "agentResults": [...]
+    },
+    "tokensUsed": 4200,
+    "durationMs": 18500
+  }
+}
+```
+
+O campo `output.result` contém o resultado final consolidado da orquestração.
+
+---
+
+## 5. Listando seus agentes
+
+```bash
+curl https://sofiaia.roilabs.com.br/api/public/agents \
+  -H "X-API-Key: sua_api_key_aqui"
+```
+
+**Resposta:**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-do-agente",
+      "name": "Copywriter Sênior",
+      "model": "llama-3.3-70b-versatile",
+      "status": "active"
+    }
+  ]
+}
+```
+
+---
+
+## 6. Exemplos em JavaScript (fetch)
+
+### Executar orquestração e processar resultado
+
+```javascript
+const SOFIA_API_KEY = process.env.SOFIA_API_KEY
+const ORCHESTRATION_ID = 'seu-orchestration-id'
+
+async function runOrchestration(input) {
+  const response = await fetch(
+    `https://sofiaia.roilabs.com.br/api/public/orchestrations/${ORCHESTRATION_ID}/run`,
+    {
+      method: 'POST',
+      headers: {
+        'X-API-Key': SOFIA_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ input }),
+    }
+  )
+
+  const data = await response.json()
+
+  if (!data.success) {
+    throw new Error(data.error || 'Falha na execução')
+  }
+
+  return data.data.output
+}
+
+// Uso
+const resultado = await runOrchestration(
+  'Crie uma análise SWOT para uma startup de EdTech no Brasil.'
+)
+console.log(resultado.result)
+```
+
+### Listar orquestrações disponíveis
+
+```javascript
+async function listarOrquestracoes() {
+  const response = await fetch(
+    'https://sofiaia.roilabs.com.br/api/public/orchestrations',
+    {
+      headers: { 'X-API-Key': process.env.SOFIA_API_KEY },
+    }
+  )
+  const data = await response.json()
+  return data.data
+}
+```
+
+---
+
+## 7. Casos de uso práticos
+
+### Integrar com um CRM
+
+Quando um novo lead entra no CRM, dispare uma orquestração de "pesquisa de prospect" automaticamente:
+
+```javascript
+// Webhook do CRM → sua API → Sofia AI
+app.post('/webhook/novo-lead', async (req, res) => {
+  const { empresa, segmento, tamanho } = req.body
+
+  const analise = await runOrchestration(
+    `Pesquise e analise a empresa "${empresa}" do segmento ${segmento} com ${tamanho} funcionários. Identifique dores, oportunidades e abordagem de vendas ideal.`
+  )
+
+  await crm.updateLead(req.body.id, { aiAnalysis: analise.result })
+  res.json({ ok: true })
+})
+```
+
+### Gerar relatórios automáticos
+
+```javascript
+// Cron job diário — gera relatório de mercado
+cron.schedule('0 7 * * *', async () => {
+  const relatorio = await runOrchestration(
+    'Gere um resumo das principais notícias de IA e tecnologia das últimas 24h relevantes para gestores de produto.'
+  )
+
+  await email.send({
+    to: 'time@empresa.com',
+    subject: 'Relatório Diário de IA',
+    body: relatorio.result,
+  })
+})
+```
+
+### Processar formulários
+
+```javascript
+// Quando usuário submete formulário de briefing
+app.post('/api/briefing', async (req, res) => {
+  const briefing = req.body
+
+  const proposta = await runOrchestration(
+    `Com base neste briefing de cliente, crie uma proposta comercial detalhada: ${JSON.stringify(briefing)}`
+  )
+
+  res.json({ proposta: proposta.result })
+})
+```
+
+---
+
+## 8. Tratamento de erros
+
+| Código HTTP | Significado | Solução |
+|-------------|-------------|---------|
+| `401` | API Key inválida ou ausente | Verifique o header `X-API-Key` |
+| `403` | Limite do plano atingido | Faça upgrade ou aguarde o reset |
+| `404` | Orquestração não encontrada | Verifique o ID |
+| `400` | Orquestração inativa | Ative a orquestração no dashboard |
+| `500` | Erro interno | Tente novamente ou contate o suporte |
+
+```javascript
+async function runComRetry(input, tentativas = 3) {
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      return await runOrchestration(input)
+    } catch (err) {
+      if (i === tentativas - 1) throw err
+      await new Promise(r => setTimeout(r, 2000 * (i + 1))) // backoff
+    }
+  }
+}
+```
+
+---
+
+## 9. Limites por plano
+
+| Plano | Execuções via API/mês | Timeout máximo |
+|-------|-----------------------|----------------|
+| Free | 50 | 2 min |
+| Pro | 1.000 | 10 min |
+| Business | Ilimitado | 30 min |
+
+---
+
+## 10. Autenticação segura em produção
+
+**Nunca** exponha a API Key no frontend ou em variáveis de ambiente públicas. Use sempre:
+
+```javascript
+// .env (nunca commite isso)
+SOFIA_API_KEY=sk_live_...
+
+// No código do servidor
+const apiKey = process.env.SOFIA_API_KEY // ✅ servidor
+// const apiKey = 'sk_live_...' // ❌ nunca hardcode
+```
+
+---
+
+## Próximos passos
+
+A API do Sofia AI é a forma mais poderosa de trazer IA para qualquer fluxo da sua empresa sem construir infraestrutura própria. Para configurar suas orquestrações e obter sua API Key, acesse [sofiaia.roilabs.com.br/dashboard/api-keys](https://sofiaia.roilabs.com.br/dashboard/api-keys).
+
+Dúvidas? Acesse a [documentação completa](https://sofiaia.roilabs.com.br/docs) ou entre no [Discord da comunidade](https://sofiaia.roilabs.com.br/comunidade).

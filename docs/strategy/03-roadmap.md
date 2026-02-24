@@ -1,6 +1,6 @@
 # Sofia — Roadmap Executável
 
-> Última atualização: 23/02/2026
+> Última atualização: 24/02/2026
 > Status: Em execução
 
 ## Legenda
@@ -337,3 +337,32 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ⬜ **P0** — LinkedIn: primeiros 10 posts do founder brand (estratégia + execução)
 - ⬜ **P1** — YouTube: setup canal + 1 vídeo demo de orquestração ao vivo
 - ✅ **P2** — Google Search Console + Bing Webmaster Tools configurados
+
+---
+
+## Sprint 13 — Auth + Webhooks + Afiliados (Semana 41-44)
+
+**Objetivo**: Aumentar conversão reduzindo fricção de entrada (Google OAuth), aumentar retenção com integrações de output (webhooks) e abrir canal viral de aquisição (afiliados)
+
+### Produto — Auth (conversão de signup)
+- ✅ **P0** — Google OAuth via next-auth: "Entrar com Google" nas páginas de login e cadastro
+- ✅ **P0** — Bridge OAuth → JWT existente (login social cria/encontra user no DB e emite cookie JWT)
+- ⬜ **P1** — Botão "Continuar com Google" no onboarding wizard (step 1)
+
+### Produto — Webhooks de Output (retenção + integração)
+- ✅ **P0** — Config de output em orquestrações: webhook URL, email, Slack webhook
+- ✅ **P0** — Disparar webhook/email/Slack ao final de cada execução bem-sucedida
+- ✅ **P1** — UI de configuração de outputs no editor de orquestração
+- ⬜ **P1** — Histórico de disparos (enviado, falhou, retry)
+
+### Produto — Afiliados (aquisição viral)
+- ✅ **P1** — Página pública `/afiliados` (landing com benefícios, comissão e CTA para se inscrever)
+- ✅ **P1** — Link rastreável por usuário (ref=USER_ID nos CTAs do dashboard e sidebar)
+- ⬜ **P2** — Contador de indicações no perfil do usuário
+
+### SEO — Camada 2/3 (cadência mensal)
+- ✅ **P0** — "Como Integrar Agentes IA com Slack, Email e Webhooks"
+- ✅ **P0** — "Programa de Afiliados de IA: Como Ganhar Indicando Sofia AI"
+- ✅ **P1** — "Google Login vs Email/Senha: Por que Login Social Aumenta Conversão"
+- ✅ **P1** — "Como Usar a API do Sofia AI: Guia para Desenvolvedores"
+- ✅ **P2** — "Automação com Slack e IA: Notificações Inteligentes para Times"

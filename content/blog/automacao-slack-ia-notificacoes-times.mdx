@@ -1,0 +1,198 @@
+---
+title: "Automação com Slack e IA: Notificações Inteligentes para Times"
+slug: "automacao-slack-ia-notificacoes-times"
+description: "Aprenda a integrar Slack com agentes IA para receber notificações automáticas e inteligentes. Guia prático com passo a passo de como configurar Sofia AI + Slack Incoming Webhooks para times de marketing, produto e operações."
+date: "2026-02-24"
+author: "Equipe Sofia"
+tags: ["slack ia", "automação slack", "notificações inteligentes", "ia para times", "integração slack"]
+readTime: "8 min"
+---
+
+Times modernos vivem no Slack — e IA pode entregar resultados diretamente lá, eliminando a necessidade de abrir dashboards, exportar relatórios ou agendar reuniões para compartilhar análises. Com a integração entre **Sofia AI e Slack**, você configura uma orquestração de agentes para rodar automaticamente e jogar o resultado no canal certo.
+
+Este guia mostra como configurar isso em 15 minutos.
+
+---
+
+## Por que usar IA + Slack juntos
+
+O Slack é onde decisões acontecem em tempo real. Quando uma análise de IA chega direto no canal do time — sem precisar que alguém abra outra ferramenta, exporte PDF ou cole num doc — a velocidade de decisão aumenta drasticamente.
+
+| Sem integração | Com IA + Slack |
+|----------------|----------------|
+| Rodar análise manualmente | Análise roda automaticamente |
+| Copiar resultado para o Slack | Resultado aparece no canal |
+| Lembrar de verificar o dashboard | Notificação proativa |
+| Reunião para compartilhar insights | Todos veem ao mesmo tempo |
+
+---
+
+## Casos de uso por área
+
+### Marketing
+- **Relatório diário de concorrentes**: orquestração roda toda manhã e posta no `#marketing` o resumo de novidades dos concorrentes
+- **Análise de campanha**: ao finalizar uma campanha, dispara análise de performance e posta resultado no `#campanhas`
+- **Geração de pauta**: toda semana, um agente sugere pautas de conteúdo para o canal `#conteudo`
+
+### Produto
+- **Resumo de feedbacks**: toda sexta, agrega feedbacks da semana e posta análise no `#produto`
+- **Análise de churn**: quando churn sobe, alerta automático com análise de causas no `#alerts`
+- **Release notes redigidas**: ao lançar uma versão, agente gera release notes e posta no `#produto`
+
+### Operações
+- **Relatório de SLA**: diariamente, posta no `#ops` o status de SLA dos tickets
+- **Análise de custos**: semanalmente, agente analisa custos e identifica anomalias
+
+---
+
+## Passo a passo: configurar Sofia AI + Slack
+
+### Etapa 1: Criar um Incoming Webhook no Slack
+
+1. Acesse [api.slack.com/apps](https://api.slack.com/apps) e clique em **Create New App**
+2. Escolha **From scratch**, dê um nome (ex: "Sofia AI") e selecione seu workspace
+3. No menu lateral, clique em **Incoming Webhooks**
+4. Ative a opção **Activate Incoming Webhooks**
+5. Clique em **Add New Webhook to Workspace**
+6. Escolha o canal de destino (ex: `#marketing`) e clique em **Allow**
+7. Copie a URL gerada — ela tem o formato: `https://hooks.slack.com/services/T.../B.../xxx`
+
+### Etapa 2: Configurar o output no Sofia AI
+
+1. Acesse o Sofia AI e abra a orquestração que deseja conectar
+2. Role até o card **"Outputs & Notificações"**
+3. No seletor de tipo, escolha **Slack**
+4. Cole a URL do Incoming Webhook no campo
+5. Ative o toggle e clique em **Salvar**
+
+Pronto. A partir da próxima execução, o resultado será postado automaticamente no canal do Slack.
+
+### Etapa 3: Testar a integração
+
+Execute a orquestração manualmente clicando em **Executar** e verifique se a mensagem chegou no canal do Slack. A notificação incluirá:
+
+- Nome da orquestração
+- Duração da execução
+- Tokens utilizados
+- O resultado completo (até 2.000 caracteres, com truncagem automática)
+
+---
+
+## O que aparece no Slack
+
+A mensagem enviada para o Slack tem este formato:
+
+```
+✅ Orquestração concluída: Pipeline de Marketing
+⏱ Duração: 18.4s | 🔤 Tokens: 4.200
+
+Resultado:
+Com base na análise dos dados fornecidos, identificamos 3 oportunidades principais
+para o lançamento do produto em Março/2026...
+[resultado completo]
+```
+
+---
+
+## Configurando múltiplos canais por orquestração
+
+Você pode adicionar mais de um output por orquestração. Por exemplo:
+
+- Slack `#marketing` — recebe o resultado
+- Email `cmo@empresa.com` — recebe uma cópia para arquivo
+- Webhook `https://seu-crm.com/webhooks/ia` — alimenta o CRM automaticamente
+
+Cada output pode ser ativado/desativado individualmente sem excluir a configuração.
+
+---
+
+## Automatizando com agendamento
+
+Para que a orquestração rode automaticamente (ex: toda manhã às 8h), combine Sofia AI com:
+
+### Opção 1: n8n (self-hosted ou cloud)
+```
+Cron (8h diário) → HTTP POST /api/public/orchestrations/:id/run → resultado vai para o Slack via Sofia AI
+```
+
+### Opção 2: GitHub Actions (gratuito)
+```yaml
+name: Relatório Diário IA
+on:
+  schedule:
+    - cron: '0 11 * * 1-5'  # 8h BRT = 11h UTC, seg-sex
+
+jobs:
+  rodar-orquestracao:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Executar orquestração Sofia AI
+        run: |
+          curl -X POST \
+            "https://sofiaia.roilabs.com.br/api/public/orchestrations/${{ secrets.SOFIA_ORCHESTRATION_ID }}/run" \
+            -H "X-API-Key: ${{ secrets.SOFIA_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"input": "Gere o relatório de performance da semana."}'
+```
+
+### Opção 3: Cron no seu servidor
+```javascript
+// cron.js — rode com node-cron
+const cron = require('node-cron')
+
+cron.schedule('0 8 * * 1-5', async () => {
+  await fetch(
+    `https://sofiaia.roilabs.com.br/api/public/orchestrations/${process.env.SOFIA_ORCHESTRATION_ID}/run`,
+    {
+      method: 'POST',
+      headers: {
+        'X-API-Key': process.env.SOFIA_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        input: 'Gere o relatório matinal de performance.',
+      }),
+    }
+  )
+})
+```
+
+---
+
+## Dicas para mensagens mais úteis no Slack
+
+### Configure o sistema prompt do agente para formatar a saída
+
+No agente responsável pela saída final da orquestração, adicione ao prompt do sistema:
+
+```
+Responda sempre em formato conciso e direto.
+Use bullet points para listas.
+Comece com o insight mais importante.
+Evite introduções longas.
+Máximo 500 palavras.
+```
+
+Isso garante que a mensagem no Slack seja escaneável e fácil de ler no contexto de um canal ativo.
+
+### Use emojis nos papéis dos agentes
+
+Quando o papel do agente inclui um emoji (ex: "📊 Analista de Dados"), a mensagem no Slack fica mais clara para distinguir de qual etapa o output veio.
+
+---
+
+## Resultado: menos reuniões, mais contexto
+
+Uma empresa que implementa essa integração tipicamente:
+
+- Elimina 2-3 reuniões semanais de alinhamento
+- Reduz em 40% o tempo gasto em relatórios manuais
+- Aumenta a velocidade de reação a mudanças de mercado (de dias para horas)
+
+IA não deve ficar presa em dashboards. Com Sofia AI + Slack, os insights vão para onde as decisões já acontecem.
+
+---
+
+## Comece agora
+
+Configure sua primeira integração Sofia AI + Slack em [sofiaia.roilabs.com.br](https://sofiaia.roilabs.com.br). O recurso de output webhooks está disponível em todos os planos — crie sua conta gratuita e teste hoje.

@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const usage = await getUsageSummary(auth.id)
-    return NextResponse.json(usage)
+    return NextResponse.json({ ...usage, userId: auth.id })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
