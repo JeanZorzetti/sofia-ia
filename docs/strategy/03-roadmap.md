@@ -454,3 +454,67 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P1** — "Como Usar a API REST do Sofia AI: Guia Completo com Exemplos"
 - ✅ **P1** — "SDK JavaScript para Agentes IA: Integrando Sofia AI em Qualquer Aplicação"
 - ✅ **P2** — "Webhook Seguro com HMAC: Verificando Assinaturas de Notificações IA"
+
+---
+
+## Sprint 16 — Teams & Organizations + Audit Log + Integrações Nativas (Semana 53-56)
+
+**Objetivo**: Desbloquear enterprise e B2B real — workspaces multi-membro com RBAC, audit log para compliance, e conectores nativos para Zapier/Make/n8n. Estes são os três desbloqueadores do plano macro "Longuíssimo Prazo": enterprise features, integration marketplace e expansão de ticket médio via seats.
+
+### Produto — Organizations & Teams
+
+#### Schema e infraestrutura
+- ⬜ **P0** — Model `Organization` (id, name, slug, plan, createdAt) + `OrganizationMember` (orgId, userId, role: ADMIN | MEMBER | VIEWER, invitedAt, joinedAt)
+- ⬜ **P0** — Todos os resources existentes (agents, orchestrations, knowledgeBases, conversations) recebem campo `organizationId` opcional — backward-compat: recursos sem org pertencem ao usuário pessoal
+- ⬜ **P0** — Middleware `getOrgContext()`: resolve workspace ativo da requisição (header ou cookie `x-org-id`)
+- ⬜ **P0** — Todas as queries de listagem passam a filtrar por `organizationId` quando workspace org está ativo
+
+#### Invite & onboarding
+- ⬜ **P0** — `POST /api/organizations` — criar nova org
+- ⬜ **P0** — `POST /api/organizations/[slug]/invites` — convidar membro por email (envia email via Resend com link de aceite)
+- ⬜ **P0** — `GET /api/organizations/invites/accept?token=xxx` — aceitar convite, cria OrganizationMember
+- ⬜ **P1** — `PATCH /api/organizations/[slug]/members/[userId]` — alterar role (só ADMIN)
+- ⬜ **P1** — `DELETE /api/organizations/[slug]/members/[userId]` — remover membro
+
+#### Dashboard de equipe
+- ⬜ **P0** — Página `/dashboard/settings/team` — listar membros, pendentes, botão convidar, alterar role, remover
+- ⬜ **P0** — Seletor de workspace na sidebar (pessoal ↔ organizações) — persiste em cookie `x-org-id`
+- ⬜ **P1** — Página `/dashboard/settings/organization` — nome, slug, plano da org, danger zone (deletar org)
+- ⬜ **P2** — Badge de role visível no perfil do usuário dentro do contexto da org
+
+#### RBAC enforcement
+- ⬜ **P1** — ADMIN: tudo. MEMBER: criar/editar/usar recursos. VIEWER: apenas leitura (GET), sem criar/editar/deletar
+- ⬜ **P1** — Helper `checkOrgPermission(userId, orgId, action)` reutilizado em todas as rotas sensíveis
+
+### Produto — Audit Log
+
+- ⬜ **P0** — Model `AuditLog` (id, userId, orgId?, action, resource, resourceId, metadata JSON, ip, userAgent, createdAt)
+- ⬜ **P0** — Helper `logAudit(action, resource, resourceId, metadata)` chamado nos eventos críticos:
+  - agent: created, updated, deleted
+  - orchestration: executed, scheduled, deleted
+  - knowledgeBase: created, uploaded, deleted
+  - member: invited, joined, removed, role_changed
+  - apiKey: created, revoked
+  - billing: plan_changed
+- ⬜ **P1** — Página `/dashboard/audit-log` — tabela com filtros por ação, resource, usuário, período
+- ⬜ **P2** — Export CSV do audit log (últimos 90 dias)
+
+### Produto — Integrações Nativas
+
+#### Zapier & Make
+- ⬜ **P0** — Endpoint de trigger para Zapier: `GET /api/v1/integrations/zapier/poll` — retorna execuções recentes (polling trigger)
+- ⬜ **P0** — Endpoint de action para Zapier: `POST /api/v1/integrations/zapier/execute` — executa orquestração (action)
+- ⬜ **P0** — Página pública `/integrations/zapier` — guia de setup passo-a-passo com screenshots descritivos
+- ⬜ **P1** — Página pública `/integrations/make` — guia de setup para Make (Integromat) com webhook
+- ⬜ **P1** — Página pública `/integrations/n8n` — guia de setup para n8n com HTTP Request node
+
+#### Página hub de integrações
+- ⬜ **P1** — Atualizar `/integrations` existente com cards visuais para Zapier, Make, n8n, API direta, Slack, Email
+- ⬜ **P2** — Página `/integrations/slack` — como configurar bot Slack recebendo outputs de orquestrações
+
+### SEO — Camada 2/3 (cadência mensal, 5 artigos)
+- ⬜ **P0** — "Como Criar Workspace de IA para seu Time: Guia de Multi-usuário em Sofia AI"
+- ⬜ **P0** — "Zapier + IA: Como Automatizar Workflows com Agentes de IA sem Código"
+- ⬜ **P1** — "RBAC em SaaS: Por que Controle de Acesso por Papel é Essencial para Enterprise"
+- ⬜ **P1** — "Audit Log em Aplicações IA: Compliance, Segurança e Rastreabilidade"
+- ⬜ **P2** — "Make vs Zapier vs n8n: Qual Plataforma de Automação Usar com IA em 2026"
