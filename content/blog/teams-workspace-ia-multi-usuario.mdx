@@ -1,0 +1,143 @@
+---
+title: "Como Criar um Workspace de IA para seu Time: Guia Completo"
+slug: "teams-workspace-ia-multi-usuario"
+description: "Aprenda como configurar um workspace de IA multi-usuário com controle de acesso, convites e colaboração em equipe. RBAC, roles e organizações explicados do zero."
+date: "2026-02-24"
+author: "Equipe Sofia"
+tags: ["workspace ia", "times ia", "rbac", "colaboracao ia", "multi-usuario", "organizations"]
+readTime: "9 min"
+---
+
+**Trabalhar com IA em equipe exige mais do que uma conta individual.** Quando sua empresa começa a usar agentes de IA e orquestrações de forma séria, múltiplos colaboradores precisam acessar, configurar e monitorar os mesmos recursos — com níveis de permissão diferentes.
+
+É para isso que existem os workspaces colaborativos de IA.
+
+---
+
+## Por que você precisa de um workspace de equipe?
+
+Imagine os seguintes cenários:
+
+- O time de **marketing** quer acessar agentes de conteúdo, mas não deve mexer nos agentes de vendas
+- O **CTO** precisa ver audit logs de tudo, mas não deve editar prompts
+- Um **freelancer externo** deve poder testar orquestrações, mas não criar novos agentes
+
+Sem controle de acesso, qualquer pessoa com acesso à conta pode fazer qualquer coisa. Isso é um risco operacional e de segurança.
+
+A solução é RBAC — Role-Based Access Control.
+
+---
+
+## O que é RBAC em contexto de IA?
+
+**RBAC (Role-Based Access Control)** é um modelo onde cada usuário tem um papel (role) que determina o que ele pode fazer. No contexto de plataformas de IA como o Sofia AI, os roles típicos são:
+
+### Admin
+- Acesso total à organização
+- Pode convidar e remover membros
+- Pode alterar roles de outros membros
+- Pode deletar a organização
+- Pode criar, editar e deletar qualquer agente ou orquestração
+
+### Membro (Member)
+- Pode criar e editar agentes e orquestrações
+- Pode executar orquestrações
+- Pode acessar knowledge bases
+- **Não pode** gerenciar membros da organização
+
+### Visualizador (Viewer)
+- Acesso somente leitura
+- Pode ver agentes, orquestrações e resultados
+- Pode consultar audit logs
+- Ideal para stakeholders e executivos que precisam de visibilidade sem poder alterar nada
+
+---
+
+## Como criar um workspace de equipe no Sofia AI
+
+### Passo 1: Criar a organização
+
+Acesse **Dashboard → Configurações → Gestão de Equipe** e clique em "Nova Organização".
+
+Você precisará definir:
+- **Nome**: Nome visível da organização (ex: "Acme Marketing AI")
+- **Slug**: Identificador único em URL (ex: `acme-marketing-ai`)
+
+Você será automaticamente definido como **Admin** da organização.
+
+### Passo 2: Convidar membros
+
+Na mesma página de Gestão de Equipe, clique em "Convidar Membro":
+
+1. Informe o **email** do convidado
+2. Selecione o **role**: Admin, Membro ou Visualizador
+3. Clique em "Enviar Convite"
+
+O convidado receberá um email com um link para aceitar o convite. O link é válido por 7 dias.
+
+### Passo 3: Aceitar o convite
+
+O convidado acessa o link no email, vê os detalhes da organização (nome, role que terá) e clica em "Aceitar Convite". Se ainda não tiver conta no Sofia AI, será redirecionado para criar uma primeiro.
+
+### Passo 4: Colaborar no workspace
+
+Após aceitar, o membro vê um seletor de workspace na barra lateral do dashboard. Ele pode alternar entre "Pessoal" e qualquer organização da qual faz parte.
+
+---
+
+## Casos de uso por departamento
+
+### Marketing
+- **Agentes**: criadores de conteúdo, analisadores de sentimento, geradores de copy
+- **Roles recomendados**: Admins (coordenadores), Membros (criadores), Visualizadores (gestores)
+- **Benefício**: cada pessoa acessa apenas o que precisa, sem risco de deletar agentes de outros times
+
+### Vendas
+- **Agentes**: qualificadores de leads, geradores de propostas, SDRs automáticos
+- **Roles recomendados**: Admins (gerentes de vendas), Membros (vendedores), Visualizadores (diretores)
+- **Benefício**: vendedores executam orquestrações sem precisar entender configurações técnicas
+
+### Suporte
+- **Agentes**: atendimento automático, triagem de tickets, rascunhadores de resposta
+- **Roles recomendados**: Admins (supervisores), Membros (atendentes sênior), Visualizadores (analistas)
+- **Benefício**: supervisores controlam qualidade sem precisar responder tickets individualmente
+
+### TI / DevOps
+- **Agentes**: análise de logs, geração de documentação, revisão de código
+- **Roles recomendados**: Admins (tech leads), Membros (desenvolvedores), Visualizadores (PMs)
+- **Benefício**: desenvolvedores têm autonomia total enquanto PMs acompanham sem interferir
+
+---
+
+## Audit Log: visibilidade total para compliance
+
+Toda ação dentro de um workspace é registrada no **Audit Log**:
+
+- Quem criou ou deletou um agente
+- Quem executou qual orquestração
+- Quem foi convidado e quem aceitou
+- Quais roles foram alterados
+
+Isso é fundamental para compliance (especialmente LGPD), accountability e troubleshooting.
+
+Acesse em **Dashboard → Audit Log** com filtros por período e tipo de ação, além de exportação em CSV.
+
+---
+
+## Boas práticas de workspace de IA em equipe
+
+1. **Princípio do menor privilégio**: dê às pessoas apenas o acesso que elas precisam, não mais
+2. **Revisar membros periodicamente**: remova ex-colaboradores e freelancers que terminaram projetos
+3. **Usar roles diferentes por ambiente**: pode ser útil ter uma org de "produção" e outra de "testes"
+4. **Documentar os agentes**: use descrições claras para que qualquer membro entenda o que cada agente faz
+5. **Monitorar o audit log**: verifique periodicamente quem está executando o quê
+
+---
+
+## Conclusão
+
+Um workspace de IA bem configurado aumenta a produtividade do time, reduz erros operacionais e garante compliance. Com RBAC adequado, cada pessoa tem acesso ao que precisa — nem mais, nem menos.
+
+O Sofia AI oferece Organizations com roles granulares, sistema de convites por email, audit log completo e seletor de workspace na sidebar para alternar entre contextos com facilidade.
+
+**Pronto para criar o workspace da sua equipe?**

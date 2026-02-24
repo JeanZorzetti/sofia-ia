@@ -1,0 +1,181 @@
+---
+title: "Audit Log em Aplicações IA: Compliance, Segurança e Rastreabilidade"
+slug: "audit-log-compliance-ia"
+description: "Por que aplicações de IA precisam de audit log, o que registrar, como estruturar para compliance LGPD e quais são as melhores práticas de rastreabilidade em sistemas de agentes IA."
+date: "2026-02-24"
+author: "Equipe Sofia"
+tags: ["audit log", "compliance ia", "lgpd ia", "rastreabilidade ia", "segurança agentes ia", "log auditoria"]
+readTime: "8 min"
+---
+
+**Um agente de IA tomou uma decisão que causou prejuízo. Quem acionou? O que foi enviado? Quando aconteceu?** Sem audit log, essas perguntas ficam sem resposta — e isso é um problema sério para compliance, segurança e confiança.
+
+Este artigo explica por que audit log é essencial em aplicações de IA, o que registrar e como estruturar para atender LGPD e requisitos enterprise.
+
+---
+
+## O que é um Audit Log?
+
+Um **audit log** (registro de auditoria) é um registro cronológico e imutável de todas as ações relevantes que aconteceram em um sistema. Cada entrada registra:
+
+- **O quê**: qual ação foi executada (`agent.created`, `orchestration.executed`)
+- **Quem**: qual usuário executou a ação
+- **Quando**: timestamp preciso
+- **Como**: IP de origem, user agent, metadados adicionais
+- **O resultado**: sucesso, falha, dados afetados
+
+Em aplicações tradicionais (bancos, ERPs), audit logs são obrigatórios há décadas. Em aplicações de IA, a necessidade é ainda maior — porque os impactos de ações de IA podem ser muito mais abrangentes.
+
+---
+
+## Por que aplicações de IA precisam de audit log?
+
+### 1. Ações automatizadas em escala
+
+Um agente de IA pode enviar centenas de mensagens, gerar dezenas de documentos ou atualizar múltiplos registros em minutos. Se algo der errado, você precisa saber exatamente o que foi feito e reverter ou corrigir.
+
+Sem audit log, investigar um incidente de IA é como resolver um crime sem evidências.
+
+### 2. LGPD e proteção de dados
+
+A **Lei Geral de Proteção de Dados** (Lei 13.709/2018) exige que empresas demonstrem que dados pessoais são processados de forma adequada. Isso inclui:
+
+- Registrar quando dados pessoais foram acessados
+- Documentar quem teve acesso
+- Demonstrar que processamento tem base legal
+- Responder a requisições de titulares ("quais operações foram feitas com meus dados?")
+
+Se seu agente de IA processa dados de clientes (nomes, emails, histórico de conversa), o audit log é seu mecanismo de compliance com a LGPD.
+
+### 3. Responsabilização (accountability)
+
+Em organizações com múltiplos usuários, é fundamental saber quem fez o quê. Sem audit log, conflitos ficam sem resolução: "Eu não deletei o agente!" "Foi você!" — sem como verificar.
+
+Com audit log, a resposta é imediata e objetiva.
+
+### 4. Detecção de anomalias e segurança
+
+Padrões incomuns no audit log podem indicar:
+- Conta comprometida (acessos de IPs incomuns)
+- Uso indevido (usuário executando centenas de orquestrações)
+- Erros de configuração (falhas repetidas no mesmo recurso)
+
+Audit logs são a base de sistemas de detecção de intrusão e monitoramento de segurança.
+
+### 5. Debugging e troubleshooting
+
+Quando um cliente reporta "o agente me enviou uma mensagem estranha na terça-feira", você pode consultar o audit log filtrado por agente, data e usuário para reconstituir exatamente o que aconteceu.
+
+---
+
+## O que registrar no audit log de IA?
+
+### Ações de usuário
+
+```
+agent.created       — usuário criou um agente
+agent.updated       — usuário editou configurações do agente
+agent.deleted       — usuário deletou um agente
+orchestration.executed — orquestração foi executada
+member.invited      — usuário foi convidado para organização
+member.joined       — usuário aceitou convite
+member.removed      — usuário foi removido da organização
+apiKey.created      — nova API key foi criada
+apiKey.revoked      — API key foi revogada
+```
+
+### Ações de sistema
+
+```
+execution.started   — execução iniciada
+execution.completed — execução concluída com sucesso
+execution.failed    — execução falhou
+webhook.triggered   — webhook enviado para sistema externo
+```
+
+### O que NÃO incluir no audit log
+
+- **Conteúdo de mensagens dos usuários**: pode conter dados pessoais sensíveis
+- **Senhas, tokens e chaves**: nunca logar credenciais
+- **Dados biométricos ou saúde**: categorias especiais de dados pela LGPD
+
+---
+
+## Estrutura recomendada de audit log
+
+```typescript
+{
+  id: string           // ID único do registro
+  userId: string       // ID do usuário que executou
+  orgId?: string       // Organização (se aplicável)
+  action: string       // "agent.created", "member.invited", etc.
+  resource: string     // Tipo do recurso afetado
+  resourceId?: string  // ID do recurso específico
+  metadata: object     // Contexto adicional (name, changes, etc.)
+  ip?: string          // IP de origem
+  userAgent?: string   // Browser/client info
+  createdAt: DateTime  // Timestamp imutável
+}
+```
+
+### Princípios de implementação
+
+1. **Fire and forget**: nunca deixe o audit log bloquear a operação principal. Se o log falhar, a ação deve continuar.
+2. **Imutabilidade**: registros de audit log nunca devem ser editados ou deletados.
+3. **Retenção**: mantenha pelo menos 90 dias para operações normais, 1 ano para operações críticas.
+4. **Indexação**: indexe por `userId`, `action`, `resource` e `createdAt` para consultas rápidas.
+
+---
+
+## Audit Log no Sofia AI
+
+O Sofia AI registra automaticamente todas as ações relevantes em `UserAuditLog`:
+
+### Acesso via Dashboard
+
+Acesse **Dashboard → Audit Log** para ver o histórico completo com:
+- Filtros por período (24h, 7 dias, 30 dias)
+- Filtro por tipo de ação
+- Exportação em CSV para compliance
+
+### Exportação para compliance
+
+O botão "Exportar CSV" gera um arquivo com todos os registros do período selecionado — útil para auditorias externas, respostas à LGPD e relatórios de segurança.
+
+### Integração com ferramentas de SIEM
+
+Para enterprise, você pode usar a API de audit log para alimentar ferramentas SIEM (Splunk, Datadog, etc.) com os registros de ações da plataforma de IA.
+
+---
+
+## LGPD: como o audit log ajuda na conformidade
+
+### Artigo 37 — Registro de atividades de tratamento
+
+A LGPD exige que o controlador mantenha registros das operações de tratamento de dados. O audit log é a implementação técnica desse requisito.
+
+### Artigo 18 — Direitos do titular
+
+Quando um titular solicita informações sobre o tratamento de seus dados, você pode consultar o audit log filtrado por identificadores relacionados a esse titular.
+
+### Artigo 48 — Notificação de incidentes
+
+Em caso de incidente de segurança (vazamento, acesso não autorizado), o audit log é a fonte primária para determinar o escopo e impacto — informação necessária para a notificação à ANPD.
+
+---
+
+## Boas práticas finais
+
+1. **Implemente desde o início**: audit log adicionado retroativamente tem lacunas históricas
+2. **Revise regularmente**: alguém deve revisar o audit log periodicamente, não apenas em incidentes
+3. **Alerte sobre anomalias**: configure alertas para padrões suspeitos (muitas falhas, acesso fora do horário)
+4. **Teste a exportação**: valide que o CSV de compliance é gerado corretamente antes de precisar
+5. **Documente a política**: tenha uma política de retenção e acesso ao audit log documentada
+
+---
+
+## Conclusão
+
+O audit log não é overhead burocrático — é infraestrutura de confiança. Em aplicações de IA onde ações automatizadas têm impacto real, ele é a diferença entre ter e não ter controle sobre o que acontece na sua plataforma.
+
+O Sofia AI inclui audit log completo desde a versão Enterprise, com dashboard integrado e exportação para compliance. Configure sua organização e tenha rastreabilidade total das ações da sua equipe.

@@ -1,0 +1,214 @@
+---
+title: "Make vs Zapier vs n8n: Qual Plataforma de Automação Usar com IA em 2026"
+slug: "make-zapier-n8n-comparativo"
+description: "Comparativo detalhado entre Make, Zapier e n8n para integrar com IA em 2026. Tabela comparativa, prós e contras, recomendações por perfil e casos de uso com agentes IA."
+date: "2026-02-24"
+author: "Equipe Sofia"
+tags: ["make vs zapier", "n8n comparativo", "automacao ia 2026", "zapier alternativa", "make integromat", "n8n self-hosted"]
+readTime: "10 min"
+---
+
+**Make, Zapier ou n8n?** Esta é uma das perguntas mais frequentes de quem quer automatizar workflows com IA. As três plataformas permitem conectar Sofia AI a centenas de outros apps — mas cada uma tem características bem diferentes.
+
+Neste artigo fazemos um comparativo honesto e direto para você escolher a certa.
+
+---
+
+## Visão Geral Rápida
+
+| Critério | Zapier | Make | n8n |
+|----------|--------|------|-----|
+| **Modelo** | Cloud | Cloud | Open source (cloud + self-hosted) |
+| **Facilidade de uso** | Muito fácil | Fácil | Moderado |
+| **Integrações nativas** | 7.000+ | 1.000+ | 400+ |
+| **Preço** | Alto | Médio | Baixo (self-hosted grátis) |
+| **Visual builder** | Sim (linear) | Sim (canvas) | Sim (canvas) |
+| **Complexidade de workflows** | Baixa-Média | Alta | Muito alta |
+| **Debugging** | Básico | Bom | Excelente |
+| **Self-hosted** | Não | Não | Sim |
+| **Open source** | Não | Não | Sim |
+| **API como trigger/action** | Sim | Sim | Sim |
+| **Ideal para** | Iniciantes, PMEs | Times de marketing/ops | Devs, enterprise, privacidade |
+
+---
+
+## Zapier
+
+### O que é
+
+O Zapier é a plataforma de automação mais popular do mundo, com mais de 7.000 apps integrados. Funciona no modelo de "Zaps": cada automação tem um trigger e uma ou mais actions.
+
+### Pontos fortes
+
+**Ecossistema imenso**: com 7.000+ integrações nativas, é raro precisar de HTTP manual. Provavelmente o app que você usa já tem conector oficial.
+
+**Facilidade extrema**: você configura um Zap em 5 minutos sem nenhum conhecimento técnico. É o mais intuitivo das três opções.
+
+**Confiabilidade**: infraestrutura robusta com histórico de uptime excelente. Para automações críticas de negócio, isso importa.
+
+**Suporte**: documentação extensa, comunidade ativa, suporte responsivo.
+
+### Pontos fracos
+
+**Custo**: o plano pago começa em US$19,99/mês e sobe rapidamente conforme o volume de tarefas. Para alto volume, pode se tornar caro.
+
+**Workflows lineares**: o modelo trigger → action → action é simples, mas limita workflows complexos com bifurcações, loops e lógica condicional avançada.
+
+**Lock-in**: todo o histórico e configuração ficam no Zapier. Migrar para outra plataforma é trabalhoso.
+
+**Limitações de transformação**: manipular dados complexos (JSON aninhado, arrays, transformações matemáticas) é difícil sem ferramentas como "Formatter".
+
+### Ideal para
+
+- PMEs que precisam de automação rápida sem equipe técnica
+- Integrações simples entre apps de negócio (CRM, email, planilhas)
+- Times de marketing e vendas que querem automação sem DevOps
+
+### Usar com Sofia AI
+
+Configure a Action como "Webhooks by Zapier > Custom Request" apontando para `/api/v1/integrations/zapier/execute`. Funciona perfeitamente para casos de uso lineares.
+
+---
+
+## Make (Integromat)
+
+### O que é
+
+O Make (antigo Integromat) é uma plataforma de automação visual com modelo de "cenários" em canvas. Mais poderoso que o Zapier para workflows complexos, com preço mais competitivo.
+
+### Pontos fortes
+
+**Canvas visual**: você constrói cenários arrastando e conectando módulos em um canvas. Muito melhor que Zapier para visualizar workflows complexos.
+
+**Manipulação de dados avançada**: o Make tem funções nativas para transformar dados: arrays, objetos JSON, strings, matemática. Não precisa de módulos extras.
+
+**Iteradores e agregadores**: processar listas de items (ex: todos os leads de uma planilha) é muito mais fácil no Make do que no Zapier.
+
+**Preço razoável**: plano gratuito com 1.000 operações/mês. Planos pagos custam menos que Zapier para volumes similares.
+
+**Webhooks poderosos**: o módulo HTTP do Make permite configurar qualquer chamada HTTP com controle total sobre headers, body e autenticação.
+
+### Pontos fracos
+
+**Curva de aprendizado**: mais complexo que Zapier. A interface inicial pode confundir usuários sem nenhuma experiência técnica.
+
+**Menos integrações**: 1.000+ integrações nativas vs 7.000+ do Zapier. Para apps muito nichados, pode não ter conector nativo.
+
+**Cloud only**: não tem opção self-hosted, o que pode ser problema para empresas com requisitos de privacidade rígidos.
+
+**Performance**: para cenários com muitos módulos, pode ser mais lento que o Zapier.
+
+### Ideal para
+
+- Times de operações e marketing com algum conhecimento técnico
+- Workflows complexos com múltiplas condições e transformações de dados
+- Empresas que precisam processar listas e dados estruturados
+- Quem quer mais poder que o Zapier por um preço menor
+
+### Usar com Sofia AI
+
+Use o módulo "HTTP > Make a request" com método POST, URL do endpoint Sofia AI e header x-api-key. O mapeamento visual do Make facilita muito a montagem do body JSON.
+
+---
+
+## n8n
+
+### O que é
+
+O n8n é uma plataforma de automação de workflows open source, disponível tanto como SaaS (app.n8n.cloud) quanto self-hosted. É a mais técnica das três, mas também a mais poderosa e flexível.
+
+### Pontos fortes
+
+**Open source e self-hosted**: você pode rodar o n8n no seu próprio servidor, com controle total sobre dados, sem custo de licença. Ideal para empresas com requisitos de privacidade ou compliance rígidos.
+
+**Workflows de código**: além de blocos visuais, você pode adicionar código JavaScript/Python diretamente nos nodes. Poder quase ilimitado.
+
+**Debugging excelente**: interface de execução detalhada, visualização de input/output de cada node, histórico completo de runs.
+
+**Sem limite de operações no self-hosted**: ao contrário de Zapier e Make, o n8n self-hosted não cobra por número de execuções.
+
+**Integração com banco de dados**: pode se conectar diretamente a PostgreSQL, MySQL, MongoDB sem módulo adicional.
+
+### Pontos fracos
+
+**Mais técnico**: requer conhecimento básico de tecnologia. Configurar self-hosted exige conhecimento de Docker/servidor.
+
+**Menos integrações nativas**: 400+ nodes vs 7.000+ do Zapier. Para muitas integrações, você precisará usar o HTTP Request node.
+
+**Interface menos polida**: visualmente menos refinado que Make e Zapier.
+
+**Suporte limitado na versão gratuita**: a comunidade é ativa, mas suporte oficial é apenas para planos pagos.
+
+### Ideal para
+
+- Desenvolvedores e times técnicos
+- Empresas com requisitos de privacidade (dados não podem sair da infraestrutura)
+- Workflows muito complexos com código customizado
+- Alto volume de execuções (self-hosted sem custo por execução)
+- Startups tech com foco em controle e customização
+
+### Usar com Sofia AI
+
+Use o node "HTTP Request" com método POST, URL do endpoint e header x-api-key. Importe o [workflow JSON de exemplo](/integrations/n8n) para começar mais rápido. Você pode adicionar nodes de código para processar o output da IA de formas criativas.
+
+---
+
+## Comparativo de preços (Fevereiro 2026)
+
+| Plano | Zapier | Make | n8n |
+|-------|--------|------|-----|
+| Gratuito | 100 tarefas/mês | 1.000 ops/mês | Self-hosted grátis |
+| Starter | US$19,99/mês (750 tasks) | US$9/mês (10k ops) | US$20/mês (cloud) |
+| Profissional | US$49/mês (2.000 tasks) | US$16/mês (40k ops) | US$50/mês (cloud) |
+| Business | US$69+/mês | US$29+/mês | Grátis (self-hosted) |
+
+*Preços estimados — verifique os sites oficiais para valores atuais.*
+
+---
+
+## Recomendação por perfil
+
+### "Quero automatizar agora, sem complicação"
+**→ Zapier**
+Crie seu primeiro Zap em 10 minutos, sem guia. O ecossistema de 7.000+ apps garante que você encontrará o conector que precisa.
+
+### "Quero automações poderosas com budget controlado"
+**→ Make**
+Melhor custo-benefício para workflows complexos. O canvas visual é intuitivo assim que você aprende os conceitos básicos.
+
+### "Sou desenvolvedor ou quero controle total"
+**→ n8n self-hosted**
+Custo zero de plataforma, código JavaScript nos nodes, controle absoluto sobre seus dados e nenhum limite de execuções.
+
+### "Minha empresa tem requisitos de compliance/privacidade"
+**→ n8n self-hosted**
+Seus dados nunca saem da sua infraestrutura. Você tem um audit log completo de todas as execuções.
+
+### "Preciso integrar com apps muito específicos/nichados"
+**→ Zapier**
+Com 7.000+ integrações, é muito improvável que seu app não tenha conector nativo.
+
+---
+
+## Integração com Sofia AI: qual usar?
+
+Todas as três plataformas se integram com Sofia AI via HTTP Request/Webhook. A diferença está no contexto de uso:
+
+- **Zapier**: melhor para automações simples de negócio (CRM, email, Google Sheets)
+- **Make**: melhor para cenários complexos que transformam e roteiam dados
+- **n8n**: melhor para workflows técnicos ou quando privacidade é crítica
+
+Para começar, o Zapier é o caminho de menor resistência. Para scale ou controle máximo, n8n self-hosted é a resposta.
+
+---
+
+## Conclusão
+
+Não existe a plataforma "melhor" — existe a certa para o seu contexto. Zapier é simples e poderoso. Make equilibra poder e usabilidade. n8n é para quem quer controle total.
+
+O bom é que você pode testar as três gratuitamente. Comece pelo Zapier para o primeiro Zap, migre para Make quando precisar de mais complexidade, e considere n8n quando privacidade ou custo em escala se tornarem relevantes.
+
+O Sofia AI tem guias específicos para cada plataforma:
+- [Guia Zapier](/integrations/zapier)
+- [Guia Make](/integrations/make)
+- [Guia n8n](/integrations/n8n)

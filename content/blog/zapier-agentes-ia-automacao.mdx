@@ -1,0 +1,153 @@
+---
+title: "Zapier + IA: Como Automatizar Workflows com Agentes Sem Código"
+slug: "zapier-agentes-ia-automacao"
+description: "Tutorial passo a passo para integrar agentes de IA ao Zapier e automatizar workflows em 7.000+ apps sem escrever código. Do zero ao Zap funcionando em 15 minutos."
+date: "2026-02-24"
+author: "Equipe Sofia"
+tags: ["zapier ia", "automação agentes ia", "zapier integracao", "workflow ia sem codigo", "zapier sofia ai"]
+readTime: "8 min"
+---
+
+**E se cada vez que um lead entrasse no seu CRM, um agente de IA gerasse uma proposta personalizada automaticamente?** Isso é possível hoje, sem escrever uma linha de código, combinando Zapier e Sofia AI.
+
+Neste tutorial você vai criar do zero um workflow completo: de um trigger no Zapier até a execução de uma orquestração de IA.
+
+---
+
+## O que você vai precisar
+
+- Conta no **Sofia AI** (gratuita para começar)
+- Conta no **Zapier** (plano gratuito funciona para testes)
+- 15 minutos
+
+---
+
+## Passo 1: Crie a orquestração no Sofia AI
+
+Antes de configurar o Zapier, você precisa ter uma orquestração pronta para receber o trigger.
+
+1. Acesse **Dashboard → Orquestrações**
+2. Clique em **"Nova Orquestração"**
+3. Configure os agentes (ex: agente de análise de lead + agente gerador de proposta)
+4. Anote o **ID da orquestração** (visível na URL: `/dashboard/orchestrations/ESSE_ID`)
+
+Se você ainda não tem uma orquestração, use um dos templates disponíveis em /dashboard/templates — há modelos prontos para geração de propostas, qualificação de leads e atendimento.
+
+---
+
+## Passo 2: Gere sua API Key
+
+No Sofia AI, acesse **Dashboard → API Keys** e clique em "Gerar Nova Chave".
+
+- Dê um nome descritivo: "Zapier Integration"
+- Selecione os escopos: `read, execute`
+- Copie a chave: ela começa com `sk_live_...`
+
+**Importante**: a chave só é mostrada uma vez. Guarde em um lugar seguro.
+
+---
+
+## Passo 3: Crie o Zap
+
+No Zapier, clique em "Create Zap" e configure o trigger:
+
+### Opção A: Webhook (mais flexível)
+- Trigger App: **Webhooks by Zapier**
+- Evento: **Catch Hook**
+- Zapier gera uma URL de webhook. Você pode disparar de qualquer sistema.
+
+### Opção B: App específico
+- Exemplos: New Row in Google Sheets, New Lead in HubSpot, Email in Gmail
+- Configure conforme a documentação do app escolhido
+
+---
+
+## Passo 4: Configure a Action
+
+Na etapa de Action do Zap:
+
+1. **App**: Webhooks by Zapier
+2. **Evento**: Custom Request
+3. **Método**: POST
+4. **URL**: `https://sofiaia.roilabs.com.br/api/v1/integrations/zapier/execute`
+5. **Headers**:
+   ```
+   x-api-key: sk_live_SEU_TOKEN
+   Content-Type: application/json
+   ```
+6. **Data (Body JSON)**:
+   ```json
+   {
+     "orchestrationId": "ID_DA_SUA_ORQUESTRACAO",
+     "input": "{{trigger.text}}"
+   }
+   ```
+
+Substitua `{{trigger.text}}` pelo campo de dados do trigger que você quer enviar para a IA.
+
+---
+
+## Passo 5: Teste e ative
+
+1. Clique em "Test & Review" para ver se a Action retorna `{ "success": true, "executionId": "..." }`
+2. Se funcionou, clique em "Publish Zap"
+
+Cada vez que o trigger disparar, o Zap chamará o Sofia AI e executará sua orquestração automaticamente.
+
+---
+
+## Receber resultados de volta no Zapier
+
+Se você quer usar o *output* da IA em etapas posteriores do Zap, use o **endpoint de polling**:
+
+**GET** `https://sofiaia.roilabs.com.br/api/v1/integrations/zapier/poll`
+```
+Headers:
+  x-api-key: sk_live_SEU_TOKEN
+```
+
+Este endpoint retorna as últimas 10 execuções concluídas — perfeito para criar Zaps com trigger de polling que processam resultados da IA.
+
+---
+
+## Exemplos de Zaps prontos para usar
+
+### 1. CRM → Proposta IA → Email
+- Trigger: New Lead in HubSpot
+- Action 1: Execute Sofia AI Orchestration (gerar proposta)
+- Action 2: Poll execução para obter resultado
+- Action 3: Send Email via Gmail com a proposta gerada
+
+### 2. Google Sheets → Análise IA → Notion
+- Trigger: New Row in Google Sheets
+- Action 1: Execute Sofia AI Orchestration (analisar dados)
+- Action 2: Create Page in Notion com o resultado
+
+### 3. Email → Triagem IA → Slack
+- Trigger: New Email in Gmail
+- Action 1: Execute Sofia AI Orchestration (classificar email)
+- Action 2: Send Message to Slack channel com a classificação
+
+---
+
+## Monitoramento
+
+Todas as execuções disparadas pelo Zapier ficam registradas em:
+- **Dashboard → Orquestrações → [nome] → Execuções**: resultado completo de cada run
+- **Dashboard → Audit Log**: histórico com IP e user agent do Zapier
+
+---
+
+## Limites e boas práticas
+
+- **Rate limiting**: o plano Free permite 100 execuções/mês. Para automações com alto volume, use plano Pro ou Business.
+- **Timeout**: orquestrações complexas podem levar alguns segundos. O Zapier tem timeout de 30s — prefira orquestrações otimizadas para automação.
+- **Idempotência**: evite disparar a mesma orquestração múltiplas vezes com o mesmo input. Use filtros no Zapier para evitar duplicatas.
+
+---
+
+## Conclusão
+
+Com Zapier + Sofia AI, qualquer evento em qualquer aplicativo pode acionar um agente de IA — sem código, sem servidor, sem DevOps. Você tem o poder de uma automação com IA em minutos.
+
+O próximo passo é criar sua primeira orquestração e configurar o Zap. **Comece hoje com o plano gratuito.**
