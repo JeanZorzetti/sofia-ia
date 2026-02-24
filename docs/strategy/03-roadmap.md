@@ -319,18 +319,18 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 **Objetivo**: Transformar produto maduro em crescimento mensurável — analytics real, onboarding mais eficaz, novos templates de orquestração e cadência de distribuição ativa
 
 ### Produto (desbloqueadores de conversão)
-- ⬜ **P0** — Google Analytics 4 no site público (medir tráfego orgânico real)
-- ⬜ **P0** — Barra de uso de plano visível no dashboard (agentes, msgs, KBs usados vs limite)
+- ✅ **P0** — Google Analytics 4 no site público (medir tráfego orgânico real)
+- ✅ **P0** — Barra de uso de plano visível no dashboard (agentes, msgs, KBs usados vs limite)
 - ⬜ **P1** — Melhoria no onboarding: step "Experimente agora" com orquestração de demo pré-carregada
-- ⬜ **P1** — 5 novos templates de orquestração (verticais: jurídico, RH, e-commerce, saúde, finanças)
+- ✅ **P1** — 5 novos templates de orquestração (verticais: jurídico, RH, e-commerce, saúde, finanças)
 - ⬜ **P2** — Página `/changelog` pública (histórico de features — gera conteúdo SEO e credibilidade)
 
 ### SEO — Camada 2 (criar demanda, intenção comercial)
-- ⬜ **P0** — "Como Automatizar Atendimento ao Cliente com IA em 2026"
-- ⬜ **P0** — "Multi-agente vs Single-agente: Quando Usar Cada Abordagem"
-- ⬜ **P1** — "Como Criar Workflows de IA sem Programar"
-- ⬜ **P1** — "Sofia AI vs n8n vs Zapier: Qual Usar para Automação com IA?"
-- ⬜ **P2** — "10 Prompts de Sistema para Agentes IA de Alta Performance"
+- ✅ **P0** — "Como Automatizar Atendimento ao Cliente com IA em 2026"
+- ✅ **P0** — "Multi-agente vs Single-agente: Quando Usar Cada Abordagem"
+- ✅ **P1** — "Como Criar Workflows de IA sem Programar"
+- ✅ **P1** — "Sofia AI vs n8n vs Zapier: Qual Usar para Automação com IA?"
+- ✅ **P2** — "10 Prompts de Sistema para Agentes IA de Alta Performance"
 
 ### Distribuição (manual)
 - ⬜ **P0** — Newsletter: enviar edições 1 e 2 reais (Resend + lista de assinantes)
