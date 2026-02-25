@@ -250,6 +250,42 @@ export default function TemplatesPage() {
           })
         }}
       />
+      {/* Schema Markup — FAQPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: [
+              {
+                '@type': 'Question',
+                name: 'O que são templates de orquestração de agentes IA?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Templates de orquestração são pipelines de agentes IA pré-configurados para casos de uso específicos, como geração de conteúdo de marketing, suporte ao cliente, análise jurídica e pesquisa de mercado. Você importa o template com um clique e personaliza conforme sua necessidade.'
+                }
+              },
+              {
+                '@type': 'Question',
+                name: 'Posso criar meu próprio template de orquestração?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Sim. Na Sofia AI você cria orquestrações personalizadas com qualquer número de agentes. Você também pode usar o recurso "Criar com IA" (AI Magic Create) — basta descrever o processo em linguagem natural e a plataforma gera a orquestração automaticamente.'
+                }
+              },
+              {
+                '@type': 'Question',
+                name: 'Os templates funcionam com qualquer modelo de IA?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Sim. Cada agente em um template pode usar modelos diferentes — GPT-4o, Claude, Llama, Mistral. Você escolhe o modelo mais adequado para cada papel dentro do pipeline: modelos mais rápidos para triagem, mais potentes para análise crítica.'
+                }
+              }
+            ]
+          })
+        }}
+      />
 
       {/* Navbar */}
       <nav className="navbar-glass sticky top-0 z-50 px-6 py-4">

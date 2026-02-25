@@ -1,0 +1,245 @@
+---
+title: "O que é llms.txt: O Novo Padrão para Otimizar Sites para IA Generativa"
+slug: "o-que-e-llms-txt-otimizar-sites-ia-generativa"
+description: "Entenda o padrão llms.txt, como ele funciona, por que sua empresa deveria implementar e como criar um arquivo llms.txt que aumenta sua visibilidade em ChatGPT, Perplexity e Claude."
+date: "2026-02-25"
+author: "Equipe Sofia"
+tags: ["llms.txt", "geo ia generativa", "otimizacao llm", "chatgpt seo", "perplexity seo", "IA generativa visibilidade"]
+readTime: "7 min"
+---
+
+**Você já otimizou seu site para Google com SEO. Mas e para o ChatGPT? Para o Perplexity? Para o Claude?** Em 2026, uma parcela crescente do tráfego de descoberta passa por respostas de LLMs — e existe um novo padrão técnico para ajudar sua marca a ser citada.
+
+Esse padrão se chama `llms.txt`.
+
+---
+
+## O que é o llms.txt?
+
+`llms.txt` é um arquivo de texto colocado na raiz do seu site (acessível em `https://seusite.com/llms.txt`) que fornece contexto estruturado sobre seu site especificamente para modelos de linguagem (LLMs).
+
+Assim como o `robots.txt` guia crawlers de buscadores e o `humans.txt` é uma convenção para humanos, o `llms.txt` é projetado para que IAs entendam seu site de forma eficiente.
+
+A proposta foi formalizada por Jeremy Howard (fast.ai) em 2024 e ganhou tração rápida no ecossistema de IA.
+
+---
+
+## Por que isso importa?
+
+Em 2025-2026, a forma como pessoas descobrem informações mudou:
+
+- **ChatGPT** responde perguntas diretas e cita fontes
+- **Perplexity** é o novo Google para muitos usuários
+- **Claude** e **Gemini** são integrados em ferramentas de trabalho
+- **SearchGPT** (OpenAI) compete diretamente com o Google
+
+Quando alguém pergunta "qual a melhor plataforma de agentes IA do Brasil?", esses sistemas precisam escolher quais fontes citar. Sites que fornecem contexto claro e estruturado têm mais chances de aparecer.
+
+O `llms.txt` é um sinal de autoridade e clareza para esses sistemas.
+
+---
+
+## O que vai dentro de um llms.txt?
+
+O formato é Markdown simples — sem schema rigoroso, mas com convenções recomendadas:
+
+```markdown
+# Nome da Empresa ou Produto
+
+## Descrição
+Uma ou duas frases explicando o que você faz.
+
+## O que fazemos
+Descrição mais detalhada do produto/serviço.
+
+## Casos de uso principais
+- Caso de uso 1
+- Caso de uso 2
+
+## Preços
+Informações de planos, se relevante.
+
+## Perguntas frequentes
+**P: Pergunta comum?**
+R: Resposta direta.
+
+## Links canônicos
+- Home: https://seusite.com
+- Docs: https://seusite.com/docs
+```
+
+O arquivo do Sofia AI, por exemplo, inclui:
+- Descrição clara da plataforma
+- Lista de features principais com explicações sucintas
+- Tabela de preços com planos
+- FAQ com perguntas reais sobre multi-agent AI
+- Stack técnica
+- Links canônicos para todas as seções importantes
+
+---
+
+## Diferença entre SEO e GEO (Generative Engine Optimization)
+
+| Aspecto | SEO (Google) | GEO (LLMs) |
+|---------|-------------|-----------|
+| Objetivo | Aparecer na lista de resultados | Ser citado na resposta gerada |
+| Formato | HTML, meta tags, backlinks | Texto estruturado, clareza, autoridade |
+| Sinal principal | PageRank (backlinks) | Relevância semântica + citações |
+| Arquivo técnico | robots.txt, sitemap.xml | llms.txt |
+| Métricas | Posição, CTR, impressões | Citações, brand mentions em respostas |
+
+---
+
+## Como implementar llms.txt
+
+### Opção 1: Arquivo estático
+
+Crie o arquivo `llms.txt` e coloque na pasta `/public` do seu projeto:
+
+```bash
+# Em um projeto Next.js
+touch public/llms.txt
+```
+
+Exemplo do conteúdo mínimo:
+
+```markdown
+# MinhaSolucao.com
+
+## O que é
+[MinhaSolucao] é uma plataforma SaaS para [descrição clara em 1 linha].
+
+## Para quem serve
+Empresas que precisam de [problema que você resolve].
+
+## Principais funcionalidades
+- Feature 1: descrição breve
+- Feature 2: descrição breve
+- Feature 3: descrição breve
+
+## Preços
+- Gratuito: [o que inclui]
+- Pago: [o que inclui] por [R$ XX/mês]
+
+## Links
+- Produto: https://meusite.com
+- Documentação: https://meusite.com/docs
+- Blog: https://meusite.com/blog
+```
+
+### Opção 2: Rota dinâmica (Next.js)
+
+```typescript
+// src/app/llms.txt/route.ts
+export async function GET() {
+  const content = `# Sofia AI — Context for LLMs
+
+## About
+Sofia AI is a multi-agent orchestration platform...
+
+## Features
+- Multi-agent pipelines
+- Knowledge Base (RAG)
+...`
+
+  return new Response(content, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+  })
+}
+```
+
+---
+
+## O que mais fazer para GEO além do llms.txt?
+
+O `llms.txt` é um dos vários sinais. Combine com:
+
+### 1. Atualizar o robots.txt para LLM crawlers
+```
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+```
+
+### 2. JSON-LD em todas as páginas
+LLMs processam dados estruturados melhor do que HTML puro:
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Sofia AI",
+  "description": "Plataforma de orquestração de agentes IA",
+  ...
+}
+```
+
+### 3. FAQ schema nas páginas de produto
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "O que é [Produto]?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Resposta direta e completa..."
+      }
+    }
+  ]
+}
+```
+
+### 4. Conteúdo answer-first
+Estruture seus artigos com a resposta direta no início:
+
+```
+# O que é X?
+
+[Resposta em 2-3 frases diretamente]
+
+## Detalhes
+[Mais contexto para quem quiser se aprofundar]
+```
+
+### 5. Citações e fontes
+LLMs confiam mais em sites que citam fontes e estudos. Adicione links para dados externos relevantes.
+
+---
+
+## Monitorando se seu llms.txt está funcionando
+
+É difícil mensurar citações de LLMs diretamente, mas você pode:
+
+- **Buscar sua marca** no ChatGPT, Perplexity e Claude regularmente
+- **Configurar alertas** de brand mentions online
+- **Analisar tráfego referral** de ferramentas de IA (alguns LLMs geram cliques rastreáveis)
+- **Monitorar Domain Authority** — citações em LLMs frequentemente correlacionam com backlinks de qualidade
+
+---
+
+## Erros comuns ao implementar llms.txt
+
+- **Muito longo**: LLMs têm contexto limitado. Seja sucinto — máximo 2.000 palavras
+- **Jargão técnico excessivo**: Escreva para o modelo entender e parafrasear para usuários leigos
+- **Informações desatualizadas**: Preços e features mudam. Revise trimestralmente
+- **Sem links canônicos**: Ajuda o modelo a direcionar usuários para as páginas corretas
+- **Sem FAQ**: Perguntas e respostas diretas são o formato favorito de LLMs para citar
+
+---
+
+## Conclusão
+
+O `llms.txt` é simples de implementar e representa um investimento de longo prazo na sua visibilidade em sistemas de IA generativa. Em um mundo onde cada vez mais decisões de compra começam com uma pergunta a um LLM, garantir que sua marca apareça nas respostas é tão importante quanto aparecer no Google.
+
+**Próximos passos:**
+- [Ver o llms.txt do Sofia AI](/llms.txt)
+- [Estratégias avançadas de GEO para SaaS](/blog/chatgpt-perplexity-fontes-geo-fundadores)
+- [Checklist de SEO técnico para SaaS em 2026](/blog/checklist-seo-tecnico-saas-2026)

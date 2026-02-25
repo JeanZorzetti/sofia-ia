@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discord Community
+    url: https://discord.gg/sofiaia
+    about: For general questions, ideas, and community support — use our Discord server.
+  - name: Security Vulnerability
+    url: mailto:security@roilabs.com.br
+    about: Please report security vulnerabilities privately by email, NOT via GitHub issues.
+  - name: GitHub Discussions
+    url: https://github.com/JeanZorzetti/sofia-ia/discussions
+    about: For RFC proposals, architecture discussions, and open-ended questions.

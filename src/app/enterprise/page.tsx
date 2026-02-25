@@ -69,6 +69,75 @@ const trustedFeatures = [
 export default function EnterprisePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Schema Markup — SoftwareApplication */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'Sofia AI Enterprise',
+            applicationCategory: 'BusinessApplication',
+            description: 'Plataforma enterprise de orquestração de agentes IA com self-hosted, SSO/SAML, SLA garantido e compliance completo.',
+            operatingSystem: 'Web, Linux (self-hosted)',
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'BRL',
+              description: 'Preço customizado — contate vendas'
+            },
+            creator: {
+              '@type': 'Organization',
+              name: 'ROI Labs',
+              url: 'https://roilabs.com.br'
+            }
+          })
+        }}
+      />
+      {/* Schema Markup — FAQPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: [
+              {
+                '@type': 'Question',
+                name: 'O que inclui o plano Enterprise da Sofia AI?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'O plano Enterprise inclui deploy self-hosted na infraestrutura do cliente, SSO/SAML 2.0 (Google Workspace, Azure AD), SLA garantido em contrato, compliance LGPD completo, gerente de conta dedicado, treinamento da equipe e suporte 24/7.'
+                }
+              },
+              {
+                '@type': 'Question',
+                name: 'A Sofia AI suporta SSO com Azure AD e Google Workspace?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Sim. O plano Enterprise suporta SSO via OAuth 2.0 / SAML 2.0 com Microsoft Entra ID (Azure AD) e Google Workspace. É possível forçar SSO para todos os membros da organização e bloquear login por email/senha.'
+                }
+              },
+              {
+                '@type': 'Question',
+                name: 'É possível fazer self-hosted da Sofia AI?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Sim. A Sofia AI é open-source (MIT) e pode ser implantada na infraestrutura do cliente via Docker Compose. O plano Enterprise inclui assistência técnica no deploy, atualizações gerenciadas e suporte de infraestrutura.'
+                }
+              },
+              {
+                '@type': 'Question',
+                name: 'Qual o SLA do plano Enterprise?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'O SLA do Enterprise é 99.9% de uptime, com tempo de resposta garantido em contrato. Inclui janela de manutenção programada, alertas proativos e canal prioritário de suporte.'
+                }
+              }
+            ]
+          })
+        }}
+      />
       <nav className="navbar-glass sticky top-0 z-50 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">

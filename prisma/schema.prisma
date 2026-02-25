@@ -21,6 +21,7 @@ model User {
   onboardingData       Json      @default("{}") @map("onboarding_data")
   googleId             String?   @map("google_id") @db.VarChar(255)
   referredBy           String?   @map("referred_by") @db.Uuid
+  isBetaTester         Boolean   @default(false) @map("is_beta_tester")
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
@@ -37,6 +38,7 @@ model User {
   orgMemberships       OrganizationMember[]
   userAuditLogs        UserAuditLog[]
   oauthConnections     OAuthConnection[]
+  betaFeedbacks        BetaFeedback[]
 
   @@index([workspaceId])
   @@map("users")
@@ -1038,4 +1040,43 @@ model UserAuditLog {
   @@index([resource])
   @@index([createdAt(sort: Desc)])
   @@map("user_audit_logs")
+}
+
+// ─────────────────────────────────────────────────────────
+// BetaApplication — Candidaturas ao programa beta
+// ─────────────────────────────────────────────────────────
+model BetaApplication {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id") @db.Uuid
+  name      String   @db.VarChar(255)
+  email     String   @db.VarChar(255)
+  company   String?  @db.VarChar(255)
+  useCase   String   @map("use_case") @db.Text
+  plan      String   @default("pro") @db.VarChar(50) // free | pro | business
+  status    String   @default("pending") @db.VarChar(20) // pending | approved | rejected
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([email])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("beta_applications")
+}
+
+// ─────────────────────────────────────────────────────────
+// BetaFeedback — Feedbacks de beta testers
+// ─────────────────────────────────────────────────────────
+model BetaFeedback {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id") @db.Uuid
+  message   String   @db.Text
+  category  String   @default("general") @db.VarChar(50) // bug | feature | general
+  page      String?  @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("beta_feedbacks")
 }

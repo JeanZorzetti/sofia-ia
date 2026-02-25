@@ -1,0 +1,227 @@
+---
+title: "Notion + Agentes IA: Automatize sua Base de Conhecimento com Sofia AI"
+slug: "notion-agentes-ia-base-conhecimento"
+description: "Como conectar o Notion ao Sofia AI e criar agentes que criam páginas, buscam databases e atualizam conteúdo automaticamente. Tutorial com casos de uso práticos."
+date: "2026-02-25"
+author: "Equipe Sofia"
+tags: ["notion ia", "notion agentes ia", "automatizar notion ia", "sofia ai notion", "notion api ia"]
+readTime: "8 min"
+---
+
+**O Notion é onde times modernos guardam seu conhecimento. Mas toda vez que algo precisa ser documentado, alguém precisa sentar, abrir o Notion e escrever.** E se um agente de IA fizesse isso por você?
+
+Com a integração nativa do Sofia AI com Notion, seus agentes podem criar páginas, buscar informações em databases e atualizar registros — tudo automaticamente.
+
+---
+
+## Por que Notion + IA?
+
+O Notion se tornou o sistema nervoso central de muitas empresas: onde ficam os processos, as notas de reunião, os projetos, o CRM improvisado, a wiki de produto.
+
+O problema é que manter o Notion atualizado é trabalho manual. A IA resolve isso:
+
+- **Notas de reunião automáticas** — agente processa transcrição e cria página estruturada no Notion
+- **Documentação de bugs** — agente lê relatório de erro e cria página com diagnóstico e solução
+- **Pesquisa organizada** — agente busca na web, resume e documenta no Notion
+- **Pipeline de conteúdo** — agente lê pauta do database, gera rascunhos e registra na mesma base
+
+---
+
+## Conectando Notion ao Sofia AI
+
+O Notion usa seu próprio sistema de OAuth — diferente do Google. Você vai precisar de uma **Integração do Notion**.
+
+### Passo a passo
+
+1. No Sofia AI, vá para **Integrações → Notion**
+2. Clique em **"Conectar Notion"**
+3. Faça login com sua conta Notion
+4. Autorize o acesso para a workspace desejada
+5. No Notion, **compartilhe os databases** com a integração Sofia AI:
+   - Abra o database no Notion
+   - Clique em `...` → `Adicionar conexão` → Selecione `Sofia AI`
+
+> **Importante**: O Notion só permite que integrações acessem databases explicitamente compartilhados. Você precisa compartilhar cada database que quiser usar com os agentes.
+
+---
+
+## As 3 tools disponíveis
+
+### 1. `notion_create_page`
+Cria uma nova página em um database do Notion.
+
+```
+Parâmetros:
+- databaseId: ID do database (da URL do Notion)
+- properties: Propriedades da página no formato da API Notion
+```
+
+**Exemplo de uso**: Criar um registro de cliente com nome, email, status e empresa.
+
+### 2. `notion_query_database`
+Busca páginas em um database com filtro opcional. Retorna até 20 resultados.
+
+```
+Parâmetros:
+- databaseId: ID do database
+- filter (opcional): Filtro no formato da API Notion
+```
+
+**Exemplo de uso**: Buscar todas as tarefas com status "Em progresso" atribuídas a um usuário.
+
+### 3. `notion_update_page`
+Atualiza propriedades de uma página existente.
+
+```
+Parâmetros:
+- pageId: ID da página
+- properties: Propriedades a atualizar
+```
+
+**Exemplo de uso**: Marcar uma tarefa como "Concluída" após o agente completar uma ação.
+
+---
+
+## Como encontrar o ID de um database
+
+O ID está na URL quando você abre o database:
+
+```
+https://notion.so/seuworkspace/[DATABASE_ID]?v=xxx
+```
+
+Ou, se você abrir a página do database:
+```
+https://www.notion.so/[DATABASE_ID]
+```
+
+O ID é a sequência de caracteres antes do `?`.
+
+---
+
+## Caso de uso 1: Notas de reunião automatizadas
+
+### Setup
+
+Crie um database no Notion chamado "Reuniões" com propriedades:
+- `Título` (text)
+- `Data` (date)
+- `Participantes` (text)
+- `Decisões` (text)
+- `Próximas ações` (text)
+
+Crie um agente no Sofia AI com system prompt:
+
+```
+Você é um especialista em documentação corporativa.
+
+Quando receber uma transcrição de reunião, você deve:
+1. Extrair o título da reunião, data e participantes
+2. Identificar as principais decisões tomadas
+3. Listar as próximas ações com responsáveis (se mencionados)
+4. Criar uma página no Notion com essas informações
+
+Database ID: [ID_DO_SEU_DATABASE]
+```
+
+**Uso**: Cole a transcrição da reunião e o agente cria a página automaticamente.
+
+---
+
+## Caso de uso 2: CRM no Notion via agente
+
+Muitas startups usam o Notion como CRM. Com a integração, um agente pode:
+
+1. Receber dados de um lead (via formulário, email ou Zapier)
+2. Verificar se o lead já existe no database (`notion_query_database` com filtro de email)
+3. Se não existir, criar novo registro (`notion_create_page`)
+4. Se existir, atualizar com novas informações (`notion_update_page`)
+
+System prompt do agente:
+
+```
+Você gerencia nosso CRM no Notion.
+
+Database de Contatos ID: [ID]
+
+Quando receber dados de um novo contato:
+1. Busque pelo email para verificar se já existe
+2. Se novo: crie uma página com nome, email, empresa, cargo e status "Novo Lead"
+3. Se existente: atualize com as novas informações e adicione nota com data
+
+Sempre confirme a ação realizada.
+```
+
+---
+
+## Caso de uso 3: Wiki de conhecimento auto-atualizada
+
+Orquestração de 3 agentes para manter documentação técnica atualizada:
+
+1. **Agente Monitor**: Verifica o database de "Erros Conhecidos" e identifica itens sem solução
+2. **Agente Pesquisador**: Busca a solução para cada erro (usando Knowledge Base ou web)
+3. **Agente Documentador**: Atualiza a página do erro com a solução encontrada
+
+---
+
+## Formato das propriedades da API Notion
+
+A API do Notion tem um formato específico para propriedades. Aqui estão os mais comuns:
+
+### Título (obrigatório em todo database)
+```json
+{
+  "Nome": {
+    "title": [{ "text": { "content": "Minha página" } }]
+  }
+}
+```
+
+### Texto rico
+```json
+{
+  "Descrição": {
+    "rich_text": [{ "text": { "content": "Texto aqui" } }]
+  }
+}
+```
+
+### Select (dropdown)
+```json
+{
+  "Status": {
+    "select": { "name": "Em progresso" }
+  }
+}
+```
+
+### Data
+```json
+{
+  "Data": {
+    "date": { "start": "2026-02-25" }
+  }
+}
+```
+
+> **Dica**: O agente entende linguagem natural para formatar as propriedades corretamente se você descrever o esquema do database no system prompt.
+
+---
+
+## Boas práticas
+
+- **Documente o esquema do database no system prompt** do agente para que ele saiba que propriedades existem
+- **Compartilhe apenas os databases necessários** com a integração por segurança
+- **Use `notion_query_database` antes de criar** para evitar duplicatas
+- **Teste com dados reais** usando a interface de teste na página da integração
+
+---
+
+## Conclusão
+
+Notion + Sofia AI transforma sua base de conhecimento em um sistema vivo — que se atualiza automaticamente conforme eventos acontecem na empresa. Notas de reunião documentadas, leads registrados, bugs documentados — tudo sem precisar lembrar de abrir o Notion.
+
+**Próximos passos:**
+- [Conectar Notion](/dashboard/integrations/notion)
+- [Ver outros casos de uso de integrações](/integrations)
+- [Criar sua primeira orquestração](/dashboard/orchestrations)

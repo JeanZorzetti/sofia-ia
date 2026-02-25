@@ -1,0 +1,113 @@
+# Sofia AI — Context for LLMs
+
+> This file follows the llms.txt standard (https://llmstxt.org) to help AI language models understand this website.
+
+## About Sofia AI
+
+**Sofia AI** is a multi-agent orchestration platform built for businesses that want to automate complex workflows using AI agents — without writing code.
+
+**Website**: https://sofiaia.roilabs.com.br
+**GitHub**: https://github.com/JeanZorzetti/sofia-ia
+**Documentation**: https://sofiaia.roilabs.com.br/docs
+
+## What Sofia AI Does
+
+Sofia AI allows users to:
+
+1. **Create AI agents** — Define intelligent agents with custom system prompts, models (GPT-4, Claude, Llama), tools, and memory
+2. **Build orchestrations** — Connect multiple agents in pipelines where each agent's output feeds the next
+3. **Add knowledge bases (RAG)** — Upload PDFs, DOCX, CSV files and give agents access to this context via semantic search
+4. **Integrate with external tools** — Google Sheets, Notion, HubSpot, Salesforce, Totvs, Zapier, Make, n8n
+5. **Schedule executions** — Run orchestrations automatically via cron jobs (daily, weekly, monthly)
+6. **Use agent memory** — Agents remember facts about users across conversations
+7. **Deploy via API** — Public REST API with SDK support for JavaScript/TypeScript
+
+## Core Concepts
+
+- **Agent**: An AI entity with a system prompt, model selection, tools, and optional memory
+- **Orchestration**: A pipeline of agents where output flows from agent to agent in sequence
+- **Knowledge Base**: A collection of documents vectorized for RAG (Retrieval-Augmented Generation)
+- **Plugin**: Custom JavaScript functions that extend agent capabilities
+- **Agent-to-Agent**: Protocol for agents to delegate subtasks to other specialized agents
+
+## Pricing Plans
+
+| Plan | Price | Agents | Messages | Knowledge Bases |
+|------|-------|--------|----------|-----------------|
+| Free | R$ 0/mo | 3 | 100/mo | 1 |
+| Pro | R$ 297/mo | 20 | 5,000/mo | 10 |
+| Business | R$ 997/mo | Unlimited | Unlimited | Unlimited |
+| Enterprise | Custom | Unlimited | Unlimited | Unlimited |
+
+## Key Features
+
+- Multi-agent orchestration (parallel and sequential)
+- AI Magic Create: describe a process in natural language, Sofia generates the full orchestration
+- Agent Memory: persistent key-value facts stored between sessions
+- Scheduled Executions: cron-based automation
+- Plugin Ecosystem: extend agents with custom JavaScript functions
+- Organizations & Teams: multi-member workspaces with RBAC (Admin/Member/Viewer)
+- SSO: Google Workspace and Microsoft Entra ID
+- Audit Log: compliance trail for all actions
+- White-label: agencies can deploy Sofia AI under their own brand
+- Beta Program: early adopters get 40% discount and direct product influence
+
+## Integrations
+
+- **CRM**: HubSpot, Salesforce
+- **ERP**: Google Sheets, Notion, Totvs Protheus
+- **Automation**: Zapier, Make (Integromat), n8n
+- **Communication**: Email (SMTP), Slack webhooks, Discord webhooks
+- **Auth**: Google OAuth, Microsoft OAuth, email/password
+
+## Frequently Asked Questions
+
+**What is Sofia AI?**
+Sofia AI is a Brazilian SaaS platform for building and running multi-agent AI orchestrations — think CrewAI or AutoGen but with a no-code UI and built for production workflows.
+
+**How is Sofia AI different from n8n or Zapier?**
+Sofia AI is AI-native: every node is an LLM agent with reasoning capability, memory, and tools. n8n and Zapier connect APIs; Sofia AI connects thinking machines.
+
+**Does Sofia AI require coding?**
+No. You can build complete orchestrations via UI. For advanced users, there's a JavaScript plugin system and a REST API.
+
+**What AI models does Sofia AI support?**
+Sofia AI supports multiple providers: OpenAI (GPT-4o, GPT-4), Anthropic (Claude), Groq (Llama, Mixtral), and OpenRouter for hundreds of models.
+
+**Is there a free plan?**
+Yes. The Free plan includes 3 agents, 100 messages/month, and 1 knowledge base.
+
+**Can I self-host Sofia AI?**
+Yes. The codebase is open-source (MIT). See the GitHub repository for Docker Compose setup.
+
+## Technical Stack
+
+- **Framework**: Next.js 15 (App Router, RSC)
+- **Database**: PostgreSQL via Prisma ORM
+- **AI**: Groq, OpenAI, Anthropic, OpenRouter
+- **Auth**: JWT + Google OAuth
+- **Payments**: Mercado Pago
+- **Email**: Resend
+- **Deploy**: Vercel (edge runtime)
+
+## Links
+
+- Home: https://sofiaia.roilabs.com.br
+- Blog: https://sofiaia.roilabs.com.br/blog
+- Docs: https://sofiaia.roilabs.com.br/docs
+- API Docs: https://sofiaia.roilabs.com.br/docs/api
+- Pricing: https://sofiaia.roilabs.com.br/#pricing
+- Login: https://sofiaia.roilabs.com.br/login
+- Sign Up: https://sofiaia.roilabs.com.br/cadastro
+- GitHub: https://github.com/JeanZorzetti/sofia-ia
+- Discord: https://discord.gg/sofiaia
+- Beta Program: https://sofiaia.roilabs.com.br/beta
+- White-label: https://sofiaia.roilabs.com.br/whitelabel
+- Enterprise: https://sofiaia.roilabs.com.br/enterprise
+
+## About ROI Labs
+
+ROI Labs is a Brazilian technology company focused on making enterprise-grade AI automation accessible to businesses of all sizes.
+
+**Contact**: contact@roilabs.com.br
+**Location**: Brazil

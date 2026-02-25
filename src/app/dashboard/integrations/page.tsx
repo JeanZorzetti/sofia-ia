@@ -30,6 +30,9 @@ import {
   GitBranch,
   ArrowRight,
   Key,
+  Table,
+  FileText,
+  Building2,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -93,6 +96,36 @@ const automationPlatforms = [
     bg: 'bg-blue-400/10',
     badge: 'CRM',
     href: '/dashboard/integrations/salesforce',
+  },
+  {
+    id: 'google-sheets',
+    name: 'Google Sheets',
+    description: 'Leia e escreva dados em planilhas Google Sheets com seus agentes',
+    icon: Table,
+    color: 'text-green-600',
+    bg: 'bg-green-600/10',
+    badge: 'ERP',
+    href: '/dashboard/integrations/google-sheets',
+  },
+  {
+    id: 'notion',
+    name: 'Notion',
+    description: 'Crie e atualize páginas e databases no Notion com agentes IA',
+    icon: FileText,
+    color: 'text-gray-700',
+    bg: 'bg-gray-700/10',
+    badge: 'ERP',
+    href: '/dashboard/integrations/notion',
+  },
+  {
+    id: 'totvs',
+    name: 'Totvs Protheus',
+    description: 'Consulte clientes e crie pedidos no ERP Totvs Protheus',
+    icon: Building2,
+    color: 'text-blue-700',
+    bg: 'bg-blue-700/10',
+    badge: 'ERP BR',
+    href: '/dashboard/integrations/totvs',
   },
 ]
 

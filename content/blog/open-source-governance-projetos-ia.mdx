@@ -1,0 +1,274 @@
+---
+title: "Open Source Governance: Como Estruturar Contribuição em Projetos de IA"
+slug: "open-source-governance-projetos-ia"
+description: "Guia completo sobre como estruturar a governança de projetos open-source de IA: modelo BDFL vs comitê, processo de RFC, templates GitHub, política de segurança e como atrair contribuidores."
+date: "2026-02-25"
+author: "Equipe Sofia"
+tags: ["open source governance", "contribuicao open source", "github projetos ia", "rfc processo", "open source ia", "bdfl modelo"]
+readTime: "11 min"
+---
+
+**Tornar um projeto de IA open-source é fácil. Torná-lo sustentável é difícil.** A diferença está na governança — as regras, processos e estruturas que determinam como decisões são tomadas, como contribuições são aceitas e como a comunidade se auto-organiza.
+
+Projetos como Kubernetes, React e Python sobreviveram por décadas porque investiram em governança antes de escalar. Projetos que ignoraram isso se tornaram repositórios abandonados com 2.000 issues abertas.
+
+Neste guia, você vai aprender como estruturar a governança de um projeto open-source de IA desde o início.
+
+---
+
+## Os modelos de governança mais comuns
+
+### 1. BDFL (Benevolent Dictator For Life)
+
+O criador tem autoridade final sobre todas as decisões. Usado por Python (Guido van Rossum), Django (Adrian Holovaty) e muitos projetos bem-sucedidos.
+
+**Vantagens**:
+- Decisões rápidas e coerentes
+- Visão de produto unificada
+- Menos burocracia
+
+**Desvantagens**:
+- Dependência de uma pessoa
+- Risco de burnout do BDFL
+- Pode afastar contribuidores que discordam das decisões
+
+**Quando usar**: Projetos novos, fundados por uma pessoa ou empresa com visão clara.
+
+### 2. Comitê de Mantenedores (Steering Committee)
+
+Um grupo de mantenedores confiáveis que votam em decisões importantes. Usado pelo Node.js, Rust e PostgreSQL.
+
+**Vantagens**:
+- Mais resiliente — não depende de um único indivíduo
+- Perspectivas diversas nas decisões
+- Percepção de comunidade mais saudável
+
+**Desvantagens**:
+- Decisões mais lentas
+- Risco de gridlock em decisões difíceis
+- Coordenação mais complexa
+
+**Quando usar**: Projetos maduros com múltiplos contribuidores ativos.
+
+### 3. Modelo Híbrido (BDFL + Core Team)
+
+O mais comum em projetos de sucesso: BDFL tem voto de minerva, mas um Core Team de mantenedores confiáveis tem merge rights e toma decisões do dia-a-dia.
+
+**Quando usar**: A maioria dos projetos — especialmente projetos comerciais open-source (COSS).
+
+---
+
+## Os 5 documentos essenciais de governança
+
+### 1. GOVERNANCE.md
+
+O documento central. Define:
+- Modelo de tomada de decisão (BDFL, comitê, etc.)
+- Quem pode fazer o quê (criar issues, fazer merge, criar releases)
+- Como alguém se torna mantenedor
+- Como conflitos são resolvidos
+- Como o próprio documento de governança pode ser alterado
+
+**Exemplo de estrutura**:
+
+```markdown
+# Governance
+
+## Decision-Making Model
+[BDFL / Committee / Hybrid]
+
+## Roles
+- **BDFL**: [descrição]
+- **Core Maintainer**: [permissões]
+- **Contributor**: [permissões]
+
+## How to become a maintainer
+[Critérios e processo]
+
+## RFC Process
+[Link para RFC-PROCESS.md]
+
+## Conflict Resolution
+[Processo de resolução]
+```
+
+### 2. RFC-PROCESS.md
+
+Define como mudanças significativas são propostas e aprovadas. O RFC (Request for Comments) é o mecanismo que previne decisões arquiteturais sendo tomadas num PR às 23h sem discussão.
+
+**O que exige um RFC**:
+- Mudanças na API pública
+- Mudanças arquiteturais significativas
+- Novos modelos de dados (schema)
+- Quebra de compatibilidade
+
+**O que não precisa de RFC**:
+- Bug fixes
+- Documentação
+- Refatoração interna sem mudança de comportamento
+
+**Ciclo do RFC**:
+1. Autor abre uma GitHub Discussion com o template de RFC
+2. Comunidade discute por 7-14 dias
+3. Mantenedores anunciam FCP (Final Comment Period) de 3-5 dias
+4. Decisão: aceito, aceito com modificações, rejeitado, ou adiado
+5. Implementação começa com referência ao RFC aprovado
+
+### 3. SECURITY.md
+
+Define a política de disclosure responsável de vulnerabilidades. Absolutamente essencial para qualquer projeto de produção.
+
+**O que incluir**:
+- Versões suportadas
+- Como reportar vulnerabilidades (email privado — NUNCA issue pública)
+- SLA de resposta (24h para acknowledgement, 72h para assessment)
+- Processo de disclosure coordenado
+- Se há bug bounty ou reconhecimento
+
+**Exemplo de intro**:
+
+```markdown
+## Reporting a Vulnerability
+
+**Please do NOT report security vulnerabilities through public GitHub issues.**
+
+Email: security@suaempresa.com.br
+
+Include:
+1. Description of the vulnerability
+2. Steps to reproduce
+3. Impact assessment
+4. Affected versions
+```
+
+### 4. Templates de issues (.github/ISSUE_TEMPLATE/)
+
+Bons templates de issue fazem o trabalho de triagem por você. Usuários que preenchem um template bem estruturado fornecem 80% das informações que você precisaria pedir depois.
+
+**Bug Report** deve ter:
+- Descrição do bug
+- Passos para reproduzir
+- Comportamento esperado vs atual
+- Ambiente (OS, versão, browser)
+- Logs/screenshots
+
+**Feature Request** deve ter:
+- Problema que resolve
+- Solução proposta
+- Alternativas consideradas
+- Disposição para contribuir
+
+Use formato `.yml` para campos estruturados no GitHub:
+
+```yaml
+name: Bug Report
+description: Report a bug
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrição do bug
+    validations:
+      required: true
+```
+
+### 5. PULL_REQUEST_TEMPLATE.md
+
+Um template de PR garante que contribuidores forneçam contexto suficiente e sigam um checklist antes de pedir review.
+
+**Deve incluir**:
+- Resumo do que foi feito e por quê
+- Tipo de mudança (bug fix, feature, breaking change, docs)
+- Checklist (testes passando, documentação atualizada, sem console.logs)
+- Screenshots para mudanças visuais
+- Issues relacionadas
+
+---
+
+## Como atrair contribuidores de qualidade
+
+### Labels estratégicas
+
+- `good first issue` — issues bem definidas e simples para novos contribuidores
+- `help wanted` — issues onde você quer contribuição externa
+- `RFC` — discussões de mudanças arquiteturais
+- `blocked` — aguardando decisão ou dependência
+
+### Reconhecimento público
+
+- Mencionar contribuidores no CHANGELOG e release notes
+- Badge de contribuidor no README
+- Canal #contribuidores no Discord com welcome automático
+
+### Documentação do processo de contribuição
+
+O CONTRIBUTING.md deve cobrir:
+1. Setup local em menos de 10 comandos
+2. Como encontrar issues para começar
+3. Convenções de código (lint, formatting)
+4. Processo de review (quem revisa, quanto tempo)
+5. Como criar um bom PR
+
+---
+
+## Governança para projetos comerciais open-source (COSS)
+
+Se você tem um produto SaaS sobre um core open-source (como o Sofia AI), a governança precisa equilibrar interesse comercial e comunidade.
+
+**Princípios do COSS sustentável**:
+
+1. **Open Core**: Funcionalidades básicas são open-source; features enterprise são proprietárias
+2. **Transparência do roadmap**: Mostre o que está sendo construído, mesmo que algumas features sejam pagas
+3. **Contribuições externas**: Aceite PRs da comunidade para o core, nunca bloqueie
+4. **Licença clara**: MIT, Apache 2.0 ou AGPL. Nunca licenças proprietárias disfarçadas
+
+**O que não fazer**:
+- "License bait and switch" — mudar licença depois de acumular usuários
+- Bloquear contribuições que competem com features pagas
+- Usar "open-source" no marketing mas ter código fechado na prática
+
+---
+
+## Checklist de governança para lançamento open-source
+
+Antes de tornar seu repositório público, verifique:
+
+- [ ] `README.md` claro com instalação e quickstart
+- [ ] `CONTRIBUTING.md` com processo de contribuição
+- [ ] `GOVERNANCE.md` com modelo de decisão
+- [ ] `SECURITY.md` com política de vulnerabilidades
+- [ ] `LICENSE` — arquivo de licença na raiz
+- [ ] `.github/ISSUE_TEMPLATE/bug_report.yml` — template de bug
+- [ ] `.github/ISSUE_TEMPLATE/feature_request.yml` — template de feature request
+- [ ] `.github/ISSUE_TEMPLATE/config.yml` — links para Discord e email de segurança
+- [ ] `.github/PULL_REQUEST_TEMPLATE.md` — template de PR
+- [ ] GitHub Actions — CI que roda testes automaticamente
+- [ ] Issues de `good first issue` pré-criadas (mínimo 5)
+- [ ] `CHANGELOG.md` para histórico de mudanças
+
+---
+
+## Ferramentas úteis para gestão da comunidade
+
+| Ferramenta | Uso |
+|-----------|-----|
+| GitHub Discussions | Discussões, RFCs, Q&A |
+| Discord | Suporte em tempo real, canais por tópico |
+| Mergify | Automação de merge de PRs |
+| Allcontributors | Reconhecimento automático de contribuidores |
+| Shields.io | Badges para README |
+| OpenCollective | Financiamento coletivo para sustentabilidade |
+
+---
+
+## Conclusão
+
+Governança não é burocracia — é infraestrutura social que permite que um projeto cresça além do esforço de uma única pessoa. Projetos que ignoram governança escalam até o ponto em que o fundador esgota, e então morrem. Projetos que investem em governança desde cedo criam ecossistemas que sobrevivem por décadas.
+
+Para projetos de IA open-source especificamente, a governança é ainda mais crítica: as implicações técnicas e éticas das decisões são maiores, e a comunidade de IA é atenta e exigente.
+
+**Próximos passos:**
+- [Ver o GOVERNANCE.md do Sofia AI](https://github.com/JeanZorzetti/sofia-ia/blob/main/GOVERNANCE.md)
+- [Contribuir para o Sofia AI](https://github.com/JeanZorzetti/sofia-ia/blob/main/CONTRIBUTING.md)
+- [Entrar na comunidade Discord](https://discord.gg/sofiaia)

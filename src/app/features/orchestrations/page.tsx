@@ -169,7 +169,7 @@ const differentials = [
 export default function OrchestrationFeaturePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Schema Markup */}
+      {/* Schema Markup — TechArticle */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -187,6 +187,58 @@ export default function OrchestrationFeaturePage() {
               name: 'Sofia AI',
               url: 'https://sofiaia.roilabs.com.br'
             }
+          })
+        }}
+      />
+      {/* Schema Markup — FAQPage */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: [
+              {
+                '@type': 'Question',
+                name: 'O que é orquestração de agentes IA?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Orquestração de agentes IA é a coordenação de múltiplos agentes de inteligência artificial para executar tarefas complexas em conjunto. Cada agente tem um papel específico (Pesquisador, Analista, Revisor) e a saída de um alimenta o próximo, formando um pipeline de raciocínio automatizado.'
+                }
+              },
+              {
+                '@type': 'Question',
+                name: 'Qual a diferença entre orquestração sequencial e paralela?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Na orquestração sequencial, os agentes executam um após o outro — a saída do primeiro vira entrada do segundo. Na orquestração paralela, múltiplos agentes processam o mesmo input simultaneamente, ideal para análises multi-perspectiva que precisam de velocidade.'
+                }
+              },
+              {
+                '@type': 'Question',
+                name: 'Preciso saber programar para usar orquestrações na Sofia AI?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Não. A Sofia AI oferece uma interface visual no-code para criar e executar orquestrações. Você define os agentes, seus papéis e a estratégia de execução sem escrever código. Para casos avançados, existe uma API REST e SDK JavaScript.'
+                }
+              },
+              {
+                '@type': 'Question',
+                name: 'Quantos agentes posso ter em uma orquestração?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Não há limite fixo de agentes por orquestração. Na prática, pipelines de 3 a 7 agentes são os mais comuns e eficientes. O plano Free inclui até 3 agentes no total; o plano Pro permite 20 e o Business é ilimitado.'
+                }
+              },
+              {
+                '@type': 'Question',
+                name: 'Como funciona o streaming em tempo real nas orquestrações?',
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: 'Sofia AI usa Server-Sent Events (SSE) para transmitir o output de cada agente em tempo real, conforme ele é gerado pelo modelo de linguagem. Você vê cada agente "pensando" ao vivo, com feedback visual granular por etapa do pipeline.'
+                }
+              }
+            ]
           })
         }}
       />

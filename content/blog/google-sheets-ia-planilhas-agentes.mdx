@@ -1,0 +1,178 @@
+---
+title: "Google Sheets + IA: Como Ler e Escrever Planilhas com Agentes Inteligentes"
+slug: "google-sheets-ia-planilhas-agentes"
+description: "Tutorial completo para conectar Google Sheets ao Sofia AI e criar agentes que leem, escrevem e atualizam planilhas automaticamente. Casos de uso reais com passo a passo."
+date: "2026-02-25"
+author: "Equipe Sofia"
+tags: ["google sheets ia", "planilhas com ia", "agentes google sheets", "automatizar google sheets ia", "sofia ai google sheets"]
+readTime: "9 min"
+---
+
+**Imagina um agente de IA que todo dia de manhã lê sua planilha de leads, qualifica cada um com base nos seus critérios, e ainda registra o resultado de volta na planilha.** Sem você fazer nada.
+
+Isso é possível hoje com a integração nativa do Sofia AI com Google Sheets. Neste tutorial você vai aprender a conectar sua conta Google, entender as 3 tools disponíveis para agentes, e ver casos de uso reais.
+
+---
+
+## Por que Google Sheets + IA?
+
+Google Sheets é a ferramenta de dados mais democrática do mundo. Praticamente toda empresa, de qualquer tamanho, tem algum processo rodando em planilhas — desde CRMs improvisados até dashboards de métricas.
+
+O problema: planilhas não pensam. Elas armazenam, mas não raciocinam. É aí que a IA entra.
+
+Com a integração Google Sheets + Sofia AI, você pode:
+- **Qualificar leads** automaticamente com base em critérios definidos em linguagem natural
+- **Gerar relatórios** a partir de dados brutos na planilha
+- **Monitorar anomalias** — agente que avisa quando um número foge do padrão
+- **Preencher planilhas** com dados gerados por IA (pesquisa, análise, copy)
+
+---
+
+## Conectando Google Sheets ao Sofia AI
+
+### Pré-requisitos
+- Conta no Sofia AI (qualquer plano)
+- Conta Google com acesso às planilhas
+
+### Passo a passo
+
+1. No dashboard do Sofia AI, acesse **Integrações**
+2. Clique em **Google Sheets**
+3. Clique em **"Conectar Google Sheets"**
+4. Faça login com sua conta Google
+5. Autorize o acesso às planilhas (escopo: `spreadsheets` + `drive.file`)
+6. Pronto — você verá o status "Conectado" com sua conta Google
+
+> **Dica de segurança**: O Sofia AI solicita apenas o escopo mínimo necessário. Acesso a `drive.file` permite ler e escrever apenas arquivos que o usuário abriu explicitamente.
+
+---
+
+## As 3 tools disponíveis para seus agentes
+
+Quando o Google Sheets está conectado, todos os seus agentes têm acesso automático a estas tools:
+
+### 1. `sheets_read`
+Lê células de uma planilha.
+
+```
+Parâmetros:
+- spreadsheetId: ID da planilha (da URL do Google Sheets)
+- range: Range no formato A1 (ex: "Sheet1!A1:D10")
+```
+
+**Caso de uso**: Agente de análise que lê dados de vendas do mês e gera resumo executivo.
+
+### 2. `sheets_write`
+Escreve ou atualiza células existentes.
+
+```
+Parâmetros:
+- spreadsheetId: ID da planilha
+- range: Range inicial para escrita
+- values: Array de arrays com os valores
+```
+
+**Caso de uso**: Agente que preenche a coluna "Status" de cada linha com a qualificação do lead.
+
+### 3. `sheets_append`
+Adiciona uma nova linha ao final de uma aba.
+
+```
+Parâmetros:
+- spreadsheetId: ID da planilha
+- sheetName: Nome da aba (ex: "Leads", "Sheet1")
+- row: Array com os valores da linha
+```
+
+**Caso de uso**: Agente que monitora um canal e registra cada menção relevante em uma planilha de monitoramento.
+
+---
+
+## Como encontrar o ID de uma planilha
+
+O ID da planilha fica na URL do Google Sheets:
+
+```
+https://docs.google.com/spreadsheets/d/[ID_AQUI]/edit
+```
+
+Exemplo:
+```
+https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms/edit
+                                        ↑ Este é o spreadsheetId
+```
+
+---
+
+## Caso de uso 1: Agente que qualifica leads automaticamente
+
+### Setup
+
+1. Crie uma planilha com colunas: `Nome`, `Email`, `Empresa`, `Cargo`, `Score`, `Qualificação`
+2. No Sofia AI, crie um agente com system prompt:
+
+```
+Você é um especialista em qualificação de leads B2B.
+
+Quando receber dados de uma planilha, você deve:
+1. Ler os leads da aba "Leads" (colunas A:D)
+2. Para cada lead, analisar: cargo, empresa e potencial
+3. Atribuir um score de 1 a 10
+4. Registrar o score na coluna E e qualificação ("Quente", "Morno", "Frio") na coluna F
+
+Critérios:
+- Score 8-10 (Quente): C-level, diretor ou gerente em empresa 50+ funcionários
+- Score 5-7 (Morno): Cargo técnico ou empresa menor
+- Score 1-4 (Frio): Estudante ou cargo operacional
+```
+
+3. Ative o Google Sheets na aba de configurações do agente
+4. Execute o agente com a mensagem: `Qualifique os leads da planilha [ID_DA_SUA_PLANILHA]`
+
+---
+
+## Caso de uso 2: Relatório diário agendado
+
+Configure uma **execução agendada** (diária às 7h) com este prompt para o agente:
+
+```
+Acesse a planilha de métricas [ID] e leia os dados de ontem (aba "Métricas Diárias", intervalo A:G).
+
+Gere um relatório executivo em formato de bullet points cobrindo:
+- Principais KPIs do dia vs meta
+- Tendências identificadas
+- 2-3 ações recomendadas
+- Alertas de anomalias (desvio > 20% da média)
+```
+
+O relatório é enviado por email ou Slack automaticamente via webhook de output.
+
+---
+
+## Caso de uso 3: Pipeline de pesquisa de conteúdo
+
+Uma orquestração de 3 agentes:
+
+1. **Agente Pesquisador**: Lê a pauta da semana de uma planilha (temas, palavras-chave, público-alvo)
+2. **Agente Escritor**: Gera o conteúdo para cada tema
+3. **Agente Registrador**: Escreve cada conteúdo gerado de volta na planilha com status "Rascunho"
+
+---
+
+## Boas práticas
+
+- **Prefira `sheets_append` para logs e registros** — evita sobrescrever dados acidentalmente
+- **Use ranges explícitos** — `Sheet1!A1:E100` é mais seguro que `A:E` (que inclui tudo)
+- **Compartilhe a planilha** com a conta Google conectada antes de usar
+- **Teste antes de agendar** — use a interface de teste na página da integração
+
+---
+
+## Conclusão
+
+Google Sheets + Sofia AI é uma das combinações mais poderosas para empresas que já usam planilhas como ferramenta central. Você não precisa migrar nada — seus dados continuam no Google, mas agora com um agente de IA capaz de raciocinar sobre eles.
+
+**Próximos passos:**
+- [Conectar Google Sheets](/dashboard/integrations/google-sheets)
+- [Ver templates de orquestração](/templates)
+- [Como agendar execuções automáticas](/blog/agendar-execucoes-ia-cron-jobs)
