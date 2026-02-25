@@ -1,0 +1,175 @@
+---
+title: "Como Criar Workflows de IA Descrevendo em Linguagem Natural (AI Magic Create)"
+description: "Descubra como o AI Magic Create da Sofia AI transforma descrições em linguagem natural em orquestrações completas de agentes IA — com agentes, system prompts e conexões gerados automaticamente por LLM."
+date: "2025-02-25"
+author: "ROI Labs"
+tags: ["magic-create", "orquestracao-ia", "llm", "automacao", "no-code", "agentes-ia", "workflow"]
+category: "Produto"
+image: "/blog/magic-create-cover.png"
+readTime: "8 min"
+---
+
+# Como Criar Workflows de IA Descrevendo em Linguagem Natural
+
+Imagine poder criar um workflow completo de automação com múltiplos agentes de IA apenas descrevendo o que você quer em português. Sem configurar prompts manualmente, sem definir conexões entre agentes, sem horas de engenharia de prompts.
+
+Isso é o que o **AI Magic Create** da Sofia AI faz.
+
+## O Problema com as Orquestrações Tradicionais
+
+Para criar uma orquestração multi-agente eficiente, você precisa:
+
+1. Decidir quantos agentes usar e quais são seus papéis
+2. Escrever system prompts detalhados para cada agente
+3. Definir o fluxo de dados entre eles
+4. Testar e iterar até o comportamento estar certo
+
+Para quem não tem experiência com engenharia de prompts, esse processo pode levar dias.
+
+## Como Funciona o Magic Create
+
+O Magic Create usa um LLM especializado (Llama 3.3 70B via Groq) com um prompt de sistema treinado especificamente para decompor processos em arquiteturas multi-agente.
+
+### O Fluxo
+
+```
+Usuário descreve → LLM analisa → JSON estruturado → Agentes criados → Orquestração salva
+```
+
+1. **Input**: você descreve o processo em linguagem natural
+2. **Análise**: o LLM identifica as etapas, responsabilidades e fluxo de dados
+3. **Geração**: cria um JSON com agentes, system prompts e conexões
+4. **Salvamento**: os agentes e a orquestração são salvos automaticamente no banco
+5. **Preview**: você vê o resultado antes de abrir
+
+### O Prompt de Sistema
+
+O segredo está no prompt de sistema que guia o LLM:
+
+```
+Você é um especialista em criar orquestrações de agentes IA.
+Dado um processo descrito em linguagem natural, crie uma orquestração completa.
+
+Retorne um JSON válido com esta estrutura:
+{
+  "name": "Nome da orquestração",
+  "description": "Descrição breve",
+  "agents": [
+    {
+      "name": "Nome do Agente",
+      "role": "papel deste agente",
+      "systemPrompt": "System prompt detalhado...",
+      "model": "llama-3.3-70b-versatile"
+    }
+  ],
+  "connections": [
+    { "from": 0, "to": 1, "label": "passa resultado" }
+  ]
+}
+
+Regras:
+- Use 2 a 5 agentes
+- Cada agente deve ter um papel claro e único
+- Os system prompts devem ser específicos (100-200 palavras)
+```
+
+## Exemplos Reais
+
+### Pipeline de Marketing de Conteúdo
+
+**Input do usuário**:
+> "Quero um workflow que receba um tema de artigo, pesquise dados e estatísticas, escreva o artigo completo, revise a gramática e SEO, e gere sugestões de título e meta description"
+
+**Output gerado pelo Magic Create**:
+
+- **Pesquisador de Dados**: busca estatísticas, estudos e referências relevantes ao tema
+- **Redator Principal**: escreve o artigo completo baseado nos dados pesquisados
+- **Editor SEO**: revisa gramática, ajusta densidade de palavras-chave e sugere melhorias
+- **Copywriter de Títulos**: gera 5 opções de título e meta descriptions otimizadas
+
+### Qualificação de Leads
+
+**Input**:
+> "Recebi um lead de um formulário. Quero que a IA qualifique o interesse, pesquise a empresa, calcule um score e sugira o próximo passo"
+
+**Agentes gerados**:
+- **Qualificador de Interesse**: analisa as respostas do formulário e determina nível de interesse
+- **Pesquisador Corporativo**: busca informações da empresa (tamanho, setor, receita estimada)
+- **Calculador de Score**: atribui score 0-100 baseado em fit + interesse + timing
+- **Recomendador de Próximo Passo**: sugere ação: ligar agora / email nurturing / descarte
+
+## Comparação: Manual vs. Magic Create
+
+| Aspecto | Manual | Magic Create |
+|---------|--------|--------------|
+| Tempo para criar | 2-4 horas | ~30 segundos |
+| Qualidade dos prompts | Depende da experiência | Consistentemente bom |
+| Número de agentes | Decisão do usuário | Otimizado automaticamente |
+| Conexões | Configuração manual | Definidas automaticamente |
+
+## Limitações e Quando Usar Manualmente
+
+O Magic Create é excelente para:
+- Explorar rapidamente como uma orquestração poderia funcionar
+- Usuários novos que ainda estão aprendendo sobre agentes IA
+- Prototipagem rápida antes de refinar manualmente
+
+Use criação manual quando:
+- Você precisa de controle preciso sobre cada prompt
+- Integrar com sistemas específicos (CRM, APIs externas)
+- O processo tem regras de negócio complexas e específicas
+
+## Implementação Técnica: Endpoint /api/orchestrations/magic-create
+
+O endpoint recebe a descrição e retorna a orquestração criada:
+
+```typescript
+// POST /api/orchestrations/magic-create
+// Body: { description: string }
+
+const completion = await groq.chat.completions.create({
+  model: 'llama-3.3-70b-versatile',
+  messages: [
+    { role: 'system', content: MAGIC_SYSTEM_PROMPT },
+    { role: 'user', content: `Crie uma orquestração para:\n\n${description}` },
+  ],
+  temperature: 0.7,
+  max_tokens: 3000,
+})
+
+// Parse JSON, valida, salva agentes + orquestração no banco
+// Retorna { orchestrationId, orchestration: { name, agents, connections } }
+```
+
+O processo completo — LLM + save no banco — leva cerca de 3-5 segundos.
+
+## Como Acessar no Dashboard
+
+1. Vá para **Dashboard → Orquestrações**
+2. Clique em **"Gerar com IA"** (botão roxo no topo)
+3. Descreva seu processo na textarea
+4. Aguarde ~30 segundos
+5. Veja o preview dos agentes e clique **"Abrir Orquestração"**
+
+## O Que Vem a Seguir
+
+Próximas melhorias planejadas para o Magic Create:
+
+- **Streaming SSE**: eventos de progresso em tempo real ("Criando agente Pesquisador...")
+- **Galeria de exemplos**: 20+ templates de processos comuns
+- **Edição inline**: editar system prompts diretamente no preview antes de salvar
+- **Histórico**: ver e reutilizar orquestrações geradas anteriormente
+
+## Conclusão
+
+O AI Magic Create elimina a barreira técnica de criação de orquestrações complexas. Em vez de gastar horas escrevendo prompts e configurando fluxos, você descreve o que quer e a IA faz o resto.
+
+É a implementação prática do conceito de **"IA que cria IA"** — agentes que geram outros agentes.
+
+Experimente agora no [Dashboard de Orquestrações](/dashboard/orchestrations).
+
+---
+
+**Leia também**:
+- [Guia completo de orquestrações multi-agente](/blog/como-criar-equipe-agentes-ia-sem-codigo)
+- [Multi-Agent Orchestration na Sofia AI](/features)

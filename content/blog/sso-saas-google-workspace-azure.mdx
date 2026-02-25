@@ -1,0 +1,243 @@
+---
+title: "SSO para SaaS: Como Implementar Single Sign-On com Google Workspace e Azure AD"
+description: "Guia completo para implementar SSO (Single Sign-On) em plataformas SaaS usando Google Workspace OAuth 2.0 e Microsoft Azure AD (Entra ID). Código em Next.js 16 incluído."
+date: "2025-02-25"
+author: "ROI Labs"
+tags: ["sso", "saas", "google-workspace", "azure-ad", "autenticacao", "enterprise", "next-js"]
+category: "Engenharia"
+image: "/blog/sso-saas-cover.png"
+readTime: "12 min"
+---
+
+# SSO para SaaS: Como Implementar Single Sign-On com Google Workspace e Azure AD
+
+Single Sign-On (SSO) deixou de ser uma funcionalidade premium para se tornar **requisito básico** para vender software B2B enterprise no Brasil e na América Latina. Neste guia completo, você vai aprender a implementar SSO com Google Workspace e Microsoft Azure AD (Entra ID) usando Next.js 16.
+
+## Por Que SSO É Obrigatório para SaaS Enterprise
+
+Empresas médias e grandes **já tomaram a decisão de usar um Identity Provider (IdP)**. Quando seu SaaS não suporta SSO, o departamento de TI precisa:
+
+1. Gerenciar senhas separadas para cada ferramenta
+2. Não ter visibilidade de quem acessa o quê
+3. Não poder desativar o acesso quando alguém sai da empresa
+
+O resultado? **Deals travados na fase de segurança.** A equipe de TI veta a ferramenta.
+
+Com SSO:
+- Onboarding automático de novos colaboradores
+- Offboarding instantâneo (desativar no Google/Azure = acesso revogado)
+- Logs centralizados para compliance (LGPD, ISO 27001)
+- Menos tickets de "esqueci minha senha"
+
+## Os Dois Protocolos Dominantes
+
+### SAML 2.0 (legado, mas ainda presente)
+Usado por Okta, OneLogin e implementações antigas do Azure AD. XML-based, verboso e complexo de implementar. Cada SP (Service Provider) precisa de metadados XML.
+
+### OAuth 2.0 + OIDC (moderno, preferido)
+Usado por Google Workspace e Microsoft Entra ID modernos. JSON-based, simples de implementar com callback URLs.
+
+**Nossa recomendação para novos projetos**: OAuth 2.0 + OIDC para Google e Microsoft. Adicione SAML apenas se um cliente específico exigir.
+
+## Implementando Google Workspace SSO no Next.js 16
+
+### 1. Configurar no Google Cloud Console
+
+Acesse [console.cloud.google.com](https://console.cloud.google.com) e:
+
+1. Crie um projeto ou selecione existente
+2. APIs & Services → Credentials → Create Credentials → OAuth Client ID
+3. Application type: **Web application**
+4. Authorized redirect URIs: `https://seudominio.com/api/auth/sso/google/callback`
+5. Copie o **Client ID** e **Client Secret**
+
+### 2. Rota de Início do Flow
+
+```typescript
+// src/app/api/auth/sso/google/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const domain = searchParams.get('domain') // ex: empresa.com.br
+
+  const clientId = process.env.GOOGLE_SSO_CLIENT_ID!
+  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/sso/google/callback`
+
+  const state = Buffer.from(JSON.stringify({ domain })).toString('base64url')
+
+  const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+  googleAuthUrl.searchParams.set('client_id', clientId)
+  googleAuthUrl.searchParams.set('redirect_uri', redirectUri)
+  googleAuthUrl.searchParams.set('response_type', 'code')
+  googleAuthUrl.searchParams.set('scope', 'openid email profile')
+  googleAuthUrl.searchParams.set('state', state)
+
+  return NextResponse.redirect(googleAuthUrl.toString())
+}
+```
+
+### 3. Callback: Trocar Code por Token e Criar Sessão
+
+```typescript
+// src/app/api/auth/sso/google/callback/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { signToken, setAuthCookie } from '@/lib/auth'
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const code = searchParams.get('code')
+
+  if (!code) {
+    return NextResponse.redirect('/login?error=sso_no_code')
+  }
+
+  // 1. Trocar code por access_token
+  const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code,
+      client_id: process.env.GOOGLE_SSO_CLIENT_ID!,
+      client_secret: process.env.GOOGLE_SSO_CLIENT_SECRET!,
+      redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/sso/google/callback`,
+      grant_type: 'authorization_code',
+    }),
+  })
+
+  const { access_token } = await tokenResponse.json()
+
+  // 2. Buscar perfil do usuário
+  const profileResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    headers: { Authorization: `Bearer ${access_token}` },
+  })
+  const profile = await profileResponse.json()
+  const email = profile.email
+
+  // 3. Criar ou encontrar usuário no banco
+  let user = await prisma.user.findUnique({ where: { email } })
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email,
+        name: profile.name,
+        passwordHash: '', // SSO users não têm senha
+        role: 'agent',
+        status: 'active',
+        googleId: profile.id,
+      },
+    })
+  }
+
+  // 4. Emitir JWT e redirecionar
+  const token = await signToken({ id: user.id, email: user.email, name: user.name, role: user.role })
+  await setAuthCookie(token)
+
+  return NextResponse.redirect('/dashboard')
+}
+```
+
+## Implementando Microsoft Entra ID (Azure AD)
+
+O fluxo é similar ao Google, mas com endpoints da Microsoft:
+
+### Endpoints
+
+- **Autorização**: `https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize`
+- **Token**: `https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token`
+- **Perfil**: `https://graph.microsoft.com/v1.0/me`
+
+### Configuração no Azure Portal
+
+1. Portal Azure → Azure Active Directory → App Registrations → New Registration
+2. Redirect URI: `https://seudominio.com/api/auth/sso/microsoft/callback`
+3. Certificates & Secrets → New Client Secret
+4. Copie **Application (Client) ID** e o **Secret Value**
+
+O Tenant ID pode ser `common` (multi-tenant) ou o ID específico do seu tenant Azure.
+
+## Middleware: Forçar SSO por Domínio
+
+Para organizações que querem bloquear login com email/senha:
+
+```typescript
+// Em src/middleware.ts
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+
+export async function middleware(request: NextRequest) {
+  // Apenas para rota de login com email/senha
+  if (request.nextUrl.pathname === '/api/auth/login' && request.method === 'POST') {
+    const body = await request.json()
+    const email = body.email || body.username
+    const domain = email?.split('@')[1]
+
+    if (domain) {
+      const org = await prisma.organization.findFirst({
+        where: { ssoDomain: domain, ssoForced: true },
+      })
+
+      if (org) {
+        return NextResponse.json(
+          { error: `Este domínio usa SSO via ${org.ssoProvider}. Faça login via SSO.` },
+          { status: 403 }
+        )
+      }
+    }
+  }
+
+  return NextResponse.next()
+}
+```
+
+## Modelo de Dados para SSO Multi-Tenant
+
+```prisma
+model Organization {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  ssoProvider     String?  // "google" | "microsoft" | null
+  ssoDomain       String?  // ex: "empresa.com.br"
+  ssoClientId     String?
+  ssoClientSecret String?
+  ssoForced       Boolean  @default(false)
+
+  members OrganizationMember[]
+}
+```
+
+## Checklist de Segurança SSO
+
+- [ ] **State parameter**: sempre valide o `state` para prevenir CSRF
+- [ ] **PKCE**: use em apps mobile/SPA (não necessário em server-side)
+- [ ] **HTTPS obrigatório**: OAuth 2.0 não funciona sem TLS
+- [ ] **Secrets seguros**: nunca commite `CLIENT_SECRET` — use env vars
+- [ ] **Revogação**: quando remover usuário do IdP, garanta que o JWT expira
+- [ ] **Audit log**: registre cada login SSO para compliance
+
+## Como a Sofia AI Implementou SSO
+
+Na Sofia AI, implementamos SSO no Sprint 18 com suporte a:
+
+- **Google Workspace**: para empresas que usam Google Suite
+- **Microsoft Entra ID**: para empresas que usam Office 365
+- Configuração por domínio (`@empresa.com.br`)
+- Toggle "Forçar SSO" para bloquear login com senha
+
+Se quiser explorar a implementação completa, o código está disponível no [repositório público no GitHub](https://github.com/JeanZorzetti/sofia-ia).
+
+## Conclusão
+
+SSO é um multiplicador de deals enterprise. Uma vez implementado, você remove o maior bloqueador de TI nas negociações B2B. A implementação com Next.js 16, OAuth 2.0 e Prisma é relativamente direta — leva cerca de 2-3 dias de desenvolvimento para cobrir Google e Microsoft.
+
+Se sua plataforma SaaS ainda não tem SSO, esta é a funcionalidade de maior ROI que você pode implementar hoje.
+
+---
+
+**Próximos passos**:
+- [Implementar SSO na Sofia AI](/dashboard/settings/sso)
+- [Documentação completa de autenticação](/docs)
+- [Guia de onboarding enterprise](/enterprise)
