@@ -258,6 +258,7 @@ export default function LandingPage() {
               <BookOpen className="w-3.5 h-3.5" />
               Blog
             </Link>
+            <Link href="/docs" className="text-foreground-secondary hover:text-white transition-colors text-sm">Docs</Link>
             <Link href="/integrations" className="text-foreground-secondary hover:text-white transition-colors text-sm">Integrações</Link>
           </div>
           <div className="flex items-center gap-3">

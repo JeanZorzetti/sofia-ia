@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, Zap, Key, BookOpen, Code, Globe, Terminal } from 'lucide-react'
+import { ArrowRight, Zap, Key, BookOpen, Code, Globe, Terminal, Puzzle, GitBranch, Rocket } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Documentação — Sofia AI',
@@ -66,7 +66,7 @@ export default function DocsPage() {
               A Sofia AI fornece uma API REST para gerenciar e executar orquestrações de agentes programaticamente.
               Use a API para integrar IA multi-agente diretamente nos seus sistemas, pipelines e aplicações.
             </p>
-            <div className="grid sm:grid-cols-3 gap-4">
+            <div className="grid sm:grid-cols-3 gap-4 mb-6">
               {[
                 { icon: Key, title: 'API Key auth', desc: 'Autenticação simples via header X-API-Key' },
                 { icon: Globe, title: 'REST JSON', desc: 'Endpoints REST padrão com resposta JSON' },
@@ -77,6 +77,24 @@ export default function DocsPage() {
                   <div className="font-medium text-white text-sm mb-1">{title}</div>
                   <div className="text-xs text-foreground-tertiary">{desc}</div>
                 </div>
+              ))}
+            </div>
+            {/* Cards de navegação de docs */}
+            <div className="grid sm:grid-cols-2 gap-3">
+              {[
+                { icon: Rocket, href: '/docs/getting-started', title: 'Getting Started', desc: 'Crie agente, orquestração e execute via API em 10min', color: 'text-green-400' },
+                { icon: Puzzle, href: '/docs/plugins', title: 'Plugins', desc: 'Funções JavaScript customizadas para agentes', color: 'text-purple-400' },
+                { icon: GitBranch, href: '/docs/agent-to-agent', title: 'Agent-to-Agent', desc: 'Protocolo de delegação entre agentes', color: 'text-orange-400' },
+                { icon: Code, href: '#orchestrations', title: 'API Reference', desc: 'Todos os endpoints REST com exemplos', color: 'text-blue-400' },
+              ].map(({ icon: Icon, href, title, desc, color }) => (
+                <Link key={href} href={href} className="glass-card p-4 rounded-xl hover:border-white/20 transition-colors group flex items-start gap-3">
+                  <Icon className={`w-5 h-5 ${color} flex-shrink-0 mt-0.5`} />
+                  <div>
+                    <div className="font-medium text-white text-sm group-hover:text-blue-400 transition-colors">{title}</div>
+                    <div className="text-xs text-foreground-tertiary mt-0.5">{desc}</div>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-white/20 group-hover:text-blue-400 transition-colors ml-auto flex-shrink-0 mt-0.5" />
+                </Link>
               ))}
             </div>
           </section>
