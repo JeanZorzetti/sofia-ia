@@ -2,6 +2,7 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { DesktopProvider } from '@/contexts/DesktopContext'
+import { ServiceWorkerRegistrar } from '@/components/sofia/ServiceWorkerRegistrar'
 import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -39,6 +40,14 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
+        {/* PWA Meta Tags */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Sofia AI" />
+        <meta name="theme-color" content="#7c3aed" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         {gaId && (
           <>
             <Script
@@ -60,6 +69,7 @@ export default function RootLayout({
         <DesktopProvider>
           {children}
           <Toaster richColors position="top-right" theme="dark" />
+          <ServiceWorkerRegistrar />
         </DesktopProvider>
       </body>
     </html>

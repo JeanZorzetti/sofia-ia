@@ -1,0 +1,58 @@
+{
+  "name": "Sofia AI",
+  "short_name": "Sofia AI",
+  "description": "Plataforma de Orquestração de Agentes IA — crie equipes de IA que trabalham juntas",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dashboard de Orquestrações"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Orquestrações",
+      "short_name": "Orquestrações",
+      "description": "Ver todas as orquestrações",
+      "url": "/dashboard/orchestrations",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Agentes",
+      "short_name": "Agentes",
+      "description": "Gerenciar agentes IA",
+      "url": "/dashboard/agents",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

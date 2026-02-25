@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { InstallPWA } from '@/components/sofia/InstallPWA'
 
 interface NavbarProps {
   user: {
@@ -28,6 +29,7 @@ export function Navbar({ user, onLogout }: NavbarProps) {
       </div>
 
       <div className="flex items-center gap-4">
+        <InstallPWA />
         <button
           className="hover-scale relative rounded-full p-2 text-foreground-secondary transition-colors hover:bg-background-secondary hover:text-foreground"
           aria-label="Notificações"
