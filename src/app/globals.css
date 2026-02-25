@@ -326,6 +326,14 @@ h3 { font-size: 1.25rem; font-weight: 500; letter-spacing: -0.025em; line-height
 .glow-orb-slow    { animation: orb-float-slow    12s ease-in-out infinite; }
 .glow-orb-reverse { animation: orb-float-reverse 10s ease-in-out infinite; }
 
+/* Dashboard table row hover effects */
+.dashboard-table tbody tr {
+  transition: background-color 150ms ease;
+}
+.dashboard-table tbody tr:hover {
+  background-color: hsl(0 0% 100% / 0.03);
+}
+
 /* Skeleton shimmer */
 .skeleton {
   background: linear-gradient(
