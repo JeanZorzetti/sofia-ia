@@ -1,9 +1,6 @@
-import Link from 'next/link'
+'use client'
 
-export const metadata = {
-  title: 'Sem conexão — Sofia AI',
-  description: 'Você está offline. Verifique sua conexão com a internet.',
-}
+import Link from 'next/link'
 
 export default function OfflinePage() {
   return (
