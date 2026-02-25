@@ -703,6 +703,7 @@ export default function LandingPage() {
                     { label: 'Blog', href: '/blog' },
                     { label: 'Afiliados', href: '/afiliados' },
                     { label: 'Early Access', href: '/early-access' },
+                    { label: 'Beta', href: '/beta' },
                     { label: 'White-label', href: '/whitelabel' },
                     { label: 'GitHub', href: 'https://github.com/JeanZorzetti/sofia-ia' },
                     { label: 'English', href: '/en' }
@@ -723,6 +724,8 @@ export default function LandingPage() {
               &copy; 2026 ROI Labs. Sofia AI — Plataforma de Orquestração de Agentes IA.
             </p>
             <div className="flex items-center gap-6 flex-wrap justify-center">
+
+              <Link href="/sobre" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Sobre</Link>
               <Link href="/termos" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Termos</Link>
               <Link href="/privacidade" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Privacidade</Link>
               <Link href="/contato" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Contato</Link>
