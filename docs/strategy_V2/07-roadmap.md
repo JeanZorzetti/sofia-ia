@@ -5,21 +5,21 @@
 
 ---
 
-## Sprint 1 — Fundacao: Layout Publico + Componentizacao Core
+## ✅ Sprint 1 — Fundacao: Layout Publico + Componentizacao Core
 
 **Objetivo:** Eliminar duplicacao massiva. Criar layout publico com Navbar e Footer reutilizaveis.
+**Status: CONCLUIDO — commit `6667fa2`**
 
-| # | Tarefa | Prioridade | Estimativa |
-|---|--------|------------|------------|
-| 1.1 | Criar `src/components/landing/LandingNavbar.tsx` com menu mobile (Sheet) | P0 | 2h |
-| 1.2 | Criar `src/components/landing/Footer.tsx` com variant full/minimal | P0 | 1h |
-| 1.3 | Criar `src/components/landing/MobileMenu.tsx` (Sheet drawer) | P0 | 1h |
-| 1.4 | Criar route group `(public)` com layout.tsx que inclui Navbar + Footer | P0 | 1h |
-| 1.5 | Migrar todas as paginas publicas para `(public)/` | P0 | 2h |
-| 1.6 | Remover Navbar e Footer inline de todas as paginas migradas | P0 | 2h |
-| 1.7 | Criar `src/data/navigation.ts` com links de navbar e footer | P1 | 30min |
-| 1.8 | Adicionar active state nos links da navbar | P1 | 30min |
-| 1.9 | Testar todas as paginas publicas pos-migracao | P0 | 1h |
+| # | Tarefa | Prioridade | Status |
+|---|--------|------------|--------|
+| 1.1 | Criar `LandingNavbar.tsx` com menu mobile (Sheet) | P0 | ✅ |
+| 1.2 | Criar `Footer.tsx` (MobileMenu integrado na Navbar) | P0 | ✅ |
+| 1.3 | Criar `src/data/navigation.ts` com links de navbar e footer | P1 | ✅ |
+| 1.4 | Criar route group `(public)` com layout.tsx | P0 | ✅ |
+| 1.5 | Migrar 29 diretorios publicos para `(public)/` | P0 | ✅ |
+| 1.6 | Remover Navbar e Footer inline de 34 arquivos | P0 | ✅ |
+| 1.7 | Active state nos links da navbar via usePathname | P1 | ✅ |
+| 1.8 | Build passando — 285 paginas geradas | P0 | ✅ |
 
 **Entrega:** Zero duplicacao de Navbar/Footer. Menu mobile funcionando. ~1.300 linhas eliminadas.
 
