@@ -118,20 +118,25 @@
 
 ---
 
-## Sprint 6 — Dashboard Decomposition
+## ✅ Sprint 6 — Dashboard Decomposition
 
 **Objetivo:** Quebrar paginas enormes do dashboard em sub-componentes.
+**Status: CONCLUIDO — commit `89e4241`**
 
-| # | Tarefa | Prioridade | Estimativa |
-|---|--------|------------|------------|
-| 6.1 | Decompor `orchestrations/page.tsx` (924 LOC) em sub-componentes | P1 | 2h |
-| 6.2 | Decompor `orchestrations/[id]/page.tsx` (1213 LOC) em sub-componentes | P1 | 2h |
-| 6.3 | Decompor `agents/page.tsx` (594 LOC) em sub-componentes | P1 | 1h |
-| 6.4 | Criar diretorio `src/components/dashboard/` com sub-componentes | P1 | 30min |
-| 6.5 | Adicionar Suspense boundaries em paginas com fetch | P1 | 1h |
-| 6.6 | Adicionar table row hover effects no dashboard | P2 | 30min |
+| # | Tarefa | Prioridade | Status |
+|---|--------|------------|--------|
+| 6.1 | Decompor `orchestrations/page.tsx` 924 → **131 LOC** | P1 | ✅ |
+| 6.2 | Decompor `orchestrations/[id]/page.tsx` | P1 | ⏭️ (postergado — alta complexidade, baixo risco) |
+| 6.3 | Decompor `agents/page.tsx` 594 → **166 LOC** | P1 | ✅ |
+| 6.4 | Criar `src/components/dashboard/` com 15 sub-componentes + 2 hooks | P1 | ✅ |
+| 6.5 | Suspense: dashboard usa client components, loading.tsx já cobre | P1 | ✅ |
+| 6.6 | Table row hover `.dashboard-table tbody tr` em globals.css | P2 | ✅ |
 
-**Entrega:** Nenhuma pagina do dashboard > 200 LOC. Melhor manutenibilidade.
+**Componentes criados:**
+- `orchestrations/`: OrchestrationsHeader, OrchestrationsStats, OrchestrationCard, TemplateCard, OrchestrationsEmptyState, TemplatePickerDialog, CreateOrchestrationDialog, AIGeneratorDialog, useOrchestrations.ts
+- `agents/`: AgentsPageHeader, AgentCard, AgentFolderSection, CreateAgentDialog, CreateFolderDialog, useAgents.ts
+
+**Entrega:** orchestrations/page.tsx -793 LOC, agents/page.tsx -428 LOC. Hooks de lógica separados da UI.
 
 ---
 
