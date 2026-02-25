@@ -722,10 +722,14 @@ export default function LandingPage() {
             <p className="text-foreground-tertiary text-sm">
               &copy; 2026 ROI Labs. Sofia AI — Plataforma de Orquestração de Agentes IA.
             </p>
-            <div className="flex gap-6">
+            <div className="flex items-center gap-6 flex-wrap justify-center">
               <Link href="/termos" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Termos</Link>
               <Link href="/privacidade" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Privacidade</Link>
               <Link href="/contato" className="text-foreground-tertiary hover:text-white text-sm transition-colors">Contato</Link>
+              <span className="text-white/20 text-sm hidden md:inline">|</span>
+              <Link href="/" className="text-white/60 hover:text-white text-sm transition-colors">🇧🇷 Português</Link>
+              <Link href="/es" className="text-white/40 hover:text-white text-sm transition-colors">🇪🇸 Español</Link>
+              <Link href="/en" className="text-white/40 hover:text-white text-sm transition-colors">🇺🇸 English</Link>
             </div>
           </div>
         </div>
