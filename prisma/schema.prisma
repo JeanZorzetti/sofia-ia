@@ -959,17 +959,24 @@ model AgentMemory {
 // Organization — Workspace colaborativo com membros
 // ─────────────────────────────────────────────────────────
 model Organization {
-  id        String   @id @default(cuid())
-  name      String   @db.VarChar(255)
-  slug      String   @unique @db.VarChar(100)
-  plan      String   @default("free") @db.VarChar(50)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id              String   @id @default(cuid())
+  name            String   @db.VarChar(255)
+  slug            String   @unique @db.VarChar(100)
+  plan            String   @default("free") @db.VarChar(50)
+  // SSO fields (Sprint 18)
+  ssoProvider     String?  @map("sso_provider") @db.VarChar(50)   // "google" | "microsoft" | null
+  ssoDomain       String?  @map("sso_domain") @db.VarChar(255)    // ex: "empresa.com.br"
+  ssoClientId     String?  @map("sso_client_id") @db.VarChar(500)
+  ssoClientSecret String?  @map("sso_client_secret") @db.VarChar(500)
+  ssoForced       Boolean  @default(false) @map("sso_forced")     // bloquear login email/senha para membros
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   members OrganizationMember[]
   invites OrganizationInvite[]
 
   @@index([slug])
+  @@index([ssoDomain])
   @@map("organizations")
 }
 
