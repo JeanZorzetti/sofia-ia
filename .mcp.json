@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://www.shadcn.io/api/mcp"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    },
+    "a11y": {
+      "command": "npx",
+      "args": ["-y", "a11ymcp"]
+    }
+  }
+}
