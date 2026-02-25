@@ -74,6 +74,26 @@ const automationPlatforms = [
     badge: null,
     href: '/dashboard/api-keys',
   },
+  {
+    id: 'hubspot',
+    name: 'HubSpot CRM',
+    description: 'Crie contatos e deals no HubSpot diretamente pelos seus agentes IA',
+    icon: Globe,
+    color: 'text-orange-400',
+    bg: 'bg-orange-400/10',
+    badge: 'CRM',
+    href: '/dashboard/integrations/hubspot',
+  },
+  {
+    id: 'salesforce',
+    name: 'Salesforce',
+    description: 'Qualifique leads e consulte dados no Salesforce com agentes IA',
+    icon: Globe,
+    color: 'text-blue-400',
+    bg: 'bg-blue-400/10',
+    badge: 'CRM',
+    href: '/dashboard/integrations/salesforce',
+  },
 ]
 
 interface Integration {
