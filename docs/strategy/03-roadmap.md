@@ -604,15 +604,15 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 ### Produto — SSO (Enterprise Sign-On)
 
 #### Google Workspace SSO
-- ⬜ **P0** — Configuração OAuth 2.0 para Google Workspace: callback `/api/auth/sso/google/callback`
-- ⬜ **P0** — Tela `/dashboard/settings/sso` — ativar SSO por domínio (ex: @empresa.com.br), colar Client ID + Secret
-- ⬜ **P0** — Schema: campo `ssoProvider String?` + `ssoDomain String?` + `ssoConfig Json?` no model `Organization`
-- ⬜ **P0** — Middleware: se usuário tenta login com email do domínio SSO → redireciona para IdP automaticamente
-- ⬜ **P1** — Forçar SSO por org (toggle "Exigir SSO — bloquear login email/senha para membros")
+- ✅ **P0** — Configuração OAuth 2.0 para Google Workspace: callback `/api/auth/sso/google/callback`
+- ✅ **P0** — Tela `/dashboard/settings/sso` — ativar SSO por domínio (ex: @empresa.com.br), colar Client ID + Secret
+- ✅ **P0** — Schema: campo `ssoProvider String?` + `ssoDomain String?` + `ssoClientId/Secret` no model `Organization`
+- ✅ **P0** — Middleware: se usuário tenta login com email do domínio SSO → redireciona para IdP automaticamente
+- ✅ **P1** — Forçar SSO por org (toggle "Exigir SSO — bloquear login email/senha para membros")
 
 #### Microsoft Entra ID (Azure AD)
-- ⬜ **P1** — OAuth 2.0 flow para Microsoft: callback `/api/auth/sso/microsoft/callback`
-- ⬜ **P1** — Mesmo modelo de configuração por domínio + toggle obrigatório
+- ✅ **P1** — OAuth 2.0 flow para Microsoft: callback `/api/auth/sso/microsoft/callback`
+- ✅ **P1** — Mesmo modelo de configuração por domínio + toggle obrigatório
 - ⬜ **P2** — Página `/docs/sso` — guia de configuração passo-a-passo para Google Workspace e Azure AD
 
 ### Produto — AI Magic Create (Diferencial do Macro)
@@ -620,42 +620,42 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 > "AI-assisted orchestration creation: descreva seu processo" — explicitamente listado como **Diferencial** no planejamento macro.
 
 #### Core
-- ⬜ **P0** — Endpoint `POST /api/orchestrations/magic-create` — recebe `{ description: string }`, usa LLM para gerar estrutura completa da orquestração: nome, lista de agentes (nome, systemPrompt, modelo), conexões entre eles
-- ⬜ **P0** — Prompt de sistema especializado em criar orquestrações: extrai etapas do processo, define papéis dos agentes, nomeia cada um, gera system prompts iniciais
-- ⬜ **P0** — Salva automaticamente a orquestração + agentes gerados no banco, retorna ID da orquestração criada
+- ✅ **P0** — Endpoint `POST /api/orchestrations/magic-create` — recebe `{ description: string }`, usa LLM para gerar estrutura completa da orquestração: nome, lista de agentes (nome, systemPrompt, modelo), conexões entre eles
+- ✅ **P0** — Prompt de sistema especializado em criar orquestrações: extrai etapas do processo, define papéis dos agentes, nomeia cada um, gera system prompts iniciais
+- ✅ **P0** — Salva automaticamente a orquestração + agentes gerados no banco, retorna ID da orquestração criada
 - ⬜ **P0** — Streaming SSE: envia eventos de progresso ("Criando agente Pesquisador...", "Configurando conexões...") para feedback visual
 
 #### UI
-- ⬜ **P0** — Botão "✨ Criar com IA" na página `/dashboard/orchestrations` — abre modal
-- ⬜ **P0** — Modal: textarea "Descreva o processo que você quer automatizar" + exemplos de prompt (tooltip)
-- ⬜ **P0** — Loading com steps visíveis durante geração (streaming)
-- ⬜ **P1** — Preview da orquestração gerada antes de salvar (lista agentes + conexões propostas)
-- ⬜ **P1** — Botão "Regenerar" para tentar nova versão com o mesmo prompt
+- ✅ **P0** — Botão "✨ Criar com IA" na página `/dashboard/orchestrations` — abre modal (já existia, novo modal criado)
+- ✅ **P0** — Modal `MagicCreateModal`: textarea "Descreva o processo que você quer automatizar" + exemplos de prompt
+- ✅ **P0** — Loading com steps visíveis durante geração (animação de mensagens)
+- ✅ **P1** — Preview da orquestração gerada antes de salvar (lista agentes + botão "Abrir Orquestração")
+- ✅ **P1** — Botão "Tentar outro" para nova versão com o mesmo prompt
 - ⬜ **P2** — Galeria de prompts de exemplo ("Qualificação de leads", "Pipeline de conteúdo", "Suporte ao cliente")
 
 ### Produto — PWA (Mobile Companion App)
 
-- ⬜ **P0** — `public/manifest.json` — nome, ícones 192x192 + 512x512, theme_color, display: standalone
-- ⬜ **P0** — Meta tags PWA no `layout.tsx`: `apple-mobile-web-app-capable`, `theme-color`, `viewport`
-- ⬜ **P0** — Service worker via `next-pwa` ou `public/sw.js` manual — cache de assets estáticos + offline fallback
-- ⬜ **P0** — Ícone "Instalar App" no header do dashboard (detecta `beforeinstallprompt`, exibe botão)
-- ⬜ **P1** — Página offline (`/offline`) — exibe quando sem conexão com últimas orquestrações em cache
+- ✅ **P0** — `public/manifest.json` — nome, ícones 192x192 + 512x512, theme_color, display: standalone
+- ✅ **P0** — Meta tags PWA no `layout.tsx`: `apple-mobile-web-app-capable`, `theme-color`, `viewport`
+- ✅ **P0** — Service worker `public/sw.js` manual — cache de assets estáticos + offline fallback
+- ✅ **P0** — Ícone "Instalar App" no header do dashboard (detecta `beforeinstallprompt`, exibe botão)
+- ✅ **P1** — Página offline (`/offline`) — exibe quando sem conexão
 - ⬜ **P1** — Push notifications via Web Push API para execuções agendadas concluídas
 - ⬜ **P2** — Página `/dashboard/mobile` — QR code para instalar + instruções iOS/Android
 
 ### Produto — i18n ES (Expansão Latam)
 
-- ⬜ **P0** — Setup `next-intl` (ou `next-i18next`) com locales: `pt-BR` (padrão), `es` (Espanhol Latam), `en`
-- ⬜ **P0** — Arquivo de tradução `messages/es.json` — todas as strings da landing page, pricing, features, nav, footer
-- ⬜ **P0** — Arquivo `messages/en.json` — tradução EN (se não existir ainda)
-- ⬜ **P0** — Seletor de idioma no footer do site público (bandeiras BR/ES/EN)
-- ⬜ **P1** — Rota `/es` como alias da home em espanhol (ou sub-path `/es/pricing`, `/es/features`)
-- ⬜ **P1** — Meta tags `hreflang` no layout para SEO multilíngue
-- ⬜ **P2** — Landing page `/es` otimizada para "plataforma de orquestación de agentes IA" (Latam SEO)
+- ✅ **P0** — Arquivos de tradução `src/lib/i18n/` — pt.ts, es.ts, en.ts (sem dependência next-intl)
+- ✅ **P0** — Arquivo de tradução ES — todas as strings da landing page, pricing, features, nav, footer
+- ✅ **P0** — Arquivo EN — tradução completa
+- ✅ **P0** — Seletor de idioma no footer do site público (bandeiras 🇧🇷/🇪🇸/🇺🇸)
+- ✅ **P1** — Rota `/es` — landing page completa em espanhol
+- ✅ **P1** — Meta tags `hreflang` em `/es` e `/es/precios` para SEO multilíngue
+- ✅ **P2** — Landing page `/es` otimizada para "plataforma de orquestación de agentes IA" (Latam SEO)
 
 ### SEO — Camada 2/3 (cadência mensal, 5 artigos)
-- ⬜ **P0** — "SSO para SaaS: Como Implementar Single Sign-On com Google Workspace e Azure AD"
-- ⬜ **P0** — "Como Criar Workflows de IA Descrevendo em Linguagem Natural (AI Magic Create)"
-- ⬜ **P1** — "PWA vs App Nativo: Por que Progressive Web Apps são o Futuro do SaaS Mobile"
-- ⬜ **P1** — "Expansão Latam para SaaS: Por que Espanhol é a Próxima Fronteira da IA no Brasil"
-- ⬜ **P2** — "Sofia AI en Español: La Plataforma de Orquestación de Agentes IA para Latinoamérica"
+- ✅ **P0** — "SSO para SaaS: Como Implementar Single Sign-On com Google Workspace e Azure AD"
+- ✅ **P0** — "Como Criar Workflows de IA Descrevendo em Linguagem Natural (AI Magic Create)"
+- ✅ **P1** — "PWA vs App Nativo: Por que Progressive Web Apps são o Futuro do SaaS Mobile"
+- ✅ **P1** — "Expansão Latam para SaaS: Por que Espanhol é a Próxima Fronteira da IA no Brasil"
+- ✅ **P2** — "Sofia AI en Español: La Plataforma de Orquestación de Agentes IA para Latinoamérica"
