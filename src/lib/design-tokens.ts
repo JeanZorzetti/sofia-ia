@@ -36,7 +36,8 @@ export const BRAND = {
   iconBg:          'bg-gradient-to-br from-blue-500/20 to-purple-500/20',
   iconColor:       'text-blue-400',
   highlightCard:   'bg-gradient-to-b from-blue-500/20 to-purple-500/20 border-2 border-blue-500/40',
-  highlightBadge:  'bg-blue-500',
-  highlightButton: 'bg-blue-500 hover:bg-blue-400 text-white',
+  // blue-600 (#2563eb) atinge ratio 4.5:1 com branco — WCAG AA
+  highlightBadge:  'bg-blue-600',
+  highlightButton: 'bg-blue-600 hover:bg-blue-500 text-white',
   mutedButton:     'border border-white/20 hover:bg-white/5 text-white',
 } as const

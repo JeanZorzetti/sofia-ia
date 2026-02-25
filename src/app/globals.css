@@ -150,6 +150,33 @@
   border-color: hsl(var(--border));
 }
 
+/* Focus visible — keyboard navigation (WCAG 2.4.7) */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip to main content (WCAG 2.4.1) */
+.skip-nav {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 0.75rem 1.5rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  font-weight: 600;
+  border-radius: 0 0 8px 0;
+  transition: top 0.1s;
+}
+.skip-nav:focus {
+  top: 0;
+}
+
 html {
   font-family: var(--font-primary);
 }
