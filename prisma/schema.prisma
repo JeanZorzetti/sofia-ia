@@ -36,6 +36,7 @@ model User {
   agentMemories        AgentMemory[]
   orgMemberships       OrganizationMember[]
   userAuditLogs        UserAuditLog[]
+  oauthConnections     OAuthConnection[]
 
   @@index([workspaceId])
   @@map("users")
@@ -244,6 +245,9 @@ model Agent {
   channels AgentChannel[]
   devSessions DevSession[]
   memories    AgentMemory[]
+  plugins     AgentPlugin[]
+  delegationsFrom AgentDelegation[] @relation("DelegationsFrom")
+  delegationsTo   AgentDelegation[] @relation("DelegationsTo")
 
   @@index([status])
   @@index([createdBy])
@@ -789,6 +793,73 @@ model WhitelabelAccount {
   @@index([userId])
   @@index([status])
   @@map("whitelabel_accounts")
+}
+
+// ─────────────────────────────────────────────────────────
+// AgentPlugin — Plugins JavaScript customizados por agente
+// ─────────────────────────────────────────────────────────
+model AgentPlugin {
+  id          String   @id @default(cuid())
+  agentId     String   @map("agent_id") @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  code        String   @db.Text
+  inputSchema String   @default("{}") @map("input_schema")
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([enabled])
+  @@map("agent_plugins")
+}
+
+// ─────────────────────────────────────────────────────────
+// AgentDelegation — Registro de delegações entre agentes
+// ─────────────────────────────────────────────────────────
+model AgentDelegation {
+  id          String   @id @default(cuid())
+  fromAgentId String   @map("from_agent_id") @db.Uuid
+  toAgentId   String   @map("to_agent_id") @db.Uuid
+  message     String   @db.Text
+  response    String?  @db.Text
+  status      String   @default("pending") @db.VarChar(20) // pending | completed | failed
+  depth       Int      @default(0)
+  executionId String?  @map("execution_id") @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  fromAgent Agent @relation("DelegationsFrom", fields: [fromAgentId], references: [id])
+  toAgent   Agent @relation("DelegationsTo", fields: [toAgentId], references: [id])
+
+  @@index([fromAgentId])
+  @@index([toAgentId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("agent_delegations")
+}
+
+// ─────────────────────────────────────────────────────────
+// OAuthConnection — Conexões OAuth (HubSpot, Salesforce)
+// ─────────────────────────────────────────────────────────
+model OAuthConnection {
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id") @db.Uuid
+  provider     String    @db.VarChar(50) // "hubspot" | "salesforce"
+  accessToken  String    @map("access_token") @db.Text
+  refreshToken String?   @map("refresh_token") @db.Text
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz()
+  metadata     Json      @default("{}")
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId])
+  @@index([provider])
+  @@map("oauth_connections")
 }
 
 // ─────────────────────────────────────────────────────────
