@@ -1,0 +1,161 @@
+---
+title: "HubSpot + IA: Como Automatizar seu CRM com Agentes Inteligentes"
+slug: "hubspot-ia-crm-automatico"
+description: "Aprenda a conectar HubSpot ao Sofia AI via OAuth e criar agentes que criam contatos, atualizam deals e consultam o CRM automaticamente durante conversas com clientes."
+date: "2026-02-25"
+author: "Equipe Sofia"
+tags: ["hubspot ia", "crm automatico ia", "hubspot agentes", "automacao crm", "hubspot sofia ai"]
+readTime: "8 min"
+---
+
+**Quantas horas sua equipe perde toda semana atualizando o CRM manualmente?** Para a maioria das empresas, a resposta é: muitas. E o dado que deveria estar lá, quase sempre não está — porque ninguém teve tempo de registrar.
+
+Com a integração HubSpot + Sofia AI, seus agentes de IA fazem esse trabalho automaticamente: criam contatos, atualizam deals e consultam dados do CRM em tempo real, durante as conversas.
+
+---
+
+## Como a Integração Funciona
+
+A conexão entre Sofia AI e HubSpot usa **OAuth 2.0** — o padrão seguro de autorização que não exige compartilhar senhas. Uma vez conectado, os agentes ganham acesso a três tools:
+
+### Tool 1: `hubspot_create_contact`
+
+Cria um novo contato no HubSpot CRM.
+
+**Parâmetros:**
+- `email` (obrigatório) — email do contato
+- `firstName` — primeiro nome
+- `lastName` — sobrenome
+- `phone` — telefone (opcional)
+
+**Exemplo de uso no agente:**
+```
+Usuário: "Meu nome é João Silva, email joao@empresa.com.br, fone (11) 99999-0000"
+Agente: [usa hubspot_create_contact automaticamente]
+"Perfeito João! Já cadastrei você no nosso sistema. Nossa equipe entrará em contato em breve."
+```
+
+### Tool 2: `hubspot_get_contact`
+
+Busca um contato existente pelo email.
+
+**Parâmetros:**
+- `email` (obrigatório) — email para busca
+
+Útil para verificar se o lead já existe antes de criar um novo, evitando duplicatas.
+
+### Tool 3: `hubspot_create_deal`
+
+Cria um negócio/deal no pipeline do HubSpot.
+
+**Parâmetros:**
+- `dealName` — nome do deal (ex: "Plano Pro — João Silva")
+- `amount` — valor em reais
+- `stage` — estágio no pipeline (ex: "Proposta enviada")
+- `contactId` — ID do contato HubSpot (opcional)
+
+---
+
+## Configurando a Integração
+
+### Pré-requisitos
+
+Você precisará de:
+- Conta HubSpot (gratuita serve para testes)
+- Conta Sofia AI (qualquer plano)
+- Acesso às variáveis de ambiente do Vercel (se auto-hospedado)
+
+### Passo 1: Criar uma App no HubSpot
+
+1. Acesse [developers.hubspot.com](https://developers.hubspot.com)
+2. Vá em **Apps → Create app**
+3. Em **Auth**, configure:
+   - **Redirect URL**: `https://sofiaia.roilabs.com.br/api/integrations/hubspot/callback`
+   - **Scopes**: selecione `crm.objects.contacts.read`, `crm.objects.contacts.write`, `crm.objects.deals.write`
+4. Copie o **Client ID** e o **Client Secret**
+
+### Passo 2: Configurar variáveis de ambiente
+
+No painel do Vercel (ou `.env.local`), adicione:
+
+```env
+HUBSPOT_CLIENT_ID=seu_client_id_aqui
+HUBSPOT_CLIENT_SECRET=seu_client_secret_aqui
+```
+
+### Passo 3: Conectar no Sofia AI
+
+1. Acesse **Dashboard → Integrações → HubSpot**
+2. Clique em **Conectar HubSpot**
+3. Autorize o acesso na tela do HubSpot
+4. Pronto — a conexão está ativa
+
+### Passo 4: Configurar o agente
+
+No System Prompt do agente que vai usar o HubSpot, adicione instruções:
+
+```
+Quando um usuário fornecer nome e email, use hubspot_create_contact para
+registrá-lo automaticamente no CRM. Sempre verifique com hubspot_get_contact
+se o contato já existe antes de criar um novo. Quando houver intenção de compra,
+crie um deal com hubspot_create_deal no estágio "Interesse qualificado".
+```
+
+---
+
+## Casos de Uso Práticos
+
+### Agente de Geração de Leads (Site/WhatsApp)
+
+Configure um agente para atender leads no site ou WhatsApp. Quando o visitante fornecer contato:
+
+1. Verifica se já existe no HubSpot (`hubspot_get_contact`)
+2. Se não existe, cria o contato (`hubspot_create_contact`)
+3. Se demonstrar interesse em um plano, cria o deal (`hubspot_create_deal`)
+4. Todo o processo acontece automaticamente, sem intervenção humana
+
+**Resultado**: 100% dos leads qualificados entram no CRM, sem esquecer nenhum.
+
+### Agente de Qualificação
+
+O agente faz perguntas de qualificação (orçamento, prazo, necessidade) e, ao final:
+
+1. Cria o contato com as informações coletadas
+2. Cria um deal com o valor estimado
+3. Adiciona uma nota com o resumo da qualificação
+
+O vendedor abre o HubSpot e já tem tudo pronto para a próxima ligação.
+
+### Agente de Atendimento Pós-Venda
+
+Quando um cliente entra em contato, o agente busca o registro no HubSpot para ter contexto (histórico de compras, plano contratado) e personalizar o atendimento.
+
+---
+
+## Segurança da Integração
+
+A integração usa:
+
+- **OAuth 2.0**: suas credenciais HubSpot nunca são expostas ao Sofia AI
+- **Tokens armazenados criptografados** no banco de dados
+- **Renovação automática** de tokens expirados (sem intervenção)
+- **Revogação simples**: clique em "Desconectar" e o acesso é removido imediatamente
+
+---
+
+## Comparativo: Automação manual vs. com agente IA
+
+| Aspecto | Time humano | Agente IA + HubSpot |
+|---|---|---|
+| Cadastro de lead | 3-5 min por lead | < 1 segundo |
+| Taxa de cadastro | ~60% dos leads | ~100% |
+| Consistência | Varia por pessoa | Padronizado sempre |
+| Disponibilidade | Horário comercial | 24/7 |
+
+---
+
+## Próximos Passos
+
+- [Conecte o HubSpot](https://sofiaia.roilabs.com.br/dashboard/integrations/hubspot) ao seu Sofia AI agora
+- Veja também a integração [Salesforce + IA](/blog/salesforce-agentes-ia-leads) para times enterprise
+- Explore como [criar agentes de qualificação](/docs/getting-started) do zero

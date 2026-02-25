@@ -1,0 +1,177 @@
+---
+title: "Plugin Ecosystem: Como Estender Agentes IA com Funções JavaScript Personalizadas"
+slug: "plugin-ecosystem-agentes-ia-javascript"
+description: "Entenda o que é um plugin ecosystem para agentes de IA e como criar funções JavaScript customizadas que rodam dentro dos seus agentes, sem chamadas externas e com sandbox de segurança."
+date: "2026-02-25"
+author: "Equipe Sofia"
+tags: ["plugin ia", "javascript agentes ia", "plugin ecosystem", "estender agente ia", "funções customizadas ia"]
+readTime: "9 min"
+---
+
+**E se você pudesse dar uma habilidade nova ao seu agente de IA em menos de 5 minutos, escrevendo apenas 10 linhas de JavaScript?** É isso que um plugin ecosystem para agentes de IA permite — e é exatamente o que o Sofia AI introduz no Sprint 17.
+
+Neste artigo, você vai entender o que são plugins para agentes IA, como eles funcionam tecnicamente, quando usá-los e como criar o seu primeiro plugin.
+
+---
+
+## O que é um Plugin Ecosystem para Agentes IA?
+
+Um **plugin ecosystem** é um conjunto de funções extensíveis que podem ser anexadas a um agente de IA para ampliar suas capacidades além do que o modelo de linguagem faz por padrão.
+
+Enquanto um LLM como Llama 3 ou GPT-4 gera texto, um plugin executa código real — cálculos determinísticos, formatações padronizadas, validações de dados — e retorna o resultado para o modelo usar na resposta.
+
+### Analogia simples
+
+Pense em um agente de IA como um profissional talentoso. Ele sabe escrever, analisar e raciocinar. Mas se você quiser que ele calcule o frete de um pedido com a fórmula específica da sua empresa, ele precisará de uma **ferramenta** (tool) que faça esse cálculo de forma confiável.
+
+Plugins são essas ferramentas — escritas por você, em JavaScript, executadas no servidor.
+
+---
+
+## Como Plugins Funcionam Tecnicamente
+
+No Sofia AI, um plugin é composto de três partes:
+
+1. **Nome e descrição** — o agente usa isso para decidir quando chamar o plugin
+2. **Input Schema** (JSON Schema) — define os parâmetros que o plugin aceita
+3. **Código JavaScript** — a função que recebe `input` e retorna um resultado
+
+```javascript
+// Exemplo: plugin de formatação de CPF
+const cpf = String(input.cpf).replace(/\D/g, '');
+if (cpf.length !== 11) throw new Error('CPF deve ter 11 dígitos');
+return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+```
+
+Quando o agente recebe uma mensagem como *"Formate o CPF 12345678901"*, o modelo identifica que deve usar a tool `formatar_cpf`, passa `{ cpf: "12345678901" }` como input, e o resultado `"123.456.789-01"` é injetado na resposta.
+
+### Ambiente de execução (Sandbox)
+
+O código do plugin roda em um ambiente restrito. As seguintes APIs são **bloqueadas por segurança**:
+
+- `fetch` — sem chamadas HTTP externas
+- `require` — sem imports Node.js
+- `process` — sem acesso ao servidor
+- `eval` — sem eval dinâmico
+
+Além disso, existe um **timeout de 5 segundos**. Se o plugin travar, ele é interrompido automaticamente.
+
+---
+
+## Quando Usar Plugins (e Quando Não Usar)
+
+### Use plugins para:
+
+- **Cálculos matemáticos** — preços, descontos, juros, frete
+- **Formatação de dados** — CPF, CNPJ, CEP, datas, telefones
+- **Geração de strings** — slugs, códigos, referências
+- **Validações locais** — verificar se um email tem formato válido, se um CEP existe no range correto
+- **Transformações de texto** — truncar, capitalizar, remover acentos
+
+### Não use plugins para:
+
+- Chamadas a APIs externas (use Integrações OAuth para HubSpot, Salesforce, etc.)
+- Leitura de banco de dados
+- Processamento pesado (> 5 segundos)
+- Operações com arquivos
+
+---
+
+## Criando Seu Primeiro Plugin no Sofia AI
+
+### Passo 1: Acessar a seção de Plugins
+
+1. Vá em **Dashboard → Agentes**
+2. Abra o agente desejado
+3. Clique no botão **Plugins** no cabeçalho
+
+### Passo 2: Criar o plugin
+
+Clique em **Novo Plugin** e preencha:
+
+- **Nome**: `calculadora_desconto`
+- **Descrição**: `Calcula o preço final com desconto percentual`
+- **Input Schema**:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "preco": { "type": "number" },
+    "desconto": { "type": "number" }
+  },
+  "required": ["preco", "desconto"]
+}
+```
+
+- **Código JavaScript**:
+
+```javascript
+const { preco, desconto } = input;
+if (desconto < 0 || desconto > 100) throw new Error('Desconto deve ser entre 0 e 100%');
+const precoFinal = preco * (1 - desconto / 100);
+return {
+  precoOriginal: preco,
+  desconto: `${desconto}%`,
+  precoFinal: precoFinal.toFixed(2),
+  economia: (preco - precoFinal).toFixed(2)
+};
+```
+
+### Passo 3: Testar
+
+Use o botão **Testar** com input JSON:
+
+```json
+{ "preco": 299.90, "desconto": 15 }
+```
+
+Resultado esperado:
+```json
+{
+  "precoOriginal": 299.90,
+  "desconto": "15%",
+  "precoFinal": "254.92",
+  "economia": "44.99"
+}
+```
+
+---
+
+## Templates Prontos
+
+O Sofia AI já inclui 3 templates de plugins que você pode carregar com um clique:
+
+| Plugin | O que faz |
+|---|---|
+| **Calculadora Simples** | Soma, subtração, multiplicação, divisão |
+| **Formatador de CEP** | Formata CEP no padrão XXXXX-XXX |
+| **Gerador de Slug** | Converte texto em slug para URLs |
+
+---
+
+## Limites por Plano
+
+| Plano | Plugins por agente |
+|---|---|
+| **Free** | 2 plugins |
+| **Pro** | 10 plugins |
+| **Business** | Ilimitado |
+
+---
+
+## Por que isso importa para o futuro dos agentes IA
+
+O conceito de plugin ecosystem representa uma mudança fundamental: **de agentes estáticos para agentes extensíveis**.
+
+Quando qualquer desenvolvedor pode adicionar uma função JavaScript e o agente aprende a usá-la automaticamente, você tem uma plataforma — não apenas um produto.
+
+Isso é o que torna plataformas como Zapier, Notion e Slack tão poderosas: o ecosistema criado ao redor delas. Para agentes IA, estamos no início dessa jornada.
+
+---
+
+## Próximos Passos
+
+- [Crie seu primeiro plugin](https://sofiaia.roilabs.com.br/dashboard/agents) no Sofia AI
+- Leia a [documentação técnica de plugins](/docs/plugins)
+- Explore o [protocolo agent-to-agent](/docs/agent-to-agent) — outra forma de estender agentes

@@ -1,0 +1,166 @@
+---
+title: "Agent-to-Agent: Como Agentes IA se Comunicam e Delegam Tarefas Entre Si"
+slug: "agent-to-agent-delegacao-ia"
+description: "Entenda o protocolo agent-to-agent: como agentes de IA podem chamar outros agentes especializados, delegar tarefas em tempo real e construir redes colaborativas de inteligência artificial."
+date: "2026-02-25"
+author: "Equipe Sofia"
+tags: ["agent to agent", "delegação ia", "multi-agente", "protocolo ia", "agentes colaborativos"]
+readTime: "10 min"
+---
+
+**E se um agente de IA pudesse chamar outro agente especialista no meio de uma conversa — assim como um médico generalista encaminha o paciente para um especialista?** Isso é exatamente o que o protocolo agent-to-agent permite.
+
+Neste artigo, você vai entender como funciona a comunicação entre agentes de IA, quais são os casos de uso reais e como implementar esse padrão no Sofia AI.
+
+---
+
+## O Problema que Agent-to-Agent Resolve
+
+Agentes de IA generativos são bons em muitas coisas, mas raramente são os melhores em tudo. Um agente treinado com um prompt jurídico vai produzir análises jurídicas excelentes. Um agente com prompt financeiro vai calcular riscos com mais precisão.
+
+O problema é: **como fazer esses especialistas colaborarem quando um usuário faz uma pergunta que exige as duas expertises?**
+
+A solução tradicional é criar um agente "faz-tudo" com um prompt gigantesco. Isso funciona até certo ponto, mas tem limitações: prompts muito longos aumentam o custo, reduzem a precisão e são difíceis de manter.
+
+A solução moderna é o **protocolo agent-to-agent**.
+
+---
+
+## Como Funciona o Protocolo
+
+No Sofia AI, todos os agentes têm acesso a uma tool chamada `delegate_to_agent`. Quando o modelo decide que precisa de expertise específica, ele:
+
+1. Chama a tool com o ID do agente alvo e a mensagem
+2. O sistema executa o agente alvo em background
+3. A resposta do agente alvo é retornada ao agente chamador
+4. O agente principal usa essa resposta para formular sua resposta final ao usuário
+
+```
+Usuário → Agente Principal
+         ↓ delegate_to_agent("agente-juridico", "Analise a cláusula 4.2")
+         Agente Jurídico
+         ↓ "A cláusula 4.2 tem risco de multa de até 20%..."
+         Agente Principal (combina jurídico + financeiro)
+         ↓ Resposta final ao usuário
+```
+
+### Registro completo
+
+Toda delegação é registrada no banco de dados com:
+- Agente de origem (quem delegou)
+- Agente destino (quem recebeu)
+- Mensagem enviada
+- Resposta recebida
+- Status (pending, completed, failed)
+- Profundidade de aninhamento
+
+Você pode ver o histórico completo em **Dashboard → Agentes → [Agente] → Delegações**.
+
+---
+
+## Proteção Anti-Loop: Máximo 3 Níveis
+
+O maior risco do protocolo agent-to-agent é um loop infinito: A delega para B, B delega para C, C delega de volta para A.
+
+O Sofia AI previne isso com um **limite de 3 níveis de profundidade**:
+
+```
+A → B → C → BLOQUEADO (nível 4)
+```
+
+Se um agente tentar delegar além do nível 3, a tool retorna um erro explicativo e o agente pode formular uma resposta com o que tem.
+
+---
+
+## Casos de Uso Reais
+
+### 1. Assistente Médico com Especialistas
+
+**Prompt do Agente Principal**: "Você é um assistente médico geral. Para questões de cardiologia, delegate para o agente [ID_CARDIOLOGISTA]. Para dermatologia, delegate para [ID_DERMATOLOGISTA]."
+
+Quando o paciente pergunta sobre arritmia, o agente principal automaticamente delega para o especialista em cardiologia e apresenta a resposta de forma acessível.
+
+### 2. Pipeline de Análise de Contratos
+
+**Fluxo**: Usuário envia um contrato → Agente Extrator identifica cláusulas-chave → Delega análise de risco jurídico para Agente Jurídico → Delega análise de risco financeiro para Agente Financeiro → Agente Principal compila relatório final.
+
+### 3. Atendimento ao Cliente Multi-Departamento
+
+**Prompt**: "Você atende clientes. Para questões de cobrança, delegate para [AGENTE_FINANCEIRO]. Para suporte técnico, delegate para [AGENTE_TECH]. Para cancelamentos, delegate para [AGENTE_RETENCAO]."
+
+O cliente faz uma pergunta técnica e o agente de atendimento automaticamente consulta o especialista técnico antes de responder.
+
+### 4. Geração de Conteúdo com Revisão
+
+**Fluxo**: Agente Escritor gera o artigo → Delega para Agente Revisor → Delega para Agente SEO → Retorna versão final otimizada.
+
+---
+
+## Como Configurar no Sofia AI
+
+### Passo 1: Criar os agentes especializados
+
+Primeiro, crie os agentes com prompts específicos:
+
+- **Agente Jurídico**: "Você é um advogado especialista em contratos comerciais brasileiros..."
+- **Agente Financeiro**: "Você é um analista financeiro especialista em riscos e precificação..."
+
+Anote os IDs de cada agente (visíveis na página de informações do agente).
+
+### Passo 2: Configurar o agente principal
+
+No System Prompt do agente principal, instrua explicitamente:
+
+```
+Você é um assistente empresarial. Quando precisar de análise jurídica,
+use delegate_to_agent com toAgentId="[ID_JURIDICO]".
+Para análise financeira, use toAgentId="[ID_FINANCEIRO]".
+
+Sempre consulte o especialista relevante antes de responder.
+```
+
+### Passo 3: Testar
+
+Acesse o AgentChatTester no editor do agente e faça uma pergunta que exija expertise de outro agente. O sistema registrará a delegação automaticamente.
+
+---
+
+## Diferença entre Agent-to-Agent e Orquestrações
+
+Muitos usuários confundem os dois conceitos. A distinção é importante:
+
+| Aspecto | Orquestração | Agent-to-Agent |
+|---|---|---|
+| **Quando ocorre** | Executado explicitamente pelo usuário | Ocorre automaticamente durante uma conversa |
+| **Controle** | Você define a sequência de agentes | O modelo decide quando delegar |
+| **Uso** | Pipelines de produção (relatórios, análises) | Conversas interativas com expertise dinâmica |
+| **Registro** | OrchestrationExecution | AgentDelegation |
+
+Ambos são complementares. Uma orquestração pode conter agentes que usam agent-to-agent internamente.
+
+---
+
+## Limitações Conhecidas
+
+- **Latência**: Cada nível de delegação adiciona o tempo de processamento do agente delegado
+- **Custo**: Cada delegação consome tokens adicionais (conta como mensagem)
+- **Não-determinístico**: O modelo decide quando delegar; você instrui mas não garante
+- **Máx 3 níveis**: Por design, para evitar loops
+
+---
+
+## O que vem por aí
+
+O protocolo agent-to-agent abre portas para padrões mais avançados como:
+
+- **Agentes persistentes** que mantêm estado entre delegações
+- **Redes de agentes** com topologia customizável (estrela, malha, hierarquia)
+- **Marketplace de agentes especializados** que qualquer usuário pode conectar
+
+---
+
+## Próximos Passos
+
+- Configure seu primeiro [fluxo agent-to-agent](https://sofiaia.roilabs.com.br/dashboard/agents)
+- Leia a [documentação técnica](/docs/agent-to-agent)
+- Veja também [Plugin Ecosystem](/blog/plugin-ecosystem-agentes-ia-javascript) — outra forma de estender agentes

@@ -1,0 +1,194 @@
+---
+title: "Salesforce + Agentes IA: Qualificação de Leads e Criação de Deals Automáticos"
+slug: "salesforce-agentes-ia-leads"
+description: "Como integrar Salesforce ao Sofia AI via OAuth para criar leads automaticamente, executar queries SOQL e qualificar prospects com agentes de IA em tempo real."
+date: "2026-02-25"
+author: "Equipe Sofia"
+tags: ["salesforce ia", "salesforce agentes ia", "qualificacao leads ia", "salesforce soql ia", "crm enterprise ia"]
+readTime: "9 min"
+---
+
+**Times de vendas enterprise perdem entre 30% e 40% do tempo em tarefas de CRM que poderiam ser automatizadas.** A integração Salesforce + Sofia AI elimina grande parte desse trabalho: leads criados automaticamente, queries SOQL executadas por linguagem natural e qualificações documentadas sem esforço manual.
+
+---
+
+## Por que Salesforce + IA é Diferente
+
+O Salesforce é o CRM dominante em empresas enterprise no Brasil e no mundo. Sua estrutura robusta — Leads, Accounts, Opportunities, Contacts — oferece muito mais granularidade que CRMs simples, mas também exige muito mais trabalho de alimentação.
+
+A integração com Sofia AI resolve isso em dois vetores:
+
+1. **Entrada de dados**: agentes criam leads e oportunidades automaticamente durante conversas
+2. **Consulta de dados**: agentes executam queries SOQL para buscar informações contextuais em tempo real
+
+---
+
+## As Tools Disponíveis
+
+### `salesforce_create_lead`
+
+Cria um novo Lead no Salesforce.
+
+**Parâmetros:**
+- `firstName` — primeiro nome
+- `lastName` — sobrenome (obrigatório)
+- `email` — email do lead
+- `company` — empresa (obrigatório no Salesforce)
+
+**Mapeamento automático para Salesforce:**
+```json
+{
+  "FirstName": "João",
+  "LastName": "Silva",
+  "Email": "joao@empresa.com.br",
+  "Company": "Empresa LTDA",
+  "LeadSource": "Web"
+}
+```
+
+### `salesforce_query`
+
+Executa uma SOQL query (somente leitura) e retorna os resultados.
+
+**Parâmetros:**
+- `soql` — query SOQL completa
+
+**Exemplo de uso:**
+```sql
+SELECT Id, Name, Email, Company, Status FROM Lead
+WHERE CreatedDate = THIS_WEEK AND Status = 'Open'
+ORDER BY CreatedDate DESC LIMIT 10
+```
+
+Esta tool é **read-only** por segurança — não é possível fazer UPDATE ou DELETE via query.
+
+---
+
+## Configurando a Integração
+
+### Passo 1: Criar um Connected App no Salesforce
+
+1. No Salesforce, vá em **Setup → App Manager → New Connected App**
+2. Preencha:
+   - **Connected App Name**: `Sofia AI Integration`
+   - **Enable OAuth Settings**: sim
+   - **Callback URL**: `https://sofiaia.roilabs.com.br/api/integrations/salesforce/callback`
+   - **Selected OAuth Scopes**: `api`, `refresh_token`, `offline_access`
+3. Salve e aguarde 2-10 minutos para propagação
+4. Copie o **Consumer Key** (Client ID) e o **Consumer Secret**
+
+### Passo 2: Configurar variáveis de ambiente
+
+```env
+SALESFORCE_CLIENT_ID=seu_consumer_key
+SALESFORCE_CLIENT_SECRET=seu_consumer_secret
+```
+
+### Passo 3: Conectar no Sofia AI
+
+1. Acesse **Dashboard → Integrações → Salesforce**
+2. Clique em **Conectar Salesforce**
+3. Faça login na sua org Salesforce e autorize o acesso
+4. A conexão fica ativa — os tokens são renovados automaticamente
+
+### Passo 4: Instruir o agente
+
+```
+Quando um prospect fornecer informações de contato, use salesforce_create_lead
+para registrá-lo imediatamente. Antes de criar, consulte com salesforce_query se
+o lead já existe: SELECT Id FROM Lead WHERE Email = '[email]' LIMIT 1.
+
+Para relatórios de pipeline, use salesforce_query para buscar os dados solicitados.
+```
+
+---
+
+## Casos de Uso Enterprise
+
+### 1. SDR (Sales Development Rep) Automatizado
+
+Configure um agente que:
+1. Recebe dados de formulários de interesse
+2. Verifica se o lead já existe no Salesforce
+3. Cria o lead com dados completos
+4. Envia um email de boas-vindas personalizado (via Resend)
+5. Registra a atividade para o vendedor
+
+**Volume típico**: times que processavam 50 leads/dia manualmente passam a processar 500+.
+
+### 2. Briefing de Vendas em Tempo Real
+
+Antes de uma reunião de vendas, o representante pede ao agente:
+
+*"Me dê um briefing da conta Empresa XYZ antes da minha reunião"*
+
+O agente executa:
+```sql
+SELECT Name, AnnualRevenue, NumberOfEmployees, Industry,
+       (SELECT Name, Amount, StageName FROM Opportunities)
+FROM Account WHERE Name LIKE '%Empresa XYZ%'
+```
+
+E retorna um resumo estruturado com histórico de oportunidades, tamanho da empresa e setor.
+
+### 3. Relatório de Pipeline por Linguagem Natural
+
+*"Quantas oportunidades temos no estágio 'Proposta Enviada' acima de R$ 50k?"*
+
+O agente converte para SOQL e executa:
+```sql
+SELECT COUNT(Id), SUM(Amount) FROM Opportunity
+WHERE StageName = 'Proposta Enviada' AND Amount >= 50000
+AND CloseDate >= THIS_QUARTER
+```
+
+### 4. Qualificação BANT Automatizada
+
+O agente conduz uma conversa de qualificação (Budget, Authority, Need, Timeline) e:
+- Registra o lead com os dados coletados
+- Adiciona campos customizados com a pontuação BANT
+- Alerta o vendedor apenas quando o lead atinge score mínimo
+
+---
+
+## Segurança e Compliance
+
+| Aspecto | Implementação |
+|---|---|
+| **Autenticação** | OAuth 2.0 via Connected App — sem senhas expostas |
+| **Armazenamento** | Access token + Refresh token criptografados no banco |
+| **Renovação** | Automática antes da expiração (sem intervenção) |
+| **Revogação** | Via Sofia AI (Dashboard) ou Salesforce (Setup → OAuth Tokens) |
+| **Auditoria** | Toda ação registrada no Sofia AI Audit Log |
+| **Read-only queries** | salesforce_query não permite escrita |
+
+---
+
+## SOQL para Não-Técnicos: O Agente Traduz
+
+Um dos maiores benefícios da integração é que **os vendedores não precisam conhecer SOQL**. O agente converte linguagem natural em queries:
+
+| O que o vendedor diz | Query gerada pelo agente |
+|---|---|
+| "Leads desta semana" | `WHERE CreatedDate = THIS_WEEK` |
+| "Oportunidades acima de 100k" | `WHERE Amount >= 100000` |
+| "Clientes do setor de saúde" | `WHERE Industry = 'Healthcare'` |
+
+---
+
+## Comparativo com Alternativas
+
+| Solução | Custo setup | Tempo para funcionar | Customização |
+|---|---|---|---|
+| **Sofia AI + Salesforce** | Baixo | 30 min | Alta (via prompt) |
+| **Zapier + Salesforce** | Médio | 2-4h | Média (por zap) |
+| **Desenvolvimento custom** | Alto | Semanas | Total |
+| **Salesforce Einstein** | Muito alto | Meses | Alta |
+
+---
+
+## Próximos Passos
+
+- [Conecte o Salesforce](https://sofiaia.roilabs.com.br/dashboard/integrations/salesforce) ao seu Sofia AI
+- Veja também [HubSpot + IA](/blog/hubspot-ia-crm-automatico) para times que usam HubSpot
+- Explore o [protocolo agent-to-agent](/blog/agent-to-agent-delegacao-ia) para criar fluxos mais complexos de qualificação
