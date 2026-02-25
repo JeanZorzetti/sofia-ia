@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, Users, LucideIcon } from 'lucide-react'
+import { BRAND } from '@/lib/design-tokens'
 
 interface CTASectionProps {
   icon?: LucideIcon
@@ -22,8 +23,8 @@ export function CTASection({
     <section className="px-6 py-24 bg-background-secondary">
       <div className="max-w-3xl mx-auto text-center">
         {Icon && (
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center mx-auto mb-6">
-            <Icon className="w-8 h-8 text-blue-400" />
+          <div className={`w-16 h-16 rounded-2xl ${BRAND.iconBg} border border-white/10 flex items-center justify-center mx-auto mb-6`}>
+            <Icon className={`w-8 h-8 ${BRAND.iconColor}`} />
           </div>
         )}
         <h2 className="text-3xl md:text-4xl font-bold mb-4">{title}</h2>

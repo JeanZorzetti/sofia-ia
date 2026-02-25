@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { BRAND } from '@/lib/design-tokens'
 
 interface GradientTextProps {
   children: React.ReactNode
@@ -8,10 +9,7 @@ interface GradientTextProps {
 export function GradientText({ children, className }: GradientTextProps) {
   return (
     <span
-      className={cn(
-        'bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent',
-        className
-      )}
+      className={cn(BRAND.gradientText, className)}
     >
       {children}
     </span>

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { FeatureCardData } from '@/components/landing/FeatureCard'
 import { FAQItem } from '@/components/landing/FAQSection'
+import { FEATURE_COLORS } from '@/lib/design-tokens'
 
 export const homeFeatures: FeatureCardData[] = [
   {
@@ -16,7 +17,7 @@ export const homeFeatures: FeatureCardData[] = [
     description:
       'Monte pipelines visuais onde cada agente tem um papel: Pesquisador, Analista, Revisor. Estratégias sequencial, paralela e consenso.',
     badge: 'Core',
-    color: 'from-blue-500/20 to-blue-600/20 border-blue-500/30',
+    color: FEATURE_COLORS.blue,
   },
   {
     icon: Database,
@@ -24,7 +25,7 @@ export const homeFeatures: FeatureCardData[] = [
     description:
       'Vetorize documentos PDF, DOCX e CSV. Busca semântica pgvector com score de similaridade. Agentes com contexto real do seu negócio.',
     badge: 'P1',
-    color: 'from-purple-500/20 to-purple-600/20 border-purple-500/30',
+    color: FEATURE_COLORS.purple,
   },
   {
     icon: BrainCircuit,
@@ -32,7 +33,7 @@ export const homeFeatures: FeatureCardData[] = [
     description:
       'Teste e compare Groq, OpenAI, Anthropic e 50+ modelos lado a lado. Streaming em tempo real com métricas de custo e tokens.',
     badge: 'Dev',
-    color: 'from-emerald-500/20 to-emerald-600/20 border-emerald-500/30',
+    color: FEATURE_COLORS.emerald,
   },
   {
     icon: MessageSquare,
@@ -40,7 +41,7 @@ export const homeFeatures: FeatureCardData[] = [
     description:
       'WhatsApp, chat web e múltiplos canais em uma tela. Agentes IA respondem automaticamente com escalada inteligente para humanos.',
     badge: 'Canais',
-    color: 'from-green-500/20 to-green-600/20 border-green-500/30',
+    color: FEATURE_COLORS.green,
   },
   {
     icon: BarChart3,
@@ -48,7 +49,7 @@ export const homeFeatures: FeatureCardData[] = [
     description:
       'Dashboard com custo por execução, tokens utilizados, taxa de sucesso e tempo médio. Histórico completo com replay de execuções.',
     badge: 'BI',
-    color: 'from-yellow-500/20 to-yellow-600/20 border-yellow-500/30',
+    color: FEATURE_COLORS.yellow,
   },
   {
     icon: Code2,
@@ -56,7 +57,7 @@ export const homeFeatures: FeatureCardData[] = [
     description:
       'Comece em segundos com templates de Marketing (Pesquisador → Copywriter → Revisor), Suporte, Pesquisa e muito mais.',
     badge: 'Templates',
-    color: 'from-pink-500/20 to-pink-600/20 border-pink-500/30',
+    color: FEATURE_COLORS.pink,
   },
 ]
 
