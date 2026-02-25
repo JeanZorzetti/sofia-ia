@@ -145,6 +145,28 @@ export async function chatWithAgent(
 - Status: ${leadContext.leadStatus || 'Não informado'}`
   }
 
+  // ── Injetar plugins habilitados no system prompt ───────────
+  try {
+    const enabledPlugins = await prisma.agentPlugin.findMany({
+      where: { agentId, enabled: true },
+      select: { name: true, description: true, inputSchema: true },
+    })
+    if (enabledPlugins.length > 0) {
+      const pluginList = enabledPlugins
+        .map(p => `- **${p.name}**: ${p.description || 'Plugin customizado'}. Input schema: ${p.inputSchema}`)
+        .join('\n')
+      systemPrompt += `\n\n## Plugins Disponíveis\nVocê tem acesso aos seguintes plugins customizados (use a tool run_plugin para executá-los):\n${pluginList}`
+    }
+  } catch {
+    // Silently skip plugin injection on error
+  }
+
+  // ── Injetar tool delegate_to_agent no system prompt ───────
+  const delegationDepth = leadContext?.delegationDepth ?? 0
+  if (delegationDepth < 3) {
+    systemPrompt += `\n\n## Delegação de Tarefas\nVocê pode delegar tarefas para outros agentes usando a tool delegate_to_agent(toAgentId, message). Profundidade atual: ${delegationDepth}/3.`
+  }
+
   // Buscar contexto da knowledge base se o agente tiver uma associada
   const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')
   if (lastUserMessage && agent.knowledgeBaseId) {
