@@ -659,3 +659,77 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P1** — "PWA vs App Nativo: Por que Progressive Web Apps são o Futuro do SaaS Mobile"
 - ✅ **P1** — "Expansão Latam para SaaS: Por que Espanhol é a Próxima Fronteira da IA no Brasil"
 - ✅ **P2** — "Sofia AI en Español: La Plataforma de Orquestación de Agentes IA para Latinoamérica"
+
+---
+
+## Sprint 19 — ERP Integrations + Beta Program + Open-Source Governance + GEO Avançado (Semana 65-68)
+
+**Objetivo**: Sprint de encerramento do planejamento macro original (24 meses). Cobre os últimos 4 itens buildáveis restantes: ERP fecha o trio do integration marketplace (HubSpot ✅, Salesforce ✅, ERP ⬜), beta program formaliza o canal de early adopters, open-source governance cria o moat de comunidade, e GEO avançado persegue o KPI "Sofia em 5+ respostas de LLMs".
+
+### Produto — ERP Integrations (Google Sheets + Notion + Totvs)
+
+#### Google Sheets
+- ⬜ **P0** — OAuth Google (`google.com`) reutilizando `OAuthConnection` já existente — scope: `spreadsheets`
+- ⬜ **P0** — `src/app/api/integrations/google-sheets/connect/route.ts` — inicia OAuth (Google Sheets scope)
+- ⬜ **P0** — `src/app/api/integrations/google-sheets/callback/route.ts` — troca code, salva em `OAuthConnection`
+- ⬜ **P0** — Tool `sheets_read(spreadsheetId, range)` — lê células da planilha via Google Sheets API v4
+- ⬜ **P0** — Tool `sheets_write(spreadsheetId, range, values)` — escreve/atualiza células
+- ⬜ **P0** — Tool `sheets_append(spreadsheetId, sheetName, row)` — adiciona nova linha
+- ⬜ **P1** — Página `/dashboard/integrations/google-sheets` — conectar OAuth, status, testar tools, casos de uso
+
+#### Notion
+- ⬜ **P0** — Integração via Notion API (OAuth ou Integration Token — sem Google OAuth, usa própria auth do Notion)
+- ⬜ **P0** — `src/app/api/integrations/notion/connect/route.ts` — OAuth Notion (`notion.com`)
+- ⬜ **P0** — Tool `notion_create_page(databaseId, properties)` — cria página em database do Notion
+- ⬜ **P0** — Tool `notion_query_database(databaseId, filter?)` — busca páginas com filtro opcional
+- ⬜ **P1** — Tool `notion_update_page(pageId, properties)` — atualiza página existente
+- ⬜ **P1** — Página `/dashboard/integrations/notion` — conectar, status, testar tools
+
+#### Totvs (ERP BR)
+- ⬜ **P1** — Integração via Totvs Fluig/TOTVS Protheus API REST
+- ⬜ **P1** — Tool `totvs_get_customer(code)` — busca cliente no Protheus
+- ⬜ **P1** — Tool `totvs_create_order(customerId, items)` — cria pedido de venda
+- ⬜ **P2** — Página `/dashboard/integrations/totvs` — configurar URL da API + credenciais, testar conexão
+
+#### Atualizar hub de integrações
+- ⬜ **P0** — Adicionar cards Google Sheets, Notion, Totvs na seção "Plataformas de Automação" de `/dashboard/integrations`
+
+### Produto — Beta Program (Early Adopters)
+
+- ⬜ **P0** — Schema Prisma: `BetaApplication` (id, userId?, name, email, company, useCase, plan, status: pending|approved|rejected, createdAt)
+- ⬜ **P0** — Página pública `/beta` — landing de candidatura: headline "Seja um Early Adopter", formulário (nome, empresa, caso de uso, plano desejado), CTA "Candidatar-se"
+- ⬜ **P0** — `POST /api/beta/apply` — salva candidatura, envia email de confirmação via Resend
+- ⬜ **P1** — Página admin `/dashboard/admin/beta` — lista candidaturas, botões aprovar/rejeitar, email automático ao aprovar (com link de acesso)
+- ⬜ **P1** — Badge "Beta Tester" no perfil de usuários aprovados (campo `isBetaTester Boolean` no model `User`)
+- ⬜ **P1** — Canal privado de feedback: link para Discord #beta no email de aprovação
+- ⬜ **P2** — Widget de feedback flutuante no dashboard para beta testers (botão "Enviar Feedback" com modal textarea → salva em tabela `BetaFeedback`)
+
+### Open-Source Governance
+
+- ⬜ **P0** — `GOVERNANCE.md` na raiz do repo — estrutura de decisão (Benevolent Dictator, como propor RFCs, processo de merge)
+- ⬜ **P0** — `.github/ISSUE_TEMPLATE/bug_report.yml` — template de bug report com campos: descrição, passos para reproduzir, comportamento esperado, ambiente
+- ⬜ **P0** — `.github/ISSUE_TEMPLATE/feature_request.yml` — template de feature request com campos: problema, solução proposta, alternativas, contexto
+- ⬜ **P0** — `.github/PULL_REQUEST_TEMPLATE.md` — checklist: descrição, tipo de mudança, testes, screenshots
+- ⬜ **P1** — `.github/ISSUE_TEMPLATE/config.yml` — configurar templates + link para Discord para suporte
+- ⬜ **P1** — `SECURITY.md` — política de disclosure responsável (vulnerabilidades: email direto, SLA de resposta)
+- ⬜ **P1** — `docs/RFC-PROCESS.md` — como propor grandes mudanças via RFC (Request for Comments)
+- ⬜ **P2** — Atualizar `README.md` com badge "Good First Issues" + link para `GOVERNANCE.md`
+
+### GEO Avançado (Generative Engine Optimization)
+
+> Objetivo do macro: "Sofia aparecendo em 5+ respostas de LLMs sobre multi-agent platforms"
+
+- ⬜ **P0** — `public/llms.txt` — arquivo de contexto para LLMs seguindo o padrão llms.txt: descrição da plataforma, features principais, links canônicos, FAQ
+- ⬜ **P0** — JSON-LD structured data em todas as páginas públicas — `SoftwareApplication`, `WebSite`, `BreadcrumbList`
+- ⬜ **P0** — FAQ schema (`FAQPage` JSON-LD) nas páginas `/`, `/features/orchestrations`, `/templates`, `/enterprise` — perguntas reais sobre multi-agent AI
+- ⬜ **P1** — `public/robots.txt` atualizado — `Allow` para todos os crawlers de LLMs conhecidos (GPTBot, ClaudeBot, PerplexityBot, etc.)
+- ⬜ **P1** — Página `/sobre` (About) com schema `Organization` + fundador + missão — aumenta autoridade para LLMs
+- ⬜ **P1** — Seção "Como funciona" com schema `HowTo` na landing page — descrição passo-a-passo que LLMs citam
+- ⬜ **P2** — `sitemap.xml` incluindo todas as novas páginas ES (`/es/*`) e docs (`/docs/*`)
+
+### SEO — Camada 2/3 (cadência mensal, 5 artigos)
+- ⬜ **P0** — "Google Sheets + IA: Como Ler e Escrever Planilhas com Agentes Inteligentes"
+- ⬜ **P0** — "Notion + Agentes IA: Automatize sua Base de Conhecimento com Sofia AI"
+- ⬜ **P1** — "O que é llms.txt: O Novo Padrão para Otimizar Sites para IA Generativa"
+- ⬜ **P1** — "Como Criar um Programa de Beta Testers para seu SaaS: Guia Completo"
+- ⬜ **P2** — "Open Source Governance: Como Estruturar Contribuição em Projetos de IA"
