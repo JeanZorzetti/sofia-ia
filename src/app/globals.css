@@ -175,20 +175,60 @@ h3 { font-size: 1.25rem; font-weight: 500; letter-spacing: -0.025em; line-height
   border: 1px solid hsl(var(--glass-border));
   border-radius: var(--radius-card-val);
   box-shadow: var(--shadow-glass);
+  transition: transform var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth), border-color var(--duration-base) var(--ease-smooth);
+}
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-glass), 0 0 40px rgba(255, 255, 255, 0.05);
+  border-color: hsl(0 0% 100% / 0.18);
 }
 
 /* Luxury button */
 .button-luxury {
+  position: relative;
+  overflow: hidden;
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
   border-radius: var(--radius-button-val);
   font-weight: 300;
-  transition: all var(--transition-duration) var(--transition-smooth);
+  transition: all var(--duration-base) var(--ease-smooth);
   box-shadow: var(--shadow-glass);
+}
+.button-luxury::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
+  transform: translateX(-100%);
+  transition: transform var(--duration-slow) var(--ease-smooth);
+}
+.button-luxury:hover::before {
+  transform: translateX(100%);
 }
 .button-luxury:hover {
   box-shadow: var(--shadow-glow), var(--shadow-glass);
   transform: translateY(-2px) scale(1.02);
+}
+
+/* Animated underline for nav links */
+.animated-underline {
+  position: relative;
+}
+.animated-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--duration-base) var(--ease-smooth);
+}
+.animated-underline:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
 }
 
 /* Navbar glass */
@@ -240,4 +280,38 @@ h3 { font-size: 1.25rem; font-weight: 500; letter-spacing: -0.025em; line-height
 @keyframes accordion-up {
   from { height: var(--radix-accordion-content-height); }
   to { height: 0; }
+}
+
+/* Glow orb animations (hero background) */
+@keyframes orb-float {
+  0%, 100% { transform: translate(-50%, 0) scale(1); }
+  50%       { transform: translate(-50%, -20px) scale(1.05); }
+}
+@keyframes orb-float-slow {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(10px, -15px) scale(1.03); }
+}
+@keyframes orb-float-reverse {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%       { transform: translate(-10px, 15px) scale(0.97); }
+}
+.glow-orb         { animation: orb-float         8s ease-in-out infinite; }
+.glow-orb-slow    { animation: orb-float-slow    12s ease-in-out infinite; }
+.glow-orb-reverse { animation: orb-float-reverse 10s ease-in-out infinite; }
+
+/* Skeleton shimmer */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--background-secondary)) 25%,
+    hsl(var(--background-tertiary)) 50%,
+    hsl(var(--background-secondary)) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

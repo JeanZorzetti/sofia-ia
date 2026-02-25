@@ -8,6 +8,7 @@ import { FAQSection } from '@/components/landing/FAQSection'
 import { NewsletterSection } from '@/components/landing/NewsletterSection'
 import { SectionWrapper, SectionHeader } from '@/components/landing/SectionWrapper'
 import { GradientText } from '@/components/landing/GradientText'
+import { AnimatedSection } from '@/components/landing/AnimatedSection'
 import { homeFeatures, homeComparisons, homeOrchestrationTemplates, homeFAQ } from '@/data/home'
 import { plans } from '@/data/pricing'
 
@@ -28,9 +29,11 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative px-6 pt-20 pb-28 overflow-hidden">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-500/5 rounded-full blur-3xl" />
-          <div className="absolute top-40 left-1/3 w-[400px] h-[300px] bg-purple-500/5 rounded-full blur-3xl" />
+          <div className="glow-orb absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-500/6 rounded-full blur-3xl" />
+          <div className="glow-orb-slow absolute top-40 left-1/3 w-[400px] h-[300px] bg-purple-500/6 rounded-full blur-3xl" />
+          <div className="glow-orb-reverse absolute bottom-10 right-1/4 w-[300px] h-[300px] bg-cyan-500/4 rounded-full blur-3xl" />
         </div>
+        <AnimatedSection direction="fade" delay={0.1}>
         <div className="max-w-7xl mx-auto text-center relative">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-sm text-blue-300 mb-8">
             <Zap className="w-4 h-4" />
@@ -87,18 +90,23 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
+        </AnimatedSection>
       </section>
 
       {/* Features */}
       <SectionWrapper id="features" className="border-t border-white/5">
-        <SectionHeader title="Tudo que você precisa para orquestrar agentes IA" description="Da criação do agente à execução em produção — com analytics, replay e Knowledge Base integrados." />
+        <AnimatedSection>
+          <SectionHeader title="Tudo que você precisa para orquestrar agentes IA" description="Da criação do agente à execução em produção — com analytics, replay e Knowledge Base integrados." />
+        </AnimatedSection>
         <FeatureGrid features={homeFeatures} />
       </SectionWrapper>
 
       {/* Templates */}
       <SectionWrapper id="templates" alt>
         <div className="max-w-5xl mx-auto">
-          <SectionHeader title="Comece em Segundos com Templates" description="Orquestrações pré-configuradas para os casos de uso mais comuns. Um clique para criar." className="mb-12" />
+          <AnimatedSection>
+            <SectionHeader title="Comece em Segundos com Templates" description="Orquestrações pré-configuradas para os casos de uso mais comuns. Um clique para criar." className="mb-12" />
+          </AnimatedSection>
           <div className="grid md:grid-cols-3 gap-6">
             {homeOrchestrationTemplates.map((template) => (
               <div key={template.name} className="glass-card p-6 rounded-xl hover-scale">
@@ -130,7 +138,10 @@ export default function LandingPage() {
       {/* Comparativo */}
       <SectionWrapper id="comparativo">
         <div className="max-w-5xl mx-auto">
-          <SectionHeader title="Sofia vs. Concorrentes" description="Por que times escolhem Sofia em vez de CrewAI, AutoGen ou LangFlow?" className="mb-12" />
+          <AnimatedSection>
+            <SectionHeader title="Sofia vs. Concorrentes" description="Por que times escolhem Sofia em vez de CrewAI, AutoGen ou LangFlow?" className="mb-12" />
+          </AnimatedSection>
+          <AnimatedSection delay={0.1}>
           <div className="glass-card rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -158,18 +169,22 @@ export default function LandingPage() {
               </table>
             </div>
           </div>
+          </AnimatedSection>
         </div>
       </SectionWrapper>
 
       {/* Pricing */}
       <SectionWrapper id="pricing" alt>
-        <SectionHeader title="Pricing Transparente" description="Comece grátis. Escale conforme cresce. Sem surpresas na fatura." />
+        <AnimatedSection>
+          <SectionHeader title="Pricing Transparente" description="Comece grátis. Escale conforme cresce. Sem surpresas na fatura." />
+        </AnimatedSection>
         <PricingGrid plans={plans} />
       </SectionWrapper>
 
       {/* Trust */}
       <section className="px-6 py-16 border-t border-white/5">
         <div className="max-w-5xl mx-auto">
+          <AnimatedSection>
           <div className="grid md:grid-cols-3 gap-8 text-center">
             {[{ icon: Shield, title: 'Dados seguros', desc: 'HTTPS, dados isolados por tenant, backups automáticos.' }, { icon: Lock, title: 'Self-hosted disponível', desc: 'Rode na sua infra com Docker Compose. Controle total.' }, { icon: Globe, title: 'Multi-modelo', desc: 'Groq, OpenAI, Anthropic, e 50+ modelos via OpenRouter.' }].map((item) => (
               <div key={item.title} className="flex flex-col items-center gap-3">
@@ -183,6 +198,7 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          </AnimatedSection>
         </div>
       </section>
 

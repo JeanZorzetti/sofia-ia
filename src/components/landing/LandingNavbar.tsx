@@ -32,7 +32,7 @@ export function LandingNavbar() {
               key={link.href}
               href={link.href}
               className={cn(
-                'text-sm transition-colors flex items-center gap-1',
+                'text-sm transition-colors flex items-center gap-1 animated-underline',
                 isActive(link.href)
                   ? 'text-white font-medium'
                   : 'text-foreground-secondary hover:text-white'

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { DesktopProvider } from '@/contexts/DesktopContext'
 import { ServiceWorkerRegistrar } from '@/components/sofia/ServiceWorkerRegistrar'
+import { ProgressBarProvider } from '@/components/ProgressBarProvider'
 import Script from 'next/script'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -66,6 +67,7 @@ export default function RootLayout({
         )}
       </head>
       <body className={inter.className}>
+        <ProgressBarProvider />
         <DesktopProvider>
           {children}
           <Toaster richColors position="top-right" theme="dark" />
