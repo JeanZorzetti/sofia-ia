@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
+import { getDailySignups, getFunnelCounts, getEngagementCounts } from '@/lib/analytics'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,7 +20,6 @@ export async function GET(request: NextRequest) {
   const now = new Date()
   const d7 = new Date(now); d7.setDate(d7.getDate() - 7)
   const d30 = new Date(now); d30.setDate(d30.getDate() - 30)
-  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1)
 
   const [
     totalUsers,
@@ -30,6 +30,9 @@ export async function GET(request: NextRequest) {
     planBreakdown,
     apiKeyCount,
     leadCount,
+    dailySignups,
+    funnel,
+    engagement,
   ] = await Promise.all([
     prisma.user.count({ where: { status: 'active' } }),
     prisma.user.count({ where: { createdAt: { gte: d7 } } }),
@@ -48,6 +51,9 @@ export async function GET(request: NextRequest) {
     }),
     prisma.apiKey.count({ where: { status: 'active' } }),
     prisma.salesLead.count(),
+    getDailySignups(30),
+    getFunnelCounts(),
+    getEngagementCounts(d30),
   ])
 
   // Calcula MRR estimado
@@ -62,11 +68,19 @@ export async function GET(request: NextRequest) {
       subscriptions: {
         active: activeSubscriptions,
         mrr,
-        breakdown: planBreakdown.map(p => ({ plan: p.plan, count: p._count.plan, mrr: (PLAN_MRR[p.plan] || 0) * p._count.plan })),
+        breakdown: planBreakdown.map(p => ({
+          plan: p.plan,
+          count: p._count.plan,
+          mrr: (PLAN_MRR[p.plan] || 0) * p._count.plan,
+        })),
       },
       apiKeys: { active: apiKeyCount },
       leads: { total: leadCount },
       recentUsers,
+      // V3 additions
+      dailySignups,   // last 30 days sparkline data
+      funnel,         // signups → agent → executed → paid
+      engagement,     // orchestrations, agents, kbs (last 30d)
     },
   })
 }

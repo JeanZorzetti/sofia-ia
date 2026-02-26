@@ -5,6 +5,8 @@ import { Navbar } from '@/components/sofia/Navbar'
 import { Sidebar } from '@/components/sofia/Sidebar'
 import { CommandPalette } from '@/components/ide/command-palette'
 import { Breadcrumb } from '@/components/dashboard/breadcrumb'
+import { TrialBanner } from '@/components/dashboard/trial-banner'
+import { OnboardingChecklist } from '@/components/dashboard/onboarding-checklist'
 import { Toaster } from 'sonner'
 
 function LoadingScreen() {
@@ -34,12 +36,14 @@ export default function DashboardLayout({
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Navbar user={user} onLogout={logout} />
+        <TrialBanner />
         <main className="custom-scrollbar flex-1 overflow-y-auto p-6">
           <Breadcrumb />
           {children}
         </main>
       </div>
       <CommandPalette />
+      <OnboardingChecklist />
       <Toaster position="top-right" richColors />
     </div>
   )

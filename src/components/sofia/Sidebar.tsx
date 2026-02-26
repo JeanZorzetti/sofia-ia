@@ -28,7 +28,8 @@ import {
   Building2,
   ChevronDown,
   Plus,
-  User
+  User,
+  TrendingUp
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -153,6 +154,7 @@ interface UsageData {
   planData: { name: string }
   agents: { current: number; limit: number; percentage: number }
   messages: { current: number; limit: number; percentage: number }
+  knowledgeBases: { current: number; limit: number; percentage: number }
   userId?: string
 }
 
@@ -334,35 +336,54 @@ export function Sidebar() {
                       Upgrade
                     </Link>
                   </div>
-                  {/* Agentes */}
-                  {usage.agents.limit !== -1 && (
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs text-foreground-secondary">
-                        <span>Agentes</span>
-                        <span>{usage.agents.current}/{usage.agents.limit}</span>
-                      </div>
-                      <Progress
-                        value={usage.agents.percentage}
-                        className={`h-1.5 ${usage.agents.percentage >= 90 ? '[&>div]:bg-red-500' : usage.agents.percentage >= 70 ? '[&>div]:bg-yellow-500' : ''}`}
-                      />
-                    </div>
-                  )}
-                  {/* Mensagens */}
-                  {usage.messages.limit !== -1 && (
-                    <div className="space-y-1">
-                      <div className="flex justify-between text-xs text-foreground-secondary">
-                        <span>Mensagens/mês</span>
-                        <span>{usage.messages.current.toLocaleString()}/{usage.messages.limit.toLocaleString()}</span>
-                      </div>
-                      <Progress
-                        value={usage.messages.percentage}
-                        className={`h-1.5 ${usage.messages.percentage >= 90 ? '[&>div]:bg-red-500' : usage.messages.percentage >= 70 ? '[&>div]:bg-yellow-500' : ''}`}
-                      />
-                    </div>
-                  )}
-                  {usage.agents.limit === -1 && usage.messages.limit === -1 && (
-                    <p className="text-xs text-foreground-tertiary">Uso ilimitado ✓</p>
-                  )}
+
+                  {(() => {
+                    const rows = [
+                      { label: 'Agentes', data: usage.agents },
+                      { label: 'Mensagens/mês', data: usage.messages, format: (n: number) => n.toLocaleString() },
+                      { label: 'Knowledge Bases', data: usage.knowledgeBases },
+                    ]
+                    const hasLimits = rows.some(r => r.data?.limit !== -1)
+
+                    if (!hasLimits) {
+                      return <p className="text-xs text-foreground-tertiary">Uso ilimitado ✓</p>
+                    }
+
+                    // Is any resource at 80%+ on the free plan?
+                    const nearLimit = usage.plan === 'free' && rows.some(r => r.data?.limit !== -1 && (r.data?.percentage ?? 0) >= 80)
+
+                    return (
+                      <>
+                        {rows.map(row => row.data?.limit !== -1 && (
+                          <div key={row.label} className="space-y-1">
+                            <div className="flex justify-between text-xs text-foreground-secondary">
+                              <span>{row.label}</span>
+                              <span className={(row.data?.percentage ?? 0) >= 80 ? 'text-amber-400' : ''}>
+                                {row.format ? row.format(row.data.current) : row.data.current}
+                                /{row.format ? row.format(row.data.limit) : row.data.limit}
+                              </span>
+                            </div>
+                            <Progress
+                              value={row.data?.percentage ?? 0}
+                              className={`h-1.5 ${
+                                (row.data?.percentage ?? 0) >= 100 ? '[&>div]:bg-red-500' :
+                                (row.data?.percentage ?? 0) >= 80 ? '[&>div]:bg-amber-500' : ''
+                              }`}
+                            />
+                          </div>
+                        ))}
+                        {nearLimit && (
+                          <Link
+                            href="/dashboard/billing"
+                            className="flex items-center justify-center gap-1.5 w-full text-xs font-semibold text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg py-1.5 transition-colors mt-1"
+                          >
+                            <TrendingUp className="w-3 h-3" />
+                            Quase no limite — Upgrade
+                          </Link>
+                        )}
+                      </>
+                    )
+                  })()}
                 </>
               ) : (
                 <div className="space-y-2">

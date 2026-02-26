@@ -22,16 +22,31 @@ export interface LimitCheckResult {
 
 /**
  * Get the active plan for a user.
+ * Handles trialing: returns trial plan if still active, auto-downgrades to free if expired.
  * Falls back to 'free' if no subscription exists.
  */
 export async function getUserPlan(userId: string): Promise<PlanId> {
   try {
     const sub = await prisma.subscription.findUnique({
       where: { userId },
-      select: { plan: true, status: true },
+      select: { plan: true, status: true, trialEndsAt: true },
     })
 
     if (!sub || sub.status === 'canceled' || sub.status === 'past_due') {
+      return 'free'
+    }
+
+    // Trialing: grant the trial plan if still active, auto-downgrade if expired
+    if (sub.status === 'trialing') {
+      if (sub.trialEndsAt && sub.trialEndsAt > new Date()) {
+        const plan = sub.plan as PlanId
+        return PLANS[plan] ? plan : 'free'
+      }
+      // Trial expired — downgrade silently (non-blocking)
+      prisma.subscription.update({
+        where: { userId },
+        data: { status: 'active', plan: 'free' },
+      }).catch(() => {})
       return 'free'
     }
 
@@ -191,9 +206,14 @@ export async function getUsageSummary(userId: string) {
   // Ensure period is current
   await ensureUsagePeriodCurrent(userId)
 
+  // Count KBs linked to agents of this user (KnowledgeBase has no direct userId field)
+  const userAgentIds = await prisma.agent
+    .findMany({ where: { createdBy: userId }, select: { id: true } })
+    .then(rows => rows.map(r => r.id))
+
   const [agentCount, kbCount, sub] = await Promise.all([
     prisma.agent.count({ where: { createdBy: userId } }),
-    prisma.knowledgeBase.count(),
+    prisma.knowledgeBase.count({ where: { agentId: { in: userAgentIds } } }),
     prisma.subscription.findUnique({
       where: { userId },
       select: {
@@ -201,6 +221,7 @@ export async function getUsageSummary(userId: string) {
         currentPeriodEnd: true,
         usagePeriodStart: true,
         status: true,
+        trialEndsAt: true,
         mercadoPagoPaymentId: true,
       },
     }),

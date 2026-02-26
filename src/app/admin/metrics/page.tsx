@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Users, TrendingUp, CreditCard, Key, RefreshCw, Mail, BarChart3 } from 'lucide-react'
+import { ArrowLeft, Users, TrendingUp, CreditCard, RefreshCw, Mail, BarChart3, Zap, Bot, Database } from 'lucide-react'
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface Metrics {
   users: { total: number; newLast7: number; newLast30: number }
@@ -17,6 +18,9 @@ interface Metrics {
     id: string; name: string; email: string; role: string
     createdAt: string; lastLogin: string | null
   }[]
+  dailySignups: { date: string; count: number }[]
+  funnel: { signups: number; withAgent: number; withExecution: number; paid: number }
+  engagement: { orchestrationsExecuted: number; agentsCreated: number; kbsCreated: number; documentsAdded: number }
 }
 
 export default function AdminMetricsPage() {
@@ -137,6 +141,95 @@ export default function AdminMetricsPage() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Signups diários (sparkline) + Funil de conversão */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          {/* Sparkline */}
+          <div className="glass-card p-5 rounded-xl">
+            <h2 className="font-semibold text-white mb-1 text-sm">Signups — últimos 30 dias</h2>
+            <p className="text-white/30 text-xs mb-4">{data.users.newLast30} no período</p>
+            <ResponsiveContainer width="100%" height={120}>
+              <AreaChart data={data.dailySignups} margin={{ top: 2, right: 2, left: -32, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="signupGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.3)' }}
+                  tickFormatter={v => v.slice(5)} // MM-DD
+                  interval={6}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis tick={{ fontSize: 9, fill: 'rgba(255,255,255,0.3)' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 11 }}
+                  labelStyle={{ color: 'rgba(255,255,255,0.6)' }}
+                  itemStyle={{ color: '#60a5fa' }}
+                />
+                <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} fill="url(#signupGrad)" name="Signups" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Funil de conversão */}
+          <div className="glass-card p-5 rounded-xl">
+            <h2 className="font-semibold text-white mb-4 text-sm">Funil de Conversão</h2>
+            {(() => {
+              const steps = [
+                { label: 'Signups', value: data.funnel.signups, color: 'bg-blue-500' },
+                { label: 'Criou agente', value: data.funnel.withAgent, color: 'bg-violet-500' },
+                { label: 'Executou', value: data.funnel.withExecution, color: 'bg-amber-500' },
+                { label: 'Pagante', value: data.funnel.paid, color: 'bg-green-500' },
+              ]
+              const max = steps[0].value || 1
+              return (
+                <div className="space-y-3">
+                  {steps.map((step, i) => {
+                    const pct = Math.round((step.value / max) * 100)
+                    const rate = i > 0 && steps[i - 1].value > 0
+                      ? `${((step.value / steps[i - 1].value) * 100).toFixed(0)}% do anterior`
+                      : '100%'
+                    return (
+                      <div key={step.label}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-white/60 text-xs">{step.label}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-white/30 text-xs">{rate}</span>
+                            <span className="text-white font-medium text-sm w-8 text-right">{step.value}</span>
+                          </div>
+                        </div>
+                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <div className={`h-full ${step.color} rounded-full transition-all`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
+          </div>
+        </div>
+
+        {/* Engagement (últimos 30 dias) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: 'Orquestrações executadas', value: data.engagement.orchestrationsExecuted, icon: Zap, color: 'text-amber-400', sub: 'últimos 30d' },
+            { label: 'Agentes criados', value: data.engagement.agentsCreated, icon: Bot, color: 'text-violet-400', sub: 'últimos 30d' },
+            { label: 'Knowledge Bases', value: data.engagement.kbsCreated, icon: Database, color: 'text-cyan-400', sub: 'últimos 30d' },
+            { label: 'Documentos adicionados', value: data.engagement.documentsAdded, icon: Mail, color: 'text-pink-400', sub: 'últimos 30d' },
+          ].map(card => (
+            <div key={card.label} className="glass-card p-4 rounded-xl">
+              <card.icon className={`w-4 h-4 mb-2 ${card.color}`} />
+              <div className="text-xl font-bold text-white mb-0.5">{card.value}</div>
+              <div className="text-xs text-white/40">{card.label}</div>
+              <div className="text-xs text-white/20 mt-0.5">{card.sub}</div>
+            </div>
+          ))}
         </div>
 
         {/* Usuários recentes */}

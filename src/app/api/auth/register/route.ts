@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { signToken, setAuthCookie } from '@/lib/auth'
+import { sendWelcomeEmail } from '@/lib/email'
+import { trackEvent, Events } from '@/lib/analytics'
 
 export async function POST(req: NextRequest) {
   try {
@@ -51,9 +53,20 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // Start Trial Pro for 7 days
+    const trialEndsAt = new Date()
+    trialEndsAt.setDate(trialEndsAt.getDate() + 7)
+    await prisma.subscription.create({
+      data: { userId: user.id, plan: 'pro', status: 'trialing', trialEndsAt },
+    })
+
     const payload = { id: user.id, email: user.email, name: user.name, role: user.role }
     const token = await signToken(payload)
     await setAuthCookie(token)
+
+    // Fire-and-forget: welcome email + analytics (never block the response)
+    sendWelcomeEmail(user.email, user.name).catch(() => {})
+    trackEvent(Events.SIGNUP, user.id, { method: 'email' }).catch(() => {})
 
     return NextResponse.json(
       { success: true, data: { token, user: payload, expires_in: '24h' } },

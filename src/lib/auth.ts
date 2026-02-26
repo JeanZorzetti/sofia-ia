@@ -4,8 +4,12 @@ import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('[auth] CRITICAL: JWT_SECRET env var not set in production!')
+}
+
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'sofia-next-jwt-secret-2026-roilabs'
+  process.env.JWT_SECRET || 'sofia-next-jwt-secret-dev-only-change-in-production'
 )
 const JWT_EXPIRES_IN = '24h'
 const COOKIE_NAME = 'sofia_token'
@@ -16,22 +20,6 @@ export interface JWTPayload {
   name: string
   role: string
 }
-
-// Temporary users (same as original project)
-const USERS = [
-  {
-    id: '123e4567-e89b-12d3-a456-426614174000', // Valid UUID
-    username: 'admin',
-    passwordHash: '$2a$10$5nHSoyKgmnNQzIY9nkuYIOL/P.yUB7AB.vzhP475OitOtRmuTG.fC', // SofiaAI2024#Admin
-    role: 'admin' as const,
-  },
-  {
-    id: '123e4567-e89b-12d3-a456-426614174001', // Valid UUID
-    username: 'sofia',
-    passwordHash: '$2a$10$5nHSoyKgmnNQzIY9nkuYIOL/P.yUB7AB.vzhP475OitOtRmuTG.fC', // SofiaAI2024#Admin
-    role: 'user' as const,
-  },
-]
 
 export async function signToken(payload: JWTPayload): Promise<string> {
   return new SignJWT({ ...payload })
@@ -87,33 +75,9 @@ export async function authenticateUser(
     }
   } catch (error) {
     console.error('Database authentication error:', error)
-    // Continua para fallback
   }
 
-  // Fallback para usuários hardcoded (compatibilidade)
-  const user = USERS.find((u) => u.username === username)
-  if (!user) return null
-
-  const valid = await bcrypt.compare(password, user.passwordHash)
-  if (!valid) return null
-
-  // Tenta buscar UUID real do banco para manter consistência
-  let userId = user.id
-  try {
-    const fallbackDbUser = await prisma.user.findFirst({
-      where: { email: `${user.username}@roilabs.com.br` }
-    })
-    if (fallbackDbUser) userId = fallbackDbUser.id
-  } catch { /* DB indisponível, usa ID do mock */ }
-
-  const payload: JWTPayload = {
-    id: userId,
-    email: `${user.username}@roilabs.com.br`,
-    name: user.username,
-    role: user.role
-  }
-  const token = await signToken(payload)
-  return { user: payload, token }
+  return null
 }
 
 export async function setAuthCookie(token: string) {
