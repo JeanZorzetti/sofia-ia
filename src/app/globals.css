@@ -74,32 +74,32 @@
 }
 
 :root {
-  --background: 0 0% 0%;
-  --background-secondary: 0 0% 4%;
-  --background-tertiary: 0 0% 10%;
-  --background-quaternary: 0 0% 16%;
+  --background: 240 10% 4%;
+  --background-secondary: 240 10% 6%;
+  --background-tertiary: 240 10% 10%;
+  --background-quaternary: 240 10% 14%;
 
   --foreground: 0 0% 100%;
-  --foreground-secondary: 0 0% 70%;
-  --foreground-tertiary: 0 0% 50%;
+  --foreground-secondary: 240 5% 75%;
+  --foreground-tertiary: 240 5% 55%;
 
-  --card: 0 0% 4%;
+  --card: 240 10% 4%;
   --card-foreground: 0 0% 100%;
 
-  --popover: 0 0% 4%;
+  --popover: 240 10% 4%;
   --popover-foreground: 0 0% 100%;
 
   --primary: 0 0% 100%;
-  --primary-foreground: 0 0% 0%;
+  --primary-foreground: 240 10% 4%;
 
-  --secondary: 0 0% 10%;
+  --secondary: 240 10% 10%;
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 0 0% 16%;
-  --muted-foreground: 0 0% 70%;
+  --muted: 240 10% 14%;
+  --muted-foreground: 240 5% 60%;
 
   --accent: 0 0% 100%;
-  --accent-foreground: 0 0% 0%;
+  --accent-foreground: 240 10% 4%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
@@ -201,13 +201,13 @@ h3 { font-size: 1.25rem; font-weight: 500; letter-spacing: -0.025em; line-height
   backdrop-filter: blur(var(--glass-blur));
   border: 1px solid hsl(var(--glass-border));
   border-radius: var(--radius-card-val);
-  box-shadow: var(--shadow-glass);
+  box-shadow: var(--shadow-glass), inset 0 1px 1px rgba(255, 255, 255, 0.12), inset 0 24px 32px rgba(255, 255, 255, 0.02);
   transition: transform var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth), border-color var(--duration-base) var(--ease-smooth);
 }
 .glass-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-glass), 0 0 40px rgba(255, 255, 255, 0.05);
-  border-color: hsl(0 0% 100% / 0.18);
+  box-shadow: var(--shadow-glass), 0 0 40px rgba(255, 255, 255, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  border-color: hsl(0 0% 100% / 0.25);
 }
 
 /* Luxury button */
@@ -217,24 +217,30 @@ h3 { font-size: 1.25rem; font-weight: 500; letter-spacing: -0.025em; line-height
   background: hsl(var(--primary));
   color: hsl(var(--primary-foreground));
   border-radius: var(--radius-button-val);
-  font-weight: 300;
+  font-weight: 500;
   transition: all var(--duration-base) var(--ease-smooth);
-  box-shadow: var(--shadow-glass);
+  box-shadow: var(--shadow-glass), inset 0 -2px 10px rgba(0,0,0,0.1), inset 0 2px 2px rgba(255,255,255,0.8);
 }
 .button-luxury::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
-  transform: translateX(-100%);
-  transition: transform var(--duration-slow) var(--ease-smooth);
-}
-.button-luxury:hover::before {
-  transform: translateX(100%);
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  transform: skewX(-20deg);
+  animation: button-shimmer 4s infinite linear;
 }
 .button-luxury:hover {
   box-shadow: var(--shadow-glow), var(--shadow-glass);
   transform: translateY(-2px) scale(1.02);
+}
+
+@keyframes button-shimmer {
+  0% { left: -100%; }
+  25% { left: 200%; }
+  100% { left: 200%; }
 }
 
 /* Animated underline for nav links */

@@ -91,10 +91,11 @@ export default async function LandingPage() {
             <Zap className="w-4 h-4" />
             Novo: Replay de execuções + Export PDF + Suporte a PDF/DOCX na KB
           </div>
-          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 animate-fade-in-up">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter mb-6 animate-fade-in-up leading-[1.1]">
             Orquestrações de<br />
             <GradientText>Agentes IA</GradientText>
-            {' '}que Funcionam
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50">que funcionam.</span>
           </h1>
           <p className="text-lg md:text-xl text-foreground-tertiary max-w-2xl mx-auto mb-4">
             Monte pipelines visuais de agentes que colaboram para resolver tarefas complexas. Knowledge Base com RAG semântico. IDE multi-modelo. Canais integrados.
@@ -116,7 +117,7 @@ export default async function LandingPage() {
               { n: 0, s: '', d: 'Free', label: 'Para começar' },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="text-2xl md:text-3xl font-bold text-white">
+                <div className="text-3xl md:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60">
                   {stat.d ? stat.d : <AnimatedCounter value={stat.n} suffix={stat.s} />}
                 </div>
                 <div className="text-xs text-foreground-tertiary mt-1">{stat.label}</div>
