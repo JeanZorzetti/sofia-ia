@@ -260,7 +260,7 @@ export function TemplateTestDriveCard({ template }: TemplateTestDriveCardProps) 
 
       {/* Output area */}
       {phase === 'output' && (
-        <div className="p-2.5 rounded-lg bg-green-500/10 border border-green-500/20 min-h-[44px]">
+        <div className="p-2.5 rounded-lg bg-green-500/10 border border-green-500/20 min-h-[44px] max-h-[100px] overflow-y-auto">
           {isLoadingOutput ? (
             <div className="flex items-center gap-2">
               <span className="inline-block w-[5px] h-[11px] bg-green-400/60 rounded-sm animate-pulse" />

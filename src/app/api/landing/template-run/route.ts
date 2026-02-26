@@ -58,18 +58,28 @@ export async function POST(request: NextRequest) {
 
       let accumulatedContext = ''
       let finalOutput = ''
+      const lastStepIdx = agentSteps.length - 1
 
-      for (const step of agentSteps) {
+      for (let stepIdx = 0; stepIdx < agentSteps.length; stepIdx++) {
+        const step = agentSteps[stepIdx]
         const agent = agentMap.get(step.agentId)
         if (!agent) continue
+
+        const isLast = stepIdx === lastStepIdx
 
         const userMsg = accumulatedContext
           ? `Contexto anterior:\n${accumulatedContext}\n\nTarefa original: ${sanitizedInput}`
           : sanitizedInput
 
+        // Last agent: strict 1-sentence output for the demo card
+        // Other agents: normal processing but capped
+        const constraint = isLast
+          ? `\n\nREGRA ABSOLUTA: Responda em UMA ÚNICA frase curta (máximo 25 palavras). SEM bullet points. SEM listas. Comece OBRIGATORIAMENTE com "${step.role}: ".`
+          : `\n\nResposta resumida em até 2 frases. Comece com "${step.role}: ".`
+
         const systemPrompt =
           (step.prompt ? `${agent.systemPrompt}\n\n${step.prompt}` : agent.systemPrompt) +
-          `\n\nIMPORTANTE: Resposta concisa (máximo 2-3 frases). Comece com "${step.role}: ".`
+          constraint
 
         const completion = await groq.chat.completions.create({
           model: 'llama-3.3-70b-versatile',
@@ -78,7 +88,7 @@ export async function POST(request: NextRequest) {
             { role: 'user', content: userMsg },
           ],
           temperature: agent.temperature,
-          max_tokens: 160,
+          max_tokens: isLast ? 80 : 120,
           stream: false,
         })
 
