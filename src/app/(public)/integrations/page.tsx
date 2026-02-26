@@ -39,7 +39,8 @@ const INTEGRATIONS = [
   {
     id: 'zapier',
     name: 'Zapier',
-    logo: 'https://cdn.brandfetch.io/id_ehFG80T/w/400/h/400/theme/dark/logo.png?c=1id_elSSS47-A13Q7h7',
+    logo: null,
+    logoText: 'Zapier',
     description:
       'Conecte Sofia AI a 7.000+ apps sem código. Dispare orquestrações quando um formulário é preenchido, um email chega ou uma nova linha aparece na planilha.',
     how: 'Use o webhook do Zapier como trigger ou action. Envie um POST para `/api/public/orchestrations/:id/run` com sua API Key.',
