@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, Bot, Zap, Shield, CheckCircle, Play, ChevronRight, Users, BrainCircuit, Globe, Lock } from 'lucide-react'
-import { FeatureGrid } from '@/components/landing/FeatureGrid'
+import { GlowingFeaturesGrid } from '@/components/landing/GlowingFeaturesGrid'
 import { PricingGrid } from '@/components/landing/PricingGrid'
 import { CTASection } from '@/components/landing/CTASection'
 import { FAQSection } from '@/components/landing/FAQSection'
@@ -10,7 +10,7 @@ import { SectionWrapper, SectionHeader } from '@/components/landing/SectionWrapp
 import { GradientText } from '@/components/landing/GradientText'
 import { AnimatedSection } from '@/components/landing/AnimatedSection'
 import { AnimatedCounter } from '@/components/landing/AnimatedCounter'
-import { homeFeatures, homeComparisons, homeOrchestrationTemplates, homeFAQ } from '@/data/home'
+import { homeComparisons, homeOrchestrationTemplates, homeFAQ } from '@/data/home'
 import { plans } from '@/data/pricing'
 
 export const metadata: Metadata = {
@@ -101,12 +101,12 @@ export default function LandingPage() {
         </AnimatedSection>
       </section>
 
-      {/* Features */}
+      {/* Features — Bento grid com GlowingEffect */}
       <SectionWrapper id="features" className="border-t border-white/5">
         <AnimatedSection>
           <SectionHeader title="Tudo que você precisa para orquestrar agentes IA" description="Da criação do agente à execução em produção — com analytics, replay e Knowledge Base integrados." />
         </AnimatedSection>
-        <FeatureGrid features={homeFeatures} />
+        <GlowingFeaturesGrid />
       </SectionWrapper>
 
       {/* Templates */}
