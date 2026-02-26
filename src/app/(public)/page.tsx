@@ -9,6 +9,7 @@ import { NewsletterSection } from '@/components/landing/NewsletterSection'
 import { SectionWrapper, SectionHeader } from '@/components/landing/SectionWrapper'
 import { GradientText } from '@/components/landing/GradientText'
 import { AnimatedSection } from '@/components/landing/AnimatedSection'
+import { AnimatedCounter } from '@/components/landing/AnimatedCounter'
 import { homeFeatures, homeComparisons, homeOrchestrationTemplates, homeFAQ } from '@/data/home'
 import { plans } from '@/data/pricing'
 
@@ -57,9 +58,16 @@ export default function LandingPage() {
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto mb-16">
-            {[{ value: '50+', label: 'Modelos IA suportados' }, { value: 'pgvector', label: 'Busca semântica real' }, { value: '3', label: 'Estratégias de orquestração' }, { value: 'Free', label: 'Para começar' }].map((stat) => (
+            {[
+              { n: 50, s: '+', d: '', label: 'Modelos IA suportados' },
+              { n: 0, s: '', d: 'pgvector', label: 'Busca semântica real' },
+              { n: 3, s: '', d: '', label: 'Estratégias de orquestração' },
+              { n: 0, s: '', d: 'Free', label: 'Para começar' },
+            ].map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="text-2xl md:text-3xl font-bold text-white">{stat.value}</div>
+                <div className="text-2xl md:text-3xl font-bold text-white">
+                  {stat.d ? stat.d : <AnimatedCounter value={stat.n} suffix={stat.s} />}
+                </div>
                 <div className="text-xs text-foreground-tertiary mt-1">{stat.label}</div>
               </div>
             ))}

@@ -5,6 +5,7 @@ import { SectionWrapper, SectionHeader } from '@/components/landing/SectionWrapp
 import { CTASection } from '@/components/landing/CTASection'
 import { AnimatedSection } from '@/components/landing/AnimatedSection'
 import { GradientText } from '@/components/landing/GradientText'
+import { AnimatedCounter } from '@/components/landing/AnimatedCounter'
 
 export const metadata: Metadata = {
   title: 'Sobre a Sofia AI — Quem Somos | ROI Labs',
@@ -221,14 +222,14 @@ export default function SobrePage() {
         <SectionHeader title="Sofia AI em numeros" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
           {[
-            { value: '50+', label: 'Artigos no blog', sub: 'SEO e GEO' },
-            { value: '100+', label: 'Commits', sub: 'open-source' },
-            { value: '4', label: 'Planos', sub: 'Free ate Enterprise' },
-            { value: '15+', label: 'Integracoes', sub: 'Zapier, HubSpot, Notion...' },
+            { n: 50, s: '+', label: 'Artigos no blog', sub: 'SEO e GEO' },
+            { n: 100, s: '+', label: 'Commits', sub: 'open-source' },
+            { n: 4, s: '', label: 'Planos', sub: 'Free ate Enterprise' },
+            { n: 15, s: '+', label: 'Integracoes', sub: 'Zapier, HubSpot, Notion...' },
           ].map((stat) => (
             <div key={stat.label} className="glass-card rounded-xl p-6 text-center">
               <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
-                {stat.value}
+                <AnimatedCounter value={stat.n} suffix={stat.s} />
               </div>
               <div className="font-medium text-sm">{stat.label}</div>
               <div className="text-foreground-tertiary text-xs mt-1">{stat.sub}</div>
