@@ -33,7 +33,9 @@ import {
   FileSpreadsheet,
   FileText,
   Scissors,
-  Printer
+  Printer,
+  Share2,
+  Link,
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -97,8 +99,33 @@ export function ExecutionDetailDrawer({
 }: ExecutionDetailDrawerProps) {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set())
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set())
+  const [sharing, setSharing] = useState(false)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
 
   if (!execution) return null
+
+  const handleShare = async () => {
+    if (!execution.orchestrationId) return
+    setSharing(true)
+    try {
+      const res = await fetch(
+        `/api/orchestrations/${execution.orchestrationId}/executions/${execution.id}/share`,
+        { method: 'POST' }
+      )
+      const data = await res.json()
+      if (data.success) {
+        setShareUrl(data.shareUrl)
+        navigator.clipboard.writeText(data.shareUrl).catch(() => {})
+        toast.success('Link copiado para a área de transferência!')
+      } else {
+        toast.error('Erro ao gerar link de compartilhamento')
+      }
+    } catch {
+      toast.error('Erro ao gerar link de compartilhamento')
+    } finally {
+      setSharing(false)
+    }
+  }
 
   const toggleStep = (index: number) => {
     const newExpanded = new Set(expandedSteps)
@@ -416,6 +443,20 @@ ${typeof execution.output === 'string' ? execution.output : JSON.stringify(execu
             <SheetTitle className="text-white">Detalhes da Execução</SheetTitle>
             <div className="flex items-center gap-2">
               {getStatusBadge()}
+
+              {/* Share Button */}
+              {execution.status === 'completed' && execution.orchestrationId && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleShare}
+                  disabled={sharing}
+                  className="gap-1"
+                >
+                  {shareUrl ? <Link className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
+                  {sharing ? 'Gerando...' : shareUrl ? 'Link copiado' : 'Compartilhar'}
+                </Button>
+              )}
 
               {/* Export Menu */}
               <DropdownMenu>

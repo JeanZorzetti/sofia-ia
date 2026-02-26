@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import type { Agent } from './AgentCard'
 import type { AgentFormData } from './CreateAgentDialog'
 import { FOLDER_COLORS } from './CreateFolderDialog'
+import { showUpgradeModal } from '@/components/dashboard/upgrade-modal'
 
 export interface AgentFolder {
   id: string
@@ -42,6 +43,10 @@ export function useAgents() {
       })
       const result = await res.json()
       if (result.success) { fetchAll(); return true }
+      // Show upgrade modal on plan limit errors
+      if (res.status === 403 && result.error?.toLowerCase().includes('limite')) {
+        showUpgradeModal({ resource: 'agents', plan: 'free' })
+      }
       return false
     } catch { return false }
   }

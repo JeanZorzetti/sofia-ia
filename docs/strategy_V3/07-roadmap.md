@@ -70,20 +70,20 @@
 
 ---
 
-## Sprint 3 — Activation & Retention (Semana 5-6)
+## Sprint 3 — Activation & Retention (Semana 5-6) ✅ CONCLUIDO
 
 **Hipotese:** Social proof + upgrade prompts + weekly digest = 2x activation rate.
 
 ### Tarefas Tecnicas
-| # | Tarefa | Prioridade | Esforco |
-|---|--------|------------|---------|
-| 3.1 | Social proof hero: "X orquestracoes executadas" (DB query + ISR) | P0 | 2h |
-| 3.2 | Upgrade prompt contextual quando atinge 80% do limite | P0 | 3h |
-| 3.3 | Upgrade prompt modal quando atinge 100% (soft block, nao hard) | P0 | 2h |
-| 3.4 | Email drip D+5 (templates) + D+14 (upgrade offer) | P1 | 2h |
-| 3.5 | Email D+30 (re-engagement para inativos) | P1 | 1h |
-| 3.6 | Weekly digest email (cron job, so para usuarios ativos) | P1 | 4h |
-| 3.7 | Resultado de orquestracao compartilhavel (link publico) | P2 | 4h |
+| # | Tarefa | Prioridade | Esforco | Status |
+|---|--------|------------|---------|--------|
+| 3.1 | Social proof hero: "X orquestracoes executadas" (DB query + ISR) | P0 | 2h | ⏭️ SKIP — sem usuarios reais ainda |
+| 3.2 | Upgrade prompt contextual quando atinge 80% do limite | P0 | 3h | ✅ FEITO — sidebar 80% amber button |
+| 3.3 | Upgrade prompt modal quando atinge 100% (soft block, nao hard) | P0 | 2h | ✅ FEITO — UpgradeModal + event dispatch |
+| 3.4 | Email drip D+5 (templates) + D+14 (upgrade offer) | P1 | 2h | ✅ FEITO — buildDrip5Email + buildDrip14Email |
+| 3.5 | Email D+30 (re-engagement para inativos) | P1 | 1h | ✅ FEITO — buildDrip30Email |
+| 3.6 | Weekly digest email (cron job, so para usuarios ativos) | P1 | 4h | ✅ FEITO — /api/cron/weekly-digest, cron toda segunda |
+| 3.7 | Resultado de orquestracao compartilhavel (link publico) | P2 | 4h | ✅ FEITO — shareToken + /share/[token] + share button no drawer |
 
 ### Testes
 | # | Tarefa | Prioridade | Esforco |

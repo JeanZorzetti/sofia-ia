@@ -7,6 +7,7 @@ import { CommandPalette } from '@/components/ide/command-palette'
 import { Breadcrumb } from '@/components/dashboard/breadcrumb'
 import { TrialBanner } from '@/components/dashboard/trial-banner'
 import { OnboardingChecklist } from '@/components/dashboard/onboarding-checklist'
+import { UpgradeModal } from '@/components/dashboard/upgrade-modal'
 import { Toaster } from 'sonner'
 
 function LoadingScreen() {
@@ -44,6 +45,7 @@ export default function DashboardLayout({
       </div>
       <CommandPalette />
       <OnboardingChecklist />
+      <UpgradeModal />
       <Toaster position="top-right" richColors />
     </div>
   )

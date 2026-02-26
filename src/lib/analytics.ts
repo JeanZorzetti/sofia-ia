@@ -39,6 +39,9 @@ export type AnalyticsEventName =
   | 'drip_d3_sent'
   | 'drip_d5_sent'
   | 'drip_d7_sent'
+  | 'drip_d14_sent'
+  | 'drip_d30_sent'
+  | 'weekly_digest_sent'
 
 /** Typed event constants to avoid raw string usage */
 export const Events = {

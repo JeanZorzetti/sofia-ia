@@ -546,6 +546,7 @@ model OrchestrationExecution {
   startedAt        DateTime  @default(now()) @map("started_at") @db.Timestamptz()
   completedAt      DateTime? @map("completed_at") @db.Timestamptz()
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  shareToken       String?   @unique @map("share_token") @db.VarChar(64)
 
   orchestration AgentOrchestration @relation(fields: [orchestrationId], references: [id], onDelete: Cascade)
 

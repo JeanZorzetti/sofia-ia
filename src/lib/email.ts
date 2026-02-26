@@ -314,3 +314,55 @@ export async function sendDrip7Email(userEmail: string, userName: string, userId
     html: buildDrip7Email(firstName, userId),
   })
 }
+
+/** D+14 — Upgrade offer (trial expired, still on free) */
+export function buildDrip14Email(firstName: string): string {
+  return emailShell(`
+<h2>${firstName}, seu Trial Pro acabou — mas temos uma oferta</h2>
+<p>Você testou a Sofia IA por 7 dias com acesso completo. Espero que tenha gostado!</p>
+<p>Agora você está no plano Free com limites reduzidos. Para continuar usando sem restrições:</p>
+<div class="hl">
+  <h3>Plano Pro — R$ 297/mês</h3>
+  <p>20 agentes · 5.000 mensagens/mês · 10 Knowledge Bases · Suporte prioritário</p>
+</div>
+<p style="font-size:13px;color:#64748b;">Sem contrato de fidelidade. Cancele quando quiser.</p>
+<div class="cta"><a href="${APP_URL}/dashboard/billing">Assinar o Plano Pro →</a></div>
+<p style="font-size:12px;color:#64748b;margin-top:16px;">Tem dúvidas? Responda este email e eu mesmo respondo.</p>
+`)
+}
+
+/** D+30 — Re-engagement (inactive users) */
+export function buildDrip30Email(firstName: string): string {
+  return emailShell(`
+<h2>${firstName}, sentimos sua falta</h2>
+<p>Faz um tempo que você não acessa a Sofia IA. Algumas novidades desde que você saiu:</p>
+<div class="hl">
+  <h3>Magic Create melhorado</h3>
+  <p>Agora cria pipelines completos de 5+ agentes a partir de uma descrição simples.</p>
+</div>
+<div class="hl">
+  <h3>Novos templates no marketplace</h3>
+  <p>+20 templates prontos para marketing, jurídico, e-commerce e mais.</p>
+</div>
+<p>Sua conta ainda está ativa. Entre agora e continue de onde parou.</p>
+<div class="cta"><a href="${APP_URL}/dashboard">Voltar para o dashboard →</a></div>
+`)
+}
+
+export async function sendDrip14Email(userEmail: string, userName: string) {
+  const firstName = userName.split(' ')[0]
+  return sendEmail({
+    to: userEmail,
+    subject: `${firstName}, seu Trial Pro acabou — temos uma oferta`,
+    html: buildDrip14Email(firstName),
+  })
+}
+
+export async function sendDrip30Email(userEmail: string, userName: string) {
+  const firstName = userName.split(' ')[0]
+  return sendEmail({
+    to: userEmail,
+    subject: `${firstName}, sentimos sua falta`,
+    html: buildDrip30Email(firstName),
+  })
+}
