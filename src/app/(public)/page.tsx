@@ -12,6 +12,7 @@ import { SectionWrapper, SectionHeader } from '@/components/landing/SectionWrapp
 import { GradientText } from '@/components/landing/GradientText'
 import { AnimatedSection } from '@/components/landing/AnimatedSection'
 import { AnimatedCounter } from '@/components/landing/AnimatedCounter'
+import { TemplateTestDriveCard } from '@/components/landing/TemplateTestDriveCard'
 import { homeComparisons, homeOrchestrationTemplates, homeFAQ } from '@/data/home'
 import { plans } from '@/data/pricing'
 
@@ -100,22 +101,7 @@ export default function LandingPage() {
           </AnimatedSection>
           <div className="grid md:grid-cols-3 gap-6">
             {homeOrchestrationTemplates.map((template) => (
-              <div key={template.name} className="glass-card p-6 rounded-xl hover-scale">
-                <div className="text-3xl mb-4">{template.icon}</div>
-                <h3 className="font-semibold text-white mb-3">{template.name}</h3>
-                <div className="flex items-center gap-1 mb-4 flex-wrap">
-                  {template.roles.map((role, i) => (
-                    <div key={role} className="flex items-center gap-1">
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70">{role}</span>
-                      {i < template.roles.length - 1 && <ArrowRight className="w-3 h-3 text-white/20" />}
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between text-xs text-white/40">
-                  <span>Tempo estimado: {template.time}</span>
-                  <span className="capitalize">{template.category}</span>
-                </div>
-              </div>
+              <TemplateTestDriveCard key={template.name} template={template} />
             ))}
           </div>
           <div className="text-center mt-8">
