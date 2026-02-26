@@ -1,6 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, BrainCircuit, Users, Globe, Zap, Heart, Shield, Target, Rocket } from 'lucide-react'
+import { ArrowRight, Globe, Zap, Heart, Shield, Target, Rocket } from 'lucide-react'
+import { SectionWrapper, SectionHeader } from '@/components/landing/SectionWrapper'
+import { CTASection } from '@/components/landing/CTASection'
+import { AnimatedSection } from '@/components/landing/AnimatedSection'
+import { GradientText } from '@/components/landing/GradientText'
 
 export const metadata: Metadata = {
   title: 'Sobre a Sofia AI — Quem Somos | ROI Labs',
@@ -133,7 +137,7 @@ export default function SobrePage() {
 
 
       {/* Hero */}
-      <section className="px-6 pt-20 pb-16 text-center">
+      <section className="px-6 pt-20 pb-16 text-center bg-dot-grid">
         <div className="max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-sm text-blue-300 mb-8">
             <Globe className="w-4 h-4" />
@@ -141,12 +145,10 @@ export default function SobrePage() {
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
             Democratizando a{' '}
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              inteligencia artificial
-            </span>{' '}
+            <GradientText>inteligencia artificial</GradientText>{' '}
             para empresas brasileiras
           </h1>
-          <p className="text-xl text-white/60 max-w-2xl mx-auto">
+          <p className="text-xl text-foreground-tertiary max-w-2xl mx-auto">
             Acreditamos que qualquer empresa — de qualquer tamanho — deveria ter acesso ao mesmo poder de automacao inteligente que as maiores corporacoes do mundo.
           </p>
         </div>
@@ -168,25 +170,25 @@ export default function SobrePage() {
       </section>
 
       {/* Valores */}
-      <section className="px-6 py-16 bg-white/2">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Nossos valores</h2>
-          <div className="grid md:grid-cols-2 gap-6">
+      <SectionWrapper alt>
+        <SectionHeader title="Nossos valores" />
+        <AnimatedSection direction="up" delay={0.1}>
+          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             {values.map((value) => {
               const Icon = value.icon
               return (
-                <div key={value.title} className="bg-white/5 rounded-xl border border-white/10 p-6">
+                <div key={value.title} className="glass-card rounded-xl p-6">
                   <div className="p-2 rounded-lg bg-blue-500/10 w-fit mb-4">
                     <Icon className="w-5 h-5 text-blue-400" />
                   </div>
                   <h3 className="font-semibold text-lg mb-2">{value.title}</h3>
-                  <p className="text-white/60 text-sm leading-relaxed">{value.description}</p>
+                  <p className="text-foreground-tertiary text-sm leading-relaxed">{value.description}</p>
                 </div>
               )
             })}
           </div>
-        </div>
-      </section>
+        </AnimatedSection>
+      </SectionWrapper>
 
       {/* Timeline */}
       <section className="px-6 py-16">
@@ -215,27 +217,25 @@ export default function SobrePage() {
       </section>
 
       {/* Numeros */}
-      <section className="px-6 py-16 bg-white/2">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-12">Sofia AI em numeros</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { value: '50+', label: 'Artigos no blog', sub: 'SEO e GEO' },
-              { value: '100+', label: 'Commits', sub: 'open-source' },
-              { value: '4', label: 'Planos', sub: 'Free ate Enterprise' },
-              { value: '15+', label: 'Integracoes', sub: 'Zapier, HubSpot, Notion...' },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-white/5 rounded-xl border border-white/10 p-6">
-                <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
-                  {stat.value}
-                </div>
-                <div className="font-medium text-sm">{stat.label}</div>
-                <div className="text-white/40 text-xs mt-1">{stat.sub}</div>
+      <SectionWrapper alt>
+        <SectionHeader title="Sofia AI em numeros" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+          {[
+            { value: '50+', label: 'Artigos no blog', sub: 'SEO e GEO' },
+            { value: '100+', label: 'Commits', sub: 'open-source' },
+            { value: '4', label: 'Planos', sub: 'Free ate Enterprise' },
+            { value: '15+', label: 'Integracoes', sub: 'Zapier, HubSpot, Notion...' },
+          ].map((stat) => (
+            <div key={stat.label} className="glass-card rounded-xl p-6 text-center">
+              <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
+                {stat.value}
               </div>
-            ))}
-          </div>
+              <div className="font-medium text-sm">{stat.label}</div>
+              <div className="text-foreground-tertiary text-xs mt-1">{stat.sub}</div>
+            </div>
+          ))}
         </div>
-      </section>
+      </SectionWrapper>
 
       {/* Open Source */}
       <section className="px-6 py-16">
@@ -260,25 +260,12 @@ export default function SobrePage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="px-6 py-20 text-center">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4">
-            Pronto para comecar?
-          </h2>
-          <p className="text-white/60 mb-8">
-            Crie sua conta gratis hoje. Sem cartao de credito, sem compromisso.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link href="/cadastro" className="button-luxury px-8 py-4 text-base flex items-center gap-2">
-              Comecar gratis <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link href="/contato" className="text-white/60 hover:text-white text-sm flex items-center gap-1">
-              Falar com nossa equipe <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <CTASection
+        title="Pronto para comecar?"
+        description="Crie sua conta gratis hoje. Sem cartao de credito, sem compromisso."
+        primaryCta={{ label: 'Comecar gratis', href: '/cadastro' }}
+        secondaryCta={{ label: 'Falar com nossa equipe', href: '/contato' }}
+      />
 
 
     </div>

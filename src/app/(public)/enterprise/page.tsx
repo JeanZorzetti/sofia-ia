@@ -1,9 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
-  ArrowRight, CheckCircle, BrainCircuit, Shield, Lock, Globe,
+  ArrowRight, CheckCircle, Shield, Lock, Globe,
   Users, Server, FileCheck, Headphones, ArrowLeft, Building2
 } from 'lucide-react'
+import { SectionWrapper, SectionHeader } from '@/components/landing/SectionWrapper'
+import { CTASection } from '@/components/landing/CTASection'
+import { AnimatedSection } from '@/components/landing/AnimatedSection'
+import { GradientText } from '@/components/landing/GradientText'
 
 export const metadata: Metadata = {
   title: 'Enterprise — Sofia AI para Grandes Organizações',
@@ -141,7 +145,7 @@ export default function EnterprisePage() {
 
 
       {/* Hero */}
-      <section className="px-6 pt-20 pb-24 relative overflow-hidden">
+      <section className="px-6 pt-20 pb-24 relative overflow-hidden bg-dot-grid">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-500/5 rounded-full blur-3xl" />
         </div>
@@ -155,9 +159,7 @@ export default function EnterprisePage() {
           </div>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
             IA para grandes<br />
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              organizações
-            </span>
+            <GradientText>organizações</GradientText>
           </h1>
           <p className="text-xl text-foreground-tertiary max-w-2xl mx-auto mb-10">
             Self-hosted na sua infra. SSO corporativo. SLA garantido em contrato.
@@ -175,14 +177,12 @@ export default function EnterprisePage() {
       </section>
 
       {/* Features */}
-      <section className="px-6 py-24 border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Tudo que grandes empresas precisam</h2>
-            <p className="text-foreground-tertiary max-w-xl mx-auto">
-              Segurança, compliance e controle sem abrir mão da velocidade de inovação com IA.
-            </p>
-          </div>
+      <SectionWrapper>
+        <SectionHeader
+          title="Tudo que grandes empresas precisam"
+          description="Segurança, compliance e controle sem abrir mão da velocidade de inovação com IA."
+        />
+        <AnimatedSection direction="up" delay={0.1}>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f) => (
               <div key={f.title} className="glass-card p-6 rounded-xl">
@@ -192,8 +192,8 @@ export default function EnterprisePage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </AnimatedSection>
+      </SectionWrapper>
 
       {/* O que está incluído */}
       <section className="px-6 py-24 bg-background-secondary">
@@ -238,19 +238,13 @@ export default function EnterprisePage() {
         </div>
       </section>
 
-      {/* CTA final */}
-      <section className="px-6 py-24">
-        <div className="max-w-3xl mx-auto text-center">
-          <Globe className="w-12 h-12 text-blue-400 mx-auto mb-6" />
-          <h2 className="text-3xl font-bold mb-4">Pronto para começar?</h2>
-          <p className="text-foreground-tertiary mb-8 text-lg">
-            Agende uma call de 30 minutos com nossa equipe para entender seu caso de uso e montar uma proposta.
-          </p>
-          <Link href="/contato?type=enterprise" className="button-luxury px-12 py-4 text-base inline-flex items-center gap-2 justify-center">
-            Agendar call <ArrowRight className="w-5 h-5" />
-          </Link>
-        </div>
-      </section>
+      <CTASection
+        icon={Globe}
+        title="Pronto para começar?"
+        description="Agende uma call de 30 minutos com nossa equipe para entender seu caso de uso e montar uma proposta."
+        primaryCta={{ label: 'Agendar call', href: '/contato?type=enterprise' }}
+        secondaryCta={{ label: 'Ver todos os planos', href: '/preco' }}
+      />
 
 
     </div>

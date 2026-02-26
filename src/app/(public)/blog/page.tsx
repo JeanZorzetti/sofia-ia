@@ -3,6 +3,9 @@ import Link from 'next/link'
 import { getAllPosts, formatDate } from '@/lib/blog'
 import { BrainCircuit, ArrowRight, Clock, Tag } from 'lucide-react'
 import NewsletterForm from '@/components/NewsletterForm'
+import { AnimatedSection } from '@/components/landing/AnimatedSection'
+import { CTASection } from '@/components/landing/CTASection'
+import { GradientText } from '@/components/landing/GradientText'
 
 export const metadata: Metadata = {
   title: 'Blog — Sofia AI | Orquestração de Agentes IA, RAG e Automação',
@@ -38,27 +41,23 @@ export default function BlogPage() {
 
 
       {/* Header */}
-      <section className="relative px-6 pt-20 pb-16 overflow-hidden">
+      <section className="relative px-6 pt-20 pb-16 overflow-hidden bg-dot-grid">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-500/5 rounded-full blur-3xl" />
         </div>
-        <div className="max-w-4xl mx-auto text-center relative">
+        <AnimatedSection className="max-w-4xl mx-auto text-center relative">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-sm text-blue-300 mb-6">
             <BrainCircuit className="w-4 h-4" />
             Blog & Guias
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-            Aprenda a Orquestrar
-            <br />
-            <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Agentes IA
-            </span>
+            Aprenda a Orquestrar <GradientText>Agentes IA</GradientText>
           </h1>
           <p className="text-lg text-foreground-tertiary max-w-2xl mx-auto">
             Guias completos e artigos técnicos sobre orquestração de agentes, Knowledge Base com
             RAG e automação inteligente para empresas.
           </p>
-        </div>
+        </AnimatedSection>
       </section>
 
       {/* Posts Grid */}
@@ -125,19 +124,11 @@ export default function BlogPage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="px-6 py-16 bg-background-secondary border-t border-white/5">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-3">Pronto para criar sua primeira orquestração?</h2>
-          <p className="text-foreground-tertiary mb-6 text-sm">
-            Coloque em prática o que aprendeu. Crie sua conta grátis no Sofia IA — sem cartão,
-            sem configuração complexa.
-          </p>
-          <Link href="/login" className="button-luxury px-8 py-3 text-sm inline-flex items-center gap-2">
-            Criar Conta Grátis <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </section>
+      <CTASection
+        title="Pronto para criar sua primeira orquestração?"
+        description="Coloque em prática o que aprendeu. Crie sua conta grátis no Sofia IA — sem cartão, sem configuração complexa."
+        primaryCta={{ label: 'Criar Conta Grátis', href: '/login' }}
+      />
 
       {/* Footer minimal */}
 

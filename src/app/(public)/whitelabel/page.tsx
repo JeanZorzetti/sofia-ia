@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
-  BrainCircuit,
   ArrowRight,
   Paintbrush,
   Globe,
@@ -13,6 +12,10 @@ import {
   Code2,
   Star,
 } from 'lucide-react'
+import { SectionWrapper, SectionHeader } from '@/components/landing/SectionWrapper'
+import { CTASection } from '@/components/landing/CTASection'
+import { AnimatedSection } from '@/components/landing/AnimatedSection'
+import { GradientText } from '@/components/landing/GradientText'
 
 export const metadata: Metadata = {
   title: 'White-label Sofia AI — Plataforma de IA com Sua Marca',
@@ -91,22 +94,18 @@ const steps = [
 
 export default function WhitelabelPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
-
+    <div className="min-h-screen bg-background text-foreground">
 
       {/* Hero */}
-      <section className="px-6 pt-20 pb-16 text-center">
-        <div className="max-w-3xl mx-auto">
+      <section className="px-6 pt-20 pb-16 text-center bg-dot-grid">
+        <AnimatedSection className="max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-sm text-purple-300 mb-6">
             <Building2 className="w-4 h-4" /> Para agências, consultorias e ISVs
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Plataforma de IA{' '}
-            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              com a sua marca
-            </span>
+            Plataforma de IA <GradientText>com a sua marca</GradientText>
           </h1>
-          <p className="text-lg text-white/50 max-w-2xl mx-auto mb-10">
+          <p className="text-lg text-foreground-tertiary max-w-2xl mx-auto mb-10">
             Ofereça uma plataforma completa de orquestração de agentes IA para seus clientes — com seu logo, seu
             domínio e seus preços. Infraestrutura nossa, valor seu.
           </p>
@@ -124,34 +123,32 @@ export default function WhitelabelPage() {
               Ver Planos <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-        </div>
+        </AnimatedSection>
       </section>
 
       {/* Use cases */}
-      <section className="px-6 pb-20">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-bold text-center mb-10">Quem usa white-label Sofia AI</h2>
+      <SectionWrapper>
+        <SectionHeader title="Quem usa white-label Sofia AI" />
+        <AnimatedSection>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {useCases.map((uc) => (
               <div key={uc.title} className="glass-card rounded-2xl p-6">
                 <div className="text-3xl mb-4">{uc.icon}</div>
                 <h3 className="font-semibold text-white mb-2">{uc.title}</h3>
-                <p className="text-white/50 text-sm">{uc.description}</p>
+                <p className="text-foreground-tertiary text-sm">{uc.description}</p>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </AnimatedSection>
+      </SectionWrapper>
 
       {/* Features */}
-      <section className="px-6 py-20 border-t border-white/5">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold mb-4">Tudo que você precisa para revender IA</h2>
-            <p className="text-white/50 max-w-xl mx-auto">
-              Recursos enterprise disponíveis no plano White-label, prontos para personalização e entrega.
-            </p>
-          </div>
+      <SectionWrapper alt>
+        <SectionHeader
+          title="Tudo que você precisa para revender IA"
+          description="Recursos enterprise disponíveis no plano White-label, prontos para personalização e entrega."
+        />
+        <AnimatedSection direction="up" delay={0.1}>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map(({ icon: Icon, title, description }) => (
               <div key={title} className="glass-card rounded-2xl p-6 flex gap-4">
@@ -160,19 +157,19 @@ export default function WhitelabelPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-white mb-1">{title}</h3>
-                  <p className="text-white/50 text-sm">{description}</p>
+                  <p className="text-foreground-tertiary text-sm">{description}</p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </AnimatedSection>
+      </SectionWrapper>
 
       {/* How it works */}
-      <section className="px-6 py-20 border-t border-white/5">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Como funciona</h2>
-          <div className="grid md:grid-cols-2 gap-6">
+      <SectionWrapper>
+        <SectionHeader title="Como funciona" />
+        <AnimatedSection direction="up" delay={0.1}>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {steps.map(({ step, title, description }) => (
               <div key={step} className="flex gap-4">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-white/10 flex items-center justify-center flex-shrink-0">
@@ -180,26 +177,26 @@ export default function WhitelabelPage() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-white mb-1">{title}</h3>
-                  <p className="text-white/50 text-sm">{description}</p>
+                  <p className="text-foreground-tertiary text-sm">{description}</p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </AnimatedSection>
+      </SectionWrapper>
 
       {/* Pricing highlight */}
-      <section className="px-6 py-20 border-t border-white/5">
+      <SectionWrapper alt>
         <div className="max-w-2xl mx-auto glass-card rounded-2xl p-10 text-center">
           <div className="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-5">
             <Star className="w-6 h-6 text-purple-400" />
           </div>
           <h2 className="text-2xl font-bold mb-3">Plano Enterprise White-label</h2>
-          <p className="text-white/50 mb-6">
+          <p className="text-foreground-tertiary mb-6">
             Preço customizado conforme volume de clientes e funcionalidades necessárias. Inclui onboarding dedicado,
             SLA personalizado e suporte comercial para revenda.
           </p>
-          <ul className="space-y-2 text-sm text-white/60 mb-8 text-left max-w-sm mx-auto">
+          <ul className="space-y-2 text-sm text-foreground-secondary mb-8 text-left max-w-sm mx-auto">
             {[
               'Tudo do plano Business',
               'Marca e domínio customizados',
@@ -222,9 +219,7 @@ export default function WhitelabelPage() {
             Falar com Vendas <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
-      </section>
-
-
+      </SectionWrapper>
     </div>
   )
 }

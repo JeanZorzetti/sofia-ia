@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
-  BrainCircuit,
   ArrowRight,
   Github,
   MessageSquare,
@@ -14,6 +13,9 @@ import {
   Mail,
 } from 'lucide-react'
 import NewsletterForm from '@/components/NewsletterForm'
+import { AnimatedSection } from '@/components/landing/AnimatedSection'
+import { GradientText } from '@/components/landing/GradientText'
+import { SectionWrapper } from '@/components/landing/SectionWrapper'
 
 export const metadata: Metadata = {
   title: 'Comunidade Sofia AI — Discord, GitHub e Early Access',
@@ -47,22 +49,19 @@ const earlyAdopterBenefits = [
 
 export default function ComunidadePage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
-
+    <div className="min-h-screen bg-background text-foreground">
 
       {/* Hero */}
       <section className="px-6 pt-20 pb-16 text-center">
-        <div className="max-w-3xl mx-auto">
+        <AnimatedSection className="max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-sm text-purple-300 mb-6">
             <Users className="w-4 h-4" /> Comunidade aberta e em crescimento
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
             Construa o futuro da{' '}
-            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              IA junto com a gente
-            </span>
+            <GradientText>IA junto com a gente</GradientText>
           </h1>
-          <p className="text-lg text-white/50 max-w-2xl mx-auto mb-10">
+          <p className="text-lg text-foreground-tertiary max-w-2xl mx-auto mb-10">
             Uma comunidade de empresários, desenvolvedores e profissionais que usam orquestração multi-agente para
             automatizar e crescer. Aprenda, compartilhe e influencie o produto.
           </p>
@@ -84,12 +83,13 @@ export default function ComunidadePage() {
               <Github className="w-4 h-4" /> Ver no GitHub
             </a>
           </div>
-        </div>
+        </AnimatedSection>
       </section>
 
       {/* Community hubs */}
-      <section className="px-6 pb-20">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
+      <SectionWrapper>
+        <AnimatedSection>
+        <div className="grid md:grid-cols-3 gap-6">
 
           {/* Discord */}
           <div className="glass-card rounded-2xl p-8 flex flex-col">
@@ -181,22 +181,23 @@ export default function ComunidadePage() {
             </Link>
           </div>
         </div>
-      </section>
+        </AnimatedSection>
+      </SectionWrapper>
 
       {/* Newsletter */}
-      <section className="px-6 py-20 border-t border-white/5">
+      <SectionWrapper alt>
         <div className="max-w-xl mx-auto text-center">
           <div className="w-12 h-12 rounded-xl bg-green-500/20 border border-green-500/30 flex items-center justify-center mx-auto mb-5">
             <Mail className="w-6 h-6 text-green-400" />
           </div>
           <h2 className="text-2xl font-bold mb-3">Newsletter semanal</h2>
-          <p className="text-white/50 text-sm mb-8">
+          <p className="text-foreground-tertiary text-sm mb-8">
             Toda semana: novidades do produto, artigos sobre IA para empresas, tutoriais e cases de uso reais.
             Sem spam — só conteúdo que vale o seu tempo.
           </p>
           <NewsletterForm source="comunidade" />
         </div>
-      </section>
+      </SectionWrapper>
 
       {/* Stats */}
       <section className="px-6 py-16 border-t border-white/5">
@@ -209,7 +210,7 @@ export default function ComunidadePage() {
           ].map(({ value, label }) => (
             <div key={label}>
               <div className="text-2xl font-bold text-white mb-1">{value}</div>
-              <div className="text-sm text-white/40">{label}</div>
+              <div className="text-sm text-foreground-tertiary">{label}</div>
             </div>
           ))}
         </div>

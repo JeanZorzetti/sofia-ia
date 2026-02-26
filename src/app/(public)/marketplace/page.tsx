@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
-  BrainCircuit,
   ArrowRight,
   Search,
   Star,
@@ -13,9 +12,10 @@ import {
   Scale,
   ShoppingCart,
   Megaphone,
-  BookOpen
 } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
+import { AnimatedSection } from '@/components/landing/AnimatedSection'
+import { GradientText } from '@/components/landing/GradientText'
 
 export const metadata: Metadata = {
   title: 'Marketplace de Templates — Sofia AI | Orquestrações Prontas',
@@ -237,7 +237,7 @@ export default async function MarketplacePage() {
   const templates: TemplateItem[] = dbTemplates ?? fallbackTemplates
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Schema Markup */}
       <script
         type="application/ld+json"
@@ -260,23 +260,18 @@ export default async function MarketplacePage() {
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-purple-500/5 rounded-full blur-3xl" />
         </div>
-        <div className="max-w-4xl mx-auto text-center relative">
+        <AnimatedSection className="max-w-4xl mx-auto text-center relative">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 text-sm text-purple-300 mb-6">
             <GitBranch className="w-4 h-4" />
             {templates.length}+ templates prontos
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">
-            Marketplace de{' '}
-            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-              Templates IA
-            </span>
+            Marketplace de <GradientText>Templates IA</GradientText>
           </h1>
-          <p className="text-lg text-white/60 max-w-2xl mx-auto mb-8">
+          <p className="text-lg text-foreground-tertiary max-w-2xl mx-auto mb-8">
             Orquestrações pré-configuradas para os casos de uso mais comuns. Um clique para
             importar e começar a usar no seu workspace.
           </p>
-
-          {/* Search bar (visual only - filtering done client-side via category buttons) */}
           <div className="relative max-w-md mx-auto">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
             <input
@@ -286,7 +281,7 @@ export default async function MarketplacePage() {
               readOnly
             />
           </div>
-        </div>
+        </AnimatedSection>
       </section>
 
       {/* Category Filter */}
@@ -299,7 +294,7 @@ export default async function MarketplacePage() {
                 className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm transition-all cursor-default ${
                   cat.id === 'all'
                     ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                    : 'border-white/10 text-white/60 hover:border-white/20 hover:text-white/80'
+                    : 'border-white/10 text-foreground-tertiary hover:border-white/20 hover:text-foreground-secondary'
                 }`}
               >
                 <cat.icon className="w-3.5 h-3.5" />
@@ -315,15 +310,16 @@ export default async function MarketplacePage() {
         <div className="max-w-7xl mx-auto">
           {/* Stats bar */}
           <div className="flex items-center justify-between mb-8">
-            <p className="text-sm text-white/40">
+            <p className="text-sm text-foreground-tertiary">
               {templates.length} templates disponíveis
             </p>
-            <div className="flex items-center gap-1 text-xs text-white/30">
+            <div className="flex items-center gap-1 text-xs text-foreground-tertiary">
               <Star className="w-3.5 h-3.5 text-yellow-500/60" />
               Templates oficiais validados pela equipe Sofia AI
             </div>
           </div>
 
+          <AnimatedSection>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {templates.map((template) => (
               <div
@@ -349,7 +345,7 @@ export default async function MarketplacePage() {
                 <h3 className="font-semibold text-white mb-2 leading-snug group-hover:text-blue-300 transition-colors">
                   {template.name}
                 </h3>
-                <p className="text-sm text-white/50 leading-relaxed mb-4 flex-1 line-clamp-3">
+                <p className="text-sm text-foreground-tertiary leading-relaxed mb-4 flex-1 line-clamp-3">
                   {template.description}
                 </p>
 
@@ -382,7 +378,7 @@ export default async function MarketplacePage() {
 
                 {/* Footer */}
                 <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                  <div className="flex items-center gap-3 text-xs text-white/30">
+                  <div className="flex items-center gap-3 text-xs text-foreground-tertiary">
                     <span className="flex items-center gap-1">
                       <Zap className="w-3 h-3" /> {template.time}
                     </span>
@@ -400,6 +396,7 @@ export default async function MarketplacePage() {
               </div>
             ))}
           </div>
+          </AnimatedSection>
 
           {/* Submit Template CTA */}
           <div className="mt-16 glass-card p-8 rounded-2xl text-center border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-blue-500/5">
@@ -409,7 +406,7 @@ export default async function MarketplacePage() {
             <h2 className="text-2xl font-bold text-white mb-2">
               Tem um template para compartilhar?
             </h2>
-            <p className="text-white/50 mb-6 max-w-md mx-auto text-sm">
+            <p className="text-foreground-tertiary mb-6 max-w-md mx-auto text-sm">
               Publique suas orquestrações no marketplace e ajude outros times a acelerar com IA.
               Templates aprovados ganham badge Oficial.
             </p>
