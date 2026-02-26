@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, Bot, Zap, Shield, CheckCircle, Play, ChevronRight, Users, BrainCircuit, Globe, Lock } from 'lucide-react'
+import { ArrowRight, Zap, Shield, CheckCircle, Play, ChevronRight, Users, BrainCircuit, Globe, Lock } from 'lucide-react'
 import { GlowingFeaturesGrid } from '@/components/landing/GlowingFeaturesGrid'
+import { PipelineSimulator } from '@/components/landing/PipelineSimulator'
 import { PricingGrid } from '@/components/landing/PricingGrid'
 import { CTASection } from '@/components/landing/CTASection'
 import { FAQSection } from '@/components/landing/FAQSection'
@@ -72,30 +73,9 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-          {/* Pipeline Demo */}
+          {/* Pipeline Simulator — interativo */}
           <div className="max-w-3xl mx-auto">
-            <div className="glass-card p-6 rounded-2xl">
-              <p className="text-xs text-white/40 mb-4 text-left">Pipeline de Marketing em execução</p>
-              <div className="flex items-center gap-2 md:gap-4 justify-center flex-wrap">
-                {['Pesquisador', 'Copywriter', 'Revisor'].map((role, i) => (
-                  <div key={role} className="flex items-center gap-2 md:gap-4">
-                    <div className={`flex flex-col items-center ${i === 1 ? 'opacity-100' : i === 0 ? 'opacity-60' : 'opacity-30'}`}>
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center border text-xs font-medium ${i === 0 ? 'bg-green-500/20 border-green-500/40 text-green-300' : i === 1 ? 'bg-blue-500/20 border-blue-500/40 text-blue-300 animate-pulse' : 'bg-white/5 border-white/10 text-white/40'}`}>
-                        <Bot className="w-5 h-5" />
-                      </div>
-                      <span className="text-xs text-white/60 mt-2">{role}</span>
-                      {i === 0 && <span className="text-[10px] text-green-400 mt-1">Concluido</span>}
-                      {i === 1 && <span className="text-[10px] text-blue-400 mt-1 animate-pulse">Processando...</span>}
-                      {i === 2 && <span className="text-[10px] text-white/30 mt-1">Aguardando</span>}
-                    </div>
-                    {i < 2 && <ArrowRight className="w-4 h-4 text-white/20 flex-shrink-0" />}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-left">
-                <p className="text-xs text-green-300 font-mono">Pesquisador: &ldquo;Encontrei 5 tendências no mercado de SaaS para 2026. A principal é...&rdquo;</p>
-              </div>
-            </div>
+            <PipelineSimulator />
           </div>
         </div>
         </AnimatedSection>
