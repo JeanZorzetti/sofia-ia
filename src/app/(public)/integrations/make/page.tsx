@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Sofia AI + Make',
     description: 'Automatize orquestracoes de IA com Make (Integromat).',
+    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+
   },
 }
 

@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   title: 'Sofia — Plataforma de Orquestração de Agentes IA | ROI Labs',
   description: 'Crie equipes de agentes IA que trabalham juntos para resolver tarefas complexas. Orquestrações multi-agente, Knowledge Base com RAG semântico, IDE multi-modelo e canais de atendimento integrados. Free para começar.',
   keywords: ['orquestração de agentes ia', 'multi-agent ai', 'agentes ia para empresas', 'knowledge base rag', 'ia generativa', 'crewai alternativa', 'autogen alternativa', 'plataforma ia no-code', 'sofia ia'],
-  openGraph: { title: 'Sofia — Plataforma de Orquestração de Agentes IA', description: 'Crie equipes de agentes IA que colaboram para resolver qualquer tarefa. Mais poderoso que CrewAI. Mais simples que AutoGen.', type: 'website', locale: 'pt_BR', siteName: 'Sofia AI' },
+  openGraph: { title: 'Sofia — Plataforma de Orquestração de Agentes IA', description: 'Crie equipes de agentes IA que colaboram para resolver qualquer tarefa. Mais poderoso que CrewAI. Mais simples que AutoGen.', type: 'website', locale: 'pt_BR', siteName: 'Sofia AI' , images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }]},
   twitter: { card: 'summary_large_image', title: 'Sofia — Multi-Agent AI Orchestration Platform', description: 'Build AI agent teams that collaborate on complex tasks. Knowledge Base with RAG, multi-model IDE, WhatsApp integration. Free to start.' },
   alternates: { canonical: 'https://sofiaia.roilabs.com.br' },
 }

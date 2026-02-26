@@ -11,6 +11,8 @@ export const metadata: Metadata = {
     description: 'Ganhe comissões recorrentes revendendo a plataforma de orquestração de agentes IA mais completa do Brasil.',
     type: 'website',
     locale: 'pt_BR',
+    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+
   },
   alternates: { canonical: 'https://sofiaia.roilabs.com.br/parceiros' },
 }

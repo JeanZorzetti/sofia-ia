@@ -27,6 +27,8 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'pt_BR',
     siteName: 'Sofia AI',
+    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+
   },
   alternates: {
     canonical: 'https://sofiaia.roilabs.com.br/blog',

@@ -27,6 +27,8 @@ export const metadata: Metadata = {
     description: 'Comparativo completo entre as principais plataformas de orquestração de agentes IA. Interface visual, RAG, multi-canal e preço.',
     type: 'website',
     locale: 'pt_BR',
+    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+
   },
   alternates: { canonical: 'https://sofiaia.roilabs.com.br/comparativo' },
 }

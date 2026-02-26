@@ -38,7 +38,9 @@ export const metadata: Metadata = {
     description: 'Pipelines visuais de agentes que colaboram. Sequencial, paralelo ou consenso. Streaming em tempo real. Analytics por execução.',
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Sofia AI'
+    siteName: 'Sofia AI',
+    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+
   },
   twitter: {
     card: 'summary_large_image',
