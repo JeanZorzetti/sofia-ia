@@ -27,6 +27,7 @@ export default function OrchestrationsPage() {
     handleAiGenerate,
     handleCreateFromAi,
     handleDeleteOrchestration,
+    handleToggleLanding,
     router,
   } = useOrchestrations()
 
@@ -74,6 +75,7 @@ export default function OrchestrationsPage() {
               orchestration={orchestration}
               onView={(id) => router.push(`/dashboard/orchestrations/${id}`)}
               onDelete={handleDeleteOrchestration}
+              onToggleLanding={handleToggleLanding}
             />
           ))}
         </div>

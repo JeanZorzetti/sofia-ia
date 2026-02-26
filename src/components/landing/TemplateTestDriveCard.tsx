@@ -40,11 +40,18 @@ const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
   },
 }
 
-async function fetchAIOutput(category: string, input: string): Promise<string> {
+async function fetchAIOutput(
+  category: string,
+  input: string,
+  orchestrationId: string | null
+): Promise<string> {
+  const body = orchestrationId
+    ? { orchestrationId, input }
+    : { category, input }
   const res = await fetch('/api/landing/template-run', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ category, input }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) throw new Error('api_error')
   const data = await res.json()
@@ -53,6 +60,7 @@ async function fetchAIOutput(category: string, input: string): Promise<string> {
 
 interface TemplateTestDriveCardProps {
   template: {
+    orchestrationId: string | null
     icon: string
     name: string
     roles: string[]
@@ -86,7 +94,7 @@ export function TemplateTestDriveCard({ template }: TemplateTestDriveCardProps) 
     setCharIndex(0)
 
     // Kick off real AI call in background while animation runs
-    aiPromiseRef.current = fetchAIOutput(template.category, trimmed).catch(
+    aiPromiseRef.current = fetchAIOutput(template.category, trimmed, template.orchestrationId).catch(
       () => config.fallback(trimmed)
     )
 

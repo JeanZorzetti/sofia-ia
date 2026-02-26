@@ -17,6 +17,8 @@ export interface Orchestration {
   agents: unknown[]
   strategy: string
   status: string
+  isLandingTemplate: boolean
+  config: Record<string, unknown>
   createdAt: string
   _count: { executions: number }
   executions: { status: string; completedAt?: string; startedAt?: string }[]
@@ -262,6 +264,27 @@ export function useOrchestrations() {
     }
   }
 
+  const handleToggleLanding = async (id: string, current: boolean) => {
+    try {
+      const res = await fetch(`/api/orchestrations/${id}/landing`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isLandingTemplate: !current }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        toast.success(!current ? 'Adicionado à landing page' : 'Removido da landing page')
+        setOrchestrations((prev) =>
+          prev.map((o) => (o.id === id ? { ...o, isLandingTemplate: !current } : o))
+        )
+      } else {
+        toast.error(data.error || 'Erro ao atualizar')
+      }
+    } catch {
+      toast.error('Erro ao atualizar')
+    }
+  }
+
   return {
     orchestrations,
     agents,
@@ -277,6 +300,7 @@ export function useOrchestrations() {
     handleAiGenerate,
     handleCreateFromAi,
     handleDeleteOrchestration,
+    handleToggleLanding,
     router,
   }
 }

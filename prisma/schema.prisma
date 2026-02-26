@@ -515,16 +515,18 @@ model AgentOrchestration {
   agents      Json     @default("[]")
   strategy    String   @default("sequential") @db.VarChar(50)
   config      Json     @default("{}")
-  status      String   @default("active") @db.VarChar(20)
-  createdBy   String   @map("created_by") @db.Uuid
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  status            String   @default("active") @db.VarChar(20)
+  isLandingTemplate Boolean  @default(false) @map("is_landing_template")
+  createdBy         String   @map("created_by") @db.Uuid
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   executions          OrchestrationExecution[]
   scheduledExecutions ScheduledExecution[]
 
   @@index([status])
   @@index([createdBy])
+  @@index([isLandingTemplate])
   @@map("agent_orchestrations")
 }
 

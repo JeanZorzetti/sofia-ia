@@ -10,6 +10,7 @@ import {
   XCircle,
   Trash2,
   Loader2,
+  Globe,
 } from 'lucide-react'
 
 interface Execution {
@@ -25,6 +26,7 @@ interface Orchestration {
   agents: unknown[]
   strategy: string
   status: string
+  isLandingTemplate: boolean
   createdAt: string
   _count: { executions: number }
   executions: Execution[]
@@ -34,6 +36,7 @@ interface OrchestrationCardProps {
   orchestration: Orchestration
   onView: (id: string) => void
   onDelete: (id: string) => void
+  onToggleLanding: (id: string, current: boolean) => void
 }
 
 function getStrategyBadge(strategy: string) {
@@ -91,13 +94,21 @@ function getLastExecutionBadge(orchestration: Orchestration) {
   return null
 }
 
-export function OrchestrationCard({ orchestration, onView, onDelete }: OrchestrationCardProps) {
+export function OrchestrationCard({ orchestration, onView, onDelete, onToggleLanding }: OrchestrationCardProps) {
   return (
     <Card className="glass-card hover:shadow-lg transition-shadow">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-white mb-2">{orchestration.name}</CardTitle>
+            <div className="flex items-center gap-2 mb-2">
+              <CardTitle className="text-white">{orchestration.name}</CardTitle>
+              {orchestration.isLandingTemplate && (
+                <Badge className="bg-blue-600/80 text-white text-[10px] gap-1 py-0 px-1.5">
+                  <Globe className="w-2.5 h-2.5" />
+                  Landing
+                </Badge>
+              )}
+            </div>
             <CardDescription className="text-white/60">
               {orchestration.description || 'Sem descrição'}
             </CardDescription>
@@ -133,6 +144,17 @@ export function OrchestrationCard({ orchestration, onView, onDelete }: Orchestra
         <div className="pt-4 border-t border-white/20 flex gap-2">
           <Button size="sm" className="flex-1" onClick={() => onView(orchestration.id)}>
             Ver Detalhes
+          </Button>
+          <Button
+            size="sm"
+            variant={orchestration.isLandingTemplate ? 'default' : 'outline'}
+            className={orchestration.isLandingTemplate
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'border-white/20 text-white/50 hover:text-white hover:border-white/40'}
+            onClick={() => onToggleLanding(orchestration.id, orchestration.isLandingTemplate)}
+            title={orchestration.isLandingTemplate ? 'Remover da landing page' : 'Mostrar na landing page'}
+          >
+            <Globe className="h-4 w-4" />
           </Button>
           <Button
             size="sm"

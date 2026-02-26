@@ -15,6 +15,28 @@ import { AnimatedCounter } from '@/components/landing/AnimatedCounter'
 import { TemplateTestDriveCard } from '@/components/landing/TemplateTestDriveCard'
 import { homeComparisons, homeOrchestrationTemplates, homeFAQ } from '@/data/home'
 import { plans } from '@/data/pricing'
+import { prisma } from '@/lib/prisma'
+
+interface AgentStep { agentId: string; role: string }
+
+function dbToTemplateCard(o: {
+  id: string
+  name: string
+  agents: unknown
+  strategy: string
+  config: unknown
+}) {
+  const steps = (o.agents as AgentStep[]) ?? []
+  const cfg = (o.config as Record<string, string>) ?? {}
+  return {
+    orchestrationId: o.id,
+    name: o.name,
+    icon: cfg.landingIcon ?? '🤖',
+    roles: steps.map((s) => s.role).filter(Boolean),
+    time: cfg.landingTime ?? '~45s',
+    category: o.strategy,
+  }
+}
 
 export const metadata: Metadata = {
   title: 'Sofia — Plataforma de Orquestração de Agentes IA | ROI Labs',
@@ -25,7 +47,31 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://sofiaia.roilabs.com.br' },
 }
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  // Try to pull real orchestrations marked as landing templates
+  let liveTemplates: ReturnType<typeof dbToTemplateCard>[] = []
+  try {
+    const rows = await prisma.agentOrchestration.findMany({
+      where: { isLandingTemplate: true, status: 'active' },
+      orderBy: { updatedAt: 'desc' },
+      take: 3,
+      select: { id: true, name: true, agents: true, strategy: true, config: true },
+    })
+    liveTemplates = rows.map(dbToTemplateCard)
+  } catch {
+    // Silently fall back to static templates if DB is unavailable
+  }
+
+  // Fall back to hardcoded static templates when none configured in DB
+  const templateCards = liveTemplates.length > 0 ? liveTemplates : homeOrchestrationTemplates.map((t) => ({
+    orchestrationId: null,
+    name: t.name,
+    icon: t.icon,
+    roles: t.roles,
+    time: t.time,
+    category: t.category,
+  }))
+
   return (
     <div className="bg-background text-foreground">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Sofia AI', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' }, description: 'Plataforma de orquestração de agentes IA com Knowledge Base RAG, IDE multi-modelo e canais integrados.' }) }} />
@@ -100,7 +146,7 @@ export default function LandingPage() {
             <SectionHeader title="Comece em Segundos com Templates" description="Orquestrações pré-configuradas para os casos de uso mais comuns. Um clique para criar." className="mb-12" />
           </AnimatedSection>
           <div className="grid md:grid-cols-3 gap-6">
-            {homeOrchestrationTemplates.map((template) => (
+            {templateCards.map((template) => (
               <TemplateTestDriveCard key={template.name} template={template} />
             ))}
           </div>
