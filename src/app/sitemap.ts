@@ -59,11 +59,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Contato
     { url: `${baseUrl}/contato`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${baseUrl}/status`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.5 },
-    // Legal
-    { url: `${baseUrl}/termos`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    { url: `${baseUrl}/privacidade`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
-    // App
-    { url: `${baseUrl}/login`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    // Legal — datas estáticas (raramente mudam)
+    { url: `${baseUrl}/termos`, lastModified: new Date('2025-06-01'), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${baseUrl}/privacidade`, lastModified: new Date('2025-06-01'), changeFrequency: 'yearly', priority: 0.3 },
+    // /login excluído: bloqueado em robots.txt — não deve aparecer no sitemap
     ...blogEntries,
   ]
 }

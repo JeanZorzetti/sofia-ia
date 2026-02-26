@@ -22,7 +22,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Integrações Sofia AI',
     description: 'Conecte Sofia AI com Zapier, n8n, Make, Slack, Discord e API REST.',
+    type: 'website',
+    locale: 'pt_BR',
+    siteName: 'Sofia AI',
+    url: 'https://sofiaia.roilabs.com.br/integrations',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Integrações Sofia AI — Zapier, n8n, Make e mais',
+    description: 'Conecte Sofia AI com as ferramentas que você já usa. REST API inclusa.',
+  },
+  alternates: { canonical: 'https://sofiaia.roilabs.com.br/integrations' },
 }
 
 const INTEGRATIONS = [
