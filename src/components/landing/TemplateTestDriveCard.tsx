@@ -16,28 +16,39 @@ const PHASE_TO_ACTIVE: Record<CardPhase, number> = {
 interface TemplateConfig {
   placeholder: string
   steps: string[]
-  getOutput: (input: string) => string
+  fallback: (input: string) => string
 }
 
 const TEMPLATE_CONFIGS: Record<string, TemplateConfig> = {
   marketing: {
     placeholder: 'Digite um tema para criar um post...',
     steps: ['Pesquisando tendências...', 'Escrevendo conteúdo...', 'Revisando clareza...'],
-    getOutput: (input) =>
-      `Revisor: "Post sobre '${input}' aprovado. Hook forte no título. 3 pontos de valor identificados. CTA claro ao final. Pronto para LinkedIn e blog."`,
+    fallback: (input) =>
+      `Revisor: "Post sobre '${input}' aprovado. Hook forte no título. 3 pontos de valor. CTA claro. Pronto para publicar."`,
   },
   suporte: {
     placeholder: 'Descreva o problema do cliente...',
     steps: ['Triando urgência...', 'Elaborando resposta...', 'Verificando escalação...'],
-    getOutput: (input) =>
-      `Escalação: "Ticket sobre '${input}' triado. Prioridade: Média. Resposta personalizada redigida. Resolução estimada: 2h. Sem escalação necessária."`,
+    fallback: (input) =>
+      `Escalação: "Ticket sobre '${input}' triado. Prioridade: Média. Resposta redigida. Resolução estimada: 2h."`,
   },
   pesquisa: {
     placeholder: 'Qual tema deseja pesquisar?',
     steps: ['Coletando fontes...', 'Analisando dados...', 'Sintetizando insights...'],
-    getOutput: (input) =>
-      `Sintetizador: "Análise de '${input}' concluída. 8 fontes verificadas. 3 insights prioritários identificados. Relatório: 420 palavras. Confiança: 94%."`,
+    fallback: (input) =>
+      `Sintetizador: "Análise de '${input}' concluída. 8 fontes verificadas. 3 insights principais. Confiança: 94%."`,
   },
+}
+
+async function fetchAIOutput(category: string, input: string): Promise<string> {
+  const res = await fetch('/api/landing/template-run', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category, input }),
+  })
+  if (!res.ok) throw new Error('api_error')
+  const data = await res.json()
+  return data.text || ''
 }
 
 interface TemplateTestDriveCardProps {
@@ -54,9 +65,11 @@ export function TemplateTestDriveCard({ template }: TemplateTestDriveCardProps) 
   const config = TEMPLATE_CONFIGS[template.category] ?? TEMPLATE_CONFIGS.pesquisa
   const [phase, setPhase] = useState<CardPhase>('idle')
   const [input, setInput] = useState('')
+  const [outputText, setOutputText] = useState('')
   const [charIndex, setCharIndex] = useState(0)
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
   const capturedInputRef = useRef('')
+  const aiPromiseRef = useRef<Promise<string> | null>(null)
 
   const clearAll = useCallback(() => {
     timeoutsRef.current.forEach(clearTimeout)
@@ -66,30 +79,61 @@ export function TemplateTestDriveCard({ template }: TemplateTestDriveCardProps) 
   const handleRun = useCallback(() => {
     if (!input.trim()) return
     clearAll()
-    capturedInputRef.current = input.trim()
+    const trimmed = input.trim()
+    capturedInputRef.current = trimmed
     setPhase('running-0')
+    setOutputText('')
     setCharIndex(0)
+
+    // Kick off real AI call in background while animation runs
+    aiPromiseRef.current = fetchAIOutput(template.category, trimmed).catch(
+      () => config.fallback(trimmed)
+    )
+
     timeoutsRef.current = [
       setTimeout(() => setPhase('running-1'), 1200),
       setTimeout(() => setPhase('running-2'), 2400),
       setTimeout(() => setPhase('output'), 3600),
     ]
-  }, [input, clearAll])
+  }, [input, clearAll, template.category, config])
 
   const handleReset = useCallback(() => {
     clearAll()
     setPhase('idle')
+    setOutputText('')
     setCharIndex(0)
+    aiPromiseRef.current = null
   }, [clearAll])
 
-  // Typewriter effect
+  // When output phase starts, resolve AI promise → typewriter
   useEffect(() => {
     if (phase !== 'output') return
-    const text = config.getOutput(capturedInputRef.current)
-    if (charIndex >= text.length) return
+    let cancelled = false
+    ;(async () => {
+      let text = ''
+      try {
+        text = aiPromiseRef.current
+          ? await aiPromiseRef.current
+          : config.fallback(capturedInputRef.current)
+      } catch {
+        text = config.fallback(capturedInputRef.current)
+      }
+      if (!cancelled) {
+        setOutputText(text)
+        setCharIndex(0)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [phase, config])
+
+  // Typewriter
+  useEffect(() => {
+    if (!outputText || charIndex >= outputText.length) return
     const t = setTimeout(() => setCharIndex((n) => n + 1), 18)
     return () => clearTimeout(t)
-  }, [phase, charIndex, config])
+  }, [outputText, charIndex])
 
   // Cleanup on unmount
   useEffect(() => () => clearAll(), [clearAll])
@@ -103,7 +147,7 @@ export function TemplateTestDriveCard({ template }: TemplateTestDriveCardProps) 
   }
 
   const isRunning = phase !== 'idle'
-  const outputText = config.getOutput(capturedInputRef.current)
+  const isLoadingOutput = phase === 'output' && !outputText
 
   return (
     <div className="glass-card p-5 rounded-xl flex flex-col gap-4">
@@ -136,7 +180,7 @@ export function TemplateTestDriveCard({ template }: TemplateTestDriveCardProps) 
         </div>
       )}
 
-      {/* Input + Play button */}
+      {/* Input + Play */}
       {!isRunning && (
         <div className="flex gap-2">
           <input
@@ -206,15 +250,22 @@ export function TemplateTestDriveCard({ template }: TemplateTestDriveCardProps) 
         </div>
       )}
 
-      {/* Typewriter output */}
+      {/* Output area */}
       {phase === 'output' && (
         <div className="p-2.5 rounded-lg bg-green-500/10 border border-green-500/20 min-h-[44px]">
-          <p className="text-[11px] text-green-300 font-mono leading-relaxed">
-            {outputText.slice(0, charIndex)}
-            {charIndex < outputText.length && (
-              <span className="inline-block w-[5px] h-[11px] bg-green-400/80 rounded-sm animate-pulse align-[-2px] ml-[1px]" />
-            )}
-          </p>
+          {isLoadingOutput ? (
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-[5px] h-[11px] bg-green-400/60 rounded-sm animate-pulse" />
+              <span className="text-[11px] text-green-300/40 font-mono">Gerando resposta...</span>
+            </div>
+          ) : (
+            <p className="text-[11px] text-green-300 font-mono leading-relaxed">
+              {outputText.slice(0, charIndex)}
+              {charIndex < outputText.length && (
+                <span className="inline-block w-[5px] h-[11px] bg-green-400/80 rounded-sm animate-pulse align-[-2px] ml-[1px]" />
+              )}
+            </p>
+          )}
         </div>
       )}
 
