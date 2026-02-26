@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { ArrowRight, Zap, Shield, CheckCircle, Play, ChevronRight, Users, BrainCircuit, Globe, Lock } from 'lucide-react'
 import { GlowingFeaturesGrid } from '@/components/landing/GlowingFeaturesGrid'
 import { PipelineSimulator } from '@/components/landing/PipelineSimulator'
+import { FloatingPaths } from '@/components/ui/background-paths'
 import { PricingGrid } from '@/components/landing/PricingGrid'
 import { CTASection } from '@/components/landing/CTASection'
 import { FAQSection } from '@/components/landing/FAQSection'
@@ -31,6 +32,8 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative px-6 pt-20 pb-28 overflow-hidden bg-dot-grid">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <FloatingPaths position={1} />
+          <FloatingPaths position={-1} />
           <div className="glow-orb absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-500/6 rounded-full blur-3xl" />
           <div className="glow-orb-slow absolute top-40 left-1/3 w-[400px] h-[300px] bg-purple-500/6 rounded-full blur-3xl" />
           <div className="glow-orb-reverse absolute bottom-10 right-1/4 w-[300px] h-[300px] bg-cyan-500/4 rounded-full blur-3xl" />
