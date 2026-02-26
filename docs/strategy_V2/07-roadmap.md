@@ -167,6 +167,30 @@
 
 ---
 
+## ✅ Sprint 8 — UX Polish + Dashboard Decomposition
+
+**Objetivo:** Micro-interacoes pendentes (counter animation, loading states) + reducao de divida tecnica nos dashboards maiores.
+**Status: CONCLUIDO — commit `06ad8dc`**
+
+| # | Tarefa | Prioridade | Status |
+|---|--------|------------|--------|
+| 8.1 | `AnimatedCounter` component (framer-motion useInView + rAF ease-out cubic) | P1 | ✅ |
+| 8.2 | Aplicar AnimatedCounter em home/sobre stats | P1 | ✅ |
+| 8.3 | Button loading states — knowledge create/add-document | P1 | ✅ |
+| 8.4 | Button loading states — orchestrations webhooks/schedule (estado ja existia) | P1 | ✅ |
+| 8.5 | `useKnowledge.ts` hook — extrai state + handlers da KB page | P0 | ✅ |
+| 8.6 | `AddDocumentDialog.tsx` — dialog self-contained com 3 abas (text/url/file) | P0 | ✅ |
+| 8.7 | `CreateKnowledgeBaseDialog.tsx` — dialog self-contained | P0 | ✅ |
+| 8.8 | knowledge/page.tsx decomposicao: 555 → ~120 LOC | P0 | ✅ |
+| 8.9 | `useOrchestrationDetail.ts` hook — extrai todo state + handlers (~15 useState, 3 useEffects) | P0 | ✅ |
+| 8.10 | `OutputWebhooksManager.tsx` — card self-contained com add/toggle/remove + dispatch history | P0 | ✅ |
+| 8.11 | `ScheduleDialog.tsx` — dialog self-contained com cron presets | P0 | ✅ |
+| 8.12 | orchestrations/[id]/page.tsx decomposicao: 1214 → ~310 LOC | P0 | ✅ |
+
+**Entrega:** AnimatedCounter em 2 paginas landing. 7 arquivos novos. -2.562 LOC liquidas de divida tecnica. Build 285 paginas ok.
+
+---
+
 ## Resumo de Impacto
 
 | Metrica | Antes | Depois |
