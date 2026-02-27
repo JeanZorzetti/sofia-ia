@@ -11,6 +11,7 @@ import { NewsletterSection } from '@/components/landing/NewsletterSection'
 import { SectionWrapper, SectionHeader } from '@/components/landing/SectionWrapper'
 import { GradientText } from '@/components/landing/GradientText'
 import { AnimatedSection } from '@/components/landing/AnimatedSection'
+import { AnimatedCounter } from '@/components/landing/AnimatedCounter'
 import { TemplateTestDriveCard } from '@/components/landing/TemplateTestDriveCard'
 import { homeComparisons, homeOrchestrationTemplates, homeFAQ } from '@/data/home'
 import { plans } from '@/data/pricing'
@@ -80,11 +81,7 @@ export default async function LandingPage() {
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <FloatingPaths position={1} />
           <FloatingPaths position={-1} />
-          {/* Cyan radial glow — top center */}
-          <div className="absolute top-0 left-0 right-0 h-[800px]" style={{ background: 'radial-gradient(circle at 50% 30%, rgba(56, 189, 248, 0.15), transparent 60%)' }} />
-          {/* Diagonal glow lines */}
-          <div className="absolute h-[300px] w-[150%] -rotate-[25deg] -top-[20%] -right-[20%] blur-[60px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.1), rgba(168,85,247,0.1), transparent)' }} />
-          <div className="absolute h-[300px] w-[150%] -rotate-[45deg] -bottom-[10%] -left-[20%] opacity-50 blur-[60px]" style={{ background: 'linear-gradient(90deg, transparent, rgba(56,189,248,0.1), rgba(168,85,247,0.1), transparent)' }} />
+          <div className="glow-orb absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-500/6 rounded-full blur-3xl" />
           <div className="glow-orb-slow absolute top-40 left-1/3 w-[400px] h-[300px] bg-purple-500/6 rounded-full blur-3xl" />
           <div className="glow-orb-reverse absolute bottom-10 right-1/4 w-[300px] h-[300px] bg-cyan-500/4 rounded-full blur-3xl" />
         </div>
@@ -112,26 +109,21 @@ export default async function LandingPage() {
               Ver como funciona <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-
-          {/* Stats bar — glassmorphism */}
-          <div className="w-full max-w-5xl mx-auto mb-16">
-            <div className="rounded-2xl py-10 px-4 border border-white/10 bg-white/[0.03] backdrop-blur-xl">
-              <div className="flex flex-col md:flex-row items-center justify-between divide-y md:divide-y-0 md:divide-x divide-white/15 gap-8 md:gap-0">
-                {[
-                  { d: '50+', label: 'Modelos IA suportados' },
-                  { d: 'pgvector', label: 'Busca semântica real' },
-                  { d: '3', label: 'Estratégias de orquestração' },
-                  { d: 'Free', label: 'Para começar' },
-                ].map((stat) => (
-                  <div key={stat.label} className="flex-1 flex flex-col items-center justify-center px-4 w-full">
-                    <span className="text-5xl md:text-6xl font-extrabold text-white mb-2 tracking-tight">{stat.d}</span>
-                    <span className="text-sm text-white/50 font-medium text-center">{stat.label}</span>
-                  </div>
-                ))}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto mb-16">
+            {[
+              { n: 50, s: '+', d: '', label: 'Modelos IA suportados' },
+              { n: 0, s: '', d: 'pgvector', label: 'Busca semântica real' },
+              { n: 3, s: '', d: '', label: 'Estratégias de orquestração' },
+              { n: 0, s: '', d: 'Free', label: 'Para começar' },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <div className="text-3xl md:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60">
+                  {stat.d ? stat.d : <AnimatedCounter value={stat.n} suffix={stat.s} />}
+                </div>
+                <div className="text-xs text-foreground-tertiary mt-1">{stat.label}</div>
               </div>
-            </div>
+            ))}
           </div>
-
           {/* Pipeline Simulator — interativo */}
           <div className="max-w-3xl mx-auto">
             <PipelineSimulator />
