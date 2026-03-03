@@ -34,7 +34,8 @@ import {
   Network,
   CalendarDays,
   BarChart2,
-  Megaphone
+  Megaphone,
+  Code2,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -56,126 +57,71 @@ interface OrgItem {
   role: string
 }
 
-const menuItems = [
+type MenuItem = {
+  href: string
+  label: string
+  icon: React.ElementType
+}
+
+type MenuSection = {
+  label: string | null
+  items: MenuItem[]
+}
+
+const menuSections: MenuSection[] = [
   {
-    href: '/dashboard',
-    label: 'Overview',
-    icon: LayoutDashboard,
+    label: null,
+    items: [
+      { href: '/dashboard',              label: 'Overview',      icon: LayoutDashboard },
+      { href: '/dashboard/agents',       label: 'Agentes de IA', icon: Bot },
+      { href: '/dashboard/conversations', label: 'Conversas',    icon: Inbox },
+    ],
   },
   {
-    href: '/dashboard/agents',
-    label: 'Agentes de IA',
-    icon: Bot,
+    label: 'Plataforma',
+    items: [
+      { href: '/dashboard/skills',         label: 'Skills',        icon: Sparkles },
+      { href: '/dashboard/mcp',            label: 'MCP Servers',   icon: Network },
+      { href: '/dashboard/knowledge',      label: 'Knowledge Base', icon: Database },
+      { href: '/dashboard/workflows',      label: 'Workflows',     icon: Workflow },
+      { href: '/dashboard/orchestrations', label: 'Orquestrações', icon: Users },
+      { href: '/dashboard/files',          label: 'IDE',           icon: Terminal },
+      { href: '/dashboard/integrations',   label: 'Integrações',   icon: Plug },
+    ],
   },
   {
-    href: '/dashboard/skills',
-    label: 'Skills',
-    icon: Sparkles,
+    label: 'Threads',
+    items: [
+      { href: '/dashboard/threads/calendar',  label: 'Calendário', icon: CalendarDays },
+      { href: '/dashboard/threads/analytics', label: 'Analytics',  icon: BarChart2 },
+      { href: '/dashboard/threads/campaigns', label: 'Campanhas',  icon: Megaphone },
+    ],
   },
   {
-    href: '/dashboard/mcp',
-    label: 'MCP Servers',
-    icon: Network,
+    label: 'Crescimento',
+    items: [
+      { href: '/dashboard/analytics',  label: 'Analytics',    icon: BarChart3 },
+      { href: '/dashboard/ab-tests',   label: 'A/B Tests',    icon: FlaskConical },
+      { href: '/dashboard/monitoring', label: 'Monitoramento', icon: Activity },
+    ],
   },
   {
-    href: '/dashboard/conversations',
-    label: 'Conversas',
-    icon: Inbox,
+    label: 'Distribuição',
+    items: [
+      { href: '/dashboard/whatsapp',   label: 'WhatsApp',   icon: MessageSquare },
+      { href: '/dashboard/templates',  label: 'Templates',  icon: LayoutTemplate },
+      { href: '/dashboard/marketplace', label: 'Marketplace', icon: Store },
+    ],
   },
   {
-    href: '/dashboard/knowledge',
-    label: 'Knowledge Base',
-    icon: Database,
-  },
-  {
-    href: '/dashboard/workflows',
-    label: 'Workflows',
-    icon: Workflow,
-  },
-  {
-    href: '/dashboard/orchestrations',
-    label: 'Orquestrações',
-    icon: Users,
-  },
-  {
-    href: '/dashboard/files',
-    label: 'IDE',
-    icon: Terminal,
-  },
-  {
-    href: '/dashboard/integrations',
-    label: 'Integrações',
-    icon: Plug,
-  },
-  {
-    href: '/dashboard/threads/calendar',
-    label: 'Calendário Threads',
-    icon: CalendarDays,
-  },
-  {
-    href: '/dashboard/threads/analytics',
-    label: 'Analytics Threads',
-    icon: BarChart2,
-  },
-  {
-    href: '/dashboard/threads/campaigns',
-    label: 'Campanhas Threads',
-    icon: Megaphone,
-  },
-  {
-    href: '/dashboard/analytics',
-    label: 'Analytics',
-    icon: BarChart3,
-  },
-  {
-    href: '/dashboard/ab-tests',
-    label: 'A/B Tests',
-    icon: FlaskConical,
-  },
-  {
-    href: '/dashboard/templates',
-    label: 'Templates',
-    icon: LayoutTemplate,
-  },
-  {
-    href: '/dashboard/marketplace',
-    label: 'Marketplace',
-    icon: Store,
-  },
-  {
-    href: '/dashboard/monitoring',
-    label: 'Monitoramento',
-    icon: Activity,
-  },
-  {
-    href: '/dashboard/whatsapp',
-    label: 'WhatsApp',
-    icon: MessageSquare,
-  },
-  {
-    href: '/dashboard/billing',
-    label: 'Billing',
-    icon: CreditCard,
-  },
-  {
-    href: '/dashboard/whitelabel',
-    label: 'White-label',
-    icon: Layers,
-  },
-  {
-    href: '/dashboard/api-keys',
-    label: 'API Keys',
-    icon: Key,
-  },
-  {
-    href: '/dashboard/settings',
-    label: 'Configurações',
-    icon: Settings,
-  },
-  {
-    href: '/dashboard/dev-chat',
-    label: 'Dev Playground',
-    icon: Terminal,
+    label: 'Sistema',
+    items: [
+      { href: '/dashboard/billing',    label: 'Billing',       icon: CreditCard },
+      { href: '/dashboard/whitelabel', label: 'White-label',   icon: Layers },
+      { href: '/dashboard/api-keys',   label: 'API Keys',      icon: Key },
+      { href: '/dashboard/settings',   label: 'Configurações', icon: Settings },
+      { href: '/dashboard/dev-chat',   label: 'Dev Playground', icon: Code2 },
+    ],
   },
 ]
 
@@ -212,7 +158,6 @@ export function Sidebar() {
 
   const handleWorkspaceChange = (orgSlug: string | 'personal') => {
     setActiveWorkspace(orgSlug)
-    // Store selection in localStorage for persistence across page loads
     try {
       if (typeof window !== 'undefined') {
         localStorage.setItem('sofia_active_workspace', orgSlug)
@@ -232,7 +177,7 @@ export function Sidebar() {
         "hidden h-full flex-col border-r border-sidebar-border bg-sidebar lg:flex transition-all duration-300",
         collapsed ? "w-20" : "w-64"
       )}>
-        <div className="flex flex-1 flex-col gap-2 p-4">
+        <div className="flex flex-1 flex-col gap-2 p-3 overflow-hidden">
           {/* Workspace Selector */}
           {!collapsed && (
             <DropdownMenu>
@@ -266,7 +211,7 @@ export function Sidebar() {
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel className="text-xs text-foreground-tertiary uppercase tracking-wide">
-                      Organizacoes
+                      Organizações
                     </DropdownMenuLabel>
                     {orgs.map((org) => (
                       <DropdownMenuItem
@@ -284,22 +229,22 @@ export function Sidebar() {
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/settings/team" className="flex items-center">
                     <Plus className="h-4 w-4 mr-2" />
-                    Nova Organizacao
+                    Nova Organização
                   </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
 
-          <div className="mb-2 flex items-center justify-between">
-            {!collapsed && <div className="text-xs font-semibold text-foreground-tertiary">Menu</div>}
+          <div className="flex items-center justify-between mb-1">
+            {!collapsed && <div className="text-[10px] font-semibold text-foreground-tertiary uppercase tracking-widest px-1">Menu</div>}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setCollapsed(!collapsed)}
-                  className="h-8 w-8 p-0"
+                  className={cn("h-7 w-7 p-0", collapsed && "mx-auto")}
                 >
                   {collapsed ? (
                     <ChevronRight className="h-4 w-4" />
@@ -313,48 +258,63 @@ export function Sidebar() {
               </TooltipContent>
             </Tooltip>
           </div>
-          <nav className="flex flex-col gap-1">
-            {menuItems.map((item) => {
-              const isActive = pathname === item.href
-              const Icon = item.icon
 
-              const linkElement = (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'hover-scale flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all',
-                    isActive
-                      ? 'bg-sidebar-accent text-white'
-                      : 'text-foreground-secondary hover:bg-sidebar-accent/50 hover:text-foreground',
-                    collapsed && 'justify-center'
-                  )}
-                >
-                  <Icon className="h-5 w-5 flex-shrink-0" />
-                  {!collapsed && <span>{item.label}</span>}
-                </Link>
-              )
+          {/* Scrollable nav area */}
+          <nav className="flex flex-col gap-3 flex-1 overflow-y-auto scrollbar-none pr-0.5">
+            {menuSections.map((section, si) => (
+              <div key={si} className="flex flex-col gap-0.5">
+                {/* Section label (expanded) or divider (collapsed) */}
+                {section.label && !collapsed && (
+                  <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-foreground-tertiary">
+                    {section.label}
+                  </div>
+                )}
+                {section.label && collapsed && si > 0 && (
+                  <div className="mx-3 border-t border-sidebar-border/50 my-1.5" />
+                )}
 
-              if (collapsed) {
-                return (
-                  <Tooltip key={item.href}>
-                    <TooltipTrigger asChild>
-                      {linkElement}
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      {item.label}
-                    </TooltipContent>
-                  </Tooltip>
-                )
-              }
+                {section.items.map((item) => {
+                  const isActive =
+                    item.href === '/dashboard'
+                      ? pathname === '/dashboard'
+                      : pathname === item.href || pathname.startsWith(item.href + '/')
+                  const Icon = item.icon
 
-              return linkElement
-            })}
+                  const linkElement = (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        'hover-scale flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
+                        isActive
+                          ? 'bg-sidebar-accent text-white'
+                          : 'text-foreground-secondary hover:bg-sidebar-accent/50 hover:text-foreground',
+                        collapsed && 'justify-center px-0'
+                      )}
+                    >
+                      <Icon className="h-4.5 w-4.5 flex-shrink-0 h-[18px] w-[18px]" />
+                      {!collapsed && <span className="truncate">{item.label}</span>}
+                    </Link>
+                  )
+
+                  if (collapsed) {
+                    return (
+                      <Tooltip key={item.href}>
+                        <TooltipTrigger asChild>{linkElement}</TooltipTrigger>
+                        <TooltipContent side="right">{item.label}</TooltipContent>
+                      </Tooltip>
+                    )
+                  }
+
+                  return linkElement
+                })}
+              </div>
+            ))}
           </nav>
         </div>
 
         {!collapsed && (
-          <div className="border-t border-sidebar-border p-4">
+          <div className="border-t border-sidebar-border p-3">
             <div className="glass-card rounded-lg p-3 space-y-3">
               {usage ? (
                 <>
@@ -379,7 +339,6 @@ export function Sidebar() {
                       return <p className="text-xs text-foreground-tertiary">Uso ilimitado ✓</p>
                     }
 
-                    // Is any resource at 80%+ on the free plan?
                     const nearLimit = usage.plan === 'free' && rows.some(r => r.data?.limit !== -1 && (r.data?.percentage ?? 0) >= 80)
 
                     return (
