@@ -6,7 +6,7 @@
 
 **Data de criação**: 2026-03-03
 **Última atualização**: 2026-03-03
-**Estado atual**: ~65% de uma agência real
+**Estado atual**: ~85% de uma agência real
 
 ---
 
@@ -295,6 +295,36 @@ model ThreadsScheduledPost {
 
 ---
 
+### ✅ M3 — Gestão de Engajamento (Replies)
+> **CONCLUÍDO em 2026-03-03**
+
+- ThreadsService: `getReplies(postId)` + `replyToPost(postId, text)`
+- MCP: `threads_get_replies` + `threads_reply_to_post` (scopes `threads_read_replies` + `threads_manage_replies`)
+- Flow "Monitoramento de Engajamento Threads" (CRON `0 */6 * * *`): Analista mapeia → Gestor classifica e responde leads quentes
+- Flow ID: `7ab40d7b-ed94-48ea-8722-73f96fc14639`
+
+---
+
+### ✅ M5 — Dashboard de Performance da Agência
+> **CONCLUÍDO em 2026-03-03**
+
+- API: `GET /api/threads/insights?days=7|30` — agrega perfil + insights + top posts com métricas
+- Dashboard `/dashboard/threads/analytics`: stats grid (views/likes/replies/reposts/quotes/engajamento), mini bar charts, tabela top posts rankeada por interações, lista de posts recentes
+- Sidebar: link "Analytics Threads"
+
+---
+
+### ✅ M6 — Campanha Estruturada
+> **CONCLUÍDO em 2026-03-03**
+
+- Prisma: `ThreadsCampaign` + `ThreadsCampaignPost` (planning → approved → active → completed)
+- API: `GET/POST /api/threads/campaigns` + `GET/PUT/DELETE /api/threads/campaigns/[id]`
+- Orchestration "Planejamento de Campanha Threads" (`acd45aad`) — 5 etapas: Estrategista (arco narrativo) → Analista (validação com dados reais) → Copywriter (todos os posts) → Editor (revisão) → Gestor (agendamento automático)
+- Dashboard `/dashboard/threads/campaigns`: CRUD de campanhas, progress bar, lista de posts por posição, filtros por status
+- Sidebar: links Campanhas + Analytics Threads
+
+---
+
 ### M2 — Posts com Imagem (AI-Generated)
 
 **Por que importa**: posts com imagem têm alcance organicamente maior no Threads.
@@ -479,14 +509,14 @@ interface CampaignPost {
 
 ### Métricas de Sucesso — Médio Prazo
 
-| Métrica | Meta |
-|---|---|
-| Posts publicados/semana (automático) | 5+ |
-| Taxa de engajamento média | >5% |
-| Crescimento de seguidores/mês | +100 |
-| Tempo do briefing ao post publicado | <15 min |
-| Replies respondidas/semana | 80% das recebidas |
-| Campanhas ativas simultâneas | 1-2 |
+| Métrica | Meta | Status |
+|---|---|---|
+| Posts publicados/semana (automático) | 5+ | 🟡 Infra pronta |
+| Taxa de engajamento média | >5% | 🟡 Monitorável via Analytics |
+| Crescimento de seguidores/mês | +100 | 🟡 Rastreável |
+| Tempo do briefing ao post publicado | <15 min | ✅ Pipeline ~5min |
+| Replies respondidas/semana | 80% das recebidas | ✅ Flow 6h automatiza |
+| Campanhas ativas simultâneas | 1-2 | ✅ Dashboard de campanhas |
 
 ---
 

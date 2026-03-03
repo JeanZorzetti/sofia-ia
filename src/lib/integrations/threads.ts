@@ -60,6 +60,16 @@ export interface ThreadsProfileInsights {
   totalQuotes: number;
 }
 
+export interface ThreadsReply {
+  id: string;
+  text?: string;
+  timestamp: string;
+  username?: string;
+  permalink?: string;
+  has_replies?: boolean;
+  hide_status?: string;
+}
+
 export type ThreadsMediaType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'CAROUSEL';
 
 export interface ThreadsPostOptions {
@@ -75,7 +85,7 @@ export function buildAuthUrl(redirectUri: string): string {
   const params = new URLSearchParams({
     client_id: process.env.THREADS_APP_ID!,
     redirect_uri: redirectUri,
-    scope: 'threads_basic,threads_content_publish,threads_manage_insights,threads_read_replies',
+    scope: 'threads_basic,threads_content_publish,threads_manage_insights,threads_read_replies,threads_manage_replies',
     response_type: 'code',
   });
   return `${THREADS_AUTH_URL}?${params.toString()}`;
@@ -304,6 +314,71 @@ export class ThreadsService {
       }
     }
     return result
+  }
+
+  /**
+   * Lista replies de um post específico (requer threads_read_replies)
+   */
+  async getReplies(postId: string, limit = 20): Promise<ThreadsReply[]> {
+    const l = Math.min(Math.max(1, limit), 50)
+    const params = new URLSearchParams({
+      fields: 'id,text,timestamp,username,permalink,has_replies,hide_status',
+      limit: String(l),
+      access_token: this.accessToken,
+    })
+    try {
+      const res = await fetch(`${THREADS_BASE}/${postId}/replies?${params.toString()}`)
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error?.message || 'Failed to fetch replies')
+      }
+      const data = await res.json()
+      return data.data ?? []
+    } catch (error) {
+      throw error
+    }
+  }
+
+  /**
+   * Publica uma reply a um post ou comentário (requer threads_manage_replies)
+   */
+  async replyToPost(postId: string, text: string): Promise<{ success: boolean; replyId?: string; error?: string }> {
+    try {
+      // Etapa 1: criar container de reply
+      const createParams = new URLSearchParams({
+        media_type: 'TEXT',
+        text,
+        reply_to_id: postId,
+        access_token: this.accessToken,
+      })
+      const createRes = await fetch(
+        `${THREADS_BASE}/${this.userId}/threads?${createParams.toString()}`,
+        { method: 'POST' }
+      )
+      if (!createRes.ok) {
+        const err = await createRes.json()
+        throw new Error(err.error?.message || 'Failed to create reply container')
+      }
+      const { id: containerId } = await createRes.json()
+
+      // Etapa 2: publicar o container
+      const publishParams = new URLSearchParams({
+        creation_id: containerId,
+        access_token: this.accessToken,
+      })
+      const publishRes = await fetch(
+        `${THREADS_BASE}/${this.userId}/threads_publish?${publishParams.toString()}`,
+        { method: 'POST' }
+      )
+      if (!publishRes.ok) {
+        const err = await publishRes.json()
+        throw new Error(err.error?.message || 'Failed to publish reply')
+      }
+      const { id: replyId } = await publishRes.json()
+      return { success: true, replyId }
+    } catch (error) {
+      return { success: false, error: String(error) }
+    }
   }
 
   /**

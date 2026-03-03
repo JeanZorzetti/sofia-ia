@@ -150,6 +150,44 @@ const THREADS_MCP_TOOLS = [
       required: ['scheduled_post_id', 'threads_post_id'],
     },
   },
+  {
+    name: 'threads_get_replies',
+    description:
+      'Lista replies (comentários) de um post específico do Threads. Retorna texto, username e timestamp de cada reply. Requer threads_read_replies scope.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        post_id: {
+          type: 'string',
+          description: 'ID do post Threads (obtido via threads_get_recent_posts)',
+        },
+        limit: {
+          type: 'number',
+          description: 'Quantidade de replies a retornar (padrão: 20, máx: 50)',
+        },
+      },
+      required: ['post_id'],
+    },
+  },
+  {
+    name: 'threads_reply_to_post',
+    description:
+      'Publica uma reply (resposta) a um post ou comentário no Threads. Use para responder perguntas, leads quentes e engajamento da audiência. Requer threads_manage_replies scope.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        post_id: {
+          type: 'string',
+          description: 'ID do post ou reply ao qual responder',
+        },
+        text: {
+          type: 'string',
+          description: 'Texto da resposta (máx 500 caracteres)',
+        },
+      },
+      required: ['post_id', 'text'],
+    },
+  },
 ]
 
 // ─── Tool Executor ───────────────────────────────────────────────────────────
@@ -365,6 +403,53 @@ async function executeThreadsTool(
     })
 
     return ok(`✅ Post marcado como publicado!\nID agendado: ${scheduledPostId}\nPost ID Threads: ${threadsPostId}`)
+  }
+
+  // ── threads_get_replies ───────────────────────────────────────────────────
+  if (name === 'threads_get_replies') {
+    const postId = args.post_id as string
+    if (!postId?.trim()) return fail('post_id é obrigatório')
+    const limit = typeof args.limit === 'number' ? args.limit : 20
+    try {
+      const replies = await service.getReplies(postId, limit)
+      if (!replies.length) return ok(`💬 Nenhuma reply encontrada no post ${postId}.`)
+      const formatted = replies
+        .map((r, i) => {
+          const date = r.timestamp?.slice(0, 16).replace('T', ' ') ?? '?'
+          const user = r.username ? `@${r.username}` : 'anônimo'
+          const text = r.text ? (r.text.length > 200 ? r.text.slice(0, 200) + '...' : r.text) : '(sem texto)'
+          const hasMore = r.has_replies ? ' [tem sub-replies]' : ''
+          return `${i + 1}. [${date}] ${user}${hasMore}\n   "${text}"\n   ID: ${r.id}`
+        })
+        .join('\n\n')
+      return ok(`💬 ${replies.length} repl${replies.length === 1 ? 'y' : 'ies'} no post ${postId}:\n\n${formatted}`)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      if (msg.toLowerCase().includes('authorized') || msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('scope')) {
+        return fail('Permissão insuficiente para replies. Reconecte o Threads em /dashboard/integrations para liberar o escopo threads_read_replies.')
+      }
+      return fail(msg)
+    }
+  }
+
+  // ── threads_reply_to_post ─────────────────────────────────────────────────
+  if (name === 'threads_reply_to_post') {
+    const postId = args.post_id as string
+    const text = args.text as string
+    if (!postId?.trim()) return fail('post_id é obrigatório')
+    if (!text?.trim()) return fail('text é obrigatório')
+    if (text.length > 500) return fail(`Texto excede 500 chars (${text.length})`)
+    try {
+      const result = await service.replyToPost(postId, text)
+      if (!result.success) return fail(result.error || 'Falha ao publicar reply')
+      return ok(`✅ Reply publicada com sucesso!\nReply ID: ${result.replyId}\nEm resposta ao post: ${postId}`)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      if (msg.toLowerCase().includes('authorized') || msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('scope')) {
+        return fail('Permissão insuficiente para responder. Reconecte o Threads em /dashboard/integrations para liberar o escopo threads_manage_replies.')
+      }
+      return fail(msg)
+    }
   }
 
   return { content: [{ type: 'text', text: `Tool desconhecida: ${name}` }] }

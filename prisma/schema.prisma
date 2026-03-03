@@ -44,6 +44,7 @@ model User {
   mcpServers           McpServer[]
   threadsScheduledPosts        ThreadsScheduledPost[]
   approvedScheduledPosts       ThreadsScheduledPost[] @relation("ScheduledPostApprover")
+  threadsCampaigns             ThreadsCampaign[]
 
   @@index([workspaceId])
   @@map("users")
@@ -1236,8 +1237,58 @@ model ThreadsScheduledPost {
   user     User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   approver User? @relation("ScheduledPostApprover", fields: [approvedBy], references: [id])
 
+  campaignPost ThreadsCampaignPost?
+
   @@index([userId])
   @@index([status])
   @@index([scheduledAt])
   @@map("threads_scheduled_posts")
+}
+
+// ─────────────────────────────────────────────────────────
+// ThreadsCampaign — Campanha de conteúdo estruturada
+// ─────────────────────────────────────────────────────────
+model ThreadsCampaign {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  name        String   @db.VarChar(255)
+  objective   String   @default("awareness") @db.VarChar(50)
+  theme       String   @db.Text
+  description String?  @db.Text
+  status      String   @default("planning") @db.VarChar(20)
+  startDate   DateTime @map("start_date") @db.Timestamptz()
+  endDate     DateTime @map("end_date") @db.Timestamptz()
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posts ThreadsCampaignPost[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([startDate])
+  @@map("threads_campaigns")
+}
+
+// ─────────────────────────────────────────────────────────
+// ThreadsCampaignPost — Post dentro de uma campanha
+// ─────────────────────────────────────────────────────────
+model ThreadsCampaignPost {
+  id              String    @id @default(uuid()) @db.Uuid
+  campaignId      String    @map("campaign_id") @db.Uuid
+  scheduledPostId String?   @unique @map("scheduled_post_id") @db.Uuid
+  position        Int       @default(0)
+  tema            String    @db.Text
+  angle           String?   @db.Text
+  status          String    @default("draft") @db.VarChar(20)
+  scheduledAt     DateTime? @map("scheduled_at") @db.Timestamptz()
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  campaign      ThreadsCampaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  scheduledPost ThreadsScheduledPost? @relation(fields: [scheduledPostId], references: [id])
+
+  @@index([campaignId])
+  @@map("threads_campaign_posts")
 }
