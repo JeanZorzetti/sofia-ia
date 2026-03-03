@@ -32,6 +32,34 @@ export interface ThreadsPublishResult {
   error?: string;
 }
 
+export interface ThreadsPost {
+  id: string;
+  text?: string;
+  timestamp: string;
+  media_type: string;
+  permalink?: string;
+  shortcode?: string;
+}
+
+export interface ThreadsPostInsights {
+  postId: string;
+  views: number;
+  likes: number;
+  replies: number;
+  reposts: number;
+  quotes: number;
+}
+
+export interface ThreadsProfileInsights {
+  since: string;
+  until: string;
+  totalViews: number;
+  totalLikes: number;
+  totalReplies: number;
+  totalReposts: number;
+  totalQuotes: number;
+}
+
 export type ThreadsMediaType = 'TEXT' | 'IMAGE' | 'VIDEO' | 'CAROUSEL';
 
 export interface ThreadsPostOptions {
@@ -47,7 +75,7 @@ export function buildAuthUrl(redirectUri: string): string {
   const params = new URLSearchParams({
     client_id: process.env.THREADS_APP_ID!,
     redirect_uri: redirectUri,
-    scope: 'threads_basic,threads_content_publish',
+    scope: 'threads_basic,threads_content_publish,threads_manage_insights,threads_read_replies',
     response_type: 'code',
   });
   return `${THREADS_AUTH_URL}?${params.toString()}`;
@@ -190,6 +218,92 @@ export class ThreadsService {
 
     const data = await res.json();
     return data.id;
+  }
+
+  /**
+   * Lista os posts mais recentes da conta (requer threads_basic)
+   */
+  async getRecentPosts(limit = 10): Promise<ThreadsPost[]> {
+    const l = Math.min(Math.max(1, limit), 25)
+    const params = new URLSearchParams({
+      fields: 'id,text,timestamp,media_type,permalink,shortcode',
+      limit: String(l),
+      access_token: this.accessToken,
+    })
+    try {
+      const res = await fetch(`${THREADS_BASE}/${this.userId}/threads?${params.toString()}`)
+      if (!res.ok) return []
+      const data = await res.json()
+      return data.data ?? []
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * Retorna métricas de um post específico (requer threads_manage_insights)
+   */
+  async getPostInsights(postId: string): Promise<ThreadsPostInsights> {
+    const params = new URLSearchParams({
+      metric: 'views,likes,replies,reposts,quotes',
+      access_token: this.accessToken,
+    })
+    const res = await fetch(`${THREADS_BASE}/${postId}/insights?${params.toString()}`)
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.error?.message || 'Failed to fetch post insights')
+    }
+    const data = await res.json()
+    const result: ThreadsPostInsights = { postId, views: 0, likes: 0, replies: 0, reposts: 0, quotes: 0 }
+    for (const insight of (data.data ?? [])) {
+      const value = insight.values?.[0]?.value ?? insight.total_value?.value ?? 0
+      switch (insight.name) {
+        case 'views':   result.views   = value; break
+        case 'likes':   result.likes   = value; break
+        case 'replies': result.replies = value; break
+        case 'reposts': result.reposts = value; break
+        case 'quotes':  result.quotes  = value; break
+      }
+    }
+    return result
+  }
+
+  /**
+   * Retorna métricas do perfil em um período (requer threads_manage_insights)
+   */
+  async getProfileInsights(since?: string, until?: string): Promise<ThreadsProfileInsights> {
+    const nowTs  = Math.floor(Date.now() / 1000)
+    const sinceTs = since ? Math.floor(new Date(since).getTime() / 1000) : nowTs - 7 * 24 * 60 * 60
+    const untilTs = until ? Math.floor(new Date(until).getTime() / 1000) : nowTs
+    const params = new URLSearchParams({
+      metric: 'views,likes,replies,reposts,quotes',
+      period: 'day',
+      since: String(sinceTs),
+      until: String(untilTs),
+      access_token: this.accessToken,
+    })
+    const res = await fetch(`${THREADS_BASE}/${this.userId}/insights?${params.toString()}`)
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err.error?.message || 'Failed to fetch profile insights')
+    }
+    const data = await res.json()
+    const result: ThreadsProfileInsights = {
+      since: new Date(sinceTs * 1000).toISOString().slice(0, 10),
+      until: new Date(untilTs * 1000).toISOString().slice(0, 10),
+      totalViews: 0, totalLikes: 0, totalReplies: 0, totalReposts: 0, totalQuotes: 0,
+    }
+    for (const insight of (data.data ?? [])) {
+      const total = (insight.values ?? []).reduce((s: number, v: { value: number }) => s + (v.value ?? 0), 0)
+      switch (insight.name) {
+        case 'views':   result.totalViews   = total; break
+        case 'likes':   result.totalLikes   = total; break
+        case 'replies': result.totalReplies = total; break
+        case 'reposts': result.totalReposts = total; break
+        case 'quotes':  result.totalQuotes  = total; break
+      }
+    }
+    return result
   }
 
   /**

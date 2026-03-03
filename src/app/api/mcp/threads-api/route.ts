@@ -6,9 +6,12 @@
  * que por sua vez busca a conta Threads associada no banco.
  *
  * Tools disponíveis:
- *  - threads_validate_format   → valida posts (500 chars/post, max 10 posts)
- *  - threads_publish_post      → publica post via Threads Graph API
- *  - threads_get_profile       → retorna dados do perfil conectado
+ *  - threads_validate_format       → valida posts (500 chars/post, max 10 posts)
+ *  - threads_publish_post          → publica post via Threads Graph API
+ *  - threads_get_profile           → retorna dados do perfil conectado
+ *  - threads_get_recent_posts      → lista posts recentes com ID e timestamp
+ *  - threads_get_post_insights     → métricas de um post (views, likes, replies...)
+ *  - threads_get_profile_insights  → métricas do perfil em um período
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -61,6 +64,55 @@ const THREADS_MCP_TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'threads_get_recent_posts',
+    description:
+      'Lista os posts mais recentes da conta Threads conectada com ID, texto, data e permalink. Use para obter IDs de posts antes de buscar seus insights.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Quantidade de posts a retornar (padrão: 10, máx: 25)',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'threads_get_post_insights',
+    description:
+      'Retorna métricas detalhadas de um post específico: views, likes, replies, reposts, quotes e taxa de engajamento. Requer threads_manage_insights scope.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        post_id: {
+          type: 'string',
+          description: 'ID do post Threads (obtido via threads_get_recent_posts)',
+        },
+      },
+      required: ['post_id'],
+    },
+  },
+  {
+    name: 'threads_get_profile_insights',
+    description:
+      'Retorna métricas agregadas do perfil em um período: views, likes, replies, reposts, quotes e taxa de engajamento geral. Requer threads_manage_insights scope.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        since: {
+          type: 'string',
+          description: 'Data de início no formato ISO 8601 (ex: 2026-02-24). Padrão: 7 dias atrás',
+        },
+        until: {
+          type: 'string',
+          description: 'Data de fim no formato ISO 8601 (ex: 2026-03-03). Padrão: hoje',
+        },
+      },
       required: [],
     },
   },
@@ -154,6 +206,73 @@ async function executeThreadsTool(
     if (!result.success) return fail(result.error || 'Falha ao publicar')
 
     return ok(`✅ Publicado com sucesso!\nPost ID: ${result.postId}`)
+  }
+
+  // ── threads_get_recent_posts ─────────────────────────────────────────────
+  if (name === 'threads_get_recent_posts') {
+    const limit = typeof args.limit === 'number' ? args.limit : 10
+    const posts = await service.getRecentPosts(limit)
+    if (!posts.length) return ok('Nenhum post encontrado.')
+    const formatted = posts
+      .map((p, i) => {
+        const date = p.timestamp?.slice(0, 10) ?? '?'
+        const snippet = p.text ? (p.text.length > 120 ? p.text.slice(0, 120) + '...' : p.text) : '(sem texto)'
+        return `${i + 1}. [${date}] ${snippet}\n   ID: ${p.id}${p.permalink ? `\n   Link: ${p.permalink}` : ''}`
+      })
+      .join('\n\n')
+    return ok(`📋 Últimos ${posts.length} posts:\n\n${formatted}`)
+  }
+
+  // ── threads_get_post_insights ────────────────────────────────────────────
+  if (name === 'threads_get_post_insights') {
+    const postId = args.post_id as string
+    if (!postId?.trim()) return fail('post_id é obrigatório')
+    try {
+      const insights = await service.getPostInsights(postId)
+      const totalEng = insights.likes + insights.replies + insights.reposts + insights.quotes
+      const engRate = insights.views > 0 ? ((totalEng / insights.views) * 100).toFixed(2) : '0.00'
+      return ok(
+        `📊 Insights do Post ${postId}\n\n` +
+        `👁️  Views:       ${insights.views}\n` +
+        `❤️  Likes:       ${insights.likes}\n` +
+        `💬  Replies:     ${insights.replies}\n` +
+        `🔁  Reposts:     ${insights.reposts}\n` +
+        `💬  Quotes:      ${insights.quotes}\n` +
+        `📈  Engajamento: ${engRate}% (${totalEng} interações / ${insights.views} views)`
+      )
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      if (msg.toLowerCase().includes('authorized') || msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('scope') || msg.toLowerCase().includes('oauth')) {
+        return fail('Permissão insuficiente para insights. Reconecte o Threads em /dashboard/integrations para liberar o escopo threads_manage_insights.')
+      }
+      return fail(msg)
+    }
+  }
+
+  // ── threads_get_profile_insights ─────────────────────────────────────────
+  if (name === 'threads_get_profile_insights') {
+    const since = args.since as string | undefined
+    const until = args.until as string | undefined
+    try {
+      const insights = await service.getProfileInsights(since, until)
+      const totalEng = insights.totalLikes + insights.totalReplies + insights.totalReposts + insights.totalQuotes
+      const engRate = insights.totalViews > 0 ? ((totalEng / insights.totalViews) * 100).toFixed(2) : '0.00'
+      return ok(
+        `📊 Insights do Perfil (${insights.since} → ${insights.until})\n\n` +
+        `👁️  Views totais:     ${insights.totalViews}\n` +
+        `❤️  Likes totais:     ${insights.totalLikes}\n` +
+        `💬  Replies totais:   ${insights.totalReplies}\n` +
+        `🔁  Reposts totais:   ${insights.totalReposts}\n` +
+        `💬  Quotes totais:    ${insights.totalQuotes}\n` +
+        `📈  Taxa de engajamento: ${engRate}% (${totalEng} interações / ${insights.totalViews} views)`
+      )
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      if (msg.toLowerCase().includes('authorized') || msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('scope') || msg.toLowerCase().includes('oauth')) {
+        return fail('Permissão insuficiente para insights. Reconecte o Threads em /dashboard/integrations para liberar o escopo threads_manage_insights.')
+      }
+      return fail(msg)
+    }
   }
 
   return { content: [{ type: 'text', text: `Tool desconhecida: ${name}` }] }
