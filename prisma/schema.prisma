@@ -42,6 +42,8 @@ model User {
   threadsAccount       ThreadsAccount?
   skills               Skill[]
   mcpServers           McpServer[]
+  threadsScheduledPosts        ThreadsScheduledPost[]
+  approvedScheduledPosts       ThreadsScheduledPost[] @relation("ScheduledPostApprover")
 
   @@index([workspaceId])
   @@map("users")
@@ -1211,4 +1213,31 @@ model AgentMcpServer {
   @@unique([agentId, mcpServerId])
   @@index([agentId])
   @@map("agent_mcp_servers")
+}
+
+// ─────────────────────────────────────────────────────────
+// ThreadsScheduledPost — Fila de posts agendados para o Threads
+// ─────────────────────────────────────────────────────────
+model ThreadsScheduledPost {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  text        String    @db.Text
+  scheduledAt DateTime  @map("scheduled_at") @db.Timestamptz()
+  status      String    @default("pending") @db.VarChar(20)
+  postId      String?   @map("post_id") @db.VarChar(255)
+  createdBy   String?   @map("created_by") @db.VarChar(255)
+  approvedBy  String?   @map("approved_by") @db.Uuid
+  metadata    Json      @default("{}")
+  publishedAt DateTime? @map("published_at") @db.Timestamptz()
+  errorMsg    String?   @map("error_msg") @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user     User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approver User? @relation("ScheduledPostApprover", fields: [approvedBy], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("threads_scheduled_posts")
 }

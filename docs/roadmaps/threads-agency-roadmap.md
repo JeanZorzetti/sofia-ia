@@ -6,7 +6,7 @@
 
 **Data de criação**: 2026-03-03
 **Última atualização**: 2026-03-03
-**Estado atual**: ~55% de uma agência real
+**Estado atual**: ~65% de uma agência real
 
 ---
 
@@ -33,7 +33,7 @@
 | Delegação estocástica | **Alto** | Depende do LLM decidir chamar `delegate_to_agent` — inconsistente |
 | Sem pipeline automático | **Alto** | Nenhum Flow ou Orchestration conectando os 5 agentes |
 | ~~Gestor sem posts recentes~~ | ~~**Médio**~~ | ✅ **RESOLVIDO** — `threads_get_recent_posts` no MCP |
-| Sem agendamento de posts | **Médio** | Só publica em tempo real — nenhuma fila ou calendário |
+| ~~Sem agendamento de posts~~ | ~~**Médio**~~ | ✅ **RESOLVIDO** — `ThreadsScheduledPost`, Flow CRON horário, dashboard `/dashboard/threads/calendar` |
 | Sem imagem/mídia | **Médio** | Só texto — Threads tem alcance maior com imagem |
 | Sem gestão de replies | **Baixo** | Gestor não consegue responder comentários programaticamente |
 
@@ -255,7 +255,8 @@ prompts não mencionam as tools MCP disponíveis (insights, posts recentes).
 
 ---
 
-### M1 — Calendário de Conteúdo com Agendamento
+### ✅ M1 — Calendário de Conteúdo com Agendamento
+> **CONCLUÍDO em 2026-03-03**
 
 **Problema atual**: publicação é apenas em tempo real. Uma agência de verdade trabalha
 com antecedência e tem uma fila de aprovação.

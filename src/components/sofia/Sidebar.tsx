@@ -31,7 +31,8 @@ import {
   User,
   TrendingUp,
   Sparkles,
-  Network
+  Network,
+  CalendarDays
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -103,6 +104,11 @@ const menuItems = [
     href: '/dashboard/integrations',
     label: 'Integrações',
     icon: Plug,
+  },
+  {
+    href: '/dashboard/threads/calendar',
+    label: 'Calendário Threads',
+    icon: CalendarDays,
   },
   {
     href: '/dashboard/analytics',

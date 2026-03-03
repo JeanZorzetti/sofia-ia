@@ -116,6 +116,40 @@ const THREADS_MCP_TOOLS = [
       required: [],
     },
   },
+  {
+    name: 'threads_check_scheduled_posts',
+    description:
+      'Retorna os posts agendados pendentes que estão prontos para publicação (scheduledAt <= agora). Use para verificar a fila antes de publicar.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Máximo de posts a retornar (padrão: 10)',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'threads_mark_post_published',
+    description:
+      'Marca um post agendado como publicado após a publicação bem-sucedida. Atualiza o status no banco de dados.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        scheduled_post_id: {
+          type: 'string',
+          description: 'ID do ThreadsScheduledPost (UUID)',
+        },
+        threads_post_id: {
+          type: 'string',
+          description: 'ID do post retornado pela Threads API após publicação',
+        },
+      },
+      required: ['scheduled_post_id', 'threads_post_id'],
+    },
+  },
 ]
 
 // ─── Tool Executor ───────────────────────────────────────────────────────────
@@ -273,6 +307,64 @@ async function executeThreadsTool(
       }
       return fail(msg)
     }
+  }
+
+  // ── threads_check_scheduled_posts ────────────────────────────────────────
+  if (name === 'threads_check_scheduled_posts') {
+    const limit = typeof args.limit === 'number' ? Math.min(args.limit, 50) : 10
+    const now = new Date()
+    const pending = await prisma.threadsScheduledPost.findMany({
+      where: {
+        userId,
+        status: 'pending',
+        scheduledAt: { lte: now },
+      },
+      orderBy: { scheduledAt: 'asc' },
+      take: limit,
+    })
+
+    if (!pending.length) {
+      return ok('✅ Nenhum post agendado pronto para publicação no momento.')
+    }
+
+    const formatted = pending
+      .map((p, i) => {
+        const when = p.scheduledAt.toISOString().slice(0, 16).replace('T', ' ')
+        const snippet = p.text.length > 100 ? p.text.slice(0, 100) + '...' : p.text
+        const meta = p.metadata && typeof p.metadata === 'object' ? JSON.stringify(p.metadata) : '{}'
+        return `${i + 1}. [Agendado: ${when}]\n   ID: ${p.id}\n   Texto: ${snippet}\n   Metadata: ${meta}`
+      })
+      .join('\n\n')
+
+    return ok(`📋 ${pending.length} post(s) prontos para publicação:\n\n${formatted}`)
+  }
+
+  // ── threads_mark_post_published ──────────────────────────────────────────
+  if (name === 'threads_mark_post_published') {
+    const scheduledPostId = args.scheduled_post_id as string
+    const threadsPostId = args.threads_post_id as string
+
+    if (!scheduledPostId?.trim()) return fail('scheduled_post_id é obrigatório')
+    if (!threadsPostId?.trim()) return fail('threads_post_id é obrigatório')
+
+    const post = await prisma.threadsScheduledPost.findUnique({
+      where: { id: scheduledPostId },
+    })
+
+    if (!post) return fail(`Post agendado não encontrado: ${scheduledPostId}`)
+    if (post.userId !== userId) return fail('Acesso negado — post pertence a outro usuário')
+    if (post.status === 'published') return ok(`Post ${scheduledPostId} já estava marcado como publicado.`)
+
+    await prisma.threadsScheduledPost.update({
+      where: { id: scheduledPostId },
+      data: {
+        status: 'published',
+        postId: threadsPostId,
+        publishedAt: new Date(),
+      },
+    })
+
+    return ok(`✅ Post marcado como publicado!\nID agendado: ${scheduledPostId}\nPost ID Threads: ${threadsPostId}`)
   }
 
   return { content: [{ type: 'text', text: `Tool desconhecida: ${name}` }] }
