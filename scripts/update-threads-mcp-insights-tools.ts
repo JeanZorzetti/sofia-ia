@@ -92,7 +92,7 @@ async function main() {
 
   // Verificar se o Analista está vinculado ao MCP server
   const AGENTS = {
-    analista: '87245dd3-76b3-4776-bdf0-2c38896e74c0', // ajuste se necessário
+    analista: '1f3811da-f92f-4cd6-a66f-05a6ff17ab94',
     gestor:   '8d03ebc6-6dcb-447b-9f41-5a78e6f7987f',
   };
 
