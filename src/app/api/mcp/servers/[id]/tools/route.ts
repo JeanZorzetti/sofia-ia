@@ -30,7 +30,7 @@ export async function GET(
           mcpServerId: id,
           name: t.name,
           description: t.description || '',
-          inputSchema: t.inputSchema,
+          inputSchema: t.inputSchema as object,
         })),
       })
     }

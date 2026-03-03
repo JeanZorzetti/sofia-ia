@@ -162,8 +162,8 @@ export async function chatWithAgent(
   }
 
   // === SKILLS INJECTION ===
-  let agentSkills: Awaited<ReturnType<typeof prisma.agentSkill.findMany>> = []
-  let agentMcpServers: Awaited<ReturnType<typeof prisma.agentMcpServer.findMany>> = []
+  let agentSkills: any[] = []
+  let agentMcpServers: any[] = []
   try {
     agentSkills = await prisma.agentSkill.findMany({
       where: { agentId, enabled: true },

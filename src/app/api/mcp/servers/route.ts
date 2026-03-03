@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
           mcpServerId: server.id,
           name: t.name,
           description: t.description || '',
-          inputSchema: t.inputSchema,
+          inputSchema: t.inputSchema as object,
         })),
       })
     }
