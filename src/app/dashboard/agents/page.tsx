@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -32,6 +32,7 @@ export default function AgentsPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [folderDialogOpen, setFolderDialogOpen] = useState(false)
   const [collapsedFolders, setCollapsedFolders] = useState<Set<string>>(new Set())
+  const foldersInitialized = useRef(false)
   const [draggedAgentId, setDraggedAgentId] = useState<string | null>(null)
   const [dragOverTarget, setDragOverTarget] = useState<string | null>(null)
   const [newFolderName, setNewFolderName] = useState('')
@@ -51,6 +52,13 @@ export default function AgentsPage() {
     e.preventDefault(); setDragOverTarget(null)
     if (draggedAgentId) await handleDropAgent(draggedAgentId, folderId)
   }
+
+  useEffect(() => {
+    if (folders.length > 0 && !foldersInitialized.current) {
+      setCollapsedFolders(new Set(folders.map((f) => f.id)))
+      foldersInitialized.current = true
+    }
+  }, [folders])
 
   const toggleFolder = (id: string) => {
     setCollapsedFolders((prev) => {
