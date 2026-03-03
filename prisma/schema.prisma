@@ -40,6 +40,8 @@ model User {
   oauthConnections     OAuthConnection[]
   betaFeedbacks        BetaFeedback[]
   threadsAccount       ThreadsAccount?
+  skills               Skill[]
+  mcpServers           McpServer[]
 
   @@index([workspaceId])
   @@map("users")
@@ -251,6 +253,8 @@ model Agent {
   plugins     AgentPlugin[]
   delegationsFrom AgentDelegation[] @relation("DelegationsFrom")
   delegationsTo   AgentDelegation[] @relation("DelegationsTo")
+  agentSkills     AgentSkill[]
+  agentMcpServers AgentMcpServer[]
 
   @@index([status])
   @@index([createdBy])
@@ -1103,4 +1107,108 @@ model ThreadsAccount {
 
   @@index([userId])
   @@map("threads_accounts")
+}
+
+// ─────────────────────────────────────────────────────────
+// Skill — Capacidades modulares para agentes (tool ou prompt)
+// ─────────────────────────────────────────────────────────
+model Skill {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String   @db.VarChar(255)
+  description    String?  @db.Text
+  type           String   @default("tool") @db.VarChar(20)
+  category       String   @default("general") @db.VarChar(50)
+  toolDefinition Json     @default("{}") @map("tool_definition")
+  toolCode       String?  @db.Text @map("tool_code")
+  promptBlock    String?  @db.Text @map("prompt_block")
+  isBuiltin      Boolean  @default(false) @map("is_builtin")
+  createdBy      String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user        User?       @relation(fields: [createdBy], references: [id])
+  agentSkills AgentSkill[]
+
+  @@index([type])
+  @@index([category])
+  @@index([isBuiltin])
+  @@map("skills")
+}
+
+// ─────────────────────────────────────────────────────────
+// AgentSkill — Skills habilitadas por agente
+// ─────────────────────────────────────────────────────────
+model AgentSkill {
+  id        String   @id @default(uuid()) @db.Uuid
+  agentId   String   @map("agent_id") @db.Uuid
+  skillId   String   @map("skill_id") @db.Uuid
+  enabled   Boolean  @default(true)
+  config    Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, skillId])
+  @@index([agentId])
+  @@map("agent_skills")
+}
+
+// ─────────────────────────────────────────────────────────
+// McpServer — Servidor MCP externo
+// ─────────────────────────────────────────────────────────
+model McpServer {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  url         String   @db.Text
+  transport   String   @default("http") @db.VarChar(20)
+  headers     Json     @default("{}")
+  status      String   @default("active") @db.VarChar(20)
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user            User             @relation(fields: [createdBy], references: [id])
+  agentMcpServers AgentMcpServer[]
+  tools           McpServerTool[]
+
+  @@index([createdBy])
+  @@index([status])
+  @@map("mcp_servers")
+}
+
+// ─────────────────────────────────────────────────────────
+// McpServerTool — Tools cacheadas de um servidor MCP
+// ─────────────────────────────────────────────────────────
+model McpServerTool {
+  id          String   @id @default(uuid()) @db.Uuid
+  mcpServerId String   @map("mcp_server_id") @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  inputSchema Json     @default("{}") @map("input_schema")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  server McpServer @relation(fields: [mcpServerId], references: [id], onDelete: Cascade)
+
+  @@index([mcpServerId])
+  @@map("mcp_server_tools")
+}
+
+// ─────────────────────────────────────────────────────────
+// AgentMcpServer — Servidores MCP conectados a um agente
+// ─────────────────────────────────────────────────────────
+model AgentMcpServer {
+  id          String   @id @default(uuid()) @db.Uuid
+  agentId     String   @map("agent_id") @db.Uuid
+  mcpServerId String   @map("mcp_server_id") @db.Uuid
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  mcpServer McpServer @relation(fields: [mcpServerId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, mcpServerId])
+  @@index([agentId])
+  @@map("agent_mcp_servers")
 }

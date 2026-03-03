@@ -161,6 +161,36 @@ export async function chatWithAgent(
     // Silently skip plugin injection on error
   }
 
+  // === SKILLS INJECTION ===
+  let agentSkills: Awaited<ReturnType<typeof prisma.agentSkill.findMany>> = []
+  let agentMcpServers: Awaited<ReturnType<typeof prisma.agentMcpServer.findMany>> = []
+  try {
+    agentSkills = await prisma.agentSkill.findMany({
+      where: { agentId, enabled: true },
+      include: { skill: true },
+    })
+
+    // Prompt skills — inject into system prompt
+    const promptSkills = agentSkills.filter((as: typeof agentSkills[0]) => (as.skill as any).type === 'prompt')
+    for (const { skill } of promptSkills) {
+      if ((skill as any).promptBlock) {
+        systemPrompt += `\n\n${(skill as any).promptBlock}`
+      }
+    }
+  } catch {
+    // Silently skip skills injection on error
+  }
+
+  // === MCP INJECTION ===
+  try {
+    agentMcpServers = await prisma.agentMcpServer.findMany({
+      where: { agentId, enabled: true },
+      include: { mcpServer: { include: { tools: true } } },
+    })
+  } catch {
+    // Silently skip MCP injection on error
+  }
+
   // ── Injetar tool delegate_to_agent no system prompt ───────
   const delegationDepth = leadContext?.delegationDepth ?? 0
   if (delegationDepth < 3) {
@@ -342,7 +372,33 @@ REGRAS PARA ESCREVER CÓDIGO:
       // Build native OpenAI tools array (READ-ONLY: list_files, read_file only)
       // write_file is NOT included — code is extracted from markdown blocks to avoid garbled args
       const { readOnlyToolDefinitions, filesystemTools } = await import('@/lib/tools/filesystem')
-      const apiTools = toolsEnabled ? readOnlyToolDefinitions : undefined
+
+      // Tool skills — add to function calling tools
+      const toolSkillDefinitions = agentSkills
+        .filter((as: typeof agentSkills[0]) => (as.skill as any).type === 'tool' && (as.skill as any).toolDefinition)
+        .map((as: typeof agentSkills[0]) => ({
+          type: 'function' as const,
+          function: (as.skill as any).toolDefinition as {
+            name: string
+            description: string
+            parameters: Record<string, unknown>
+          },
+        }))
+
+      // MCP tool definitions
+      const mcpToolDefinitions = agentMcpServers.flatMap((ams: typeof agentMcpServers[0]) =>
+        ((ams.mcpServer as any).tools as any[]).map((tool: any) => ({
+          type: 'function' as const,
+          function: {
+            name: `mcp__${(ams.mcpServer as any).id.slice(0, 8)}__${tool.name}`,
+            description: `[MCP: ${(ams.mcpServer as any).name}] ${tool.description || tool.name}`,
+            parameters: tool.inputSchema as Record<string, unknown>,
+          },
+        }))
+      )
+
+      const allTools = [...readOnlyToolDefinitions, ...toolSkillDefinitions, ...mcpToolDefinitions]
+      const apiTools = toolsEnabled ? allTools : undefined
 
       // ReAct Loop with hybrid approach
       let loopCount = 0
@@ -387,12 +443,54 @@ REGRAS PARA ESCREVER CÓDIGO:
             }
 
             console.log(`[Agent Tool] Loop ${loopCount + 1}: ${fnName}`, fnArgs)
-            const result = await filesystemTools.execute(fnName, fnArgs)
+            let toolResult: string
+
+            // Handle MCP tool calls
+            if (fnName.startsWith('mcp__')) {
+              const parts = fnName.split('__')
+              const serverIdPrefix = parts[1]
+              const toolName = parts.slice(2).join('__')
+              const ams = agentMcpServers.find((s: typeof agentMcpServers[0]) => (s.mcpServer as any).id.startsWith(serverIdPrefix))
+              if (ams) {
+                try {
+                  const { mcpClient } = await import('@/lib/mcp/client')
+                  const mcpResult = await mcpClient.callTool(
+                    (ams.mcpServer as any).url,
+                    toolName,
+                    fnArgs,
+                    (ams.mcpServer as any).headers as Record<string, string>
+                  )
+                  toolResult = mcpResult.content.map((c: any) => c.text || '').join('\n')
+                } catch (mcpErr) {
+                  toolResult = `MCP error: ${String(mcpErr)}`
+                }
+              } else {
+                toolResult = `MCP server not found for tool: ${fnName}`
+              }
+            // Handle skill tool calls
+            } else if (toolSkillDefinitions.some((t: any) => t.function.name === fnName)) {
+              const matchedSkill = agentSkills.find((as: typeof agentSkills[0]) => ((as.skill as any).toolDefinition as any)?.name === fnName)
+              if (matchedSkill && (matchedSkill.skill as any).toolCode) {
+                try {
+                  const { executeToolSkill } = await import('@/lib/skills/executor')
+                  const skillResult = await executeToolSkill((matchedSkill.skill as any).toolCode, fnArgs)
+                  toolResult = skillResult.success ? JSON.stringify(skillResult.output) : `Erro: ${skillResult.error}`
+                } catch (skillErr) {
+                  toolResult = `Skill error: ${String(skillErr)}`
+                }
+              } else {
+                toolResult = `Skill not found or has no code: ${fnName}`
+              }
+            } else {
+              // Default: filesystem tools
+              const result = await filesystemTools.execute(fnName, fnArgs)
+              toolResult = typeof result === 'string' ? result : JSON.stringify(result)
+            }
 
             currentMessages.push({
               role: 'tool',
               tool_call_id: toolCall.id,
-              content: typeof result === 'string' ? result : JSON.stringify(result),
+              content: toolResult,
             })
           }
 
