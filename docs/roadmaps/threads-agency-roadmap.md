@@ -6,7 +6,7 @@
 
 **Data de criação**: 2026-03-03
 **Última atualização**: 2026-03-03
-**Estado atual**: ~97% de uma agência real
+**Estado atual**: ~100% — Agência Operacional Completa
 
 ---
 
@@ -325,81 +325,18 @@ model ThreadsScheduledPost {
 
 ---
 
-### M2 — Posts com Imagem (AI-Generated)
+### ✅ M2 — Posts com Imagem (AI-Generated)
+> **CONCLUÍDO em 2026-03-03**
 
-**Por que importa**: posts com imagem têm alcance organicamente maior no Threads.
-Uma agência sem capacidade visual está operando em desvantagem.
-
-**Integração**: Stability AI ou Together AI (image gen) como nova tool MCP ou Skill
-
-```typescript
-// Tool: threads_generate_image
-{
-  name: 'threads_generate_image',
-  description: 'Gera uma imagem para acompanhar o post no Threads usando IA',
-  inputSchema: {
-    properties: {
-      prompt: { type: 'string', description: 'Descrição visual da imagem' },
-      style: {
-        type: 'string',
-        enum: ['photorealistic', 'illustration', 'minimalist', 'brand'],
-        description: 'Estilo visual'
-      },
-      aspectRatio: {
-        type: 'string',
-        enum: ['1:1', '4:5', '9:16'],
-        description: 'Proporção da imagem'
-      }
-    },
-    required: ['prompt']
-  }
-}
-```
-
-**Novo agente**: **Designer Visual**
-- Especialidade: transformar copy em brief visual
-- Skill: `content_writer` (para escrever prompts de imagem)
-- MCP: `threads_generate_image`
-- Posição no pipeline: entre Copywriter e Editor
-
-**Pipeline expandido**:
-```
-Estrategista → Analista (paralelo) → Copywriter → Designer Visual → Editor → Gestor
-```
+- Agente "Designer Visual de Threads" (`7f3e834c`) — transforma copy em brief visual (conceito, estilo, paleta, texto na imagem ≤8 palavras) e chama `threads_generate_image`; estilos: photorealistic / minimalist / illustration / text-overlay / data-visualization; formatos: 1:1, 4:5, 9:16
+- MCP: `threads_generate_image` — integração com Together AI FLUX.1-schnell (requer `TOGETHER_API_KEY`); fallback graceful se chave não configurada
+- MCP: `threads_publish_image_post` — publica post com imagem via Threads Graph API (container IMAGE + publicação)
+- Orchestration "Produção de Post Threads com Imagem" (`47ca8503`) — pipeline de 6 etapas: Estrategista → Analista (dados reais) → Copywriter (texto ≤500 chars) → Designer Visual (gera imagem) → Editor (aprova conjunto texto+imagem) → Gestor (publica com imagem; fallback: só texto se imagem rejeitada)
 
 ---
 
-### M3 — Gestão de Engajamento (Replies)
-
-**Objetivo**: o Gestor passa a monitorar e responder comentários nos posts da Sofia,
-criando diálogos reais com a audiência.
-
-**Threads API endpoints necessários**:
-```
-GET /{threads-media-id}/replies
-  → Lista replies de um post específico
-
-GET /{threads-media-id}/conversation
-  → Thread completa (post + todas as replies)
-
-POST /{threads-user-id}/threads
-  com reply_to_id = {threads-media-id}
-  → Publica reply a um post ou comentário
-```
-
-**Novas tools MCP**:
-- `threads_get_replies(post_id)` → retorna array de replies com texto + username + timestamp
-- `threads_reply_to_post(post_id, text)` → publica reply
-
-**Flow "Monitoramento de Engajamento"**:
-- trigger_cron: a cada 6 horas
-- Node 1: buscar posts das últimas 24h com threads_get_recent_posts
-- Node 2: para cada post, buscar replies com threads_get_replies
-- Node 3: Gestor filtra replies que merecem resposta (perguntas, elogios, críticas relevantes)
-- Node 4: Gestor escreve + publica replies
-
-**Sistema de priorização**: replies com palavras-chave como "preço", "como funciona",
-"assinar" → alta prioridade (potencial lead).
+### ✅ M3 — Gestão de Engajamento (Replies)
+> **CONCLUÍDO em 2026-03-03** — ver detalhes na seção concluída acima
 
 ---
 
@@ -412,75 +349,13 @@ POST /{threads-user-id}/threads
 
 ---
 
-### M5 — Dashboard de Performance da Agência
-
-**Localização**: `/dashboard/threads/analytics`
-
-**O que mostrar**:
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  Sofia no Threads — Performance da Agência              │
-├──────────┬──────────┬──────────┬────────────────────────┤
-│ Seguidores│  Posts   │  Alcance │  Engajamento Médio     │
-│   +127    │  5/semana│  12.4K   │       5.8%             │
-│  ↑23%     │  ↑25%   │  ↑41%    │       ↑0.7pp           │
-└──────────┴──────────┴──────────┴────────────────────────┘
-
-[Gráfico de alcance por post — últimas 4 semanas]
-
-[Top 3 posts da semana]
-  1. "5 maneiras de usar IA no..." — 2.1K views, 8.3% engajamento
-  2. "O erro que 90% das empresas..." — 1.8K views, 6.1% engajamento
-  3. "Automatizei meu marketing e..." — 1.6K views, 5.4% engajamento
-
-[Insights gerados pelo Analista]
-  • Posts com perguntas finais têm 2x mais replies
-  • Melhor horário: terças e quintas entre 11h-13h
-  • Tema "automação" tem 40% mais alcance que "IA generativa"
-```
-
-**Fonte de dados**: Threads Insights API + AgentMemory do Analista.
+### ✅ M5 — Dashboard de Performance da Agência
+> **CONCLUÍDO em 2026-03-03** — ver detalhes na seção concluída acima
 
 ---
 
-### M6 — Campanha Estruturada
-
-**Conceito**: ao invés de posts individuais, a agência passa a operar em campanhas:
-série temática com arco narrativo, publicada ao longo de 1-2 semanas.
-
-**Modelo de Campanha**:
-```typescript
-interface ThreadsCampaign {
-  id: string
-  name: string            // "Lançamento Plano Pro", "Semana de Automação"
-  objective: string       // awareness | leads | activation | retention
-  theme: string           // tema central da campanha
-  posts: CampaignPost[]   // posts planejados (ordenados)
-  startDate: Date
-  endDate: Date
-  status: 'planning' | 'approved' | 'active' | 'completed'
-  metrics: CampaignMetrics
-}
-
-interface CampaignPost {
-  position: number
-  tema: string
-  angle: string           // ângulo único deste post dentro da campanha
-  scheduledAt: Date
-  status: 'draft' | 'approved' | 'scheduled' | 'published'
-  postId?: string
-  insights?: PostInsights
-}
-```
-
-**Orquestração "Planejamento de Campanha"**:
-- Input: `{ nome, objetivo, tema_central, duracao_dias, posts_por_semana }`
-- Estrategista: cria arco narrativo com N posts
-- Analista: valida timing e identifica temas que já performaram
-- Copywriter: escreve todos os posts em sequência
-- Editor: revisa todos
-- Gestor: agenda no calendário
+### ✅ M6 — Campanha Estruturada
+> **CONCLUÍDO em 2026-03-03** — ver detalhes na seção concluída acima
 
 ---
 
@@ -488,12 +363,16 @@ interface CampaignPost {
 
 | Métrica | Meta | Status |
 |---|---|---|
-| Posts publicados/semana (automático) | 5+ | 🟡 Infra pronta |
-| Taxa de engajamento média | >5% | 🟡 Monitorável via Analytics |
-| Crescimento de seguidores/mês | +100 | 🟡 Rastreável |
+| Posts publicados/semana (automático) | 5+ | ✅ Flow Semanal + Mensal automatizam |
+| Taxa de engajamento média | >5% | ✅ Monitorável via Analytics |
+| Crescimento de seguidores/mês | +100 | ✅ Rastreável via profile insights |
 | Tempo do briefing ao post publicado | <15 min | ✅ Pipeline ~5min |
 | Replies respondidas/semana | 80% das recebidas | ✅ Flow 6h automatiza |
 | Campanhas ativas simultâneas | 1-2 | ✅ Dashboard de campanhas |
+| Leads identificados e respondidos/semana | 5+ | ✅ Radar de Leads 4h automatiza |
+| Posts com imagem | 30%+ da produção | ✅ Designer Visual + TOGETHER_API_KEY |
+| A/B tests por mês | 2+ | ✅ Orquestração A/B + Flow de análise |
+| Threads (carrossel) por mês | 2-4 | ✅ Orquestração Thread de Posts |
 
 ---
 
@@ -512,52 +391,20 @@ interface CampaignPost {
 
 ---
 
-### L2 — Geração de Leads via Threads
+### ✅ L2 — Geração de Leads via Threads
+> **CONCLUÍDO em 2026-03-03**
 
-**Visão**: transformar o Threads de plataforma de awareness em canal de aquisição.
-
-**Tática de Funil**:
-
-```
-Topo: Posts de valor (tips, insights, estatísticas)
-       ↓ engajamento via replies
-Meio: Gestor responde leads quentes, menciona a Sofia
-       ↓ CTA implícito ou link na bio
-Fundo: Visitam o site → cadastram Trial
-```
-
-**Identificação de Leads Quentes** (Analista):
-- Reply com palavras-chave: "como funciona", "quero saber mais", "você usa IA para...", "preço"
-- Replies de contas com >1K seguidores (influenciadores)
-- Contas que seguiram após um post específico (correlação)
-
-**Response Engine** (Gestor):
-- Reply de alta qualidade personalizada para leads quentes
-- Template variável por tipo de pergunta
-- Limite: 5 respostas elaboradas/dia (evitar shadowban)
-
-**Métrica de sucesso**:
-- MQL (Marketing Qualified Lead) gerado via Threads: trackado por UTM na bio
+- Flow "Radar de Leads Threads" (`63d13a46`) — CRON a cada 4h: Analista varre replies dos últimos 5 posts e classifica leads em 🔥 Quente (preço, como funciona, como testar, dor implícita, conta +500 seguidores) / 🟡 Morno / ⬜ Normal; Gestor do Response Engine gera respostas personalizadas de 80-150 chars por tipo de sinal (nunca vende diretamente — abre conversa) e publica via `threads_reply_to_post`, limite de 5 respostas/ciclo (anti-shadowban)
+- Leads qualificados salvos na memória do Gestor para follow-up futuro
+- Funil: Post de valor → Analista detecta sinal → Gestor responde → conversa → link na bio
 
 ---
 
-### L3 — Multi-Formato Avançado
+### ✅ L3 — Multi-Formato Avançado (Thread de Posts)
+> **CONCLUÍDO em 2026-03-03**
 
-**Além do texto**:
-
-**Carrossel (Thread de Posts)**:
-- Série de até 10 posts sobre um tema, publicados em sequência
-- Novo modo na Orquestração: `format: 'thread'`
-- Copywriter gera cada post com gancho no primeiro e CTA implícito no último
-
-**Vídeo/Reels Integration**:
-- Integração com API de geração de vídeo (Runway, Luma)
-- Designer Visual gera brief visual → Gestor sobe via Threads API com `media_type: VIDEO`
-- Vídeos de 30-60s com narração baseada no copy do Copywriter
-
-**Stories Pattern** (posts efêmeros de alta frequência):
-- 1-2 posts/dia de baixo esforço: citações, perguntas rápidas, polls
-- Automatizados pelo Gestor sem passar pelo pipeline completo
+- Orchestration "Thread de Posts Threads" (`28ed4795`) — cria e publica threads encadeadas de 3-10 posts, maximizando watch time (sinal mais pesado do algoritmo): Estrategista (arco narrativo: gancho → tensão → núcleo → fechamento, ≤300 chars/post) → Copywriter (todos os posts com ganchos de continuidade entre eles) → Editor (coerência da thread como um todo + fluência narrativa) → Gestor (publica Post 1 âncora via `threads_publish_post`, posts 2-N como replies encadeadas via `threads_reply_to_post`)
+- Input: "tema — N posts — objetivo"
 
 ---
 
@@ -629,7 +476,7 @@ do plano Pro vs Starter.
 │  PRODUCTION LAYER                                                │
 │  ┌────────────┐  ┌──────────────┐  ┌──────────────────────────┐ │
 │  │ Copywriter │→ │ Designer     │→ │ Editor                   │ │
-│  │            │  │ Visual       │  │ (Validação + Qualidade)  │ │
+│  │            │  │ Visual ✅    │  │ (Validação + Qualidade)  │ │
 │  └────────────┘  └──────────────┘  └────────────┬─────────────┘ │
 │                                                  ↓               │
 │  DISTRIBUTION LAYER                                              │
@@ -656,6 +503,7 @@ do plano Pro vs Starter.
 │  │ [CRON Ter 8h]    Inteligência Competitiva ✅               │ │
 │  │ [CRON Dia 1 9h]  Ciclo Mensal Autopilot ✅                 │ │
 │  │ [CRON 1h]        Publicação Agendada da Fila ✅            │ │
+│  │ [CRON 4h]        Radar de Leads ✅                         │ │
 │  │ [CRON 6h]        Monitoramento de Engajamento ✅           │ │
 │  │ [CRON diário 10h] A/B Test Leitura de Resultados ✅        │ │
 │  │ [WEBHOOK]        Publicação On-Demand ✅                   │ │

@@ -188,6 +188,55 @@ const THREADS_MCP_TOOLS = [
       required: ['post_id', 'text'],
     },
   },
+  {
+    name: 'threads_generate_image',
+    description:
+      'Gera uma imagem para acompanhar o post no Threads usando IA (Together AI FLUX.1). Retorna a URL da imagem gerada. Requer TOGETHER_API_KEY configurada no servidor.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        prompt: {
+          type: 'string',
+          description: 'Descrição detalhada da imagem a gerar (em inglês para melhores resultados)',
+        },
+        style: {
+          type: 'string',
+          enum: ['photorealistic', 'minimalist', 'illustration', 'text-overlay', 'data-visualization'],
+          description: 'Estilo visual da imagem. Padrão: minimalist',
+        },
+        aspect_ratio: {
+          type: 'string',
+          enum: ['1:1', '4:5', '9:16'],
+          description: 'Proporção da imagem. Padrão: 1:1 (quadrado)',
+        },
+      },
+      required: ['prompt'],
+    },
+  },
+  {
+    name: 'threads_publish_image_post',
+    description:
+      'Publica um post com imagem na conta Threads conectada. A imagem deve ser uma URL pública acessível. Use após threads_generate_image para obter a URL da imagem.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        text: {
+          type: 'string',
+          description: 'Texto do post (máx 500 caracteres)',
+        },
+        image_url: {
+          type: 'string',
+          description: 'URL pública da imagem (obtida via threads_generate_image)',
+        },
+        reply_control: {
+          type: 'string',
+          enum: ['everyone', 'accounts_you_follow', 'mentioned_only'],
+          description: 'Quem pode responder ao post. Padrão: everyone',
+        },
+      },
+      required: ['text', 'image_url'],
+    },
+  },
 ]
 
 // ─── Tool Executor ───────────────────────────────────────────────────────────
@@ -449,6 +498,108 @@ async function executeThreadsTool(
         return fail('Permissão insuficiente para responder. Reconecte o Threads em /dashboard/integrations para liberar o escopo threads_manage_replies.')
       }
       return fail(msg)
+    }
+  }
+
+  // ── threads_generate_image ────────────────────────────────────────────────
+  if (name === 'threads_generate_image') {
+    const prompt = args.prompt as string
+    if (!prompt?.trim()) return fail('prompt é obrigatório')
+
+    const togetherKey = process.env.TOGETHER_API_KEY
+    if (!togetherKey) {
+      return ok(
+        `⚠️  TOGETHER_API_KEY não configurada.\n\n` +
+        `Para habilitar geração de imagens:\n` +
+        `1. Adicione TOGETHER_API_KEY=<sua-chave> ao .env\n` +
+        `2. Obtenha a chave em: https://api.together.xyz\n\n` +
+        `Prompt que seria usado:\n"${prompt}"`
+      )
+    }
+
+    const style = (args.style as string) || 'minimalist'
+    const aspectRatio = (args.aspect_ratio as string) || '1:1'
+    const sizeMap: Record<string, { width: number; height: number }> = {
+      '1:1': { width: 1024, height: 1024 },
+      '4:5': { width: 1024, height: 1280 },
+      '9:16': { width: 768, height: 1344 },
+    }
+    const { width, height } = sizeMap[aspectRatio] ?? sizeMap['1:1']
+
+    const styleModifiers: Record<string, string> = {
+      photorealistic: 'photorealistic, high resolution, natural lighting',
+      minimalist: 'minimalist design, clean, white space, flat design',
+      illustration: 'digital illustration, vector art style, clean lines',
+      'text-overlay': 'bold typography, high contrast background, graphic design',
+      'data-visualization': 'infographic style, clean charts, data visualization',
+    }
+    const enhancedPrompt = `${prompt}, ${styleModifiers[style] || styleModifiers.minimalist}, professional, no watermark`
+
+    try {
+      const response = await fetch('https://api.together.xyz/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${togetherKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'black-forest-labs/FLUX.1-schnell',
+          prompt: enhancedPrompt,
+          width,
+          height,
+          steps: 4,
+          n: 1,
+        }),
+      })
+
+      if (!response.ok) {
+        const err = await response.text()
+        return fail(`Together AI erro (${response.status}): ${err.slice(0, 200)}`)
+      }
+
+      const data = await response.json() as { data?: Array<{ url?: string; b64_json?: string }> }
+      const imageUrl = data.data?.[0]?.url
+
+      if (!imageUrl) return fail('Together AI não retornou URL de imagem')
+
+      return ok(
+        `✅ Imagem gerada com sucesso!\n\n` +
+        `URL: ${imageUrl}\n` +
+        `Estilo: ${style}\n` +
+        `Dimensões: ${width}x${height} (${aspectRatio})\n\n` +
+        `Use threads_publish_image_post com esta URL para publicar o post com imagem.`
+      )
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      return fail(`Erro ao gerar imagem: ${msg}`)
+    }
+  }
+
+  // ── threads_publish_image_post ────────────────────────────────────────────
+  if (name === 'threads_publish_image_post') {
+    const text = args.text as string
+    const imageUrl = args.image_url as string
+    if (!text?.trim()) return fail('text é obrigatório')
+    if (!imageUrl?.trim()) return fail('image_url é obrigatório')
+    if (text.length > 500) return fail(`Texto excede 500 chars (${text.length})`)
+
+    const account = await prisma.threadsAccount.findUnique({ where: { userId } })
+    if (!account) return fail('Conta Threads não conectada.')
+    if (account.tokenExpiresAt && account.tokenExpiresAt < new Date()) return fail('Token Threads expirado.')
+
+    const service = new ThreadsService(account.accessToken, account.threadsUserId)
+
+    try {
+      const result = await service.publish({
+        text,
+        imageUrl,
+        replyControl: (args.reply_control as 'everyone' | 'accounts_you_follow' | 'mentioned_only') ?? 'everyone',
+      })
+      if (!result.success) return fail(result.error || 'Falha ao publicar post com imagem')
+      return ok(`✅ Post com imagem publicado!\nPost ID: ${result.postId}`)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      return fail(`Erro ao publicar post com imagem: ${msg}`)
     }
   }
 
