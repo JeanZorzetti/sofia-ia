@@ -29,7 +29,9 @@ import {
   ChevronDown,
   Plus,
   User,
-  TrendingUp
+  TrendingUp,
+  Sparkles,
+  Network
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -61,6 +63,16 @@ const menuItems = [
     href: '/dashboard/agents',
     label: 'Agentes de IA',
     icon: Bot,
+  },
+  {
+    href: '/dashboard/skills',
+    label: 'Skills',
+    icon: Sparkles,
+  },
+  {
+    href: '/dashboard/mcp',
+    label: 'MCP Servers',
+    icon: Network,
   },
   {
     href: '/dashboard/conversations',

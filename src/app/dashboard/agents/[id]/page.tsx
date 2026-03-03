@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
-import { ArrowLeft, Loader2, Save, MessageSquare, Mail, Globe, Brain, Puzzle, GitBranch } from 'lucide-react'
+import { ArrowLeft, Loader2, Save, MessageSquare, Mail, Globe, Brain, Puzzle, GitBranch, Sparkles, Network } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AgentChatTester } from '@/components/sofia/AgentChatTester'
@@ -262,6 +262,18 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
             <Button variant="outline" size="sm">
               <GitBranch className="h-4 w-4 mr-2" />
               Delegações
+            </Button>
+          </Link>
+          <Link href={`/dashboard/agents/${resolvedParams.id}/skills`}>
+            <Button variant="outline" size="sm">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Skills
+            </Button>
+          </Link>
+          <Link href={`/dashboard/agents/${resolvedParams.id}/mcp`}>
+            <Button variant="outline" size="sm">
+              <Network className="h-4 w-4 mr-2" />
+              MCP
             </Button>
           </Link>
           <Button onClick={handleSave} disabled={saving}>
