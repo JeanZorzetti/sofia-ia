@@ -39,6 +39,7 @@ model User {
   userAuditLogs        UserAuditLog[]
   oauthConnections     OAuthConnection[]
   betaFeedbacks        BetaFeedback[]
+  threadsAccount       ThreadsAccount?
 
   @@index([workspaceId])
   @@map("users")
@@ -1083,4 +1084,23 @@ model BetaFeedback {
   @@index([userId])
   @@index([createdAt(sort: Desc)])
   @@map("beta_feedbacks")
+}
+
+// ─────────────────────────────────────────────────────────
+// ThreadsAccount — Conta Threads conectada por usuário
+// ─────────────────────────────────────────────────────────
+model ThreadsAccount {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @unique @map("user_id") @db.Uuid
+  threadsUserId  String    @map("threads_user_id") @db.VarChar(255)
+  username       String?   @db.VarChar(255)
+  accessToken    String    @map("access_token") @db.Text
+  tokenExpiresAt DateTime? @map("token_expires_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("threads_accounts")
 }
