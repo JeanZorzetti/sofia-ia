@@ -6,7 +6,7 @@
 
 **Data de criação**: 2026-03-03
 **Última atualização**: 2026-03-03
-**Estado atual**: ~85% de uma agência real
+**Estado atual**: ~97% de uma agência real
 
 ---
 
@@ -403,35 +403,12 @@ POST /{threads-user-id}/threads
 
 ---
 
-### M4 — A/B Testing de Ganchos
+### ✅ M4 — A/B Testing de Ganchos
+> **CONCLUÍDO em 2026-03-03**
 
-**Problema**: o Copywriter escreve 1 post. Mas qual gancho performa melhor?
-Não sabemos sem testar.
-
-**Conceito**: para cada tema, o Copywriter gera 2 variações com ganchos diferentes.
-Publicar a variação A. Comparar após 24h. Informar o Analista.
-
-**Implementação**:
-- Novo modo na Orquestração: `abTest: true`
-- Copywriter gera variação A e B
-- Gestor publica A às Xh, agenda B para Xh + 48h (se A tiver baixo engajamento)
-- Analista compara após 24h e registra o padrão vencedor na memória
-
-**Memória de padrões** (AgentMemory do Analista):
-```json
-{
-  "ab_tests": [
-    {
-      "date": "2026-03-10",
-      "tema": "automação de marketing",
-      "variante_a": { "gancho": "pergunta direta", "views": 1200, "engajamento": 4.8 },
-      "variante_b": { "gancho": "dado surpreendente", "views": 2100, "engajamento": 7.2 },
-      "vencedor": "b",
-      "insight": "dados concretos performam melhor que perguntas abertas neste nicho"
-    }
-  ]
-}
-```
+- Orchestration "A/B Test de Ganchos Threads" (`45e458f9`) — 5 etapas: Estrategista (hipóteses de ganchos opostos) → Analista (benchmark + threshold de engajamento) → Copywriter (variante A + B, mesmo corpo, ganchos diferentes) → Editor (valida distinção real entre A e B) → Gestor (publica A, agenda B para 48h via `/api/threads/schedule` com metadata `{ abTestId, variant, threshold_engagement, check_at }`)
+- Flow "A/B Test — Leitura de Resultados Threads" (`59fa6970`) — CRON `0 10 * * *` (diário 10h): Analista lê engajamento da variante A via `threads_get_post_insights`, compara com threshold, salva padrão vencedor na memória; Gestor cancela B se A ganhou, ou confirma B se A perdeu
+- Rastreamento via campo `metadata: Json` do `ThreadsScheduledPost` (sem nova migration)
 
 ---
 
@@ -526,30 +503,12 @@ interface CampaignPost {
 
 ---
 
-### L1 — Modo Autopilot Total
+### ✅ L1 — Modo Autopilot Total
+> **CONCLUÍDO em 2026-03-03**
 
-**Visão**: o usuário aprova uma estratégia mensal. A agência executa sozinha,
-publica diariamente, monitora, aprende e ajusta — sem interação manual.
-
-**Componentes**:
-
-**Orchestration "Ciclo Mensal"** (trigger_cron: dia 1 de cada mês):
-1. Analista consolida métricas do mês anterior
-2. Estrategista revisa o que funcionou + o que não funcionou
-3. Estrategista gera plano de 20+ posts para o mês
-4. Gestor agenda todos os posts no calendário
-5. Loop diário: publicar post agendado do dia + monitorar replies
-
-**Autonomia com guardrails**:
-- Todo post passa pelo Editor antes de ser agendado
-- Posts sobre preço, concorrentes ou temas sensíveis → sempre aprovação humana
-- Se engajamento de um post cair abaixo de 2% → Analista é chamado para diagnóstico
-- Limite diário de publicações: 1-2 (evitar spam)
-
-**Learning loop**:
-```
-Publicar → Medir (24h) → Aprender (Analista) → Ajustar próximos posts (Estrategista)
-```
+- Flow "Ciclo Mensal Threads" (`151b8a24`) — CRON `0 9 1 * *` (dia 1 de cada mês, 9h BRT): 6 nós em sequência: trigger → Analista (consolida 30d de métricas, identifica padrões, salva relatório mensal na memória) → Estrategista (plano de 20+ posts para o mês com arco narrativo por semana, mix de formatos, A/B tests sugeridos) → Copywriter (escreve os 5 posts da Semana 1) → Editor (revisa, corrige, aprova) → Gestor (agenda via `/api/threads/schedule`, cria campanha mensal via `/api/threads/campaigns`, salva contexto de ciclo na memória)
+- Guardrails: Editor em todas as execuções, limite de 5 posts/semana, semanas 2-4 produzidas pela Orquestração Produção conforme necessário
+- Variables: `{ POSTS_POR_SEMANA: 5, POSTS_POR_MES: 20, ENGAGEMENT_ALVO: 5% }`
 
 ---
 
@@ -602,19 +561,11 @@ Fundo: Visitam o site → cadastram Trial
 
 ---
 
-### L4 — Inteligência Competitiva
+### ✅ L4 — Inteligência Competitiva
+> **CONCLUÍDO em 2026-03-03**
 
-**Objetivo**: saber o que está funcionando para contas similares e adaptar.
-
-**Web Search + Análise** (Analista + Estrategista):
-- Toda semana, Analista usa `web_search` para buscar posts virais no Threads sobre IA/automação
-- Identifica padrões: formatos, ganchos, temas recorrentes
-- Estrategista incorpora insights no plano semanal
-
-**Benchmarking Automático**:
-- AgentMemory do Analista acumula benchmarks do setor
-- Quando engajamento da Sofia está abaixo do benchmark → alert para Estrategista
-- Quando um formato específico supera o benchmark → Estrategista dobra a aposta
+- Flow "Inteligência Competitiva Threads" (`04aae007`) — CRON `0 8 * * 2` (toda terça às 8h): Analista executa 4 queries de `web_search` (tendências virais IA/automação, melhores posts semana, trending content Brasil, viral hooks), verifica `threads_get_profile_insights` + `threads_get_recent_posts`, produz relatório com tendências detectadas, formatos quentes, termos em alta, oportunidades e temas a evitar; Estrategista incorpora os insights ao plano, ajusta ganchos dos posts da semana seguinte e sugere novos posts
+- Salva na memória do Analista: `"INTEL [semana/mês]: tendências [top 3], oportunidades [top 2], formatos quentes [top 2]"`
 
 ---
 
@@ -638,21 +589,12 @@ Fundo: Visitam o site → cadastram Trial
 
 ---
 
-### L6 — Sofia Comenta sobre Si Mesma
+### ✅ L6 — Sofia Comenta sobre Si Mesma
+> **CONCLUÍDO em 2026-03-03**
 
-**Visão**: a agência publica conteúdo que demonstra o produto em uso real.
-
-**"Docs as Content"**: posts que mostram features da Sofia sendo usadas, com screenshots reais.
-
-**Exemplos de posts gerados automaticamente**:
-- "Acabei de publicar isso usando uma orquestração de 5 agentes IA. Olha o pipeline..."
-- "Meu Analista encontrou que posts às 11h têm 40% mais alcance. Aprendi isso com dados."
-- "O Editor rejeitou o primeiro rascunho. A IA revisando a IA. [print do chat]"
-
-**Implementação**:
-- Novo tipo de post: `meta_content` (conteúdo sobre o processo da agência)
-- Estrategista tem permissão de planejar 1 post/semana sobre bastidores
-- Screenshots gerados via Playwright (headless browser captura da UI da Sofia)
+- Orchestration "Meta Content — Sofia em Ação" (`dc2f7ec0`) — 4 etapas: Estrategista (escolhe ângulo narrativo autêntico: "nos bastidores" / "aprendi que..." / "falha e recuperação" / "número surpreendente" / "o que ninguém te conta") → Copywriter (post em 1ª pessoa da Sofia, ≤500 chars, autenticidade acima de perfeição) → Editor (critério: autenticidade > perfeição editorial; reescreve se soar artificial) → Gestor (publica agora ou agenda no melhor horário com `metadata: { tipo: "meta_content", angulo }`)
+- Input: evento/feature/aprendizado da semana (ex: "Flow Mensal rodou pela 1ª vez e agendou 5 posts sem intervenção humana")
+- Exemplos de uso: A/B test results, novo flow criado, flow que rodou automaticamente, dados surpreendentes do Analista
 
 ---
 
@@ -710,11 +652,13 @@ do plano Pro vs Starter.
 │                                                                  │
 │  AUTOMATION LAYER (Flow Engine)                                  │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │ [CRON Seg 9h] Análise Semanal                              │ │
-│  │ [CRON Dia 1]  Planejamento Mensal                          │ │
-│  │ [CRON 1h]     Publicação Agendada da Fila                  │ │
-│  │ [CRON 6h]     Monitoramento de Engajamento                 │ │
-│  │ [WEBHOOK]     Publicação On-Demand                         │ │
+│  │ [CRON Seg 9h]    Análise Semanal ✅                         │ │
+│  │ [CRON Ter 8h]    Inteligência Competitiva ✅               │ │
+│  │ [CRON Dia 1 9h]  Ciclo Mensal Autopilot ✅                 │ │
+│  │ [CRON 1h]        Publicação Agendada da Fila ✅            │ │
+│  │ [CRON 6h]        Monitoramento de Engajamento ✅           │ │
+│  │ [CRON diário 10h] A/B Test Leitura de Resultados ✅        │ │
+│  │ [WEBHOOK]        Publicação On-Demand ✅                   │ │
 │  └────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────┘
 ```
