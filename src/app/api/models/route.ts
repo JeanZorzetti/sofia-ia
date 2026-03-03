@@ -16,7 +16,13 @@ export async function GET(request: NextRequest) {
         // Default Groq models
         const models = [
             { id: 'llama-3.3-70b-versatile', name: 'Llama 3.3 70B (Versatile)', provider: 'Groq' },
-            { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1 (via OpenRouter)', provider: 'OpenRouter' },
+            { id: 'llama-3.3-70b-specdec', name: 'Llama 3.3 70B (SpecDec)', provider: 'Groq' },
+            { id: 'deepseek-r1-distill-llama-70b', name: 'DeepSeek R1 Distill Llama 70B', provider: 'Groq' },
+            { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', provider: 'Groq' },
+            { id: 'anthropic/claude-sonnet-4-5', name: 'Claude Sonnet 4.5', provider: 'OpenRouter' },
+            { id: 'anthropic/claude-haiku-4-5', name: 'Claude Haiku 4.5', provider: 'OpenRouter' },
+            { id: 'anthropic/claude-opus-4-5', name: 'Claude Opus 4.5', provider: 'OpenRouter' },
+            { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', provider: 'OpenRouter' },
             { id: 'arcee-ai/trinity-large-preview:free', name: 'Trinity Large Preview (Free)', provider: 'OpenRouter' },
             { id: 'qwen/qwen3-coder:free', name: 'Qwen 3 Coder 480B (Free)', provider: 'OpenRouter' },
             // Claude Code CLI models — all available via local CLI with --model flag
@@ -35,8 +41,6 @@ export async function GET(request: NextRequest) {
             { id: 'opencode-claude-sonnet-4', name: 'Claude Sonnet 4 (via Opencode)', provider: 'Opencode' },
             { id: 'opencode-claude-sonnet-4-5', name: 'Claude Sonnet 4.5 (via Opencode)', provider: 'Opencode' },
             { id: 'opencode-claude-opus-4', name: 'Claude Opus 4 (via Opencode)', provider: 'Opencode' },
-            { id: 'llama-3.3-70b-specdec', name: 'Llama 3.3 70B (SpecDec)', provider: 'Groq' },
-            { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B', provider: 'Groq' },
         ];
 
         // Check for active integrations
