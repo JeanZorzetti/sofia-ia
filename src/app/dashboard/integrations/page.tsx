@@ -33,6 +33,7 @@ import {
   Table,
   FileText,
   Building2,
+  AtSign,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -411,6 +412,12 @@ export default function IntegrationsPage() {
             <Link href="/dashboard/integrations/telegram">
               <Send className="mr-2 h-4 w-4" />
               Telegram
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/integrations/threads">
+              <AtSign className="mr-2 h-4 w-4" />
+              Threads
             </Link>
           </Button>
           <Button asChild variant="outline">
