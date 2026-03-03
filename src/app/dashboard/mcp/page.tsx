@@ -15,8 +15,9 @@ interface McpServer {
   name: string
   url: string
   description: string | null
-  authType: 'none' | 'bearer' | 'api-key'
-  enabled: boolean
+  transport: string
+  headers: Record<string, string>
+  status: string
   createdAt: string
   tools: McpServerTool[]
 }
@@ -25,8 +26,7 @@ const defaultForm = {
   name: '',
   url: '',
   description: '',
-  authType: 'none' as 'none' | 'bearer' | 'api-key',
-  authValue: '',
+  headers: '{}',
 }
 
 export default function McpPage() {
@@ -52,7 +52,7 @@ export default function McpPage() {
       setLoading(true)
       const res = await fetch('/api/mcp/servers')
       const data = await res.json()
-      if (data.success) setServers(data.servers)
+      if (data.success) setServers(data.data ?? [])
     } catch (error) {
       console.error('Error fetching MCP servers:', error)
     } finally {
@@ -66,22 +66,25 @@ export default function McpPage() {
       return
     }
 
+    let parsedHeaders: Record<string, string> = {}
+    try {
+      parsedHeaders = JSON.parse(form.headers)
+    } catch {
+      alert('Headers deve ser um JSON valido. Ex: {"Authorization": "Bearer token"}')
+      return
+    }
+
     setSaving(true)
     try {
-      const body: Record<string, unknown> = {
-        name: form.name,
-        url: form.url,
-        description: form.description,
-        authType: form.authType,
-      }
-      if (form.authType !== 'none' && form.authValue) {
-        body.authValue = form.authValue
-      }
-
       const res = await fetch('/api/mcp/servers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          name: form.name,
+          url: form.url,
+          description: form.description,
+          headers: parsedHeaders,
+        }),
       })
       const data = await res.json()
       if (data.success) {
@@ -113,7 +116,7 @@ export default function McpPage() {
       await fetch(`/api/mcp/servers/${server.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ enabled: !server.enabled }),
+        body: JSON.stringify({ status: server.status === 'active' ? 'inactive' : 'active' }),
       })
       fetchServers()
     } catch (error) {
@@ -154,16 +157,6 @@ export default function McpPage() {
     setExpandedTools((prev) => ({ ...prev, [serverId]: !prev[serverId] }))
   }
 
-  const getAuthBadge = (authType: string) => {
-    switch (authType) {
-      case 'bearer':
-        return <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">Bearer Token</span>
-      case 'api-key':
-        return <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400">API Key</span>
-      default:
-        return <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/50">Sem Auth</span>
-    }
-  }
 
   return (
     <div className="space-y-6 p-6">
@@ -272,9 +265,9 @@ export default function McpPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${server.enabled ? 'bg-green-400' : 'bg-white/20'}`} />
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${server.status === "active" ? 'bg-green-400' : 'bg-white/20'}`} />
                       <h3 className="font-medium text-white">{server.name}</h3>
-                      {getAuthBadge(server.authType)}
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/50">{server.transport}</span>
                       <span className="text-xs text-white/40">
                         {server.tools.length} tool{server.tools.length !== 1 ? 's' : ''}
                       </span>
@@ -333,13 +326,13 @@ export default function McpPage() {
                     <button
                       onClick={() => handleToggle(server)}
                       className={`relative w-10 h-5 rounded-full transition-colors ${
-                        server.enabled ? 'bg-blue-500' : 'bg-white/10'
+                        server.status === "active" ? 'bg-blue-500' : 'bg-white/10'
                       }`}
-                      title={server.enabled ? 'Desabilitar' : 'Habilitar'}
+                      title={server.status === "active" ? 'Desabilitar' : 'Habilitar'}
                     >
                       <span
                         className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                          server.enabled ? 'translate-x-5' : 'translate-x-0.5'
+                          server.status === "active" ? 'translate-x-5' : 'translate-x-0.5'
                         }`}
                       />
                     </button>
@@ -400,32 +393,18 @@ export default function McpPage() {
                 </div>
 
                 <div>
-                  <label className="text-sm text-white/60 block mb-1">Tipo de Autenticacao</label>
-                  <select
-                    value={form.authType}
-                    onChange={(e) => setForm({ ...form, authType: e.target.value as typeof form.authType })}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500/50"
-                  >
-                    <option value="none">Sem autenticacao</option>
-                    <option value="bearer">Bearer Token</option>
-                    <option value="api-key">API Key</option>
-                  </select>
+                  <label className="text-sm text-white/60 block mb-1">Headers HTTP (JSON)</label>
+                  <textarea
+                    value={form.headers}
+                    onChange={(e) => setForm({ ...form, headers: e.target.value })}
+                    rows={4}
+                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-yellow-400 text-xs font-mono placeholder-white/20 focus:outline-none focus:border-blue-500/50 resize-none"
+                    spellCheck={false}
+                  />
+                  <p className="text-xs text-white/30 mt-1">
+                    Opcional. Para autenticacao: Authorization: Bearer token
+                  </p>
                 </div>
-
-                {form.authType !== 'none' && (
-                  <div>
-                    <label className="text-sm text-white/60 block mb-1">
-                      {form.authType === 'bearer' ? 'Bearer Token' : 'API Key'} *
-                    </label>
-                    <input
-                      type="password"
-                      value={form.authValue}
-                      onChange={(e) => setForm({ ...form, authValue: e.target.value })}
-                      placeholder={form.authType === 'bearer' ? 'eyJ...' : 'sk-...'}
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm placeholder-white/20 focus:outline-none focus:border-blue-500/50 font-mono"
-                    />
-                  </div>
-                )}
               </div>
 
               <p className="text-xs text-white/30">

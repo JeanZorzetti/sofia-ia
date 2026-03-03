@@ -53,7 +53,7 @@ export default function SkillsPage() {
       setLoading(true)
       const res = await fetch('/api/skills')
       const data = await res.json()
-      if (data.success) setSkills(data.skills)
+      if (data.success) setSkills(data.data ?? [])
     } catch (error) {
       console.error('Error fetching skills:', error)
     } finally {
