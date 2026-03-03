@@ -121,11 +121,10 @@ export default function AgentSkillsPage({ params }: { params: Promise<{ id: stri
 
     return (
       <div
-        className={`p-4 border rounded-lg transition-all ${
-          enabled
-            ? 'bg-blue-500/10 border-blue-500/30'
-            : 'bg-white/5 border-white/10'
-        }`}
+        className={`p-4 border rounded-xl transition-all duration-300 ${enabled
+            ? 'bg-gradient-to-r from-blue-500/10 to-indigo-500/5 border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.05)]'
+            : 'bg-white/5 border-white/10 hover:bg-white/[0.07]'
+          }`}
       >
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0">
@@ -139,11 +138,10 @@ export default function AgentSkillsPage({ params }: { params: Promise<{ id: stri
               </div>
               <h3 className="font-medium text-white">{skill.name}</h3>
               <span
-                className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  skill.type === 'tool'
+                className={`text-xs px-2 py-0.5 rounded-full font-medium ${skill.type === 'tool'
                     ? 'bg-blue-500/20 text-blue-400'
                     : 'bg-purple-500/20 text-purple-400'
-                }`}
+                  }`}
               >
                 {skill.type === 'tool' ? 'Tool' : 'Prompt'}
               </span>
@@ -169,20 +167,20 @@ export default function AgentSkillsPage({ params }: { params: Promise<{ id: stri
           <button
             onClick={() => handleToggle(skill)}
             disabled={isToggling}
-            className={`relative w-11 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${
-              enabled ? 'bg-blue-500' : 'bg-white/20'
-            } ${isToggling ? 'opacity-50' : 'cursor-pointer'}`}
+            className={`relative flex h-6 w-11 flex-shrink-0 items-center justify-start rounded-full p-[2px] transition-all duration-300 ease-in-out focus:outline-none ${enabled
+                ? 'bg-gradient-to-r from-blue-500 to-indigo-500 shadow-[0_0_12px_rgba(59,130,246,0.6)]'
+                : 'bg-white/10 hover:bg-white/20 hover:shadow-[0_0_8px_rgba(255,255,255,0.1)]'
+              } ${isToggling ? 'opacity-50 cursor-wait' : 'cursor-pointer hover:scale-105'} `}
             title={enabled ? 'Desativar skill' : 'Ativar skill'}
           >
-            {isToggling ? (
-              <Loader2 className="w-3 h-3 animate-spin absolute top-1.5 left-1.5 text-white" />
-            ) : (
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full shadow-md transition-all duration-200 ${
-                  enabled ? 'translate-x-5 bg-white' : 'translate-x-0.5 bg-white/80'
+            <span
+              className={`flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out ${enabled ? 'translate-x-5' : 'translate-x-0'
                 }`}
-              />
-            )}
+            >
+              {isToggling && (
+                <Loader2 className={`h-3 w-3 animate-spin ${enabled ? 'text-indigo-500' : 'text-gray-500'}`} />
+              )}
+            </span>
           </button>
         </div>
       </div>
