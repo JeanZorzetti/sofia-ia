@@ -406,3 +406,12 @@ h3 { font-size: 1.25rem; font-weight: 500; letter-spacing: -0.025em; line-height
   z-index: 0;
 }
 .section-texture > * { position: relative; z-index: 1; }
+
+/* Native select dark mode — ensures dropdown options render with dark background */
+select {
+  color-scheme: dark;
+}
+select option {
+  background-color: #0f0f10;
+  color: #ffffff;
+}
