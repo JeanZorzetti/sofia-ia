@@ -49,8 +49,8 @@ export default function AgentSkillsPage({ params }: { params: Promise<{ id: stri
         fetch(`/api/agents/${agentId}/skills`),
       ])
       const [allData, agentData] = await Promise.all([allRes.json(), agentRes.json()])
-      if (allData.success) setAllSkills(allData.skills)
-      if (agentData.success) setAgentSkills(agentData.skills)
+      if (allData.success) setAllSkills(allData.data ?? [])
+      if (agentData.success) setAgentSkills(agentData.data ?? [])
     } catch (error) {
       console.error('Error fetching skills data:', error)
     } finally {

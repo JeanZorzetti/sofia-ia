@@ -15,8 +15,9 @@ interface McpServer {
   name: string
   url: string
   description: string | null
-  authType: 'none' | 'bearer' | 'api-key'
-  enabled: boolean
+  transport: string
+  status: string
+  headers: Record<string, string>
   tools: McpServerTool[]
 }
 
@@ -58,8 +59,8 @@ export default function AgentMcpPage({ params }: { params: Promise<{ id: string 
         fetch(`/api/agents/${agentId}/mcp`),
       ])
       const [allData, agentData] = await Promise.all([allRes.json(), agentRes.json()])
-      if (allData.success) setAllServers(allData.servers)
-      if (agentData.success) setAgentConnections(agentData.connections)
+      if (allData.success) setAllServers(allData.data ?? [])
+      if (agentData.success) setAgentConnections(agentData.data ?? [])
     } catch (error) {
       console.error('Error fetching MCP data:', error)
     } finally {
@@ -125,17 +126,6 @@ export default function AgentMcpPage({ params }: { params: Promise<{ id: string 
     setExpandedTools((prev) => ({ ...prev, [serverId]: !prev[serverId] }))
   }
 
-  const getAuthBadge = (authType: string) => {
-    switch (authType) {
-      case 'bearer':
-        return <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400">Bearer</span>
-      case 'api-key':
-        return <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400">API Key</span>
-      default:
-        return <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/50">Publico</span>
-    }
-  }
-
   const ServerRow = ({ server }: { server: McpServer }) => {
     const connected = isServerConnected(server.id)
     const isToggling = togglingId === server.id
@@ -152,9 +142,9 @@ export default function AgentMcpPage({ params }: { params: Promise<{ id: string 
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${server.enabled ? 'bg-green-400' : 'bg-white/20'}`} />
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${server.status === 'active' ? 'bg-green-400' : 'bg-white/20'}`} />
               <h3 className="font-medium text-white">{server.name}</h3>
-              {getAuthBadge(server.authType)}
+              <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/50">{server.transport}</span>
               <span className="text-xs text-white/40">
                 {server.tools.length} tool{server.tools.length !== 1 ? 's' : ''}
               </span>
