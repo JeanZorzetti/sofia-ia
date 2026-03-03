@@ -209,17 +209,17 @@ export default function AgentMcpPage({ params }: { params: Promise<{ id: string 
             <button
               onClick={() => handleToggle(server)}
               disabled={isToggling}
-              className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
-                connected ? 'bg-purple-500' : 'bg-white/10'
-              } ${isToggling ? 'opacity-50' : ''}`}
+              className={`relative w-11 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${
+                connected ? 'bg-purple-500' : 'bg-white/20'
+              } ${isToggling ? 'opacity-50' : 'cursor-pointer'}`}
               title={connected ? 'Desconectar servidor' : 'Conectar servidor'}
             >
               {isToggling ? (
                 <Loader2 className="w-3 h-3 animate-spin absolute top-1.5 left-1.5 text-white" />
               ) : (
                 <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                    connected ? 'translate-x-5' : 'translate-x-0.5'
+                  className={`absolute top-0.5 h-5 w-5 rounded-full shadow-md transition-all duration-200 ${
+                    connected ? 'translate-x-5 bg-white' : 'translate-x-0.5 bg-white/80'
                   }`}
                 />
               )}
