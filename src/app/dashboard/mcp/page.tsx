@@ -35,6 +35,7 @@ export default function McpPage() {
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [syncingId, setSyncingId] = useState<string | null>(null)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({})
   const [form, setForm] = useState(defaultForm)
   const [copied, setCopied] = useState(false)
@@ -112,6 +113,7 @@ export default function McpPage() {
   }
 
   const handleToggle = async (server: McpServer) => {
+    setTogglingId(server.id)
     try {
       await fetch(`/api/mcp/servers/${server.id}`, {
         method: 'PUT',
@@ -121,6 +123,8 @@ export default function McpPage() {
       fetchServers()
     } catch (error) {
       console.error('Error toggling MCP server:', error)
+    } finally {
+      setTogglingId(null)
     }
   }
 
@@ -325,16 +329,21 @@ export default function McpPage() {
                     </button>
                     <button
                       onClick={() => handleToggle(server)}
-                      className={`relative w-10 h-5 rounded-full transition-colors ${
-                        server.status === "active" ? 'bg-blue-500' : 'bg-white/10'
-                      }`}
-                      title={server.status === "active" ? 'Desabilitar' : 'Habilitar'}
+                      disabled={togglingId === server.id}
+                      className={`relative flex h-6 w-11 flex-shrink-0 items-center justify-start rounded-full p-[2px] transition-all duration-300 ease-in-out focus:outline-none ${
+                        server.status === 'active'
+                          ? 'bg-gradient-to-r from-blue-500 to-indigo-500 shadow-[0_0_12px_rgba(59,130,246,0.6)]'
+                          : 'bg-white/10 hover:bg-white/20 hover:shadow-[0_0_8px_rgba(255,255,255,0.1)]'
+                      } ${togglingId === server.id ? 'opacity-50 cursor-wait' : 'cursor-pointer hover:scale-105'}`}
+                      title={server.status === 'active' ? 'Desabilitar' : 'Habilitar'}
                     >
-                      <span
-                        className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                          server.status === "active" ? 'translate-x-5' : 'translate-x-0.5'
-                        }`}
-                      />
+                      <span className={`flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out ${
+                        server.status === 'active' ? 'translate-x-5' : 'translate-x-0'
+                      }`}>
+                        {togglingId === server.id && (
+                          <Loader2 className={`h-3 w-3 animate-spin ${server.status === 'active' ? 'text-indigo-500' : 'text-gray-500'}`} />
+                        )}
+                      </span>
                     </button>
                     <button
                       onClick={() => handleDelete(server.id)}

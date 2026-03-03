@@ -133,10 +133,10 @@ export default function AgentMcpPage({ params }: { params: Promise<{ id: string 
 
     return (
       <div
-        className={`p-4 border rounded-lg transition-all ${
+        className={`p-4 border rounded-xl transition-all ${
           connected
-            ? 'bg-purple-500/10 border-purple-500/30'
-            : 'bg-white/5 border-white/10'
+            ? 'bg-gradient-to-br from-purple-500/10 to-violet-500/5 border-purple-500/30'
+            : 'bg-white/5 border-white/10 hover:bg-white/[0.07]'
         }`}
       >
         <div className="flex items-start justify-between gap-4">
@@ -209,20 +209,20 @@ export default function AgentMcpPage({ params }: { params: Promise<{ id: string 
             <button
               onClick={() => handleToggle(server)}
               disabled={isToggling}
-              className={`relative w-11 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${
-                connected ? 'bg-purple-500' : 'bg-white/20'
-              } ${isToggling ? 'opacity-50' : 'cursor-pointer'}`}
+              className={`relative flex h-6 w-11 flex-shrink-0 items-center justify-start rounded-full p-[2px] transition-all duration-300 ease-in-out focus:outline-none ${
+                connected
+                  ? 'bg-gradient-to-r from-purple-500 to-violet-500 shadow-[0_0_12px_rgba(168,85,247,0.6)]'
+                  : 'bg-white/10 hover:bg-white/20 hover:shadow-[0_0_8px_rgba(255,255,255,0.1)]'
+              } ${isToggling ? 'opacity-50 cursor-wait' : 'cursor-pointer hover:scale-105'}`}
               title={connected ? 'Desconectar servidor' : 'Conectar servidor'}
             >
-              {isToggling ? (
-                <Loader2 className="w-3 h-3 animate-spin absolute top-1.5 left-1.5 text-white" />
-              ) : (
-                <span
-                  className={`absolute top-0.5 h-5 w-5 rounded-full shadow-md transition-all duration-200 ${
-                    connected ? 'translate-x-5 bg-white' : 'translate-x-0.5 bg-white/80'
-                  }`}
-                />
-              )}
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out ${
+                connected ? 'translate-x-5' : 'translate-x-0'
+              }`}>
+                {isToggling && (
+                  <Loader2 className={`h-3 w-3 animate-spin ${connected ? 'text-violet-500' : 'text-gray-500'}`} />
+                )}
+              </span>
             </button>
           </div>
         </div>
