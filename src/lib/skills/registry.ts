@@ -991,6 +991,1051 @@ return main(input);
   },
 
   // ─────────────────────────────────────────────────────────────────────────
+  // TOOLS — research (6 adicionais → total 7)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  {
+    name: 'Extrator de Palavras-Chave',
+    description: 'Extrai as palavras mais relevantes/frequentes de um texto',
+    type: 'tool',
+    category: 'research',
+    toolDefinition: {
+      name: 'extract_keywords',
+      description: 'Extrai palavras-chave mais frequentes de um texto, ignorando stopwords comuns.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text:  { type: 'string', description: 'Texto a analisar' },
+          top_n: { type: 'number', description: 'Quantidade de palavras a retornar (padrão 10)' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function extractKeywords(input) {
+  const stopwords = new Set(['de','a','o','que','e','do','da','em','um','para','com','uma','os','no','se','na','por','mais','as','dos','como','mas','ao','ele','das','seu','sua','ou','quando','muito','nos','já','eu','também','só','pelo','pela','até','isso','ela','entre','depois','sem','mesmo','aos','seus','quem','nas','me','esse','eles','você','essa','num','nem','suas','meu','minha','the','and','or','but','in','on','at','to','for','of','with','by','from','is','are','was','were','be','have','has','do','does','this','that','it','we','they','not','if','so','as','all','than','when','there','what','which','who','how','just','only','also','into','over','after','before','about','up','out']);
+  const words = input.text.toLowerCase().replace(/[^a-záàâãéèêíìîóòôõúùûç\s]/gi, ' ').split(/\s+/).filter(w => w.length > 3 && !stopwords.has(w));
+  const freq = {};
+  for (const w of words) freq[w] = (freq[w] || 0) + 1;
+  const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, input.top_n || 10);
+  return { keywords: sorted.map(([word, count]) => ({ word, count })), total_words: words.length };
+}
+return extractKeywords(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Sumarizador de Texto',
+    description: 'Extrai as N primeiras frases de um texto como resumo',
+    type: 'tool',
+    category: 'research',
+    toolDefinition: {
+      name: 'summarize_text',
+      description: 'Retorna as primeiras N frases de um texto como resumo automático.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text:      { type: 'string', description: 'Texto a resumir' },
+          sentences: { type: 'number', description: 'Número de frases (padrão 3)' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function summarize(input) {
+  const n = input.sentences || 3;
+  const sentences = input.text.match(/[^.!?]+[.!?]+/g) || [input.text];
+  const summary = sentences.slice(0, n).join(' ').trim();
+  return { summary, sentences_extracted: Math.min(n, sentences.length), total_sentences: sentences.length };
+}
+return summarize(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Comparador de Textos',
+    description: 'Calcula a similaridade entre dois textos (índice Jaccard)',
+    type: 'tool',
+    category: 'research',
+    toolDefinition: {
+      name: 'compare_texts',
+      description: 'Compara dois textos e retorna um score de similaridade de 0 a 100%.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text_a: { type: 'string', description: 'Primeiro texto' },
+          text_b: { type: 'string', description: 'Segundo texto' },
+        },
+        required: ['text_a', 'text_b'],
+      },
+    },
+    toolCode: `
+function compareTexts(input) {
+  const tokenize = t => new Set(t.toLowerCase().replace(/[^a-záàâãéèêíìîóòôõúùûç\s]/gi, ' ').split(/\s+/).filter(w => w.length > 1));
+  const setA = tokenize(input.text_a);
+  const setB = tokenize(input.text_b);
+  const intersection = new Set([...setA].filter(w => setB.has(w)));
+  const union = new Set([...setA, ...setB]);
+  const jaccard = union.size === 0 ? 0 : intersection.size / union.size;
+  const similarity = Math.round(jaccard * 100);
+  return { similarity_percent: similarity, level: similarity >= 80 ? 'muito similar' : similarity >= 50 ? 'moderadamente similar' : similarity >= 20 ? 'pouco similar' : 'muito diferente', common_words: [...intersection].slice(0, 20), words_only_in_a: [...setA].filter(w => !setB.has(w)).length, words_only_in_b: [...setB].filter(w => !setA.has(w)).length };
+}
+return compareTexts(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Destacador de Termos',
+    description: 'Destaca termos de busca em um texto envolvendo-os com marcadores **',
+    type: 'tool',
+    category: 'research',
+    toolDefinition: {
+      name: 'highlight_terms',
+      description: 'Envolve termos de busca com ** (negrito markdown) em um texto.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text:  { type: 'string', description: 'Texto original' },
+          terms: { type: 'string', description: 'Termos a destacar, separados por vírgula' },
+        },
+        required: ['text', 'terms'],
+      },
+    },
+    toolCode: `
+function highlightTerms(input) {
+  const terms = input.terms.split(',').map(t => t.trim()).filter(Boolean);
+  let result = input.text;
+  let count = 0;
+  for (const term of terms) {
+    const lower = term.toLowerCase();
+    let lowerResult = result.toLowerCase();
+    let idx = lowerResult.indexOf(lower);
+    let newResult = '';
+    let lastIdx = 0;
+    let matches = 0;
+    while (idx !== -1) {
+      newResult += result.slice(lastIdx, idx) + '**' + result.slice(idx, idx + term.length) + '**';
+      lastIdx = idx + term.length;
+      matches++;
+      lowerResult = result.toLowerCase();
+      idx = lowerResult.indexOf(lower, lastIdx);
+    }
+    newResult += result.slice(lastIdx);
+    result = newResult;
+    count += matches;
+  }
+  return { highlighted_text: result, total_highlights: count, terms_used: terms };
+}
+return highlightTerms(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Extrator de Números',
+    description: 'Extrai todos os números de um texto com estatísticas',
+    type: 'tool',
+    category: 'research',
+    toolDefinition: {
+      name: 'extract_numbers',
+      description: 'Extrai todos os valores numéricos de um texto e calcula estatísticas básicas.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text: { type: 'string', description: 'Texto a analisar' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function extractNumbers(input) {
+  const matches = input.text.match(/-?\\d+[.,]?\\d*/g) || [];
+  const numbers = matches.map(m => parseFloat(m.replace(',', '.'))).filter(n => !isNaN(n));
+  if (numbers.length === 0) return { numbers: [], count: 0, sum: 0, average: 0, min: null, max: null };
+  const sum = numbers.reduce((a, b) => a + b, 0);
+  return { numbers, count: numbers.length, sum: Math.round(sum * 1000) / 1000, average: Math.round((sum / numbers.length) * 1000) / 1000, min: Math.min(...numbers), max: Math.max(...numbers) };
+}
+return extractNumbers(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Contador de Seções',
+    description: 'Conta headers, listas e parágrafos em um documento markdown',
+    type: 'tool',
+    category: 'research',
+    toolDefinition: {
+      name: 'count_sections',
+      description: 'Analisa a estrutura de um documento markdown contando headers, listas e parágrafos.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text: { type: 'string', description: 'Texto ou documento markdown' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function countSections(input) {
+  const lines = input.text.split('\\n');
+  const h1 = lines.filter(l => /^#\\s/.test(l)).length;
+  const h2 = lines.filter(l => /^##\\s/.test(l)).length;
+  const h3 = lines.filter(l => /^###\\s/.test(l)).length;
+  const bulletItems = lines.filter(l => /^[-*+]\\s/.test(l.trim())).length;
+  const numberedItems = lines.filter(l => /^\\d+\\.\\s/.test(l.trim())).length;
+  const codeBlocks = Math.floor((input.text.match(/\`\`\`/g) || []).length / 2);
+  const paragraphs = input.text.split(/\\n\\n+/).filter(p => p.trim() && !/^[#*-]/.test(p.trim())).length;
+  return { h1, h2, h3, total_headers: h1 + h2 + h3, bullet_items: bulletItems, numbered_items: numberedItems, code_blocks: codeBlocks, paragraphs, total_lines: lines.length };
+}
+return countSections(input);
+    `.trim(),
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TOOLS — integration (3 adicionais → total 7)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  {
+    name: 'Validador de CEP',
+    description: 'Valida o formato de um CEP brasileiro',
+    type: 'tool',
+    category: 'integration',
+    toolDefinition: {
+      name: 'validate_cep',
+      description: 'Verifica se um CEP brasileiro está no formato correto (XXXXX-XXX ou XXXXXXXX).',
+      parameters: {
+        type: 'object',
+        properties: {
+          cep: { type: 'string', description: 'CEP a validar' },
+        },
+        required: ['cep'],
+      },
+    },
+    toolCode: `
+function validateCep(input) {
+  const cleaned = input.cep.replace(/\\D/g, '');
+  const valid = /^\\d{8}$/.test(cleaned);
+  const formatted = valid ? cleaned.slice(0, 5) + '-' + cleaned.slice(5) : null;
+  return { valid, formatted, raw: cleaned, message: valid ? 'CEP válido' : 'CEP inválido — deve ter 8 dígitos numéricos' };
+}
+return validateCep(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Formatador de Telefone BR',
+    description: 'Formata número de telefone para o padrão brasileiro',
+    type: 'tool',
+    category: 'integration',
+    toolDefinition: {
+      name: 'format_phone_br',
+      description: 'Formata um número de telefone brasileiro para (DDD) XXXX-XXXX ou (DDD) 9XXXX-XXXX.',
+      parameters: {
+        type: 'object',
+        properties: {
+          phone: { type: 'string', description: 'Número de telefone (com ou sem formatação)' },
+        },
+        required: ['phone'],
+      },
+    },
+    toolCode: `
+function formatPhoneBr(input) {
+  const digits = input.phone.replace(/\\D/g, '');
+  let cleaned = digits.startsWith('55') && digits.length > 11 ? digits.slice(2) : digits;
+  if (cleaned.length === 11) return { formatted: '(' + cleaned.slice(0,2) + ') ' + cleaned.slice(2,7) + '-' + cleaned.slice(7), type: 'celular', valid: true, ddd: cleaned.slice(0,2) };
+  if (cleaned.length === 10) return { formatted: '(' + cleaned.slice(0,2) + ') ' + cleaned.slice(2,6) + '-' + cleaned.slice(6), type: 'fixo', valid: true, ddd: cleaned.slice(0,2) };
+  return { formatted: null, valid: false, message: 'Número deve ter 10 (fixo) ou 11 (celular) dígitos', raw: digits };
+}
+return formatPhoneBr(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Parser de JSON Seguro',
+    description: 'Faz parse seguro de JSON com detalhamento de erros e formatação',
+    type: 'tool',
+    category: 'integration',
+    toolDefinition: {
+      name: 'parse_json_safe',
+      description: 'Faz parse de uma string JSON e retorna o objeto formatado ou uma mensagem de erro clara.',
+      parameters: {
+        type: 'object',
+        properties: {
+          json_string: { type: 'string', description: 'String JSON a ser parseada' },
+          pretty:      { type: 'boolean', description: 'Retornar JSON formatado (padrão true)' },
+        },
+        required: ['json_string'],
+      },
+    },
+    toolCode: `
+function parseJsonSafe(input) {
+  try {
+    const parsed = JSON.parse(input.json_string);
+    const type = Array.isArray(parsed) ? 'array' : typeof parsed;
+    const keys = type === 'object' && parsed !== null ? Object.keys(parsed) : [];
+    const pretty = input.pretty !== false ? JSON.stringify(parsed, null, 2) : JSON.stringify(parsed);
+    return { success: true, parsed, formatted: pretty, type, keys, length: Array.isArray(parsed) ? parsed.length : keys.length };
+  } catch (e) {
+    return { success: false, error: e.message, hint: 'Verifique aspas duplas, vírgulas e chaves/colchetes' };
+  }
+}
+return parseJsonSafe(input);
+    `.trim(),
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TOOLS — development (2 adicionais → total 7)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  {
+    name: 'Codificador Base64',
+    description: 'Codifica ou decodifica texto em Base64',
+    type: 'tool',
+    category: 'development',
+    toolDefinition: {
+      name: 'encode_base64',
+      description: 'Codifica texto para Base64 ou decodifica Base64 para texto legível.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text:   { type: 'string', description: 'Texto a codificar ou Base64 a decodificar' },
+          action: { type: 'string', description: '"encode" (padrão) ou "decode"' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function base64Tool(input) {
+  const action = input.action || 'encode';
+  try {
+    if (action === 'encode') {
+      const encoded = typeof Buffer !== 'undefined' ? Buffer.from(input.text).toString('base64') : btoa(unescape(encodeURIComponent(input.text)));
+      return { action: 'encode', result: encoded, original_length: input.text.length, encoded_length: encoded.length };
+    } else {
+      const decoded = typeof Buffer !== 'undefined' ? Buffer.from(input.text, 'base64').toString('utf8') : decodeURIComponent(escape(atob(input.text)));
+      return { action: 'decode', result: decoded, encoded_length: input.text.length, decoded_length: decoded.length };
+    }
+  } catch (e) {
+    return { success: false, error: e.message, hint: action === 'decode' ? 'Verifique se o input é Base64 válido' : 'Erro inesperado' };
+  }
+}
+return base64Tool(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Hash de Texto',
+    description: 'Gera um hash simples e determinístico de uma string (djb2)',
+    type: 'tool',
+    category: 'development',
+    toolDefinition: {
+      name: 'hash_text',
+      description: 'Gera um hash numérico determinístico (djb2) e hexadecimal de uma string — útil para IDs, cache keys e deduplicação.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text: { type: 'string', description: 'Texto a ser hasheado' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function hashText(input) {
+  let hash = 5381;
+  for (let i = 0; i < input.text.length; i++) {
+    hash = ((hash << 5) + hash) + input.text.charCodeAt(i);
+    hash = hash & hash;
+  }
+  const unsigned = hash >>> 0;
+  const hex = unsigned.toString(16).padStart(8, '0');
+  return { hash_decimal: unsigned, hash_hex: hex, hash_short: hex.slice(0, 8), input_length: input.text.length };
+}
+return hashText(input);
+    `.trim(),
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TOOLS — content (2 adicionais → total 7)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  {
+    name: 'Gerador de Hashtags',
+    description: 'Converte palavras-chave de um texto em hashtags formatadas',
+    type: 'tool',
+    category: 'content',
+    toolDefinition: {
+      name: 'generate_hashtags',
+      description: 'Gera hashtags a partir de um texto ou lista de palavras-chave.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text:     { type: 'string', description: 'Texto ou palavras-chave (separados por vírgula ou espaço)' },
+          max_tags: { type: 'number', description: 'Máximo de hashtags (padrão 10)' },
+          style:    { type: 'string', description: '"camelCase" (padrão) ou "lowercase"' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function generateHashtags(input) {
+  const max = input.max_tags || 10;
+  const style = input.style || 'camelCase';
+  const words = input.text.replace(/[^a-záàâãéèêíìîóòôõúùûçA-Z0-9\\s,]/g, '').split(/[,\\s]+/).filter(w => w.length > 2);
+  const toHashtag = w => {
+    const clean = w.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase();
+    return style === 'camelCase' ? '#' + clean.charAt(0).toUpperCase() + clean.slice(1) : '#' + clean;
+  };
+  const unique = [...new Set(words.map(toHashtag))].slice(0, max);
+  return { hashtags: unique, count: unique.length, block: unique.join(' ') };
+}
+return generateHashtags(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Markdown para Texto',
+    description: 'Remove formatação markdown e retorna texto limpo',
+    type: 'tool',
+    category: 'content',
+    toolDefinition: {
+      name: 'markdown_to_plain',
+      description: 'Strip de formatação markdown (headers, bold, italic, links, código) retornando texto puro.',
+      parameters: {
+        type: 'object',
+        properties: {
+          markdown: { type: 'string', description: 'Texto em markdown' },
+        },
+        required: ['markdown'],
+      },
+    },
+    toolCode: `
+function markdownToPlain(input) {
+  let text = input.markdown;
+  text = text.replace(/\`\`\`[\\s\\S]*?\`\`\`/g, '');
+  text = text.replace(/\`[^\`]+\`/g, m => m.slice(1,-1));
+  text = text.replace(/!\\[([^\\]]*)\\]\\([^)]*\\)/g, '$1');
+  text = text.replace(/\\[([^\\]]*)\\]\\([^)]*\\)/g, '$1');
+  text = text.replace(/^#{1,6}\\s+/gm, '');
+  text = text.replace(/\\*{3}(.+?)\\*{3}/g, '$1');
+  text = text.replace(/\\*{2}(.+?)\\*{2}/g, '$1');
+  text = text.replace(/\\*(.+?)\\*/g, '$1');
+  text = text.replace(/_{2}(.+?)_{2}/g, '$1');
+  text = text.replace(/_(.+?)_/g, '$1');
+  text = text.replace(/^[-*+]\\s+/gm, '');
+  text = text.replace(/^\\d+\\.\\s+/gm, '');
+  text = text.replace(/^>\\s*/gm, '');
+  text = text.replace(/^[-_*]{3,}$/gm, '');
+  text = text.replace(/\\n{3,}/g, '\\n\\n').trim();
+  return { plain_text: text, original_length: input.markdown.length, plain_length: text.length, reduction_percent: Math.round((1 - text.length / input.markdown.length) * 100) };
+}
+return markdownToPlain(input);
+    `.trim(),
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TOOLS — social-media (6 adicionais → total 7)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  {
+    name: 'Extrator de Hashtags',
+    description: 'Extrai todas as hashtags de um texto',
+    type: 'tool',
+    category: 'social-media',
+    toolDefinition: {
+      name: 'extract_hashtags',
+      description: 'Extrai todas as hashtags presentes em um texto e retorna estatísticas.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text: { type: 'string', description: 'Texto com hashtags' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function extractHashtags(input) {
+  const matches = input.text.match(/#[a-zA-Z\u00C0-\u024F0-9_]+/g) || [];
+  const unique = [...new Set(matches.map(h => h.toLowerCase()))];
+  return { hashtags: unique, count: unique.length, all_occurrences: matches.length, list: unique.join(', ') };
+}
+return extractHashtags(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Contador de Hashtags',
+    description: 'Conta hashtags e verifica limites de plataformas',
+    type: 'tool',
+    category: 'social-media',
+    toolDefinition: {
+      name: 'count_hashtags',
+      description: 'Conta hashtags e verifica recomendações por plataforma (Instagram, LinkedIn, Threads).',
+      parameters: {
+        type: 'object',
+        properties: {
+          text:     { type: 'string', description: 'Texto com hashtags' },
+          platform: { type: 'string', description: '"instagram", "linkedin", "threads" ou "twitter"' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function countHashtags(input) {
+  const tags = input.text.match(/#[a-zA-Z\u00C0-\u024F0-9_]+/g) || [];
+  const count = tags.length;
+  const limits = { instagram: { max: 30, optimal: '5-10' }, linkedin: { max: 5, optimal: '3-5' }, threads: { max: 10, optimal: '3-5' }, twitter: { max: 2, optimal: '1-2' } };
+  const p = input.platform ? input.platform.toLowerCase() : null;
+  const limit = p && limits[p] ? limits[p] : null;
+  const status = !limit ? 'ok' : count > limit.max ? 'acima do limite' : count === 0 ? 'nenhuma hashtag' : 'ok';
+  return { count, tags, status, platform: p || 'not specified', recommendation: limit ? { max: limit.max, optimal: limit.optimal, current_status: status } : null };
+}
+return countHashtags(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Divisor de Thread',
+    description: 'Divide texto longo em posts de 280 caracteres para Twitter/X',
+    type: 'tool',
+    category: 'social-media',
+    toolDefinition: {
+      name: 'split_thread',
+      description: 'Divide um texto longo em partes de no máximo 280 caracteres, quebrando em pontuação quando possível.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text:        { type: 'string', description: 'Texto a dividir' },
+          max_chars:   { type: 'number', description: 'Máximo de caracteres por post (padrão 280)' },
+          add_counter: { type: 'boolean', description: 'Adicionar "1/N" ao final (padrão true)' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function splitThread(input) {
+  const max = input.max_chars || 280;
+  const addCounter = input.add_counter !== false;
+  const sentences = input.text.match(/[^.!?]+[.!?]+\\s*/g) || [input.text];
+  const posts = [];
+  let current = '';
+  for (const s of sentences) {
+    const candidate = (current + s).trim();
+    if (candidate.length <= max - (addCounter ? 6 : 0)) { current = candidate + ' '; }
+    else { if (current.trim()) posts.push(current.trim()); current = s.trim() + ' '; }
+  }
+  if (current.trim()) posts.push(current.trim());
+  const total = posts.length;
+  const numbered = addCounter ? posts.map((p, i) => p + ' ' + (i+1) + '/' + total) : posts;
+  return { posts: numbered, count: total, original_chars: input.text.length, longest_post: Math.max(...numbered.map(p => p.length)) };
+}
+return splitThread(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Validador de Post LinkedIn',
+    description: 'Valida comprimento e estrutura de um post para LinkedIn',
+    type: 'tool',
+    category: 'social-media',
+    toolDefinition: {
+      name: 'validate_linkedin_post',
+      description: 'Verifica se um post atende às boas práticas do LinkedIn: comprimento, hook, hashtags e CTA.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text: { type: 'string', description: 'Texto do post LinkedIn' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function validateLinkedin(input) {
+  const text = input.text;
+  const chars = text.length;
+  const words = text.split(/\\s+/).filter(Boolean).length;
+  const hashtags = (text.match(/#[a-zA-Z\u00C0-\u024F0-9_]+/g) || []).length;
+  const firstLine = text.split('\\n')[0];
+  const hasCTA = /coment|compartilh|segu|salv|curta|link|bio|DM|mensag/i.test(text);
+  const issues = [];
+  if (chars < 150) issues.push('Muito curto — posts de 150-1300 chars performam melhor');
+  if (chars > 3000) issues.push('Muito longo — máximo recomendado é 1300 chars');
+  if (hashtags > 5) issues.push('Muitas hashtags — máximo recomendado é 3-5');
+  if (hashtags === 0) issues.push('Nenhuma hashtag — adicione 3-5 hashtags relevantes');
+  if (firstLine.length > 200) issues.push('Primeira linha muito longa — o hook deve ser curto e impactante');
+  if (!hasCTA) issues.push('Sem CTA — adicione uma chamada à ação');
+  return { valid: issues.length === 0, chars, words, hashtags, has_cta: hasCTA, hook: firstLine.slice(0, 100), issues, score: Math.max(0, 100 - issues.length * 15) };
+}
+return validateLinkedin(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Formatador de Caption Instagram',
+    description: 'Formata caption para Instagram com bloco de hashtags separado',
+    type: 'tool',
+    category: 'social-media',
+    toolDefinition: {
+      name: 'format_instagram_caption',
+      description: 'Organiza caption do Instagram: corpo do texto + separador + bloco de hashtags ao final.',
+      parameters: {
+        type: 'object',
+        properties: {
+          caption:   { type: 'string', description: 'Texto principal da caption' },
+          hashtags:  { type: 'string', description: 'Hashtags separadas por espaço ou vírgula' },
+          separator: { type: 'string', description: 'Separador entre texto e hashtags (padrão newlines)' },
+        },
+        required: ['caption'],
+      },
+    },
+    toolCode: `
+function formatInstagramCaption(input) {
+  const sep = input.separator || '\\n.\\n.\\n.\\n';
+  const rawTags = input.hashtags || '';
+  const tags = rawTags.split(/[,\\s]+/).filter(t => t.length > 0).map(t => t.startsWith('#') ? t : '#' + t);
+  const body = input.caption.trim();
+  const hashBlock = tags.join(' ');
+  const full = hashBlock ? body + sep + hashBlock : body;
+  const chars = full.length;
+  return { formatted: full, body_chars: body.length, hashtag_count: tags.length, total_chars: chars, valid: chars <= 2200, warnings: chars > 2200 ? ['Caption excede 2200 caracteres'] : tags.length > 30 ? ['Mais de 30 hashtags'] : [] };
+}
+return formatInstagramCaption(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Estimador de Engajamento',
+    description: 'Estima score de engajamento de um post baseado em características textuais',
+    type: 'tool',
+    category: 'social-media',
+    toolDefinition: {
+      name: 'estimate_engagement',
+      description: 'Analisa características de um post (perguntas, emojis, CTA, comprimento) e estima o potencial de engajamento.',
+      parameters: {
+        type: 'object',
+        properties: {
+          text:     { type: 'string', description: 'Texto do post' },
+          platform: { type: 'string', description: '"instagram", "linkedin", "threads" ou "twitter"' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function estimateEngagement(input) {
+  const text = input.text;
+  const questions = (text.match(/\\?/g) || []).length;
+  const emojis = (text.match(/[\u{1F300}-\u{1FFFF}]|[\u{2600}-\u{26FF}]/gu) || []).length;
+  const hasCTA = /coment|compartilh|segu|salv|respond|DM|link|clica|acessa/i.test(text) ? 15 : 0;
+  const words = text.split(/\\s+/).filter(Boolean).length;
+  const idealWords = { instagram: 80, linkedin: 150, threads: 60, twitter: 30 };
+  const platform = (input.platform || 'instagram').toLowerCase();
+  const ideal = idealWords[platform] || 100;
+  const lengthScore = Math.max(0, 20 - Math.abs(words - ideal) / ideal * 20);
+  const story = /você|eu |minha|meu|quando eu|descobri|aprendi/i.test(text) ? 15 : 0;
+  const hashtags = (text.match(/#[a-zA-Z\u00C0-\u024F0-9_]+/g) || []).length;
+  const hashScore = hashtags > 0 && hashtags <= 10 ? 15 : 0;
+  const total = Math.min(100, Math.min(questions * 10, 20) + Math.min(emojis * 3, 15) + hasCTA + Math.round(lengthScore) + story + hashScore);
+  return { score: total, level: total >= 70 ? 'Alto' : total >= 40 ? 'Médio' : 'Baixo', tips: [questions === 0 && 'Adicione uma pergunta para estimular comentários', emojis === 0 && 'Use 2-4 emojis para aumentar apelo visual', hasCTA === 0 && 'Adicione um CTA claro'].filter(Boolean) };
+}
+return estimateEngagement(input);
+    `.trim(),
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TOOLS — productivity (5 adicionais → total 7)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  {
+    name: 'Tempo de Leitura',
+    description: 'Calcula o tempo estimado de leitura de um texto',
+    type: 'tool',
+    category: 'productivity',
+    toolDefinition: {
+      name: 'time_to_read',
+      description: 'Estima o tempo de leitura com base em 200 palavras por minuto (adulto médio).',
+      parameters: {
+        type: 'object',
+        properties: {
+          text: { type: 'string', description: 'Texto a analisar' },
+          wpm:  { type: 'number', description: 'Palavras por minuto (padrão 200)' },
+        },
+        required: ['text'],
+      },
+    },
+    toolCode: `
+function timeToRead(input) {
+  const wpm = input.wpm || 200;
+  const words = input.text.trim().split(/\\s+/).filter(Boolean).length;
+  const minutes = words / wpm;
+  const mins = Math.floor(minutes);
+  const secs = Math.round((minutes - mins) * 60);
+  const display = mins > 0 ? (secs > 0 ? mins + 'm ' + secs + 's' : mins + ' min') : secs + 's';
+  return { words, wpm, minutes: Math.round(minutes * 10) / 10, display, description: minutes < 1 ? 'Leitura rápida' : minutes < 5 ? 'Leitura curta' : minutes < 15 ? 'Leitura média' : 'Leitura longa' };
+}
+return timeToRead(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Calculadora de Idade',
+    description: 'Calcula a idade exata a partir de uma data de nascimento',
+    type: 'tool',
+    category: 'productivity',
+    toolDefinition: {
+      name: 'calculate_age',
+      description: 'Calcula idade em anos, meses e dias a partir de uma data de nascimento.',
+      parameters: {
+        type: 'object',
+        properties: {
+          birth_date: { type: 'string', description: 'Data de nascimento (YYYY-MM-DD ou DD/MM/YYYY)' },
+        },
+        required: ['birth_date'],
+      },
+    },
+    toolCode: `
+function calculateAge(input) {
+  let dateStr = input.birth_date.trim();
+  if (/^\\d{2}\\/\\d{2}\\/\\d{4}$/.test(dateStr)) { const p = dateStr.split('/'); dateStr = p[2] + '-' + p[1] + '-' + p[0]; }
+  const birth = new Date(dateStr);
+  if (isNaN(birth.getTime())) return { error: 'Data inválida. Use YYYY-MM-DD ou DD/MM/YYYY' };
+  const now = new Date();
+  let years = now.getFullYear() - birth.getFullYear();
+  let months = now.getMonth() - birth.getMonth();
+  let days = now.getDate() - birth.getDate();
+  if (days < 0) { months--; days += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
+  if (months < 0) { years--; months += 12; }
+  const totalDays = Math.floor((now - birth) / 86400000);
+  const next = new Date(now.getFullYear(), birth.getMonth(), birth.getDate());
+  if (next < now) next.setFullYear(now.getFullYear() + 1);
+  return { years, months, days, total_days: totalDays, birth_date: birth.toLocaleDateString('pt-BR'), next_birthday_in_days: Math.floor((next - now) / 86400000) };
+}
+return calculateAge(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Adicionador de Dias Úteis',
+    description: 'Adiciona N dias úteis a uma data (ignora fins de semana)',
+    type: 'tool',
+    category: 'productivity',
+    toolDefinition: {
+      name: 'add_business_days',
+      description: 'Calcula a data resultante após adicionar N dias úteis (segunda a sexta) a uma data inicial.',
+      parameters: {
+        type: 'object',
+        properties: {
+          start_date: { type: 'string', description: 'Data inicial (YYYY-MM-DD ou DD/MM/YYYY)' },
+          days:       { type: 'number', description: 'Número de dias úteis a adicionar' },
+        },
+        required: ['start_date', 'days'],
+      },
+    },
+    toolCode: `
+function addBusinessDays(input) {
+  let dateStr = input.start_date.trim();
+  if (/^\\d{2}\\/\\d{2}\\/\\d{4}$/.test(dateStr)) { const p = dateStr.split('/'); dateStr = p[2] + '-' + p[1] + '-' + p[0]; }
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return { error: 'Data inválida' };
+  const daysToAdd = Math.abs(Math.round(input.days));
+  const direction = input.days < 0 ? -1 : 1;
+  let added = 0;
+  while (added < daysToAdd) { date.setDate(date.getDate() + direction); const dow = date.getDay(); if (dow !== 0 && dow !== 6) added++; }
+  const weekdays = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  return { result_date: date.toISOString().slice(0, 10), result_date_br: date.toLocaleDateString('pt-BR'), weekday: weekdays[date.getDay()], business_days_added: daysToAdd };
+}
+return addBusinessDays(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Classificador de Tarefas',
+    description: 'Classifica tarefas pela Matriz de Eisenhower (urgente × importante)',
+    type: 'tool',
+    category: 'productivity',
+    toolDefinition: {
+      name: 'classify_task',
+      description: 'Classifica uma tarefa nos quadrantes da Matriz de Eisenhower com base em urgência e importância.',
+      parameters: {
+        type: 'object',
+        properties: {
+          task:      { type: 'string', description: 'Descrição da tarefa' },
+          urgent:    { type: 'boolean', description: 'A tarefa é urgente?' },
+          important: { type: 'boolean', description: 'A tarefa é importante?' },
+        },
+        required: ['task', 'urgent', 'important'],
+      },
+    },
+    toolCode: `
+function classifyTask(input) {
+  const quadrants = {
+    'true-true':  { name: 'Fazer Agora',  label: 'Q1 — Urgente e Importante',     action: 'Execute imediatamente',             description: 'Crises, prazos críticos, emergências.' },
+    'false-true': { name: 'Agendar',      label: 'Q2 — Não Urgente e Importante', action: 'Agende com antecedência',           description: 'Planejamento, desenvolvimento, relacionamentos.' },
+    'true-false': { name: 'Delegar',      label: 'Q3 — Urgente e Não Importante', action: 'Delegue se possível',               description: 'Interrupções, reuniões desnecessárias.' },
+    'false-false':{ name: 'Eliminar',     label: 'Q4 — Não Urgente e Não Importante', action: 'Elimine ou adie indefinidamente', description: 'Distrações, trivialidades.' },
+  };
+  return { task: input.task, urgent: input.urgent, important: input.important, ...quadrants[input.urgent + '-' + input.important] };
+}
+return classifyTask(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Conversor de Fuso Horário',
+    description: 'Converte horário entre fusos usando offsets UTC',
+    type: 'tool',
+    category: 'productivity',
+    toolDefinition: {
+      name: 'convert_timezone',
+      description: 'Converte um horário de um fuso para outro usando offsets UTC (ex: -3 para Brasil, -5 para Nova York).',
+      parameters: {
+        type: 'object',
+        properties: {
+          time:        { type: 'string', description: 'Horário no formato HH:MM (24h)' },
+          from_offset: { type: 'number', description: 'Offset UTC de origem (ex: -3 para BRT)' },
+          to_offset:   { type: 'number', description: 'Offset UTC de destino (ex: -5 para EST)' },
+        },
+        required: ['time', 'from_offset', 'to_offset'],
+      },
+    },
+    toolCode: `
+function convertTimezone(input) {
+  const [hStr, mStr] = input.time.split(':');
+  const h = parseInt(hStr, 10), m = parseInt(mStr || '0', 10);
+  if (isNaN(h) || isNaN(m) || h < 0 || h > 23 || m < 0 || m > 59) return { error: 'Horário inválido. Use HH:MM (24h)' };
+  const diffHours = input.to_offset - input.from_offset;
+  let totalMins = h * 60 + m + diffHours * 60;
+  let dayOffset = 0;
+  if (totalMins < 0) { totalMins += 1440; dayOffset = -1; }
+  else if (totalMins >= 1440) { totalMins -= 1440; dayOffset = 1; }
+  const pad = n => String(n).padStart(2, '0');
+  const tzLabel = off => 'UTC' + (off >= 0 ? '+' : '') + off;
+  return { original: input.time + ' ' + tzLabel(input.from_offset), converted: pad(Math.floor(totalMins/60)) + ':' + pad(totalMins%60) + ' ' + tzLabel(input.to_offset), hours_difference: diffHours, day_change: dayOffset === 0 ? 'mesmo dia' : dayOffset > 0 ? '+1 dia' : '-1 dia' };
+}
+return convertTimezone(input);
+    `.trim(),
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TOOLS — sales (7 novas → total 7)
+  // ─────────────────────────────────────────────────────────────────────────
+
+  {
+    name: 'Calculadora de Comissão',
+    description: 'Calcula comissão de vendas com base no valor e taxa percentual',
+    type: 'tool',
+    category: 'sales',
+    toolDefinition: {
+      name: 'calculate_commission',
+      description: 'Calcula a comissão de um vendedor com base no valor vendido e taxa percentual.',
+      parameters: {
+        type: 'object',
+        properties: {
+          sale_value:   { type: 'number', description: 'Valor total da venda' },
+          rate_percent: { type: 'number', description: 'Taxa de comissão em % (ex: 5 para 5%)' },
+          base_salary:  { type: 'number', description: 'Salário base (opcional)' },
+        },
+        required: ['sale_value', 'rate_percent'],
+      },
+    },
+    toolCode: `
+function calculateCommission(input) {
+  const commission = input.sale_value * (input.rate_percent / 100);
+  const base = input.base_salary || 0;
+  const total = base + commission;
+  const fmt = n => 'R$ ' + n.toFixed(2).replace('.', ',');
+  return { sale_value: input.sale_value, rate_percent: input.rate_percent, commission: Math.round(commission * 100) / 100, base_salary: base, total_earning: Math.round(total * 100) / 100, commission_formatted: fmt(commission), total_formatted: fmt(total) };
+}
+return calculateCommission(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Calculadora de Desconto',
+    description: 'Aplica desconto percentual ou fixo em um preço e mostra a economia',
+    type: 'tool',
+    category: 'sales',
+    toolDefinition: {
+      name: 'calculate_discount',
+      description: 'Calcula preço final após desconto percentual ou fixo e exibe a economia para o cliente.',
+      parameters: {
+        type: 'object',
+        properties: {
+          original_price: { type: 'number', description: 'Preço original' },
+          discount:       { type: 'number', description: 'Desconto a aplicar' },
+          discount_type:  { type: 'string', description: '"percent" (padrão) ou "fixed"' },
+        },
+        required: ['original_price', 'discount'],
+      },
+    },
+    toolCode: `
+function calculateDiscount(input) {
+  const isPercent = (input.discount_type || 'percent') === 'percent';
+  const discountValue = isPercent ? input.original_price * (input.discount / 100) : input.discount;
+  const finalPrice = Math.max(0, input.original_price - discountValue);
+  const fmt = n => 'R$ ' + n.toFixed(2).replace('.', ',');
+  return { original_price: input.original_price, discount_applied: Math.round(discountValue * 100) / 100, final_price: Math.round(finalPrice * 100) / 100, savings_percent: Math.round((discountValue / input.original_price) * 1000) / 10, original_formatted: fmt(input.original_price), discount_formatted: fmt(discountValue), final_formatted: fmt(finalPrice), pitch: 'De ' + fmt(input.original_price) + ' por apenas ' + fmt(finalPrice) + ' — economia de ' + fmt(discountValue) + '!' };
+}
+return calculateDiscount(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Calculadora de LTV',
+    description: 'Calcula o Lifetime Value (LTV) de um cliente',
+    type: 'tool',
+    category: 'sales',
+    toolDefinition: {
+      name: 'calculate_ltv',
+      description: 'Calcula o LTV (Lifetime Value) de um cliente com base no ticket médio, frequência de compra e tempo de retenção.',
+      parameters: {
+        type: 'object',
+        properties: {
+          average_ticket:     { type: 'number', description: 'Ticket médio por compra' },
+          purchases_per_year: { type: 'number', description: 'Número de compras por ano' },
+          retention_years:    { type: 'number', description: 'Tempo médio de retenção do cliente (anos)' },
+          margin_percent:     { type: 'number', description: 'Margem de lucro em % (opcional)' },
+        },
+        required: ['average_ticket', 'purchases_per_year', 'retention_years'],
+      },
+    },
+    toolCode: `
+function calculateLTV(input) {
+  const ltv = input.average_ticket * input.purchases_per_year * input.retention_years;
+  const margin = input.margin_percent ? ltv * (input.margin_percent / 100) : null;
+  const fmt = n => 'R$ ' + n.toFixed(2).replace('.', ',');
+  return { ltv: Math.round(ltv * 100) / 100, ltv_formatted: fmt(ltv), ltv_with_margin: margin !== null ? Math.round(margin * 100) / 100 : null, ltv_with_margin_formatted: margin !== null ? fmt(margin) : null, annual_value: Math.round(input.average_ticket * input.purchases_per_year * 100) / 100, insight: ltv > 10000 ? 'Cliente de alto valor — invista em retenção' : ltv > 1000 ? 'Cliente de valor médio — foque em aumentar frequência' : 'Cliente de baixo valor — considere upsell' };
+}
+return calculateLTV(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Calculadora de CAC',
+    description: 'Calcula o Custo de Aquisição de Cliente (CAC) e ratio LTV:CAC',
+    type: 'tool',
+    category: 'sales',
+    toolDefinition: {
+      name: 'calculate_cac',
+      description: 'Calcula o CAC (Custo de Aquisição de Cliente) dividindo investimento total por clientes adquiridos.',
+      parameters: {
+        type: 'object',
+        properties: {
+          total_investment:   { type: 'number', description: 'Investimento total em marketing e vendas' },
+          customers_acquired: { type: 'number', description: 'Número de clientes adquiridos no período' },
+          ltv:                { type: 'number', description: 'LTV médio do cliente (opcional, para calcular ratio LTV:CAC)' },
+        },
+        required: ['total_investment', 'customers_acquired'],
+      },
+    },
+    toolCode: `
+function calculateCAC(input) {
+  if (input.customers_acquired === 0) return { error: 'Número de clientes não pode ser zero' };
+  const cac = input.total_investment / input.customers_acquired;
+  const ltvCacRatio = input.ltv ? input.ltv / cac : null;
+  const fmt = n => 'R$ ' + n.toFixed(2).replace('.', ',');
+  const health = ltvCacRatio !== null ? (ltvCacRatio >= 3 ? 'Saudável (LTV:CAC ≥ 3:1)' : ltvCacRatio >= 1 ? 'Atenção (LTV:CAC < 3:1)' : 'Crítico (você perde dinheiro por cliente)') : 'Informe o LTV para análise';
+  return { cac: Math.round(cac * 100) / 100, cac_formatted: fmt(cac), total_investment: input.total_investment, customers_acquired: input.customers_acquired, ltv_cac_ratio: ltvCacRatio !== null ? Math.round(ltvCacRatio * 10) / 10 : null, health_status: health, payback_months: input.ltv ? Math.ceil(cac / (input.ltv / 12)) : null };
+}
+return calculateCAC(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Qualificador de Lead BANT',
+    description: 'Pontua um lead pelo framework BANT (Budget, Authority, Need, Timeline)',
+    type: 'tool',
+    category: 'sales',
+    toolDefinition: {
+      name: 'qualify_lead_bant',
+      description: 'Pontua um lead de 0 a 100 pelos critérios BANT: Budget, Authority, Need, Timeline.',
+      parameters: {
+        type: 'object',
+        properties: {
+          has_budget:        { type: 'boolean', description: 'O lead tem orçamento definido?' },
+          is_decision_maker: { type: 'boolean', description: 'É o tomador de decisão?' },
+          has_clear_need:    { type: 'boolean', description: 'Tem necessidade clara e definida?' },
+          timeline_months:   { type: 'number', description: 'Prazo para decisão em meses (0 = imediato)' },
+        },
+        required: ['has_budget', 'is_decision_maker', 'has_clear_need', 'timeline_months'],
+      },
+    },
+    toolCode: `
+function qualifyLeadBANT(input) {
+  const t = input.timeline_months;
+  const scores = { budget: input.has_budget ? 30 : 0, authority: input.is_decision_maker ? 30 : 0, need: input.has_clear_need ? 25 : 0, timeline: t <= 1 ? 15 : t <= 3 ? 12 : t <= 6 ? 8 : t <= 12 ? 4 : 0 };
+  const total = Object.values(scores).reduce((a, b) => a + b, 0);
+  const tier = total >= 70 ? 'Hot — Priorize agora' : total >= 40 ? 'Warm — Nutra e acompanhe' : 'Cold — Coloque em automação';
+  return { score: total, tier, breakdown: scores, recommended_action: total >= 70 ? 'Proposta imediata' : total >= 40 ? 'Demo + follow-up em 3 dias' : 'Email drip + requalificar em 30 dias', disqualifiers: [!input.has_budget && 'Sem orçamento', !input.is_decision_maker && 'Não é tomador de decisão', t > 12 && 'Prazo muito longo'].filter(Boolean) };
+}
+return qualifyLeadBANT(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Calculadora de Churn',
+    description: 'Calcula taxa de churn mensal e projeta impacto na receita',
+    type: 'tool',
+    category: 'sales',
+    toolDefinition: {
+      name: 'calculate_churn',
+      description: 'Calcula churn rate mensal, MRR perdido e status de saúde da retenção.',
+      parameters: {
+        type: 'object',
+        properties: {
+          customers_start: { type: 'number', description: 'Clientes no início do período' },
+          customers_lost:  { type: 'number', description: 'Clientes perdidos no período' },
+          mrr:             { type: 'number', description: 'MRR atual (opcional, para calcular receita perdida)' },
+        },
+        required: ['customers_start', 'customers_lost'],
+      },
+    },
+    toolCode: `
+function calculateChurn(input) {
+  if (input.customers_start === 0) return { error: 'Número inicial de clientes não pode ser zero' };
+  const churnRate = input.customers_lost / input.customers_start;
+  const churnPercent = Math.round(churnRate * 1000) / 10;
+  const mrrLost = input.mrr ? Math.round((input.mrr / input.customers_start) * input.customers_lost * 100) / 100 : null;
+  const fmt = n => 'R$ ' + n.toFixed(2).replace('.', ',');
+  const health = churnPercent <= 2 ? 'Excelente (< 2%)' : churnPercent <= 5 ? 'Aceitável (2-5%)' : churnPercent <= 10 ? 'Preocupante (5-10%)' : 'Crítico (> 10%)';
+  return { churn_rate_percent: churnPercent, retention_rate_percent: Math.round((1 - churnRate) * 1000) / 10, customers_lost: input.customers_lost, customers_remaining: input.customers_start - input.customers_lost, avg_lifetime_months: churnRate > 0 ? Math.round(1 / churnRate) : null, mrr_lost: mrrLost, mrr_lost_formatted: mrrLost !== null ? fmt(mrrLost) : null, health_status: health, benchmark: 'SaaS B2B saudável: < 2% ao mês.' };
+}
+return calculateChurn(input);
+    `.trim(),
+  },
+
+  {
+    name: 'Calculadora de MRR',
+    description: 'Calcula e decompõe o Monthly Recurring Revenue (MRR)',
+    type: 'tool',
+    category: 'sales',
+    toolDefinition: {
+      name: 'calculate_mrr',
+      description: 'Calcula MRR total, ARR, Net New MRR e crescimento com base em diferentes tipos de receita recorrente.',
+      parameters: {
+        type: 'object',
+        properties: {
+          new_mrr:         { type: 'number', description: 'MRR de novos clientes no mês' },
+          expansion_mrr:   { type: 'number', description: 'MRR de expansão (upsell/cross-sell)' },
+          churn_mrr:       { type: 'number', description: 'MRR perdido por churn' },
+          contraction_mrr: { type: 'number', description: 'MRR perdido por downgrade' },
+          starting_mrr:    { type: 'number', description: 'MRR no início do mês (opcional)' },
+        },
+        required: ['new_mrr', 'churn_mrr'],
+      },
+    },
+    toolCode: `
+function calculateMRR(input) {
+  const newMRR = input.new_mrr || 0, expansionMRR = input.expansion_mrr || 0, churnMRR = input.churn_mrr || 0, contractionMRR = input.contraction_mrr || 0;
+  const netNewMRR = newMRR + expansionMRR - churnMRR - contractionMRR;
+  const endingMRR = (input.starting_mrr || 0) + netNewMRR;
+  const arr = endingMRR * 12;
+  const fmt = n => 'R$ ' + n.toFixed(2).replace('.', ',');
+  const growthPercent = input.starting_mrr && input.starting_mrr > 0 ? Math.round((netNewMRR / input.starting_mrr) * 1000) / 10 : null;
+  return { net_new_mrr: Math.round(netNewMRR * 100) / 100, ending_mrr: Math.round(endingMRR * 100) / 100, arr: Math.round(arr * 100) / 100, ending_mrr_formatted: fmt(endingMRR), arr_formatted: fmt(arr), net_new_mrr_formatted: fmt(netNewMRR), growth_percent: growthPercent, breakdown: { new_mrr: newMRR, expansion_mrr: expansionMRR, churn_mrr: -churnMRR, contraction_mrr: -contractionMRR }, health: netNewMRR > 0 ? 'Crescimento positivo' : netNewMRR === 0 ? 'Estagnado' : 'Encolhendo — reduza churn' };
+}
+return calculateMRR(input);
+    `.trim(),
+  },
+
+  // ─────────────────────────────────────────────────────────────────────────
   // PROMPTS — tipo "prompt": blocos de system prompt especializados
   // ─────────────────────────────────────────────────────────────────────────
 
