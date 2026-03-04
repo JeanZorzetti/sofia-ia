@@ -4,21 +4,70 @@
 // NodeConfigPanel — Right sidebar for configuring a selected node
 // ─────────────────────────────────────────────────────────
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { X, Settings2, Trash2 } from 'lucide-react'
+import { X, Settings2, Trash2, Loader2 } from 'lucide-react'
 
 interface ConfigField {
     key: string
     label: string
-    type: 'string' | 'number' | 'boolean' | 'select' | 'code' | 'json' | 'text' | 'expression'
+    type: 'string' | 'number' | 'boolean' | 'select' | 'code' | 'json' | 'text' | 'expression' | 'orchestration_select' | 'flow_select'
     placeholder?: string
     required?: boolean
     default?: any
     options?: { label: string; value: string }[]
     description?: string
+}
+
+// ── Resource selector components ──────────────────────────
+
+function ResourceSelect({
+    url, placeholder, value, onChange,
+}: { url: string; placeholder: string; value: string; onChange: (v: string) => void }) {
+    const [items, setItems] = useState<{ id: string; name: string }[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        fetch(url)
+            .then(r => r.json())
+            .then(data => { if (data.success) setItems(data.data) })
+            .catch(() => {})
+            .finally(() => setLoading(false))
+    }, [url])
+
+    if (loading) {
+        return (
+            <div className="flex items-center gap-2 h-8 px-2 rounded-md bg-white/5 border border-white/10">
+                <Loader2 className="h-3 w-3 text-white/40 animate-spin" />
+                <span className="text-xs text-white/40">Carregando...</span>
+            </div>
+        )
+    }
+
+    return (
+        <select
+            value={value || ''}
+            onChange={e => onChange(e.target.value)}
+            className="w-full h-8 px-2 text-xs rounded-md bg-white/5 border border-white/10 text-white appearance-none cursor-pointer"
+        >
+            <option value="" className="bg-slate-900">{placeholder}</option>
+            {items.map(item => (
+                <option key={item.id} value={item.id} className="bg-slate-900">
+                    {item.name}
+                </option>
+            ))}
+        </select>
+    )
+}
+
+function OrchestrationSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    return <ResourceSelect url="/api/orchestrations" placeholder="Selecione uma orquestração..." value={value} onChange={onChange} />
+}
+
+function FlowSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    return <ResourceSelect url="/api/flows" placeholder="Selecione um flow..." value={value} onChange={onChange} />
 }
 
 interface NodeConfigPanelProps {
@@ -131,6 +180,22 @@ export function NodeConfigPanel({
                             </option>
                         ))}
                     </select>
+                )
+
+            case 'orchestration_select':
+                return (
+                    <OrchestrationSelect
+                        value={value}
+                        onChange={(v) => handleFieldChange(field.key, v)}
+                    />
+                )
+
+            case 'flow_select':
+                return (
+                    <FlowSelect
+                        value={value}
+                        onChange={(v) => handleFieldChange(field.key, v)}
+                    />
                 )
 
             default:

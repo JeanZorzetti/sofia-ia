@@ -283,7 +283,7 @@ export const actionSubflow: NodeDefinition = {
     icon: 'GitBranch',
     color: 'violet',
     configFields: [
-        { key: 'flowId', label: 'Flow ID', type: 'string', required: true, placeholder: 'UUID do flow a executar' },
+        { key: 'flowId', label: 'Flow', type: 'flow_select', required: true, placeholder: 'Selecione o flow' },
         {
             key: 'passInput',
             label: 'Passar dados de entrada',
@@ -334,6 +334,101 @@ export const actionSubflow: NodeDefinition = {
     },
 }
 
+export const actionOrchestration: NodeDefinition = {
+    type: 'action_orchestration',
+    category: 'action',
+    label: 'Orquestração Multi-Agente',
+    description: 'Executa uma orquestração multi-agente da Sofia como etapa do flow.',
+    icon: 'Network',
+    color: 'purple',
+    configFields: [
+        {
+            key: 'orchestrationId',
+            label: 'Orquestração',
+            type: 'orchestration_select',
+            required: true,
+            placeholder: 'Selecione a orquestração',
+        },
+        {
+            key: 'input',
+            label: 'Input / Prompt',
+            type: 'text',
+            required: true,
+            placeholder: 'Tema ou dados para a orquestração: {{response}}',
+        },
+    ],
+    inputs: [{ name: 'main', type: 'any' }],
+    outputs: [{ name: 'main', type: 'any' }],
+    execute: async (config, input) => {
+        if (!config.orchestrationId) {
+            throw new Error('Orquestração não configurada. Selecione uma orquestração no nó.')
+        }
+
+        const { prisma } = await import('@/lib/prisma')
+        const { chatWithAgent } = await import('@/lib/ai/groq')
+
+        const resolvedInput = resolveExpressions(config.input || '', input)
+
+        const orchestration = await prisma.agentOrchestration.findUnique({
+            where: { id: config.orchestrationId },
+        })
+
+        if (!orchestration) {
+            throw new Error(`Orquestração não encontrada: ${config.orchestrationId}`)
+        }
+
+        if (orchestration.status !== 'active') {
+            throw new Error(`Orquestração inativa: ${orchestration.name}`)
+        }
+
+        const agentSteps = (orchestration.agents as Array<{
+            agentId: string
+            role: string
+            prompt?: string
+        }>) || []
+
+        if (agentSteps.length === 0) {
+            throw new Error('A orquestração não possui agentes configurados')
+        }
+
+        // Sequential execution — each agent receives original input + accumulated previous outputs
+        const agentResults: { role: string; output: string }[] = []
+        let finalOutput = resolvedInput
+
+        for (const step of agentSteps) {
+            const previousOutputs = agentResults
+                .map(r => `[${r.role}]:\n${r.output}`)
+                .join('\n\n---\n\n')
+
+            let prompt: string
+            if (step.prompt) {
+                // Replace {{response}} in step prompt with accumulated outputs
+                prompt = step.prompt.replace('{{response}}', previousOutputs || resolvedInput)
+            } else if (previousOutputs) {
+                prompt = `${resolvedInput}\n\nRespostas anteriores:\n${previousOutputs}`
+            } else {
+                prompt = resolvedInput
+            }
+
+            const messages = [{ role: 'user' as const, content: prompt }]
+            const response = await chatWithAgent(step.agentId, messages, {})
+
+            agentResults.push({ role: step.role, output: response.message })
+            finalOutput = response.message
+        }
+
+        return {
+            output: {
+                response: finalOutput,
+                orchestrationId: config.orchestrationId,
+                orchestrationName: orchestration.name,
+                steps: agentResults.length,
+                agentResults,
+            },
+        }
+    },
+}
+
 export const actionNodes: NodeDefinition[] = [
     actionHttp,
     actionDelay,
@@ -342,6 +437,7 @@ export const actionNodes: NodeDefinition[] = [
     actionDatabase,
     actionNotification,
     actionSubflow,
+    actionOrchestration,
 ]
 
 // ── Helpers ──────────────────────────────────────────────
