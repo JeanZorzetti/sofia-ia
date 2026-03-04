@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, Sparkles, Loader2, Code2, FileText } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Plus, Trash2, Sparkles, Loader2, Code2, FileText, Search, X } from 'lucide-react'
 
 interface Skill {
   id: string
@@ -24,6 +24,7 @@ const CATEGORIES = [
   { value: 'sales', label: 'Vendas' },
   { value: 'analytics', label: 'Analytics' },
   { value: 'content', label: 'Conteúdo' },
+  { value: 'productivity', label: 'Produtividade' },
   { value: 'custom', label: 'Customizada' },
 ]
 
@@ -43,6 +44,11 @@ export default function SkillsPage() {
   const [showModal, setShowModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState(defaultForm)
+
+  // Filters
+  const [search, setSearch] = useState('')
+  const [filterType, setFilterType] = useState<'all' | 'tool' | 'prompt'>('all')
+  const [filterCategory, setFilterCategory] = useState<string>('all')
 
   useEffect(() => {
     fetchSkills()
@@ -128,11 +134,33 @@ export default function SkillsPage() {
     }
   }
 
-  const builtinSkills = skills.filter((s) => s.isBuiltin)
-  const customSkills = skills.filter((s) => !s.isBuiltin)
-
   const getCategoryLabel = (value: string) =>
     CATEGORIES.find((c) => c.value === value)?.label || value
+
+  const applyFilters = (list: Skill[]) =>
+    list.filter((s) => {
+      if (filterType !== 'all' && s.type !== filterType) return false
+      if (filterCategory !== 'all' && s.category !== filterCategory) return false
+      if (search.trim()) {
+        const q = search.toLowerCase()
+        if (!s.name.toLowerCase().includes(q) && !(s.description ?? '').toLowerCase().includes(q)) return false
+      }
+      return true
+    })
+
+  const builtinSkills = useMemo(() => applyFilters(skills.filter((s) => s.isBuiltin)), [skills, filterType, filterCategory, search])
+  const customSkills  = useMemo(() => applyFilters(skills.filter((s) => !s.isBuiltin)), [skills, filterType, filterCategory, search])
+
+  const totalFiltered = builtinSkills.length + customSkills.length
+  const hasActiveFilters = search.trim() !== '' || filterType !== 'all' || filterCategory !== 'all'
+
+  const clearFilters = () => { setSearch(''); setFilterType('all'); setFilterCategory('all') }
+
+  // Available categories present in the loaded skills (don't show empty ones)
+  const availableCategories = useMemo(() => {
+    const cats = new Set(skills.map((s) => s.category))
+    return CATEGORIES.filter((c) => cats.has(c.value))
+  }, [skills])
 
   const SkillCard = ({ skill }: { skill: Skill }) => (
     <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
@@ -202,6 +230,86 @@ export default function SkillsPage() {
           <span className="text-purple-400 font-medium">Prompt</span> injetam blocos de texto no contexto do agente.
         </p>
       </div>
+
+      {/* ── Filtros ───────────────────────────────────────────────────────── */}
+      {!loading && (
+        <div className="space-y-3">
+          {/* Search + active filter summary */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30 pointer-events-none" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar skills..."
+                className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30"
+              />
+              {search && (
+                <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+            {hasActiveFilters && (
+              <button onClick={clearFilters} className="text-xs text-white/40 hover:text-white/70 flex items-center gap-1 transition-colors">
+                <X className="w-3 h-3" /> Limpar filtros
+              </button>
+            )}
+            {hasActiveFilters && (
+              <span className="text-xs text-white/30 ml-auto">{totalFiltered} resultado{totalFiltered !== 1 ? 's' : ''}</span>
+            )}
+          </div>
+
+          {/* Type filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] text-white/30 uppercase tracking-wider font-medium w-14 flex-shrink-0">Tipo</span>
+            {(['all', 'tool', 'prompt'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setFilterType(t)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  filterType === t
+                    ? t === 'tool' ? 'bg-blue-500/30 text-blue-300 border border-blue-500/40'
+                      : t === 'prompt' ? 'bg-purple-500/30 text-purple-300 border border-purple-500/40'
+                      : 'bg-white/15 text-white border border-white/20'
+                    : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
+                }`}
+              >
+                {t === 'all' ? 'Todos' : t === 'tool' ? 'Tool' : 'Prompt'}
+              </button>
+            ))}
+          </div>
+
+          {/* Category filter */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] text-white/30 uppercase tracking-wider font-medium w-14 flex-shrink-0">Categ.</span>
+            <button
+              onClick={() => setFilterCategory('all')}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                filterCategory === 'all'
+                  ? 'bg-white/15 text-white border border-white/20'
+                  : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
+              }`}
+            >
+              Todas
+            </button>
+            {availableCategories.map((cat) => (
+              <button
+                key={cat.value}
+                onClick={() => setFilterCategory(cat.value)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  filterCategory === cat.value
+                    ? 'bg-white/15 text-white border border-white/20'
+                    : 'bg-white/5 text-white/50 border border-white/10 hover:bg-white/10 hover:text-white/70'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex justify-center py-12">
