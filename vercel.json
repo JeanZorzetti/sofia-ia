@@ -3,7 +3,9 @@
   "framework": "nextjs",
   "installCommand": "npm install",
   "buildCommand": "npx prisma generate && (npx prisma db push --skip-generate && npx tsx prisma/seed.ts || echo 'DB sync skipped - will run at runtime') && next build",
-  "regions": ["gru1"],
+  "regions": [
+    "gru1"
+  ],
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 30
@@ -13,22 +15,6 @@
     {
       "path": "/api/analytics/collect",
       "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/cron/run-scheduled",
-      "schedule": "0 */1 * * *"
-    },
-    {
-      "path": "/api/cron/email-drip",
-      "schedule": "0 12 * * *"
-    },
-    {
-      "path": "/api/cron/weekly-digest",
-      "schedule": "0 11 * * 1"
-    },
-    {
-      "path": "/api/flows/cron",
-      "schedule": "*/5 * * * *"
     }
   ]
 }
