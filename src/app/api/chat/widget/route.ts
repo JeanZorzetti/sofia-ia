@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getGroqClient } from '@/lib/groq';
+import { getKnowledgeContextV2 } from '@/lib/knowledge-context-v2';
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -105,11 +106,24 @@ export async function POST(request: NextRequest) {
       take: 10,
     });
 
+    // Inject knowledge base context if available
+    let systemContent = agent.systemPrompt;
+    if (agent.knowledgeBaseId) {
+      try {
+        const kbContext = await getKnowledgeContextV2(agent.id, message, { topK: 3, useHybridSearch: true });
+        if (kbContext) {
+          systemContent = agent.systemPrompt + kbContext;
+        }
+      } catch {
+        // KB errors should not block the chat
+      }
+    }
+
     // Build messages array for AI
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: agent.systemPrompt,
+        content: systemContent,
       },
     ];
 
