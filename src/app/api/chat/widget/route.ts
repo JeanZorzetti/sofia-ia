@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       lead = await prisma.lead.create({
         data: {
           nome: `Widget User ${sessionId.substring(0, 8)}`,
-          telefone: `widget-${sessionId}`,
+          telefone: `w-${sessionId}`.substring(0, 20),
           fonte: 'webchat',
           metadata: {
             sessionId,
