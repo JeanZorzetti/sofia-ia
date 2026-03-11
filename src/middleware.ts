@@ -134,13 +134,17 @@ export async function middleware(request: NextRequest) {
     const isPublicApi =
       pathname.startsWith('/api/auth') ||
       pathname.startsWith('/api/health') ||
-      pathname.startsWith('/api/webhooks') ||
-      pathname.startsWith('/api/mercadopago') || // payment gateway callbacks
-      pathname.startsWith('/api/crm') || // CRM leads (public form submissions)
-      pathname.startsWith('/api/newsletter') || // newsletter subscriptions
-      pathname.startsWith('/api/cron') || // cron jobs (protected by CRON_SECRET)
-      pathname.startsWith('/api/flows/cron') || // flow cron triggers (protected by CRON_SECRET)
-      pathname.startsWith('/api/public/') // public API (auth via api_key header)
+      pathname.startsWith('/api/webhooks') ||       // webhook config
+      pathname.startsWith('/api/webhook/') ||        // inbound webhooks (Evolution, WhatsApp, etc.)
+      pathname === '/api/webhook' ||
+      pathname.startsWith('/api/mercadopago') ||     // payment gateway callbacks
+      pathname.startsWith('/api/crm') ||             // CRM leads (public form submissions)
+      pathname.startsWith('/api/newsletter') ||      // newsletter subscriptions
+      pathname.startsWith('/api/cron') ||            // cron jobs (protected by CRON_SECRET)
+      pathname.startsWith('/api/flows/cron') ||      // flow cron triggers (protected by CRON_SECRET)
+      pathname.startsWith('/api/public/') ||         // public API (auth via api_key header)
+      pathname === '/api/chat/widget' ||             // widget público (sem auth, por agentId)
+      pathname.startsWith('/api/chat/widget')
 
     if (!isPublicApi) {
       const user = await resolveUser()
