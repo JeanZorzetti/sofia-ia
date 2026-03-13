@@ -581,6 +581,74 @@ REGRAS PARA ESCREVER CÓDIGO:
     }
   }
 
+  // ── Groq com Calendar Tools (function calling) ──────────────────────────────
+  const agentConfig = (agent.config || {}) as Record<string, unknown>
+  const calendarEnabled = !!agentConfig.calendarEnabled
+  const calendarUserId = agentConfig.calendarUserId as string | undefined
+
+  if (calendarEnabled && calendarUserId) {
+    const { calendarToolDefinitions, executeCalendarTool } = await import('@/lib/ai/calendar-tools')
+    const remoteJid = leadContext?.leadPhone ? `${String(leadContext.leadPhone)}@s.whatsapp.net` : undefined
+
+    let loopMessages: Array<Record<string, unknown>> = [
+      { role: 'system', content: systemPrompt },
+      ...messages,
+    ]
+    const MAX_TOOL_LOOPS = 6
+
+    for (let i = 0; i < MAX_TOOL_LOOPS; i++) {
+      const completion = await getGroqClient().chat.completions.create({
+        model: agent.model,
+        messages: loopMessages as any,
+        tools: calendarToolDefinitions as unknown as any[],
+        tool_choice: 'auto',
+        temperature: agent.temperature,
+        max_tokens: 1024,
+      })
+
+      const responseMsg = completion.choices[0]?.message
+      const toolCalls = responseMsg?.tool_calls
+
+      if (toolCalls && toolCalls.length > 0) {
+        loopMessages.push(responseMsg as any)
+
+        for (const tc of toolCalls) {
+          let fnArgs: Record<string, string>
+          try {
+            fnArgs = JSON.parse(tc.function.arguments)
+          } catch {
+            fnArgs = {}
+          }
+
+          console.log(`[CalendarTool] ${tc.function.name}`, fnArgs)
+          const result = await executeCalendarTool(tc.function.name, fnArgs, calendarUserId, remoteJid)
+
+          loopMessages.push({
+            role: 'tool',
+            tool_call_id: tc.id,
+            content: result,
+          })
+        }
+        continue
+      }
+
+      return {
+        message: responseMsg?.content || '',
+        model: completion.model,
+        usage: completion.usage,
+        confidence: 0.9,
+      }
+    }
+
+    return {
+      message: 'Desculpe, não consegui completar a operação no calendário. Tente novamente.',
+      model: agent.model,
+      usage: { total_tokens: 0 },
+      confidence: 0.5,
+    }
+  }
+
+  // ── Groq padrão (sem tools) ───────────────────────────────────────────────
   const completion = await getGroqClient().chat.completions.create({
     model: agent.model,
     messages: [{ role: 'system', content: systemPrompt }, ...messages],

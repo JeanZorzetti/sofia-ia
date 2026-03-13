@@ -36,6 +36,7 @@ import {
   AtSign,
   Volume2,
   FolderOpen,
+  CalendarDays,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -119,6 +120,16 @@ const automationPlatforms = [
     bg: 'bg-blue-500/10',
     badge: 'RAG',
     href: '/dashboard/integrations/google-drive',
+  },
+  {
+    id: 'google-calendar',
+    name: 'Google Calendar',
+    description: 'Agende, cancele e reagende reuniões pelo WhatsApp com link Google Meet automático',
+    icon: CalendarDays,
+    color: 'text-green-500',
+    bg: 'bg-green-500/10',
+    badge: 'Agenda',
+    href: '/dashboard/integrations/google-calendar',
   },
   {
     id: 'notion',
