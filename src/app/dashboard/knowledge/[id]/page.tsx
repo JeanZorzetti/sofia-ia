@@ -160,6 +160,25 @@ export default function KnowledgeDetailPage() {
     fetchChunks(undefined, 1)
   }
 
+  const handleResetKnowledgeBase = async () => {
+    if (!confirm(`Tem certeza que deseja LIMPAR TODOS os documentos de "${knowledgeBase?.name}"?\n\nEsta ação é irreversível.`)) return
+
+    try {
+      const response = await fetch(`/api/knowledge/${params.id}/reset`, { method: 'POST' })
+      const result = await response.json()
+      if (response.ok) {
+        toast.success(result.message)
+        fetchKnowledgeBase()
+        setSelectedDocument(null)
+        fetchChunks(undefined, 1)
+      } else {
+        toast.error(result.error || 'Erro ao limpar base')
+      }
+    } catch {
+      toast.error('Erro ao limpar base de conhecimento')
+    }
+  }
+
   const handleDeleteDocument = async (documentId: string) => {
     if (!confirm('Tem certeza que deseja excluir este documento?')) return
 
@@ -274,6 +293,15 @@ export default function KnowledgeDetailPage() {
               </p>
             </div>
           </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={handleResetKnowledgeBase}
+            disabled={knowledgeBase.documents.length === 0}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Limpar KB
+          </Button>
         </div>
       </div>
 
