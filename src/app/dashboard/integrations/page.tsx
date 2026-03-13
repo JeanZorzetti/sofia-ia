@@ -35,6 +35,7 @@ import {
   Building2,
   AtSign,
   Volume2,
+  FolderOpen,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -108,6 +109,16 @@ const automationPlatforms = [
     bg: 'bg-green-600/10',
     badge: 'ERP',
     href: '/dashboard/integrations/google-sheets',
+  },
+  {
+    id: 'google-drive',
+    name: 'Google Drive',
+    description: 'Sincronize pastas do Drive com suas bases de conhecimento automaticamente',
+    icon: FolderOpen,
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10',
+    badge: 'RAG',
+    href: '/dashboard/integrations/google-drive',
   },
   {
     id: 'notion',
