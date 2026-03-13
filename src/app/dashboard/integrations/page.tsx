@@ -34,6 +34,7 @@ import {
   FileText,
   Building2,
   AtSign,
+  Volume2,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -424,6 +425,12 @@ export default function IntegrationsPage() {
             <Link href="/dashboard/integrations/voice">
               <Phone className="mr-2 h-4 w-4" />
               Voice
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/integrations/elevenlabs">
+              <Volume2 className="mr-2 h-4 w-4" />
+              ElevenLabs
             </Link>
           </Button>
           <Button onClick={() => setCreateDialogOpen(true)}>

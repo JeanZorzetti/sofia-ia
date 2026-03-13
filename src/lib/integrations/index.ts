@@ -5,15 +5,18 @@
 
 export * from './instagram';
 export * from './telegram';
+export * from './elevenlabs';
 
 import { createInstagramService, InstagramService } from './instagram';
 import { createTelegramService, TelegramService } from './telegram';
+import { createElevenLabsService, ElevenLabsService } from './elevenlabs';
 
-export type IntegrationType = 'instagram' | 'telegram' | 'whatsapp' | 'webhook' | 'email';
+export type IntegrationType = 'instagram' | 'telegram' | 'whatsapp' | 'webhook' | 'email' | 'elevenlabs';
 
 export interface IntegrationServiceMap {
   instagram: InstagramService;
   telegram: TelegramService;
+  elevenlabs: ElevenLabsService;
 }
 
 /**
@@ -22,12 +25,14 @@ export interface IntegrationServiceMap {
 export function createIntegrationService(
   type: IntegrationType,
   credentials: Record<string, any>
-): InstagramService | TelegramService | null {
+): InstagramService | TelegramService | ElevenLabsService | null {
   switch (type) {
     case 'instagram':
       return createInstagramService(credentials);
     case 'telegram':
       return createTelegramService(credentials);
+    case 'elevenlabs':
+      return createElevenLabsService(credentials);
     default:
       return null;
   }
@@ -85,6 +90,18 @@ export const integrationTemplates = {
     configFields: [
       { name: 'fromName', label: 'Nome do Remetente', type: 'text', default: 'Sofia IA' },
       { name: 'fromEmail', label: 'Email do Remetente', type: 'email', required: true },
+    ],
+  },
+  elevenlabs: {
+    name: 'ElevenLabs TTS',
+    description: 'Texto-para-voz realista com IA da ElevenLabs',
+    icon: 'volume2',
+    requiredCredentials: ['apiKey'],
+    configFields: [
+      { name: 'voiceId', label: 'ID da Voz', type: 'text', default: '21m00Tcm4TlvDq8ikWAM' },
+      { name: 'modelId', label: 'Modelo', type: 'select', options: ['eleven_multilingual_v2', 'eleven_turbo_v2_5'], default: 'eleven_multilingual_v2' },
+      { name: 'stability', label: 'Estabilidade (%)', type: 'number', default: '50' },
+      { name: 'similarityBoost', label: 'Clareza (%)', type: 'number', default: '75' },
     ],
   },
 };

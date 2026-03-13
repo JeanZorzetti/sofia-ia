@@ -1,4 +1,10 @@
 import { prisma } from '@/lib/prisma'
+import { getGroqClient } from '@/lib/ai/groq'
+import { pushToBuffer, type BufferedMessage } from '@/lib/message-buffer'
+import { formatWhatsAppResponse, isReactivationKeyword, isPauseKeyword } from '@/lib/ai/whatsapp-formatter'
+import { processDocumentVectorization } from '@/lib/ai/knowledge-context'
+
+const TRAINING_PREFIX = 'TreinoIA1212:'
 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL || 'https://ia-evolution-api.tjmarr.easypanel.host'
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY || ''
@@ -306,259 +312,565 @@ function handleConnectionUpdate(instance: string, data: Record<string, unknown>)
   }
 }
 
+// --- Groq Whisper Audio Transcription ---
+
+async function transcribeWhatsAppAudio(
+  instance: string,
+  messageKey: Record<string, unknown>
+): Promise<string | null> {
+  try {
+    console.log(`[Whisper] Baixando áudio da instância ${instance}...`)
+
+    // Buscar o base64 do áudio via Evolution API
+    const res = await evoFetch(`/chat/getBase64FromMediaMessage/${instance}`, {
+      method: 'POST',
+      body: JSON.stringify({ message: { key: messageKey }, convertToMp4: false }),
+    })
+
+    if (!res.ok) {
+      console.error(`[Whisper] Falha ao buscar áudio: HTTP ${res.status}`)
+      return null
+    }
+
+    const { base64, mimetype } = await res.json()
+    if (!base64) {
+      console.error('[Whisper] Resposta sem base64')
+      return null
+    }
+
+    // Converter base64 → Buffer → File para o Groq
+    const audioBuffer = Buffer.from(base64, 'base64')
+    const ext = mimetype?.includes('ogg') ? 'ogg' : 'mp3'
+    const audioFile = new File([audioBuffer], `audio.${ext}`, { type: mimetype || 'audio/ogg' })
+
+    console.log(`[Whisper] Transcrevendo áudio (${audioBuffer.length} bytes, tipo: ${ext})...`)
+
+    // Groq suporta whisper-large-v3 para transcrição
+    const transcription = await getGroqClient().audio.transcriptions.create({
+      file: audioFile,
+      model: 'whisper-large-v3',
+      language: 'pt',
+      response_format: 'text',
+    })
+
+    const text = typeof transcription === 'string' ? transcription : (transcription as any).text || ''
+    console.log(`[Whisper] Transcrição: "${text.slice(0, 100)}..."`)
+    return text
+  } catch (error) {
+    console.error('[Whisper] Erro na transcrição:', error)
+    return null
+  }
+}
+
 async function handleMessageUpsert(instance: string, data: unknown) {
-  // Evolution API v2: data is an array of messages directly
-  // Evolution API v1: data is { messages: [...] }
   let messages: Array<Record<string, unknown>> = []
   if (Array.isArray(data)) {
     messages = data
   } else if (data && typeof data === 'object') {
     const dataObj = data as Record<string, unknown>
     messages = (dataObj.messages || []) as Array<Record<string, unknown>>
-    // v2 single message: data has key, message, etc. directly
-    if (dataObj.key && dataObj.message) {
-      messages = [dataObj]
-    }
+    if (dataObj.key && dataObj.message) messages = [dataObj]
   }
+
   console.log(`[WEBHOOK] handleMessageUpsert: ${messages.length} messages from ${instance}`)
+
   for (const message of messages) {
     const key = message.key as Record<string, unknown>
     if (key?.fromMe) continue
 
     const contact = key?.remoteJid as string
+    if (!contact) continue
+
     const msgObj = message.message as Record<string, unknown> | undefined
-    const text =
+    const messageId = (key.id as string) || `msg_${Date.now()}`
+
+    // ── Detectar tipo e extrair conteúdo ────────────────────────────────────
+    const isAudio = !!(msgObj?.audioMessage || msgObj?.pttMessage)
+    const isImage = !!(msgObj?.imageMessage)
+
+    let text =
       (msgObj?.conversation as string) ||
       ((msgObj?.extendedTextMessage as Record<string, unknown>)?.text as string) ||
       ''
+    let messageType: BufferedMessage['messageType'] = 'text'
 
-    if (!text || !contact) continue
+    // Áudio → transcrever
+    if (isAudio && !text) {
+      messageType = 'audio'
+      console.log(`[WEBHOOK] Áudio de ${contact}, transcrevendo...`)
+      const transcribed = await transcribeWhatsAppAudio(instance, key)
+      text = transcribed || '[Áudio recebido. Por favor, escreva sua mensagem em texto.]'
+      console.log(`[WEBHOOK] Áudio transcrito: "${text.slice(0, 80)}..."`)
+    }
 
-    // Extrair número de telefone do contact (remover @s.whatsapp.net)
-    const phoneNumber = contact.replace('@s.whatsapp.net', '')
-    const messageId = (key.id as string) || `msg_${Date.now()}`
+    // Imagem → descrever com Vision
+    if (isImage && !text) {
+      messageType = 'image'
+      console.log(`[WEBHOOK] Imagem de ${contact}, analisando com Vision...`)
+      const caption = (msgObj?.imageMessage as Record<string, unknown>)?.caption as string | undefined
+      const described = await describeWhatsAppImage(instance, key, caption)
+      text = described || '[Imagem recebida mas não foi possível analisar.]'
+      console.log(`[WEBHOOK] Imagem descrita: "${text.slice(0, 80)}..."`)
+    }
 
-    try {
-      // 1. Buscar ou criar Lead
-      let lead = await prisma.lead.findUnique({
-        where: { telefone: phoneNumber }
-      })
+    if (!text) continue
 
-      if (!lead) {
-        // Criar novo lead a partir da mensagem recebida
-        lead = await prisma.lead.create({
-          data: {
-            nome: phoneNumber, // Será atualizado depois com o nome real
-            telefone: phoneNumber,
-            status: 'novo',
-            fonte: 'whatsapp',
-            score: 0,
-            metadata: {
-              whatsappChatId: contact,
-              instanceName: instance
-            }
-          }
-        })
-        console.log('✅ Novo lead criado:', lead.id, phoneNumber)
-      } else {
-        // Atualizar última interação
-        await prisma.lead.update({
-          where: { id: lead.id },
-          data: { ultimaInteracao: new Date() }
-        })
+    // ── Verificar pausa/reativação ANTES do buffer ───────────────────────────
+    // Reativação da IA (ex: "Atendimento finalizado")
+    if (isReactivationKeyword(text)) {
+      await handleReactivation(contact, instance)
+      continue
+    }
+
+    // Pausa manual da IA
+    if (isPauseKeyword(text)) {
+      await handlePause(contact)
+      continue
+    }
+
+    // ── Treinamento via WhatsApp (TreinoIA1212: conteúdo) ───────────────────
+    if (text.startsWith(TRAINING_PREFIX)) {
+      const trainingContent = text.slice(TRAINING_PREFIX.length).trim()
+      if (trainingContent) {
+        await handleTrainingMessage(contact, instance, trainingContent)
       }
+      continue
+    }
 
-      // 2. Buscar ou criar Conversation
-      let conversation = await prisma.conversation.findFirst({
-        where: {
+    // ── Empurrar para buffer Redis (debounce 10s) ────────────────────────────
+    const bufferedMsg: BufferedMessage = {
+      text,
+      messageId,
+      messageType,
+      timestamp: Date.now(),
+    }
+
+    await pushToBuffer(contact, bufferedMsg, (bufferedMessages) =>
+      processBufferedMessages(instance, contact, bufferedMessages)
+    )
+  }
+}
+
+// ── Processar conjunto de mensagens acumuladas pelo buffer ───────────────────
+async function processBufferedMessages(
+  instance: string,
+  contact: string,
+  bufferedMessages: BufferedMessage[]
+): Promise<void> {
+  // Concatenar todas as mensagens em uma única entrada do usuário
+  const combinedText = bufferedMessages.map(m => m.text).join('\n')
+  const messageId = bufferedMessages[bufferedMessages.length - 1].messageId
+  const phoneNumber = contact.replace('@s.whatsapp.net', '').replace('@g.us', '')
+
+  try {
+    // 1. Buscar ou criar Lead
+    let lead = await prisma.lead.findUnique({ where: { telefone: phoneNumber } })
+    if (!lead) {
+      lead = await prisma.lead.create({
+        data: {
+          nome: phoneNumber,
+          telefone: phoneNumber,
+          status: 'novo',
+          fonte: 'whatsapp',
+          score: 0,
+          metadata: { whatsappChatId: contact, instanceName: instance },
+        },
+      })
+      console.log('✅ Novo lead criado:', lead.id, phoneNumber)
+    } else {
+      await prisma.lead.update({ where: { id: lead.id }, data: { ultimaInteracao: new Date() } })
+    }
+
+    // 2. Buscar ou criar Conversation
+    let conversation = await prisma.conversation.findFirst({
+      where: { leadId: lead.id, whatsappChatId: contact, status: 'active' },
+    })
+    if (!conversation) {
+      conversation = await prisma.conversation.create({
+        data: {
           leadId: lead.id,
           whatsappChatId: contact,
-          status: 'active'
-        }
+          channel: 'whatsapp',
+          status: 'active',
+          handledBy: 'ai',
+          startedAt: new Date(),
+          lastMessageAt: new Date(),
+          messageCount: 0,
+        },
+      })
+      console.log('✅ Nova conversa criada:', conversation.id)
+    }
+
+    // Verificar se está em modo humano
+    if (conversation.handledBy === 'human') {
+      console.log('⚠️ Conversa em modo humano, IA não responde')
+      // Salvar mensagens mesmo assim (histórico)
+      for (const msg of bufferedMessages) {
+        await safeCreateMessage({
+          conversationId: conversation.id,
+          leadId: lead.id,
+          whatsappMessageId: msg.messageId,
+          sender: 'user',
+          messageType: msg.messageType,
+          content: msg.text,
+        })
+      }
+      return
+    }
+
+    // 3. Salvar todas as mensagens do buffer no banco
+    for (const msg of bufferedMessages) {
+      await safeCreateMessage({
+        conversationId: conversation.id,
+        leadId: lead.id,
+        whatsappMessageId: msg.messageId,
+        sender: 'user',
+        messageType: msg.messageType,
+        content: msg.text,
+      })
+    }
+
+    await prisma.conversation.update({
+      where: { id: conversation.id },
+      data: {
+        messageCount: { increment: bufferedMessages.length },
+        lastMessageAt: new Date(),
+      },
+    })
+
+    // 4. Buscar agente ativo
+    let agent = await prisma.agent.findFirst({
+      where: {
+        status: 'active',
+        channels: { some: { channel: 'whatsapp', isActive: true, config: { path: ['instanceName'], equals: instance } } },
+      },
+      include: { channels: true },
+    })
+    if (!agent) {
+      agent = await prisma.agent.findFirst({
+        where: { status: 'active', channels: { some: { channel: 'whatsapp', isActive: true } } },
+        include: { channels: true },
+      })
+    }
+
+    if (!agent) {
+      console.log('⚠️ Nenhum agente ativo encontrado para WhatsApp')
+      return
+    }
+
+    console.log(`[WEBHOOK] Agente: ${agent.name}`)
+
+    // 5. Buscar histórico + chamar IA
+    const { chatWithAgent } = await import('@/lib/groq')
+
+    const previousMessages = await prisma.message.findMany({
+      where: { conversationId: conversation.id },
+      orderBy: { sentAt: 'asc' },
+      take: 20,
+    })
+
+    const messageHistory = previousMessages.map(msg => ({
+      role: (msg.sender === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+      content: msg.content,
+    }))
+
+    try {
+      const aiResponse = await chatWithAgent(agent.id, messageHistory, {
+        leadName: lead.nome,
+        leadPhone: lead.telefone,
+        leadStatus: lead.status,
       })
 
-      if (!conversation) {
-        conversation = await prisma.conversation.create({
-          data: {
-            leadId: lead.id,
-            whatsappChatId: contact,
-            channel: 'whatsapp',
-            status: 'active',
-            handledBy: 'ai',
-            startedAt: new Date(),
-            lastMessageAt: new Date(),
-            messageCount: 0
-          }
+      if (aiResponse.message) {
+        // 6. Pós-processar resposta (char limit + emojis + naturalidade)
+        const formatted = formatWhatsAppResponse(aiResponse.message, {
+          userMessage: combinedText,
         })
-        console.log('✅ Nova conversa criada:', conversation.id)
-      }
 
-      // 3. Salvar mensagem recebida no banco (constraint @unique em whatsappMessageId garante atomicidade)
-      try {
+        await sendMessage(instance, contact, formatted)
+
         await prisma.message.create({
           data: {
             conversationId: conversation.id,
             leadId: lead.id,
-            whatsappMessageId: messageId,
-            sender: 'user',
+            sender: 'assistant',
             messageType: 'text',
-            content: text,
-            isAiGenerated: false,
+            content: formatted,
+            isAiGenerated: true,
+            aiModel: agent.model,
+            aiConfidence: aiResponse.confidence,
             sentAt: new Date(),
-          }
-        })
-      } catch (createErr: unknown) {
-        const prismaError = createErr as { code?: string }
-        if (prismaError?.code === 'P2002') {
-          // Outra instância já processou esta mensagem (race condition resolvida pelo DB)
-          console.log(`[WEBHOOK] Mensagem ${messageId} já processada por outra instância, ignorando`)
-          continue
-        }
-        throw createErr
-      }
-
-      // 4. Atualizar contador de mensagens da conversa
-      await prisma.conversation.update({
-        where: { id: conversation.id },
-        data: {
-          messageCount: { increment: 1 },
-          lastMessageAt: new Date()
-        }
-      })
-
-      console.log('✅ Mensagem salva no banco:', messageId)
-
-      // Verificar se a conversa está sendo tratada por humano
-      if (conversation.handledBy === 'human') {
-        console.log('⚠️ Conversa está em modo humano, IA não irá responder')
-        return
-      }
-
-      // Buscar agente ativo para WhatsApp: preferir agente vinculado a esta instância,
-      // depois fallback para agente sem instância definida ("Qualquer instância")
-      let agent = await prisma.agent.findFirst({
-        where: {
-          status: 'active',
-          channels: {
-            some: {
-              channel: 'whatsapp',
-              isActive: true,
-              config: { path: ['instanceName'], equals: instance }
-            }
-          }
-        },
-        include: { channels: true }
-      })
-
-      if (!agent) {
-        // Fallback: qualquer agente com WhatsApp ativo (sem instância específica ou com outra)
-        agent = await prisma.agent.findFirst({
-          where: {
-            status: 'active',
-            channels: {
-              some: {
-                channel: 'whatsapp',
-                isActive: true,
-              }
-            }
           },
-          include: { channels: true }
-        })
-      }
-
-      console.log(`[WEBHOOK] Agente para instância "${instance}": ${agent?.name || 'nenhum'}`)
-
-      if (agent) {
-        // Usar IA para gerar resposta com o agente encontrado
-        const { chatWithAgent } = await import('@/lib/groq')
-
-        // Buscar histórico de mensagens da conversa
-        const previousMessages = await prisma.message.findMany({
-          where: { conversationId: conversation.id },
-          orderBy: { sentAt: 'asc' },
-          take: 10 // Últimas 10 mensagens como contexto
         })
 
-        // Formatar mensagens para o formato do Groq
-        const messageHistory = previousMessages.map(msg => ({
-          role: (msg.sender === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
-          content: msg.content
-        }))
+        await prisma.conversation.update({
+          where: { id: conversation.id },
+          data: { messageCount: { increment: 1 }, lastMessageAt: new Date() },
+        })
 
-        try {
-          const aiResponse = await chatWithAgent(agent.id, messageHistory, {
-            leadName: lead.nome,
-            leadPhone: lead.telefone,
-            leadStatus: lead.status
-          })
-
-          if (aiResponse.message) {
-            const sendResult = await sendMessage(instance, contact, aiResponse.message)
-            if (!sendResult.success) {
-              console.error(`[WEBHOOK] Falha ao enviar resposta via WhatsApp:`, sendResult.error, sendResult.details)
-            }
-
-            // Salvar resposta da IA no banco
-            await prisma.message.create({
-              data: {
-                conversationId: conversation.id,
-                leadId: lead.id,
-                sender: 'assistant',
-                messageType: 'text',
-                content: aiResponse.message,
-                isAiGenerated: true,
-                aiModel: agent.model,
-                aiConfidence: aiResponse.confidence,
-                sentAt: new Date(),
-              }
-            })
-
-            await prisma.conversation.update({
-              where: { id: conversation.id },
-              data: {
-                messageCount: { increment: 1 },
-                lastMessageAt: new Date()
-              }
-            })
-
-            console.log('✅ Resposta da IA enviada via agente:', agent.name)
-          }
-        } catch (aiError) {
-          console.error('❌ Erro ao gerar resposta da IA:', aiError)
-          // Fallback para resposta automática simples
-          const autoResponse = getAutomatedResponse(text)
-          if (autoResponse) {
-            await sendMessage(instance, contact, autoResponse)
-
-            await prisma.message.create({
-              data: {
-                conversationId: conversation.id,
-                leadId: lead.id,
-                sender: 'assistant',
-                messageType: 'text',
-                content: autoResponse,
-                isAiGenerated: true,
-                aiModel: 'rule-based',
-                sentAt: new Date(),
-              }
-            })
-
-            await prisma.conversation.update({
-              where: { id: conversation.id },
-              data: {
-                messageCount: { increment: 1 },
-                lastMessageAt: new Date()
-              }
-            })
-          }
-        }
-      } else {
-        console.log('⚠️ Nenhum agente ativo encontrado para WhatsApp')
+        console.log('✅ Resposta enviada:', agent.name)
       }
-    } catch (error) {
-      console.error('❌ Erro ao salvar mensagem no banco:', error)
-      // Continua processando outras mensagens mesmo se houver erro
+    } catch (aiError) {
+      console.error('❌ Erro IA:', aiError)
+      const autoResponse = getAutomatedResponse(combinedText)
+      if (autoResponse) {
+        await sendMessage(instance, contact, autoResponse)
+        await prisma.message.create({
+          data: {
+            conversationId: conversation.id,
+            leadId: lead.id,
+            sender: 'assistant',
+            messageType: 'text',
+            content: autoResponse,
+            isAiGenerated: true,
+            aiModel: 'rule-based',
+            sentAt: new Date(),
+          },
+        })
+      }
     }
+  } catch (error) {
+    console.error('❌ Erro ao processar mensagens:', error)
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+async function safeCreateMessage(data: {
+  conversationId: string
+  leadId: string
+  whatsappMessageId?: string
+  sender: string
+  messageType: string
+  content: string
+}) {
+  try {
+    await prisma.message.create({
+      data: {
+        ...data,
+        isAiGenerated: false,
+        sentAt: new Date(),
+      },
+    })
+  } catch (err: unknown) {
+    const e = err as { code?: string }
+    if (e?.code === 'P2002') {
+      console.log(`[WEBHOOK] Msg ${data.whatsappMessageId} já existe, ignorando`)
+    } else {
+      throw err
+    }
+  }
+}
+
+async function handleReactivation(contact: string, instance: string) {
+  console.log(`[WEBHOOK] Reativando IA para ${contact}`)
+  const phoneNumber = contact.replace('@s.whatsapp.net', '')
+  const lead = await prisma.lead.findUnique({ where: { telefone: phoneNumber } })
+  if (!lead) return
+
+  const conversation = await prisma.conversation.findFirst({
+    where: { leadId: lead.id, whatsappChatId: contact, status: 'active' },
+  })
+  if (conversation) {
+    await prisma.conversation.update({
+      where: { id: conversation.id },
+      data: { handledBy: 'ai' },
+    })
+    await sendMessage(instance, contact, 'IA reativada! 🤖 Olá, como posso te ajudar?')
+    console.log('✅ IA reativada para', contact)
+  }
+}
+
+async function handlePause(contact: string) {
+  console.log(`[WEBHOOK] Pausando IA para ${contact}`)
+  const phoneNumber = contact.replace('@s.whatsapp.net', '')
+  const lead = await prisma.lead.findUnique({ where: { telefone: phoneNumber } })
+  if (!lead) return
+
+  const conversation = await prisma.conversation.findFirst({
+    where: { leadId: lead.id, whatsappChatId: contact, status: 'active' },
+  })
+  if (conversation) {
+    await prisma.conversation.update({
+      where: { id: conversation.id },
+      data: { handledBy: 'human' },
+    })
+    console.log('✅ IA pausada para', contact)
+  }
+}
+
+// ── Treinamento via WhatsApp ──────────────────────────────────────────────────
+
+async function handleTrainingMessage(contact: string, instance: string, content: string) {
+  console.log(`[TREINO] Mensagem de treinamento de ${contact}: "${content.slice(0, 80)}..."`)
+
+  try {
+    // Buscar agente ativo para esta instância
+    const agent = await prisma.agent.findFirst({
+      where: {
+        status: 'active',
+        channels: {
+          some: {
+            channel: 'whatsapp',
+            isActive: true,
+            config: { path: ['instanceName'], equals: instance },
+          },
+        },
+      },
+      select: { id: true, name: true, knowledgeBaseId: true },
+    }) ?? await prisma.agent.findFirst({
+      where: { status: 'active', channels: { some: { channel: 'whatsapp', isActive: true } } },
+      select: { id: true, name: true, knowledgeBaseId: true },
+    })
+
+    if (!agent?.knowledgeBaseId) {
+      console.log('[TREINO] Agente sem Knowledge Base configurada')
+      await sendMessage(instance, contact, '⚠️ Nenhuma base de conhecimento configurada para este agente.')
+      return
+    }
+
+    // Criar documento com o conteúdo de treinamento
+    const title = `WhatsApp Training - ${new Date().toISOString().slice(0, 10)}`
+    const doc = await prisma.knowledgeDocument.create({
+      data: {
+        knowledgeBaseId: agent.knowledgeBaseId,
+        title,
+        content,
+        sourceUrl: `whatsapp://${contact}/${Date.now()}`,
+        fileType: 'txt',
+        chunks: [],
+        status: 'processing',
+      },
+    })
+
+    // Vectorizar em background
+    processDocumentVectorization(doc.id, content)
+      .then(() => console.log(`[TREINO] Documento ${doc.id} vectorizado`))
+      .catch(err => console.error(`[TREINO] Erro na vectorização:`, err))
+
+    // Registrar no audit log (Google Sheets, se configurado)
+    logTrainingAudit(agent.knowledgeBaseId, doc.id, title, content.length).catch(() => {})
+
+    await sendMessage(
+      instance,
+      contact,
+      `✅ Conteúdo adicionado à base de conhecimento!\n\nDocumento: "${title}"\n${content.length} caracteres serão processados em breve.`
+    )
+
+    console.log(`[TREINO] Documento criado: ${doc.id} para KB ${agent.knowledgeBaseId}`)
+  } catch (error) {
+    console.error('[TREINO] Erro:', error)
+    await sendMessage(instance, contact, '❌ Erro ao salvar conteúdo de treinamento. Tente novamente.')
+  }
+}
+
+/**
+ * Registra evento de treinamento no Google Sheets (audit trail).
+ * Busca spreadsheetId no config da Knowledge Base.
+ */
+async function logTrainingAudit(
+  knowledgeBaseId: string,
+  documentId: string,
+  title: string,
+  charCount: number
+) {
+  try {
+    const kb = await prisma.knowledgeBase.findUnique({
+      where: { id: knowledgeBaseId },
+      select: { config: true },
+    })
+    const config = (kb?.config || {}) as Record<string, unknown>
+    const spreadsheetId = config.auditSheetId as string | undefined
+    if (!spreadsheetId) return
+
+    // Buscar qualquer conexão google-sheets ativa no sistema
+    const conn = await prisma.oAuthConnection.findFirst({
+      where: { provider: 'google-sheets' },
+      select: { accessToken: true },
+    })
+    if (!conn) return
+
+    const row = [
+      new Date().toISOString(),
+      title,
+      documentId,
+      charCount.toString(),
+      'whatsapp',
+      'completed',
+    ]
+
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A1:append?valueInputOption=USER_ENTERED`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${conn.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ values: [row] }),
+      }
+    )
+  } catch (err) {
+    console.error('[TREINO] Erro ao registrar audit no Sheets:', err)
+  }
+}
+
+// ── Análise de imagem com Vision (Groq/OpenAI) ────────────────────────────────
+async function describeWhatsAppImage(
+  instance: string,
+  messageKey: Record<string, unknown>,
+  caption?: string
+): Promise<string | null> {
+  try {
+    // Buscar base64 da imagem via Evolution API
+    const res = await evoFetch(`/chat/getBase64FromMediaMessage/${instance}`, {
+      method: 'POST',
+      body: JSON.stringify({ message: { key: messageKey }, convertToMp4: false }),
+    })
+    if (!res.ok) return null
+
+    const { base64, mimetype } = await res.json() as { base64: string; mimetype: string }
+    if (!base64) return null
+
+    // Usar OpenAI Vision (GPT-4o) para descrever a imagem
+    const openaiKey = process.env.OPENAI_API_KEY
+    if (!openaiKey) {
+      // Fallback: retornar caption se houver
+      return caption ? `[Imagem com legenda: "${caption}"]` : null
+    }
+
+    const prompt = caption
+      ? `Descreva esta imagem brevemente. A legenda do usuário é: "${caption}"`
+      : 'Descreva esta imagem brevemente em português. Seja direto e objetivo.'
+
+    const visionRes = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 300,
+        messages: [
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: `data:${mimetype};base64,${base64}`, detail: 'low' } },
+            ],
+          },
+        ],
+      }),
+    })
+
+    if (!visionRes.ok) return caption || null
+    const visionData = await visionRes.json() as { choices?: Array<{ message?: { content?: string } }> }
+    const description = visionData.choices?.[0]?.message?.content || null
+    return description ? `[Imagem: ${description}]` : null
+  } catch (error) {
+    console.error('[Vision] Erro ao descrever imagem:', error)
+    return null
   }
 }
 

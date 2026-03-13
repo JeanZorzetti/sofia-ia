@@ -45,6 +45,9 @@ export async function POST(
       case 'claude':
         testResult = await testClaudeConnection(integration);
         break;
+      case 'elevenlabs':
+        testResult = await testElevenLabsConnection(integration);
+        break;
       default:
         testResult = {
           success: false,
@@ -223,6 +226,44 @@ async function testEmailSmtpConnection(integration: {
     success: true,
     message: 'Credenciais SMTP configuradas (teste de conexão real será implementado)',
   };
+}
+
+async function testElevenLabsConnection(integration: {
+  credentials: unknown;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    const creds = integration.credentials as Record<string, string>;
+    const apiKey = creds.apiKey;
+
+    if (!apiKey) {
+      return { success: false, message: 'API Key do ElevenLabs não configurada' };
+    }
+
+    const response = await fetch('https://api.elevenlabs.io/v1/user', {
+      headers: { 'xi-api-key': apiKey },
+    });
+
+    if (response.ok) {
+      const data = await response.json() as { subscription?: { tier?: string; character_count?: number; character_limit?: number } };
+      const tier = data.subscription?.tier || 'free';
+      const used = data.subscription?.character_count ?? 0;
+      const limit = data.subscription?.character_limit ?? 10000;
+      return {
+        success: true,
+        message: `ElevenLabs conectado! Plano: ${tier} | Caracteres: ${used}/${limit}`,
+      };
+    }
+
+    return {
+      success: false,
+      message: `API Key inválida ou sem permissão (status ${response.status})`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Erro ao testar ElevenLabs: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+    };
+  }
 }
 
 async function testClaudeConnection(integration: {

@@ -6,7 +6,7 @@
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 
-export type OAuthProvider = 'hubspot' | 'salesforce' | 'google-sheets' | 'notion'
+export type OAuthProvider = 'hubspot' | 'salesforce' | 'google-sheets' | 'google-drive' | 'notion'
 
 /**
  * Busca a conexão OAuth de um usuário para um provider específico.
@@ -114,6 +114,33 @@ export async function refreshOAuthToken(
     newAccessToken = data.access_token
     newRefreshToken = refreshToken // Salesforce não emite novo refresh token
     expiresIn = 7200
+  } else if (provider === 'google-drive') {
+    const clientId = process.env.GOOGLE_CLIENT_ID
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET
+
+    if (!clientId || !clientSecret) {
+      throw new Error('Google Drive OAuth credentials not configured')
+    }
+
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Google Drive token refresh failed: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    newAccessToken = data.access_token
+    newRefreshToken = refreshToken
+    expiresIn = data.expires_in || 3600
   } else if (provider === 'google-sheets') {
     const clientId = process.env.GOOGLE_SHEETS_CLIENT_ID || process.env.GOOGLE_CLIENT_ID
     const clientSecret = process.env.GOOGLE_SHEETS_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET
