@@ -648,6 +648,28 @@ REGRAS PARA ESCREVER CÓDIGO:
     }
   }
 
+  // ── Cognitive Pipeline (3-stage: Orchestrator → Optimizer → Synthesizer) ─────
+  const cognitiveMode = !!agentConfig.cognitiveMode
+  if (cognitiveMode) {
+    try {
+      const { runCognitivePipeline } = await import('@/lib/ai/cognitive-pipeline')
+      // Extract knowledge context already injected into systemPrompt as a string block
+      // Pass it separately so the orchestrator can reason about it independently
+      const knowledgeContext = systemPrompt.includes('## Contexto da Base de Conhecimento')
+        ? systemPrompt.split('## Contexto da Base de Conhecimento')[1]?.split('IMPORTANTE')[0]?.trim() ?? ''
+        : ''
+      return await runCognitivePipeline({
+        agentModel: agent.model,
+        systemPrompt,
+        messages,
+        leadContext: leadContext ?? {},
+        knowledgeContext,
+      })
+    } catch (err) {
+      console.error('[CognitivePipeline] Error, falling through to standard Groq:', err)
+    }
+  }
+
   // ── Groq padrão (sem tools) ───────────────────────────────────────────────
   const completion = await getGroqClient().chat.completions.create({
     model: agent.model,

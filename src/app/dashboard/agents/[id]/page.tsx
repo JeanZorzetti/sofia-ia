@@ -72,7 +72,8 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
       email: false
     },
     config: {
-      workingDirectory: ''
+      workingDirectory: '',
+      cognitiveMode: false,
     }
   })
 
@@ -120,7 +121,8 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
             email: agentData.channels.some((ch: any) => ch.channel === 'email')
           },
           config: {
-            workingDirectory: agentData.config?.workingDirectory || ''
+            workingDirectory: agentData.config?.workingDirectory || '',
+            cognitiveMode: !!agentData.config?.cognitiveMode,
           }
         })
       }
@@ -459,6 +461,37 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
                   }
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Brain className="h-4 w-4 text-purple-400" />
+                Cognitive Pipeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-white">Modo Cognitivo</Label>
+                  <p className="text-xs text-white/50 mt-0.5">3 agentes encadeados por mensagem</p>
+                </div>
+                <Switch
+                  checked={formData.config.cognitiveMode}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, config: { ...formData.config, cognitiveMode: checked } })
+                  }
+                />
+              </div>
+              {formData.config.cognitiveMode && (
+                <div className="text-xs text-white/40 bg-white/5 rounded p-2 space-y-1">
+                  <p>1. Orchestrator → perfil psicológico + estratégia</p>
+                  <p>2. Optimizer → diretrizes de comunicação</p>
+                  <p>3. Synthesizer → resposta final</p>
+                  <p className="text-amber-400/60 pt-1">⚠ Latência ~3× maior</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
