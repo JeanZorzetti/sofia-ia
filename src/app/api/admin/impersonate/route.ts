@@ -28,11 +28,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
   }
 
-  // Salvar token original do admin
-  const adminToken = request.cookies.get(COOKIE_NAME)?.value
-  if (!adminToken) {
-    return NextResponse.json({ success: false, error: 'No session found' }, { status: 400 })
-  }
+  // Assinar token FRESCO para o admin (garante que usa o JWT_SECRET atual e tem nova expiração)
+  const freshAdminToken = await signToken({
+    id: auth.id,
+    email: auth.email,
+    name: auth.name,
+    role: auth.role,
+  })
 
   // Gerar novo token como o usuário alvo
   const userToken = await signToken({
@@ -46,7 +48,7 @@ export async function POST(request: NextRequest) {
   const isProd = process.env.NODE_ENV === 'production'
 
   // Salvar token do admin para restaurar depois
-  cookieStore.set(ADMIN_TOKEN_COOKIE, adminToken, {
+  cookieStore.set(ADMIN_TOKEN_COOKIE, freshAdminToken, {
     httpOnly: true,
     secure: isProd,
     sameSite: 'lax',
