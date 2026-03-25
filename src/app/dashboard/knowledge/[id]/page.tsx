@@ -79,6 +79,7 @@ export default function KnowledgeDetailPage() {
   const [knowledgeBase, setKnowledgeBase] = useState<KnowledgeBase | null>(null)
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [loading, setLoading] = useState(true)
+  const [reprocessingIds, setReprocessingIds] = useState<Set<string>>(new Set())
 
   // Chunks state
   const [chunks, setChunks] = useState<Chunk[]>([])
@@ -176,6 +177,43 @@ export default function KnowledgeDetailPage() {
       }
     } catch {
       toast.error('Erro ao limpar base de conhecimento')
+    }
+  }
+
+  const handleReprocessDocument = async (documentId: string) => {
+    setReprocessingIds((prev) => new Set(prev).add(documentId))
+    try {
+      const response = await fetch(`/api/knowledge/${params.id}/documents/${documentId}`, {
+        method: 'PATCH',
+      })
+      if (response.ok) {
+        toast.success('Reprocessamento iniciado — aguarde alguns segundos')
+        // Poll until status changes from 'processing'
+        const poll = setInterval(async () => {
+          await fetchKnowledgeBase()
+          const kb = await fetch(`/api/knowledge/${params.id}`).then(r => r.json())
+          const doc = kb.knowledgeBase?.documents?.find((d: Document) => d.id === documentId)
+          if (doc && doc.status !== 'processing') {
+            clearInterval(poll)
+            setReprocessingIds((prev) => { const n = new Set(prev); n.delete(documentId); return n })
+            fetchKnowledgeBase()
+            if (activeTab === 'chunks') fetchChunks(undefined, 1)
+            toast.success(`"${doc.title}" reprocessado com sucesso`)
+          }
+        }, 2000)
+        // Safety: stop polling after 60s
+        setTimeout(() => {
+          clearInterval(poll)
+          setReprocessingIds((prev) => { const n = new Set(prev); n.delete(documentId); return n })
+        }, 60_000)
+      } else {
+        const result = await response.json()
+        toast.error(result.error || 'Erro ao reprocessar')
+        setReprocessingIds((prev) => { const n = new Set(prev); n.delete(documentId); return n })
+      }
+    } catch {
+      toast.error('Erro ao reprocessar documento')
+      setReprocessingIds((prev) => { const n = new Set(prev); n.delete(documentId); return n })
     }
   }
 
@@ -404,17 +442,34 @@ export default function KnowledgeDetailPage() {
                                 <p className="text-white/40 text-xs mt-1">{formatDate(doc.createdAt)}</p>
                               </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleDeleteDocument(doc.id)
-                              }}
-                              className="h-6 w-6 p-0 text-white/40 hover:text-red-400 flex-shrink-0"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleReprocessDocument(doc.id)
+                                }}
+                                disabled={reprocessingIds.has(doc.id)}
+                                className="h-6 w-6 p-0 text-white/40 hover:text-blue-400 flex-shrink-0"
+                                title="Reprocessar embeddings"
+                              >
+                                {reprocessingIds.has(doc.id)
+                                  ? <Loader2 className="w-3 h-3 animate-spin" />
+                                  : <RefreshCw className="w-3 h-3" />}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteDocument(doc.id)
+                                }}
+                                className="h-6 w-6 p-0 text-white/40 hover:text-red-400 flex-shrink-0"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </Button>
+                            </div>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
                             {getStatusBadge(doc.status)}
@@ -444,14 +499,29 @@ export default function KnowledgeDetailPage() {
                     {selectedDocument ? 'Preview do Documento' : 'Selecione um Documento'}
                   </CardTitle>
                   {selectedDocument && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteDocument(selectedDocument.id)}
-                      className="text-white/60 hover:text-red-400"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleReprocessDocument(selectedDocument.id)}
+                        disabled={reprocessingIds.has(selectedDocument.id)}
+                        className="text-white/60 hover:text-blue-400 gap-1.5"
+                        title="Reprocessar embeddings"
+                      >
+                        {reprocessingIds.has(selectedDocument.id)
+                          ? <Loader2 className="w-4 h-4 animate-spin" />
+                          : <RefreshCw className="w-4 h-4" />}
+                        <span className="text-xs">Reprocessar</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteDocument(selectedDocument.id)}
+                        className="text-white/60 hover:text-red-400"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   )}
                 </div>
               </CardHeader>
