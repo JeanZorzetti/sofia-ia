@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
         agentId: agentId || null,
         type: type || 'general',
         config: config || {},
+        createdBy: auth.id,
       },
       include: {
         documents: true,

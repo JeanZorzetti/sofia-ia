@@ -43,6 +43,7 @@ model User {
   skills               Skill[]
   mcpServers           McpServer[]
   integrations         Integration[]
+  knowledgeBases       KnowledgeBase[]
   threadsScheduledPosts        ThreadsScheduledPost[]
   approvedScheduledPosts       ThreadsScheduledPost[] @relation("ScheduledPostApprover")
   threadsCampaigns             ThreadsCampaign[]
@@ -291,12 +292,15 @@ model KnowledgeBase {
   agentId   String?  @map("agent_id") @db.Uuid
   type      String   @default("general") @db.VarChar(50)
   config    Json     @default("{}")
+  createdBy String?  @map("created_by") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   documents KnowledgeDocument[]
+  creator   User?              @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@index([agentId])
+  @@index([createdBy])
   @@map("knowledge_bases")
 }
 
