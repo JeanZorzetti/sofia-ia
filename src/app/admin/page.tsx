@@ -15,6 +15,7 @@ import {
   Clock,
   Star,
 } from 'lucide-react'
+import { ImpersonateButton } from '@/components/admin/ImpersonateButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -246,6 +247,7 @@ export default async function AdminPage() {
                   <th className="pb-3 text-white/30 font-medium px-3">Plano</th>
                   <th className="pb-3 text-white/30 font-medium px-3">Último Login</th>
                   <th className="pb-3 text-white/30 font-medium">Cadastro</th>
+                  <th className="pb-3 text-white/30 font-medium"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
@@ -265,6 +267,9 @@ export default async function AdminPage() {
                       {formatDate(u.lastLogin)}
                     </td>
                     <td className="py-3 text-white/40">{formatDate(u.createdAt)}</td>
+                    <td className="py-3">
+                      <ImpersonateButton userId={u.id} userName={u.name} />
+                    </td>
                   </tr>
                 ))}
               </tbody>

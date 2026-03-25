@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/sofia/Sidebar'
 import { CommandPalette } from '@/components/ide/command-palette'
 import { Breadcrumb } from '@/components/dashboard/breadcrumb'
 import { TrialBanner } from '@/components/dashboard/trial-banner'
+import { ImpersonationBanner } from '@/components/dashboard/ImpersonationBanner'
 import { OnboardingChecklist } from '@/components/dashboard/onboarding-checklist'
 import { UpgradeModal } from '@/components/dashboard/upgrade-modal'
 import { Toaster } from 'sonner'
@@ -37,6 +38,7 @@ export default function DashboardLayout({
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Navbar user={user} onLogout={logout} />
+        <ImpersonationBanner />
         <TrialBanner />
         <main className="custom-scrollbar flex-1 overflow-y-auto p-6">
           <Breadcrumb />
