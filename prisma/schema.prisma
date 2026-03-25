@@ -101,6 +101,7 @@ model Conversation {
   updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   lead     Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  agent    Agent?    @relation(fields: [agentId], references: [id], onDelete: SetNull)
   messages Message[]
 
   @@index([leadId])
@@ -249,8 +250,9 @@ model Agent {
 
   memoryEnabled   Boolean  @default(false) @map("memory_enabled")
 
-  creator  User           @relation(fields: [createdBy], references: [id])
-  folder   AgentFolder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  creator       User           @relation(fields: [createdBy], references: [id])
+  folder        AgentFolder?   @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  conversations Conversation[]
   channels AgentChannel[]
   devSessions DevSession[]
   memories    AgentMemory[]
