@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
-
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,7 +20,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: any = {
+      agent: { createdBy: auth.id },
+    };
 
     if (status) {
       where.status = status;
@@ -95,7 +95,5 @@ export async function GET(request: NextRequest) {
       { error: 'Erro ao buscar conversas' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

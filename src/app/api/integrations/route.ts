@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get('type');
     const status = searchParams.get('status');
 
-    const where: Record<string, unknown> = {};
+    const where: Record<string, unknown> = { userId: auth.id };
     if (type && type !== 'all') {
       where.type = type;
     }
@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
         config: config || {},
         credentials: credentials || {},
         status: status || 'inactive',
+        userId: auth.id,
       },
     });
 

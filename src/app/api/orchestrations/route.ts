@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     const orchestrations = await prisma.agentOrchestration.findMany({
+      where: { createdBy: auth.id },
       orderBy: { createdAt: 'desc' },
       include: {
         executions: {

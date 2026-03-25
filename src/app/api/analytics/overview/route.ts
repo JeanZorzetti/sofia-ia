@@ -3,6 +3,7 @@ import { withAll } from '@/lib/api-middleware';
 import { rateLimiters } from '@/lib/rate-limit-redis';
 import { TTL } from '@/lib/cache';
 import { prisma } from '@/lib/prisma';
+import { getAuthFromRequest } from '@/lib/auth';
 
 interface PeriodFilter {
   startDate: Date;
@@ -56,6 +57,11 @@ function parsePeriod(period: string | null, startDate?: string, endDate?: string
  * Rate limit: 30 req/minuto
  */
 async function handler(request: NextRequest): Promise<NextResponse> {
+  const auth = await getAuthFromRequest(request);
+  if (!auth) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const period = searchParams.get('period');
   const startDateParam = searchParams.get('startDate');
@@ -116,16 +122,16 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     ? (totals.leadsQualified / totals.leadsCreated) * 100
     : 0;
 
-  // Estatísticas em tempo real (complementar aos dados históricos)
+  // Estatísticas em tempo real (filtradas pelo usuário)
   const [activeConversations, totalAgents, activeWorkflows] = await Promise.all([
     prisma.conversation.count({
-      where: { status: 'active' },
+      where: { status: 'active', agent: { createdBy: auth.id } },
     }),
     prisma.agent.count({
-      where: { status: 'active' },
+      where: { status: 'active', createdBy: auth.id },
     }),
     prisma.flow.count({
-      where: { status: 'active' },
+      where: { status: 'active', createdBy: auth.id },
     }),
   ]);
 

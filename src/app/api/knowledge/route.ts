@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     }
 
     const knowledgeBases = await prisma.knowledgeBase.findMany({
+      where: { createdBy: auth.id },
       include: {
         documents: {
           select: {

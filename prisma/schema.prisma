@@ -42,6 +42,7 @@ model User {
   threadsAccount       ThreadsAccount?
   skills               Skill[]
   mcpServers           McpServer[]
+  integrations         Integration[]
   threadsScheduledPosts        ThreadsScheduledPost[]
   approvedScheduledPosts       ThreadsScheduledPost[] @relation("ScheduledPostApprover")
   threadsCampaigns             ThreadsCampaign[]
@@ -450,11 +451,15 @@ model Integration {
   config      Json     @default("{}")
   credentials Json     @default("{}")
   status      String   @default("inactive") @db.VarChar(20)
+  userId      String?  @map("user_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@index([type])
   @@index([status])
+  @@index([userId])
   @@map("integrations")
 }
 
