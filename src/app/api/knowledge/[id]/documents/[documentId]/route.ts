@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
+import { embedDocument } from '@/app/api/knowledge/[id]/documents/route';
 
 // GET /api/knowledge/[id]/documents/[documentId] - Busca documento por ID
 export async function GET(
@@ -68,6 +69,44 @@ export async function PUT(
       { error: 'Erro ao atualizar documento' },
       { status: 500 }
     );
+  }
+}
+
+// PATCH /api/knowledge/[id]/documents/[documentId] - Reprocessa embeddings do documento
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; documentId: string }> }
+) {
+  try {
+    const auth = await getAuthFromRequest(request);
+    if (!auth) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
+    const { documentId } = await params;
+
+    const document = await prisma.knowledgeDocument.findUnique({
+      where: { id: documentId },
+    });
+
+    if (!document) {
+      return NextResponse.json({ error: 'Documento não encontrado' }, { status: 404 });
+    }
+
+    await prisma.knowledgeDocument.update({
+      where: { id: documentId },
+      data: { status: 'processing' },
+    });
+
+    // Roda em background — retorna imediatamente
+    embedDocument(documentId, document.content).catch((err) =>
+      console.error('[reprocess] embedDocument error:', err)
+    );
+
+    return NextResponse.json({ ok: true, message: 'Reprocessamento iniciado' });
+  } catch (error) {
+    console.error('Error reprocessing document:', error);
+    return NextResponse.json({ error: 'Erro ao reprocessar' }, { status: 500 });
   }
 }
 

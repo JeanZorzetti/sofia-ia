@@ -1,8 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
-import { chunkText, type Chunk, type ChunkWithEmbedding } from '@/lib/chunking';
-import { generateEmbeddingsBatch } from '@/lib/embeddings';
+import { chunkText } from '@/lib/chunking';
+import { defaultProvider, saveEmbeddings } from '@/lib/ai/embeddings';
+
+/**
+ * Chunka o conteúdo, gera embeddings reais (OpenRouter 1536d) e salva em
+ * document_embeddings via pgvector. Atualiza status do documento no final.
+ */
+export async function embedDocument(documentId: string, content: string): Promise<void> {
+  try {
+    const chunks = chunkText(content);
+    const texts = chunks.map((c) => c.text);
+    const embeddings = await defaultProvider.generateEmbeddingsBatch(texts);
+    const indexedChunks = chunks.map((c, i) => ({ text: c.text, index: i }));
+    await saveEmbeddings(documentId, indexedChunks, embeddings);
+    await prisma.knowledgeDocument.update({
+      where: { id: documentId },
+      data: { status: 'completed', chunks: chunks as any },
+    });
+  } catch (err) {
+    await prisma.knowledgeDocument.update({
+      where: { id: documentId },
+      data: { status: 'error' },
+    });
+    throw err;
+  }
+}
 
 // GET /api/knowledge/[id]/documents - Lista documentos de uma base
 export async function GET(
@@ -61,46 +85,19 @@ export async function POST(
       return NextResponse.json({ error: 'Título e conteúdo são obrigatórios' }, { status: 400 });
     }
 
-    // Processa o documento
+    // Processa conteúdo
     let processedContent = content;
-    let status = 'processing';
-    let chunks: Chunk[] | ChunkWithEmbedding[] = [];
-
-    try {
-      // Se for URL, faz fetch do conteúdo
-      if (sourceType === 'url' && sourceUrl) {
-        // Implementação simples - em produção, usar biblioteca como cheerio
+    if (sourceType === 'url' && sourceUrl) {
+      try {
         const response = await fetch(sourceUrl);
         if (response.ok) {
           const html = await response.text();
-          // Remove tags HTML básicas
           processedContent = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
         }
-      }
-
-      // Faz chunking do conteúdo
-      chunks = chunkText(processedContent);
-
-      // Gera embeddings para os chunks
-      try {
-        const chunkTexts = chunks.map(c => c.text);
-        const embeddings = await generateEmbeddingsBatch(chunkTexts);
-
-        // Adiciona embeddings aos chunks
-        chunks = chunks.map((chunk, index) => ({
-          ...chunk,
-          embedding: embeddings[index],
-        }));
-      } catch (embeddingError) {
-        console.warn('Failed to generate embeddings, saving without them:', embeddingError);
-      }
-
-      status = 'completed';
-    } catch (error) {
-      console.error('Error processing document:', error);
-      status = 'error';
+      } catch { /* mantém conteúdo original */ }
     }
 
+    // Cria documento (status processing)
     const document = await prisma.knowledgeDocument.create({
       data: {
         knowledgeBaseId: id,
@@ -108,10 +105,15 @@ export async function POST(
         content: processedContent,
         sourceUrl: sourceUrl || null,
         fileType: fileType || 'text',
-        chunks: chunks as any,
-        status,
+        chunks: [],
+        status: 'processing',
       },
     });
+
+    // Gera embeddings reais (OpenRouter text-embedding-3-small, 1536d) em background
+    embedDocument(document.id, processedContent).catch((err) =>
+      console.error('[knowledge/documents] embedDocument error:', err)
+    );
 
     return NextResponse.json({ document }, { status: 201 });
   } catch (error) {
