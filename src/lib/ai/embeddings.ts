@@ -191,8 +191,8 @@ export async function saveEmbeddings(
     for (let i = 0; i < chunks.length; i++) {
       const vec = `[${embeddings[i].join(',')}]`;
       await client.query(
-        `INSERT INTO document_embeddings (document_id, chunk_index, chunk_text, embedding, metadata)
-         VALUES ($1, $2, $3, $4::vector, $5)`,
+        `INSERT INTO document_embeddings (id, document_id, chunk_index, chunk_text, embedding, metadata)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4::vector, $5)`,
         [
           documentId,
           chunks[i].index,
