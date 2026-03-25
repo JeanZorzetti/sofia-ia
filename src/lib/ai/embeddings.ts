@@ -1,7 +1,7 @@
 /**
- * Embeddings Service v2 - JSONB storage (pgvector not required)
- * Providers: OpenRouter (text-embedding-3-small), HuggingFace (fallback)
- * Search: in-memory cosine similarity (adequate for small KBs)
+ * Embeddings Service v2 - pgvector storage
+ * Providers: OpenRouter (text-embedding-3-small, 1536d), HuggingFace (384d)
+ * Search: pgvector HNSW index with cosine distance — query runs in DB, not in memory
  */
 
 import pg from 'pg';
@@ -174,21 +174,7 @@ export const defaultProvider = createEmbeddingProvider(
 );
 
 /**
- * Cosine similarity between two vectors
- */
-function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0, normA = 0, normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  if (normA === 0 || normB === 0) return 0;
-  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
-}
-
-/**
- * Save embeddings as JSONB (no pgvector required)
+ * Save embeddings as pgvector — replaces old JSONB approach
  */
 export async function saveEmbeddings(
   documentId: string,
@@ -200,25 +186,19 @@ export async function saveEmbeddings(
 
   try {
     await client.query('BEGIN');
-
-    await client.query(
-      'DELETE FROM document_embeddings WHERE document_id = $1',
-      [documentId]
-    );
+    await client.query('DELETE FROM document_embeddings WHERE document_id = $1', [documentId]);
 
     for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      const embedding = embeddings[i];
-
+      const vec = `[${embeddings[i].join(',')}]`;
       await client.query(
         `INSERT INTO document_embeddings (document_id, chunk_index, chunk_text, embedding, metadata)
-         VALUES ($1, $2, $3, $4::jsonb, $5)`,
+         VALUES ($1, $2, $3, $4::vector, $5)`,
         [
           documentId,
-          chunk.index,
-          chunk.text,
-          JSON.stringify(embedding),
-          JSON.stringify({ tokens: Math.ceil(chunk.text.length / 4) }),
+          chunks[i].index,
+          chunks[i].text,
+          vec,
+          JSON.stringify({ tokens: Math.ceil(chunks[i].text.length / 4) }),
         ]
       );
     }
@@ -233,7 +213,8 @@ export async function saveEmbeddings(
 }
 
 /**
- * Search similar documents using in-memory cosine similarity
+ * Vector search using pgvector HNSW index (cosine distance).
+ * Runs entirely in DB — no in-memory iteration.
  */
 export async function searchSimilarDocuments(
   queryEmbedding: number[],
@@ -249,37 +230,39 @@ export async function searchSimilarDocuments(
 }>> {
   const { threshold = 0.3, limit = 5 } = options;
   const pool = getPool();
+  const vec = `[${queryEmbedding.join(',')}]`;
 
   const result = await pool.query(
-    `SELECT de.id, de.document_id, de.chunk_text, de.chunk_index, de.embedding, de.metadata
+    `SELECT
+       de.id,
+       de.document_id,
+       de.chunk_text,
+       de.chunk_index,
+       de.metadata,
+       1 - (de.embedding <=> $1::vector) AS similarity
      FROM document_embeddings de
      JOIN knowledge_documents kd ON de.document_id = kd.id
-     WHERE kd.knowledge_base_id = $1 AND kd.status = 'completed'`,
-    [knowledgeBaseId]
+     WHERE kd.knowledge_base_id = $2
+       AND kd.status = 'completed'
+       AND de.embedding IS NOT NULL
+       AND 1 - (de.embedding <=> $1::vector) >= $3
+     ORDER BY de.embedding <=> $1::vector
+     LIMIT $4`,
+    [vec, knowledgeBaseId, threshold, limit]
   );
 
-  const scored = result.rows
-    .map((row) => {
-      const emb = Array.isArray(row.embedding) ? row.embedding : JSON.parse(row.embedding || '[]');
-      const similarity = emb.length > 0 ? cosineSimilarity(queryEmbedding, emb) : 0;
-      return {
-        id: row.id,
-        documentId: row.document_id,
-        chunkText: row.chunk_text,
-        chunkIndex: row.chunk_index,
-        similarity,
-        metadata: row.metadata,
-      };
-    })
-    .filter((r) => r.similarity >= threshold)
-    .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, limit);
-
-  return scored;
+  return result.rows.map((row) => ({
+    id: row.id,
+    documentId: row.document_id,
+    chunkText: row.chunk_text,
+    chunkIndex: row.chunk_index,
+    similarity: parseFloat(row.similarity),
+    metadata: row.metadata,
+  }));
 }
 
 /**
- * Hybrid search: cosine similarity + text matching boost
+ * Hybrid search: pgvector cosine + PostgreSQL full-text rank, combined in DB.
  */
 export async function hybridSearchDocuments(
   queryText: string,
@@ -298,45 +281,42 @@ export async function hybridSearchDocuments(
 }>> {
   const { limit = 5, vectorWeight = 0.7 } = options;
   const pool = getPool();
+  const vec = `[${queryEmbedding.join(',')}]`;
 
   const result = await pool.query(
-    `SELECT de.id, de.document_id, de.chunk_text, de.chunk_index, de.embedding, de.metadata
+    `SELECT
+       de.id,
+       de.document_id,
+       de.chunk_text,
+       de.chunk_index,
+       de.metadata,
+       1 - (de.embedding <=> $1::vector)                         AS similarity,
+       ts_rank_cd(to_tsvector('portuguese', de.chunk_text),
+                  plainto_tsquery('portuguese', $2))              AS text_rank,
+       $3::float * (1 - (de.embedding <=> $1::vector))
+         + (1 - $3::float)
+         * ts_rank_cd(to_tsvector('portuguese', de.chunk_text),
+                      plainto_tsquery('portuguese', $2))          AS combined_score
      FROM document_embeddings de
      JOIN knowledge_documents kd ON de.document_id = kd.id
-     WHERE kd.knowledge_base_id = $1 AND kd.status = 'completed'`,
-    [knowledgeBaseId]
+     WHERE kd.knowledge_base_id = $4
+       AND kd.status = 'completed'
+       AND de.embedding IS NOT NULL
+     ORDER BY combined_score DESC
+     LIMIT $5`,
+    [vec, queryText, vectorWeight, knowledgeBaseId, limit]
   );
 
-  const queryWords = queryText.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
-
-  const scored = result.rows
-    .map((row) => {
-      const emb = Array.isArray(row.embedding) ? row.embedding : JSON.parse(row.embedding || '[]');
-      const similarity = emb.length > 0 ? cosineSimilarity(queryEmbedding, emb) : 0;
-
-      // Simple text rank: fraction of query words found in chunk
-      const chunkLower = row.chunk_text.toLowerCase();
-      const matchCount = queryWords.filter((w) => chunkLower.includes(w)).length;
-      const textRank = queryWords.length > 0 ? matchCount / queryWords.length : 0;
-
-      const combinedScore = vectorWeight * similarity + (1 - vectorWeight) * textRank;
-
-      return {
-        id: row.id,
-        documentId: row.document_id,
-        chunkText: row.chunk_text,
-        chunkIndex: row.chunk_index,
-        similarity,
-        textRank,
-        combinedScore,
-        metadata: row.metadata,
-      };
-    })
-    .filter((r) => r.combinedScore > 0)
-    .sort((a, b) => b.combinedScore - a.combinedScore)
-    .slice(0, limit);
-
-  return scored;
+  return result.rows.map((row) => ({
+    id: row.id,
+    documentId: row.document_id,
+    chunkText: row.chunk_text,
+    chunkIndex: row.chunk_index,
+    similarity: parseFloat(row.similarity),
+    textRank: parseFloat(row.text_rank),
+    combinedScore: parseFloat(row.combined_score),
+    metadata: row.metadata,
+  }));
 }
 
 /**
