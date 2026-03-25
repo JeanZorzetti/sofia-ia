@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   MessageSquare,
+  MessageCircle,
   Bot,
   Workflow,
   CreditCard,
@@ -394,6 +395,20 @@ export function Sidebar() {
                 <div className="text-[10px] text-green-400/60 leading-tight">20–40% de comissão recorrente</div>
               </div>
             </Link>
+
+            {/* Talk to founder */}
+            <a
+              href="https://wa.me/5562983443919"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex items-center gap-2.5 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 px-3 py-2.5 hover:bg-[#25D366]/20 transition-colors"
+            >
+              <MessageCircle className="h-4 w-4 text-[#25D366] flex-shrink-0" />
+              <div>
+                <div className="text-xs font-semibold text-[#25D366] leading-tight">Falar com o Fundador</div>
+                <div className="text-[10px] text-[#25D366]/60 leading-tight">Suporte direto via WhatsApp</div>
+              </div>
+            </a>
           </div>
         )}
       </aside>
