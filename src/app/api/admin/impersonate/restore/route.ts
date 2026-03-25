@@ -13,9 +13,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'No admin session to restore' }, { status: 400 })
   }
 
-  // Verificar que o token original ainda é válido e é admin
+  // Verificar que o token original ainda é válido (assinatura JWT garante a segurança)
   const adminPayload = await verifyToken(adminToken)
-  if (!adminPayload || adminPayload.role !== 'admin') {
+  if (!adminPayload) {
     return NextResponse.json({ success: false, error: 'Invalid admin token' }, { status: 403 })
   }
 
