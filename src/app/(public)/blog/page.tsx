@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { getAllPosts, formatDate } from '@/lib/blog'
 import { BrainCircuit, ArrowRight, Clock, Tag } from 'lucide-react'
@@ -8,7 +8,7 @@ import { CTASection } from '@/components/landing/CTASection'
 import { GradientText } from '@/components/landing/GradientText'
 
 export const metadata: Metadata = {
-  title: 'Blog — Sofia AI | Orquestração de Agentes IA, RAG e Automação',
+  title: 'Blog — Polaris IA | Orquestração de Agentes IA, RAG e Automação',
   description:
     'Artigos aprofundados sobre orquestração de agentes IA, Knowledge Base com RAG, automação inteligente e como implementar IA na sua empresa. Conteúdo técnico e prático em português.',
   keywords: [
@@ -18,20 +18,20 @@ export const metadata: Metadata = {
     'automação inteligente',
     'inteligência artificial empresas',
     'multi-agent ai',
-    'sofia ia blog',
+    'Polaris IA blog',
   ],
   openGraph: {
-    title: 'Blog Sofia AI — Orquestração de Agentes, RAG e Automação',
+    title: 'Blog Polaris IA — Orquestração de Agentes, RAG e Automação',
     description:
       'Guias completos sobre orquestração de agentes IA, Knowledge Base com RAG e automação inteligente para empresas brasileiras.',
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Sofia AI',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    siteName: 'Polaris IA',
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   alternates: {
-    canonical: 'https://sofiaia.roilabs.com.br/blog',
+    canonical: 'https://polarisia.com.br/blog',
   },
 }
 
@@ -128,7 +128,7 @@ export default function BlogPage() {
 
       <CTASection
         title="Pronto para criar sua primeira orquestração?"
-        description="Coloque em prática o que aprendeu. Crie sua conta grátis no Sofia IA — sem cartão, sem configuração complexa."
+        description="Coloque em prática o que aprendeu. Crie sua conta grátis no Polaris IA — sem cartão, sem configuração complexa."
         primaryCta={{ label: 'Criar Conta Grátis', href: '/login' }}
       />
 

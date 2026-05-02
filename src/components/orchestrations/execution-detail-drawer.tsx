@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -316,7 +316,7 @@ ${typeof execution.output === 'string' ? execution.output : JSON.stringify(execu
   ` : ''}
 
   <div class="footer">
-    Gerado em ${new Date().toLocaleString('pt-BR')} • Sofia AI Platform
+    Gerado em ${new Date().toLocaleString('pt-BR')} • Polaris IA Platform
   </div>
 
   <script>

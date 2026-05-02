@@ -103,12 +103,12 @@ export const homeFAQ: FAQItem[] = [
       'Orquestração de agentes IA é a coordenação de múltiplos agentes de inteligência artificial para trabalhar juntos em tarefas complexas. Cada agente tem um papel específico (ex: Pesquisador, Analista, Revisor) e a saída de um alimenta o próximo, criando um pipeline inteligente.',
   },
   {
-    question: 'Sofia é alternativa ao CrewAI?',
+    question: 'Polaris IA é alternativa ao CrewAI?',
     answer:
-      'Sim. Sofia oferece tudo que o CrewAI oferece (orquestração multi-agente) mais interface visual no-code, Knowledge Base com RAG embutido, canais de atendimento integrados (WhatsApp), analytics detalhado e replay de execuções. É mais completo e acessível.',
+      'Sim. Polaris IA oferece tudo que o CrewAI oferece (orquestração multi-agente) mais interface visual no-code, Knowledge Base com RAG embutido, canais de atendimento integrados (WhatsApp), analytics detalhado e replay de execuções. É mais completo e acessível.',
   },
   {
-    question: 'Posso usar o Sofia de graça?',
+    question: 'Posso usar o Polaris IA de graça?',
     answer:
       'Sim. O plano Free inclui 3 orquestrações, 5 agentes, 1 Knowledge Base e 100 execuções por mês. Não requer cartão de crédito para começar.',
   },

@@ -210,7 +210,7 @@ Recurso onde o usuário pode postar "#DearAlgo, quero ver mais sobre [tema]" —
 
 ---
 
-## 12. Integração com Agentes de IA (Sofia)
+## 12. Integração com Agentes de IA (Polaris IA)
 
 Para usar esta knowledge base com agentes de IA gerando posts para Threads:
 

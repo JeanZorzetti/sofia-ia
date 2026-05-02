@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { useState } from 'react'
@@ -26,7 +26,7 @@ const benefits = [
   {
     icon: Badge,
     title: 'Badge exclusivo de Early Adopter',
-    description: 'Seu perfil recebe o badge especial de fundador da Sofia AI — reconhecimento permanente na plataforma.',
+    description: 'Seu perfil recebe o badge especial de fundador da Polaris IA — reconhecimento permanente na plataforma.',
   },
   {
     icon: Map,
@@ -123,7 +123,7 @@ export default function EarlyAccessPage() {
             <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
               Early Adopter
             </span>{' '}
-            da Sofia AI
+            da Polaris IA
           </h1>
 
           <p className="text-lg text-white/60 max-w-xl mx-auto mb-8">

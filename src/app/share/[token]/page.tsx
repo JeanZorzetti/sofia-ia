@@ -13,10 +13,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     where: { shareToken: token },
     select: { orchestration: { select: { name: true } } },
   })
-  if (!execution) return { title: 'Resultado não encontrado — Sofia IA' }
+  if (!execution) return { title: 'Resultado não encontrado — Polaris IA' }
   return {
-    title: `${execution.orchestration.name} — Sofia IA`,
-    description: 'Resultado de orquestração gerado pela Sofia IA',
+    title: `${execution.orchestration.name} — Polaris IA`,
+    description: 'Resultado de orquestração gerado pela Polaris IA',
   }
 }
 
@@ -82,7 +82,7 @@ export default async function SharePage({ params }: Props) {
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-blue-500 flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-sm">Sofia IA</span>
+            <span className="font-semibold text-sm">Polaris IA</span>
           </div>
           <span className="text-xs text-white/40">Resultado compartilhado</span>
         </div>
@@ -193,8 +193,8 @@ export default async function SharePage({ params }: Props) {
         <div className="max-w-3xl mx-auto px-4 py-6 text-center">
           <p className="text-xs text-white/40">
             Gerado com{' '}
-            <a href="https://sofiaia.roilabs.com.br" className="text-violet-400 hover:underline">
-              Sofia IA
+            <a href="https://polarisia.com.br" className="text-violet-400 hover:underline">
+              Polaris IA
             </a>{' '}
             — Plataforma de orquestração de agentes de IA
           </p>

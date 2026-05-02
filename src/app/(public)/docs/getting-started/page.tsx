@@ -1,11 +1,11 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, Zap, Bot, Network, Terminal } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Getting Started — Sofia AI Docs',
+  title: 'Getting Started — Polaris IA Docs',
   description: 'Guia de início rápido: crie seu primeiro agente, orquestração e execute via API em menos de 10 minutos.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/docs/getting-started' },
+  alternates: { canonical: 'https://polarisia.com.br/docs/getting-started' },
 }
 
 export default function GettingStartedPage() {
@@ -104,20 +104,20 @@ Sempre cite fontes quando relevante. Responda em português brasileiro.`}</pre>
             </div>
           </div>
           <div className="ml-11 space-y-4">
-            <p className="text-foreground-tertiary text-sm">Integre Sofia AI em seus sistemas usando a API REST.</p>
+            <p className="text-foreground-tertiary text-sm">Integre Polaris IA em seus sistemas usando a API REST.</p>
             <div>
               <p className="text-xs text-white/40 mb-2">1. Gere uma API Key em <Link href="/dashboard/api-keys" className="text-blue-400 hover:underline">Dashboard &rarr; API Keys</Link></p>
             </div>
             <div>
               <p className="text-xs text-white/40 mb-2">2. Execute a orquestração:</p>
-              <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`curl -X POST https://sofiaia.roilabs.com.br/api/v1/orchestrations/SEU_ID/execute \\
+              <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`curl -X POST https://polarisia.com.br/api/v1/orchestrations/SEU_ID/execute \\
   -H "Authorization: Bearer SUA_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"input": "Analise o mercado de SaaS de IA no Brasil"}'`}</pre>
             </div>
             <div>
               <p className="text-xs text-white/40 mb-2">3. Faça polling para obter o resultado:</p>
-              <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`curl https://sofiaia.roilabs.com.br/api/v1/executions/EXECUTION_ID \\
+              <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`curl https://polarisia.com.br/api/v1/executions/EXECUTION_ID \\
   -H "Authorization: Bearer SUA_API_KEY"`}</pre>
             </div>
             <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg text-sm">

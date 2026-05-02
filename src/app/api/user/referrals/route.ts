@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
     const count = await prisma.user.count({ where: { referredBy: auth.id } })
 
-    return NextResponse.json({ count, referralLink: `https://sofiaia.roilabs.com.br/register?ref=${auth.id}` })
+    return NextResponse.json({ count, referralLink: `https://polarisia.com.br/register?ref=${auth.id}` })
   } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

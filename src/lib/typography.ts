@@ -1,5 +1,5 @@
-/**
- * Typography Scale — Sofia AI
+﻿/**
+ * Typography Scale — Polaris IA
  * Classes Tailwind para cada nível tipográfico.
  */
 

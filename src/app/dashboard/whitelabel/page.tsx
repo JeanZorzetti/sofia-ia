@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
@@ -287,7 +287,7 @@ export default function WhitelabelDashboardPage() {
                   placeholder="ia.minhaempresa.com.br"
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white placeholder-white/30 text-sm focus:outline-none focus:border-blue-500/50"
                 />
-                <p className="text-xs text-white/30 mt-1">Aponte um CNAME para sofiaia.roilabs.com.br no seu DNS.</p>
+                <p className="text-xs text-white/30 mt-1">Aponte um CNAME para polarisia.com.br no seu DNS.</p>
               </div>
               {brandingMsg && (
                 <p className={`text-sm ${brandingMsg.includes('sucesso') ? 'text-green-400' : 'text-red-400'}`}>

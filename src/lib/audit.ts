@@ -1,5 +1,5 @@
-/**
- * Audit log helper for Sofia IA.
+﻿/**
+ * Audit log helper for Polaris IA.
  * Records user actions in UserAuditLog (fire and forget — never blocks).
  *
  * Usage:

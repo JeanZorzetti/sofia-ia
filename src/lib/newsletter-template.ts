@@ -1,4 +1,4 @@
-export interface NewsletterData {
+﻿export interface NewsletterData {
   subject: string
   preheader?: string
   headline: string
@@ -43,7 +43,7 @@ export function buildNewsletterHtml(data: NewsletterData): string {
                 <tr>
                   <td>
                     <span style="display:inline-block;background:linear-gradient(135deg,#6366f1,#a855f7);border-radius:8px;padding:6px 12px;color:#fff;font-weight:700;font-size:16px;letter-spacing:0.05em;">
-                      SOFIA AI
+                      Polaris IA
                     </span>
                   </td>
                   ${edition ? `<td align="right" style="color:rgba(255,255,255,0.3);font-size:12px;">${edition}</td>` : ''}
@@ -69,10 +69,10 @@ export function buildNewsletterHtml(data: NewsletterData): string {
           <tr>
             <td style="padding:24px 40px;border-top:1px solid rgba(255,255,255,0.06);">
               <p style="margin:0;color:rgba(255,255,255,0.25);font-size:12px;line-height:1.6;">
-                Você está recebendo este email porque se cadastrou em sofiaia.roilabs.com.br.<br>
+                Você está recebendo este email porque se cadastrou em polarisia.com.br.<br>
                 <a href="{{unsubscribe_url}}" style="color:rgba(255,255,255,0.35);">Cancelar inscrição</a>
                 &nbsp;·&nbsp;
-                <a href="https://sofiaia.roilabs.com.br" style="color:rgba(255,255,255,0.35);">Sofia AI</a>
+                <a href="https://polarisia.com.br" style="color:rgba(255,255,255,0.35);">Polaris IA</a>
                 &nbsp;·&nbsp; &copy; ${year} ROI Labs
               </p>
             </td>

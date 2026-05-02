@@ -1,6 +1,6 @@
----
+﻿---
 name: Feature Request
-about: Suggest a new feature for Sofia AI
+about: Suggest a new feature for Polaris IA
 title: '[FEAT] '
 labels: enhancement
 assignees: ''

@@ -1,4 +1,4 @@
-# Growth Engine — Estrategia de Aquisicao e Conversao
+﻿# Growth Engine — Estrategia de Aquisicao e Conversao
 
 > O produto esta pronto. Agora precisa de usuarios.
 
@@ -41,7 +41,7 @@
 
 [Resultado/aprendizado — 2-3 linhas]
 
-[CTA — "Experimente gratis em sofiaia.roilabs.com.br"]
+[CTA — "Experimente gratis em polarisia.com.br"]
 
 #IAGenerativa #MultiAgente #SaaS #BuildingInPublic
 ```
@@ -75,7 +75,7 @@
 
 **Formato:**
 ```
-📬 Sofia AI News #XX
+📬 Polaris IA News #XX
 
 🔥 Feature da semana: [nome + 1 paragrafo + link]
 📖 Artigo novo: [titulo + 2 linhas + link]
@@ -95,9 +95,9 @@
 **Targets:**
 | Tipo | Abordagem | Valor |
 |------|-----------|-------|
-| Agencias de marketing digital | White-label Sofia para clientes | MRR recorrente |
-| Consultores de IA | Recomendar Sofia como plataforma | Afiliados |
-| Integradores (n8n, Make) | Sofia como no na automacao | Trafego qualificado |
+| Agencias de marketing digital | White-label Polaris IA para clientes | MRR recorrente |
+| Consultores de IA | Recomendar Polaris IA como plataforma | Afiliados |
+| Integradores (n8n, Make) | Polaris IA como no na automacao | Trafego qualificado |
 | Influencers de tech BR | Review/demo em video | Awareness |
 
 **Processo:**
@@ -113,11 +113,11 @@
 **Status:** ⬜ Nao iniciado
 
 **Videos prioritarios (5 primeiros):**
-1. "Sofia AI em 3 minutos — overview" (awareness)
+1. "Polaris IA em 3 minutos — overview" (awareness)
 2. "Criando uma orquestracao com IA em 60 segundos" (Magic Create)
 3. "Pipeline de Marketing automatizado com 3 agentes" (caso de uso)
 4. "Knowledge Base: ensine IA com seus documentos" (feature)
-5. "Sofia vs CrewAI vs AutoGen — comparacao ao vivo" (comparativo)
+5. "Polaris IA vs CrewAI vs AutoGen — comparacao ao vivo" (comparativo)
 
 **Distribuicao de cada video:**
 - YouTube (SEO de longo prazo)
@@ -230,8 +230,8 @@ Visitante → Signup → Ativado → Power User → Pagante
 
 ## 5. Viral Loops
 
-### Loop 1: "Powered by Sofia AI"
-- Resultados compartilhados de orquestracoes incluem badge "Powered by Sofia AI"
+### Loop 1: "Powered by Polaris IA"
+- Resultados compartilhados de orquestracoes incluem badge "Powered by Polaris IA"
 - Link para landing page com referral do usuario
 - Incentivo: 1 mes gratis por cada pagante indicado
 
@@ -242,7 +242,7 @@ Visitante → Signup → Ativado → Power User → Pagante
 
 ### Loop 3: "Invite your team"
 - Workspace colaborativo incentiva convites
-- Email: "Seu colega [nome] esta usando Sofia AI"
+- Email: "Seu colega [nome] esta usando Polaris IA"
 - Free tier permite 2 membros (incentiva upgrade para mais)
 
 ---

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import Image from 'next/image'
@@ -22,7 +22,7 @@ export function LandingNavbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
           <Image src="/logo-icon.svg" alt="" width={28} height={28} aria-hidden="true" />
-          <span className="font-bold text-white text-lg tracking-tight">Sofia AI</span>
+          <span className="font-bold text-white text-lg tracking-tight">Polaris IA</span>
         </Link>
 
         {/* Desktop links */}
@@ -73,7 +73,7 @@ export function LandingNavbar() {
               <div className="flex items-center justify-between mb-8">
                 <Link href="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
                   <Image src="/logo-icon.svg" alt="" width={24} height={24} aria-hidden="true" />
-                  <span className="font-bold text-white">Sofia AI</span>
+                  <span className="font-bold text-white">Polaris IA</span>
                 </Link>
                 <button
                   onClick={() => setMobileOpen(false)}

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
@@ -65,7 +65,7 @@ export default function AdminAnalyticsPage() {
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
               <BrainCircuit className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-white">Sofia AI</span>
+            <span className="font-bold text-white">Polaris IA</span>
             <span className="text-white/20 mx-1">/</span>
             <Link href="/admin" className="text-white/50 text-sm hover:text-white transition-colors">Admin</Link>
             <span className="text-white/20 mx-1">/</span>

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 /**
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   // Tenta encontrar configuração SSO para o domínio/org
   let clientId = process.env.GOOGLE_SSO_CLIENT_ID
-  let redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'}/api/auth/sso/google/callback`
+  let redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'}/api/auth/sso/google/callback`
 
   // Se um domínio ou org foi informado, busca configuração personalizada
   if (domain || orgSlug) {

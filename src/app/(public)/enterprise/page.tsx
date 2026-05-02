@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   ArrowRight, CheckCircle, Shield, Lock, Globe,
@@ -10,24 +10,24 @@ import { AnimatedSection } from '@/components/landing/AnimatedSection'
 import { GradientText } from '@/components/landing/GradientText'
 
 export const metadata: Metadata = {
-  title: 'Enterprise — Sofia AI para Grandes Organizações',
-  description: 'Sofia AI Enterprise: self-hosted (LGPD), SSO/SAML 2.0, SLA personalizado, compliance e gerente de conta dedicado. Fale com nossa equipe.',
+  title: 'Enterprise — Polaris IA para Grandes Organizações',
+  description: 'Polaris IA Enterprise: self-hosted (LGPD), SSO/SAML 2.0, SLA personalizado, compliance e gerente de conta dedicado. Fale com nossa equipe.',
   openGraph: {
-    title: 'Sofia AI Enterprise — IA em Escala para Grandes Empresas',
+    title: 'Polaris IA Enterprise — IA em Escala para Grandes Empresas',
     description: 'Self-hosted, SSO/SAML, SLA garantido, auditoria completa e suporte dedicado.',
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Sofia AI',
-    url: 'https://sofiaia.roilabs.com.br/enterprise',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    siteName: 'Polaris IA',
+    url: 'https://polarisia.com.br/enterprise',
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sofia AI Enterprise — IA em Escala para Grandes Empresas',
+    title: 'Polaris IA Enterprise — IA em Escala para Grandes Empresas',
     description: 'Self-hosted, SSO/SAML, SLA garantido e suporte dedicado.',
   },
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/enterprise' },
+  alternates: { canonical: 'https://polarisia.com.br/enterprise' },
 }
 
 const features = [
@@ -82,7 +82,7 @@ export default function EnterprisePage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'SoftwareApplication',
-            name: 'Sofia AI Enterprise',
+            name: 'Polaris IA Enterprise',
             applicationCategory: 'BusinessApplication',
             description: 'Plataforma enterprise de orquestração de agentes IA com self-hosted, SSO/SAML, SLA garantido e compliance completo.',
             operatingSystem: 'Web, Linux (self-hosted)',
@@ -110,7 +110,7 @@ export default function EnterprisePage() {
             mainEntity: [
               {
                 '@type': 'Question',
-                name: 'O que inclui o plano Enterprise da Sofia AI?',
+                name: 'O que inclui o plano Enterprise da Polaris IA?',
                 acceptedAnswer: {
                   '@type': 'Answer',
                   text: 'O plano Enterprise inclui deploy self-hosted na infraestrutura do cliente, SSO/SAML 2.0 (Google Workspace, Azure AD), SLA garantido em contrato, compliance LGPD completo, gerente de conta dedicado, treinamento da equipe e suporte 24/7.'
@@ -118,7 +118,7 @@ export default function EnterprisePage() {
               },
               {
                 '@type': 'Question',
-                name: 'A Sofia AI suporta SSO com Azure AD e Google Workspace?',
+                name: 'A Polaris IA suporta SSO com Azure AD e Google Workspace?',
                 acceptedAnswer: {
                   '@type': 'Answer',
                   text: 'Sim. O plano Enterprise suporta SSO via OAuth 2.0 / SAML 2.0 com Microsoft Entra ID (Azure AD) e Google Workspace. É possível forçar SSO para todos os membros da organização e bloquear login por email/senha.'
@@ -126,10 +126,10 @@ export default function EnterprisePage() {
               },
               {
                 '@type': 'Question',
-                name: 'É possível fazer self-hosted da Sofia AI?',
+                name: 'É possível fazer self-hosted da Polaris IA?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text: 'Sim. A Sofia AI é open-source (MIT) e pode ser implantada na infraestrutura do cliente via Docker Compose. O plano Enterprise inclui assistência técnica no deploy, atualizações gerenciadas e suporte de infraestrutura.'
+                  text: 'Sim. A Polaris IA é open-source (MIT) e pode ser implantada na infraestrutura do cliente via Docker Compose. O plano Enterprise inclui assistência técnica no deploy, atualizações gerenciadas e suporte de infraestrutura.'
                 }
               },
               {
@@ -157,7 +157,7 @@ export default function EnterprisePage() {
           </Link>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-sm text-blue-300 mb-8">
             <Building2 className="w-4 h-4" />
-            Sofia AI Enterprise
+            Polaris IA Enterprise
           </div>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6">
             IA para grandes<br />

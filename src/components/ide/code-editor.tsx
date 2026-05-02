@@ -1,7 +1,7 @@
 'use client'
 
 // ─────────────────────────────────────────────────────────
-// Code Editor — Monaco Editor wrapper for Sofia IDE
+// Code Editor — Monaco Editor wrapper for Polaris IA IDE
 // ─────────────────────────────────────────────────────────
 
 import { useRef, useCallback, useEffect } from 'react'
@@ -49,7 +49,7 @@ export function CodeEditor({
     const handleMount: OnMount = useCallback((editorInstance, monaco) => {
         editorRef.current = editorInstance
 
-        // Custom dark theme matching Sofia
+        // Custom dark theme matching Polaris IA
         monaco.editor.defineTheme('sofia-dark', {
             base: 'vs-dark',
             inherit: true,
@@ -169,7 +169,7 @@ export function EditorEmptyState() {
             <Code2 size={48} strokeWidth={1} />
             <div style={{ textAlign: 'center' }}>
                 <p style={{ fontSize: '16px', color: '#555', marginBottom: '4px' }}>
-                    Sofia IDE
+                    Polaris IA IDE
                 </p>
                 <p style={{ fontSize: '12px', color: '#444' }}>
                     Selecione um arquivo para começar a editar

@@ -877,7 +877,7 @@ async function describeWhatsAppImage(
 function getAutomatedResponse(text: string): string | null {
   const lower = text.toLowerCase()
   if (lower.includes('olá') || lower.includes('oi') || lower.includes('ola')) {
-    return 'Olá! Sou a Sofia, sua assistente virtual. Como posso te ajudar?'
+    return 'Olá! Sou a Polaris IA, sua assistente virtual. Como posso te ajudar?'
   }
   if (lower.includes('preço') || lower.includes('valor') || lower.includes('preco')) {
     return 'Para te ajudar com valores, preciso saber mais detalhes sobre o que você procura. Pode me contar mais?'

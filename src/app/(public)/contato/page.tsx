@@ -15,7 +15,7 @@ const types = [
     value: 'whitelabel',
     label: 'White-label',
     icon: Layers,
-    description: 'Revenda Sofia com sua marca para seus clientes',
+    description: 'Revenda Polaris IA com sua marca para seus clientes',
   },
   {
     value: 'general',

@@ -1,7 +1,7 @@
-{
+﻿{
   "name": "sofia-ai",
   "version": "0.1.0",
-  "description": "SDK JavaScript/TypeScript oficial para a API REST do Sofia AI",
+  "description": "SDK JavaScript/TypeScript oficial para a API REST do Polaris IA",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

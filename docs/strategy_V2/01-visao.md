@@ -19,7 +19,7 @@ A Strategy V1 completou 19 sprints com foco em funcionalidade: orquestracoes, KB
 
 ## Objetivo da V2
 
-**Transformar Sofia de "funciona" para "encanta".**
+**Transformar Polaris IA de "funciona" para "encanta".**
 
 | Dimensao | De (V1) | Para (V2) |
 |----------|---------|-----------|

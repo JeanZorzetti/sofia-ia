@@ -271,7 +271,7 @@ async function main() {
   console.log('  "Tema — N posts — objetivo"');
   console.log('  Exemplos:');
   console.log('  - "5 sinais que sua empresa está pronta para automação de marketing — 6 posts — educação"');
-  console.log('  - "Como a Sofia funciona por dentro — 4 posts — awareness + curiosidade"');
+  console.log('  - "Como a Polaris IA funciona por dentro — 4 posts — awareness + curiosidade"');
   console.log('  - "Os erros mais comuns em marketing de conteúdo — 5 posts — engajamento + leads"');
 }
 

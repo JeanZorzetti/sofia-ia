@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -258,7 +258,7 @@ export default function WhitelabelPage() {
                 placeholder="app.suaempresa.com.br"
               />
               <p className="text-xs text-white/40 mt-1">
-                Após configurar, aponte um CNAME do seu DNS para: sofiaia.roilabs.com.br
+                Após configurar, aponte um CNAME do seu DNS para: polarisia.com.br
               </p>
             </div>
           </CardContent>

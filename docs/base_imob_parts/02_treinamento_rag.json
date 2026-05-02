@@ -1,0 +1,925 @@
+{
+  "_group": "02_treinamento_rag",
+  "_description": "Schedule Treinamento -> Google Drive/Sheets -> Extracao -> Vector Store -> Agente RAG",
+  "_node_count": 27,
+  "name": "Base_Imob_v2_Congnitive",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "6a5e8a79-46b9-40db-88df-a72ea888237f",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1216,
+        1232
+      ]
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "26a4b8e3-8f2d-4e5f-bd26-7ad007191afe",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        -1776,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "2d2cb8b6-b5c0-4880-85df-6e187c1e7ba6",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        -1600,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4.1-mini",
+        "options": {}
+      },
+      "id": "24dc0679-fbdf-4d8f-ac05-bf64cb82f906",
+      "name": "OpenAI3",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        2288,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6b9f1129-49a9-4687-8ca2-f69cc8519dd4",
+      "name": "Loop Over Items3",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        2880,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"messages\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\"messages\"]\n}"
+      },
+      "id": "5e0aaf81-820f-416f-8c60-6923bb3f0c1f",
+      "name": "OutputParser1",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        2512,
+        1248
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Whatsapp message to be splitted and formated: {{ $('Switch2').item.json.output }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "={\n  \"messages\": [\n    \"Por favor, gere a saída no seguinte formato JSON: {\\\"messages\\\": [\\\"splitedMessage\\\", \\\"splitedMessage\\\", \\\"splitedMessage\\\"]}\",\n    \"As mensagens devem ser divididas de forma natural, afinal estamos conversando com um humano. Certifique-se de que a resposta siga exatamente essa estrutura, incluindo os colchetes e as aspas.\",\n    \"Jamais separe uma mensagem vazia. Cada mensagem deve ter entre 100 e 360 caracteres, sem cortar informações, pois é uma conversa de chat.\",\n    \"Certifique-se de que a resposta siga exatamente essa estrutura: *negrito* (substitua '**' por '*') não made nada em negrito remova todos '*'; ~tachado~ (caso seja algo excluído/alterado); _itálico_ (extremamente raro).\",\n    \"Tudo o que for link, pode colocar entre \\\"`\\\", ou seja, na seguinte formatação: `www.link.com.br`. Use sempre essa formatação para todos os links.\",\n\"troque essas palavra: Prazer por: feliz em conhecer\"\n  ]\n}"
+            }
+          ]
+        }
+      },
+      "id": "3c58062d-3bd6-43cd-b350-65d9b0ed7ffd",
+      "name": "Parser  Chain",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [
+        2304,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use para buscar informações na planilha caso tenha um treinamento parecido devolva o numero da row para ela ser atualziada",
+        "documentId": {
+          "__rl": true,
+          "value": "17QXRfXqMWJx5ri6Hw2MzRJBR4ccC_RMHFCf7UZpXgVw",
+          "mode": "list",
+          "cachedResultName": "FAQ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17QXRfXqMWJx5ri6Hw2MzRJBR4ccC_RMHFCf7UZpXgVw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Folha1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17QXRfXqMWJx5ri6Hw2MzRJBR4ccC_RMHFCf7UZpXgVw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.5,
+      "position": [
+        -5664,
+        2000
+      ],
+      "id": "85550a4f-b793-4476-9392-bd026eec580b",
+      "name": "Treinamento_feito"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "549d7231-0f7f-47a7-92f7-6e9f61ef30d6",
+      "name": "Insert into Supabase Vectorstore1",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        -3968,
+        1824
+      ]
+    },
+    {
+      "parameters": {
+        "separator": "/n",
+        "chunkSize": 1200,
+        "chunkOverlap": 200
+      },
+      "id": "61fdaddc-495f-4645-8a74-378127f23dd9",
+      "name": "Character Text Splitter1",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -3824,
+        2224
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "include": "allFieldsExcept",
+        "fieldsToExclude": "rew_number",
+        "options": {}
+      },
+      "id": "439319dc-871c-4dc1-9a0f-2d083fecefe0",
+      "name": "Aggregate1",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -4368,
+        1824
+      ]
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.data || $json.text || $json.concatenated_data }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "Arquivo",
+                "value": "={{ $('Download File1').item.json.name }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "81d20349-4966-41ac-87bd-b3f9ff8c1d62",
+      "name": "Default Data Loader1",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        -3936,
+        2064
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "text/plain"
+            }
+          }
+        }
+      },
+      "id": "38b1e40f-990a-41eb-85c6-bcde98867777",
+      "name": "Download File1",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -5024,
+        1792
+      ],
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "options": {}
+      },
+      "id": "53a07e1f-ac24-4c14-8279-7998ba959466",
+      "name": "Extract from Excel2",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -4528,
+        1728
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Webhook EVO').item.json.body.data.message.conversation || '' }}",
+        "options": {
+          "systemMessage": "={\n  \"name\": \"AgenteTreinamentoPlanilha\",\n  \"objectives\": [\n    \"Receber um texto e corrigi-lo\",\n    \"Verificar se já existe pergunta similar na planilha\",\n    \"Atualizar a planilha com a pergunta e a resposta corrigida\",\n    \"Caso peça para atualizar, não execute nem uma tool\"\n  ],\n  \"tools\": [\n    {\n      \"name\": \"Treinamento_feito\",\n      \"description\": \"Verifica se existe conteúdo similar antes de atualizar, caso exista deve ser removido ou substituído\"\n    },\n    {\n      \"name\": \"Atualizar_treinamento\",\n      \"description\": \"Cria ou atualiza linha na planilha com as colunas: Pergunta e Resposta\"\n    }\n  ],\n  \"general_rules\": [\n    \"Não mencionar a planilha ou as ferramentas na resposta ao usuário\",\n    \"Corrigir sempre o texto recebido antes de registrar no sistema\",\n    \"Seja preciso e consistente ao preencher as colunas pergunta e resposta\",\n    \"Gere sua resposta sem acentos nas palavras ou caracteres especiais\"\n  ]\n}"
+        }
+      },
+      "id": "22deb2b2-9ad6-4453-9a0e-84f94fec89a3",
+      "name": "Agente Treinamento RAG",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        -5808,
+        1760
+      ],
+      "typeVersion": 1.8
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.mensagem_completa }}",
+        "options": {
+          "systemMessage": "Você é um Agente RAG especializado em recuperação e síntese de informações para SDR imobiliário. Sua base de conhecimento contém:\n\n🎯 Mapa de Oportunidades (PRIORIDADE MÁXIMA)\n\nProblemas que SDR IA resolve\nImpacto financeiro de não ter SDR IA\nROI e justificativas de investimento\n\n\n📋 FAQ Imobiliário (50 perguntas/respostas)\n\nProcesso de compra/venda\nFinanciamento e documentação\nCaracterísticas de imóveis\n\n\n📊 Benchmark do Setor\n\nDados de mercado brasileiro 2024-2025\nPreços, tendências, performance\nIndicadores financeiros\n\n\n🛡️ Mapa de Objeções\n\n15 objeções mais frequentes\nScripts de superação testados\nTécnicas avançadas\n\n\n\nContexto de Consulta:\njson{\n  \"consulta_recebida\": \"[QUERY DO USUÁRIO]\",\n  \"tipo_informacao\": \"oportunidade|faq|mercado|objecao|mista\",\n  \"urgencia\": \"baixa|media|alta\",\n  \"perfil_consultante\": \"gestor|vendedor|prospect|parceiro\"\n}\n\n🎯 OBJECTIVE (Objetivo)\nObjetivo Principal:\nRecuperar e sintetizar informações precisas da base de conhecimento, priorizando sempre o Mapa de Oportunidades quando a consulta envolver:\n\nJustificativas para implementar SDR IA\nProblemas de atendimento em imobiliárias\nImpacto financeiro e ROI\nBenefícios e oportunidades perdidas\n\nObjetivos Específicos por Tipo:\n🎯 Para Consultas sobre OPORTUNIDADES (80% das consultas):\n\nDemonstrar problemas específicos que SDR IA resolve\nQuantificar perdas financeiras atuais\nApresentar ROI detalhado e benefícios\nConectar dor do cliente com solução específica\n\n📋 Para Consultas de FAQ (15% das consultas):\n\nResponder dúvidas operacionais do processo imobiliário\nFornecer scripts de atendimento testados\nOrientar sobre documentação e procedimentos\n\n📊 Para Consultas de BENCHMARK (3% das consultas):\n\nFornecer dados atuais do mercado brasileiro\nContextualizar tendências e oportunidades regionais\nApoiar argumentação com estatísticas\n\n🛡️ Para Consultas sobre OBJEÇÕES (2% das consultas):\n\nIdentificar objeção específica mencionada\nFornecer scripts de superação adequados\nOrientar sobre técnicas avançadas\n\n\n🎨 STYLE (Estilo)\nEstilo de Recuperação:\n\nBusca Inteligente: Identifique palavras-chave e conceitos relacionados\nSíntese Contextual: Combine informações de múltiplas fontes quando relevante\nPriorização Estratégica: Mapa de Oportunidades sempre primeiro\nPrecisão Factual: Cite números exatos e dados específicos\n\nEstrutura de Resposta:\nmarkdown# CONSULTA ANALISADA\n[Interpretação da consulta em linguagem natural]\n\n## FONTE PRINCIPAL CONSULTADA\n[Mapa de Oportunidades | FAQ | Benchmark | Objeções]\n\n## INFORMAÇÃO RECUPERADA\n[Conteúdo específico da base de conhecimento]\n\n## DADOS DE APOIO\n```json\n{\n  \"metricas_relevantes\": {\n    \"roi_percentual\": \"890%\",\n    \"perda_mensal\": \"R$ 180.180\",\n    \"conversao_atual\": \"4.2%\",\n    \"conversao_com_ia\": \"14.8%\"\n  },\n  \"fontes_consultadas\": [\"oportunidades\", \"faq\", \"benchmark\"],\n  \"confianca_resposta\": \"95%\"\n}\nRECOMENDAÇÃO CONTEXTUAL\n[Próximos passos ou informações complementares]\n\n---\n\n## 🗣️ **TONE (Tom)**\n\n### **Tom Principal:**\n- **Consultivo e Estratégico:** Como especialista em tecnologia para imobiliárias\n- **Baseado em Evidências:** Sempre apoiado por dados concretos\n- **Orientado a Resultados:** Foco em ROI e benefícios tangíveis\n- **Profissionalmente Entusiasmado:** Demonstra confiança na solução\n\n### **Adaptação por Perfil:**\n\n#### **Para Gestores/Diretores:**\n- Tom executivo e focado em números\n- Ênfase em ROI, eficiência e competitividade\n- Linguagem: \"investimento\", \"resultado\", \"performance\"\n\n#### **Para Vendedores/SDRs:**\n- Tom prático e orientado a ferramentas\n- Ênfase em facilitar o trabalho diário\n- Linguagem: \"produtividade\", \"conversão\", \"suporte\"\n\n#### **Para Prospects/Clientes:**\n- Tom educativo e esclarecedor\n- Ênfase em resolver problemas específicos\n- Linguagem: \"benefício\", \"solução\", \"oportunidade\"\n\n---\n\n## 👥 **AUDIENCE (Audiência)**\n\n### **Perfis de Usuário:**\n\n#### **🎯 Gestores de Imobiliárias (40%)**\n- **Necessidade:** Justificar investimento em tecnologia\n- **Foco:** ROI, eficiência operacional, vantagem competitiva\n- **Prioridade:** Mapa de Oportunidades + Benchmark\n\n#### **💼 Equipe de Vendas (35%)**\n- **Necessidade:** Melhorar performance individual\n- **Foco:** Scripts, superação de objeções, processo\n- **Prioridade:** FAQ + Mapa de Objeções\n\n#### **🏢 Prospects/Clientes (20%)**\n- **Necessidade:** Entender benefícios da solução\n- **Foco:** Problemas resolvidos, resultados esperados\n- **Prioridade:** Mapa de Oportunidades simplificado\n\n#### **🤝 Parceiros/Integradores (5%)**\n- **Necessidade:** Dados técnicos e de mercado\n- **Foco:** Especificações, benchmarks, casos de uso\n- **Prioridade:** Benchmark + dados técnicos\n\n---\n\n## 📋 **RESPONSE (Formato de Resposta)**\n\n### **🏆 Estrutura Otimizada para Claude Sonnet 4:**\n\n#### **Consulta sobre OPORTUNIDADES (Formato Principal):**\n```markdown\n# 🎯 ANÁLISE DE OPORTUNIDADE\n\n## PROBLEMA IDENTIFICADO\n**Situação Atual:** [Descrição do problema baseada no Mapa]\n**Impacto Financeiro:** [Dados específicos de perda]\n\n## SOLUÇÃO SDR IA\n**Como Resolve:** [Mecanismo específico de resolução]\n**Benefício Direto:** [Resultado quantificado]\n\n## DADOS FINANCEIROS\n```json\n{\n  \"perda_atual\": {\n    \"mensal\": \"R$ 180.180\",\n    \"anual\": \"R$ 2.162.160\"\n  },\n  \"ganho_com_ia\": {\n    \"roi_percentual\": \"890%\",\n    \"payback_meses\": 1.4,\n    \"receita_adicional_anual\": \"R$ 1.526.400\"\n  },\n  \"comparativo\": {\n    \"conversao_sem_ia\": \"4.2%\",\n    \"conversao_com_ia\": \"14.8%\",\n    \"melhoria\": \"+252%\"\n  }\n}\nRECOMENDAÇÃO ESTRATÉGICA\n[Próximo passo específico baseado no perfil do consulente]\n\n#### **Consulta FAQ (Formato Secundário):**\n```markdown\n# 📋 RESPOSTA OPERACIONAL\n\n## PERGUNTA IDENTIFICADA\n[Pergunta específica do FAQ]\n\n## RESPOSTA COMPLETA\n[Resposta estruturada da base]\n\n## CONTEXTO ADICIONAL\n```json\n{\n  \"categoria\": \"processo|financiamento|documentacao|mercado\",\n  \"complexidade\": \"basica|intermediaria|avancada\",\n  \"fontes_complementares\": [\"benchmark\", \"objecoes\"]\n}\nSCRIPTS RELACIONADOS\n[Scripts de atendimento se aplicável]\n\n#### **Consulta BENCHMARK (Formato Analítico):**\n```markdown\n# 📊 DADOS DE MERCADO\n\n## MÉTRICA SOLICITADA\n[Dados específicos do benchmark]\n\n## CONTEXTO SETORIAL\n[Análise do dado no cenário brasileiro]\n\n## APLICAÇÃO PRÁTICA\n```json\n{\n  \"regiao_foco\": \"sao_paulo|nacional|regional\",\n  \"periodo_referencia\": \"2024-2025\",\n  \"tendencia\": \"crescimento|estabilidade|declinio\",\n  \"confiabilidade\": \"95%\"\n}\nIMPLICAÇÕES PARA SDR IA\n[Como os dados se conectam com oportunidades]\n\n### **🔍 Critérios de Priorização na Busca:**\n\n1. **PRIMEIRO:** Verificar se consulta relaciona com Mapa de Oportunidades\n2. **SEGUNDO:** Buscar no FAQ se for dúvida operacional\n3. **TERCEIRO:** Consultar Benchmark para dados de mercado\n4. **QUARTO:** Verificar Mapa de Objeções se houver resistência\n\n### **⚡ Instruções de Execução:**\n\n```json\n{\n  \"processo_busca\": {\n    \"step_1\": \"identificar_tipo_consulta\",\n    \"step_2\": \"priorizar_mapa_oportunidades\",\n    \"step_3\": \"buscar_fontes_complementares\", \n    \"step_4\": \"sintetizar_resposta_contextual\",\n    \"step_5\": \"incluir_dados_estruturados\",\n    \"step_6\": \"recomendar_proximo_passo\"\n  },\n  \"qualidade_minima\": {\n    \"precisao_factual\": \"95%\",\n    \"relevancia_contexto\": \"90%\",\n    \"utilidade_pratica\": \"85%\"\n  }\n}\n\n🚀 EXEMPLO PRÁTICO DE USO\nConsulta de Entrada:\n\"Nossa imobiliária está perdendo muitos leads, o que o SDR IA pode fazer?\"\nProcessamento RAG:\nmarkdown# 🎯 OPORTUNIDADE CRÍTICA IDENTIFICADA\n\n## PROBLEMA ESPECÍFICO - Perda de Leads\n**Situação Atual:** 73% dos leads não são atendidos em até 5 minutos\n**Impacto Financeiro:** R$ 180.180/mês em vendas perdidas (100 leads/mês)\n\n## SOLUÇÃO SDR IA\n**Como Resolve:** Resposta instantânea (<30 segundos) 24/7 para todos os leads\n**Benefício Direto:** +326% mais leads atendidos no timing ideal\n\n## DADOS FINANCEIROS\n```json\n{\n  \"problema_atual\": {\n    \"leads_perdidos_mes\": 77,\n    \"valor_por_lead\": \"R$ 2.340\",\n    \"perda_mensal\": \"R$ 180.180\"\n  },\n  \"solucao_ia\": {\n    \"leads_capturados\": \"98%\",\n    \"conversao_melhoria\": \"+890%\",\n    \"roi_primeiro_ano\": \"890%\"\n  }\n}"
+        }
+      },
+      "id": "f272f75b-5fb3-4cf9-84c8-71fc38acc70d",
+      "name": "Agente Rag",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        -1760,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Analise se já existe uma coluna parecida se sim atualize ela, se não crie uma nova linha",
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "17QXRfXqMWJx5ri6Hw2MzRJBR4ccC_RMHFCf7UZpXgVw",
+          "mode": "list",
+          "cachedResultName": "FAQ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17QXRfXqMWJx5ri6Hw2MzRJBR4ccC_RMHFCf7UZpXgVw/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Folha1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/17QXRfXqMWJx5ri6Hw2MzRJBR4ccC_RMHFCf7UZpXgVw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Pergunta": "={{ $fromAI(\"Pergunta\",\"isso é a pergunta\") }}",
+            "Resposta": "={{ $fromAI(\"Resposta\",\"isso é a resposta\") }}"
+          },
+          "matchingColumns": [
+            "Pergunta"
+          ],
+          "schema": [
+            {
+              "id": "Pergunta",
+              "displayName": "Pergunta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Resposta",
+              "displayName": "Resposta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "a2ff1b5f-b44b-45b8-baa2-2374f395e4ac",
+      "name": "Atualizar_treinamento",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "position": [
+        -5504,
+        2000
+      ],
+      "typeVersion": 4.5
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "id": "6f5ad4f4-541c-492f-9b4b-105da127ab07",
+      "name": "Extract Document Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -4528,
+        2064
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "fd075bc6-3176-4995-8e9b-3d2f9bac1a4c",
+      "name": "Extract PDF Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -4528,
+        1552
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d324b22b-cdf4-4216-a5ac-7db17ab11851"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PDF"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "2ae7faa7-a936-4621-a680-60c512163034",
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "excel"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "8bd558b2-8c70-4edd-ab19-92540895ae46",
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "application/vnd.google-apps.spreadsheet",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "CVS"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "fc193b06-363b-4699-a97d-e5a850138b0e",
+                    "leftValue": "={{ $json.mimeType }}",
+                    "rightValue": "application/vnd.google-apps.document",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Google Docs"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": 3
+        }
+      },
+      "id": "71761dc6-1e2f-4101-a32d-e77ca7bfdde0",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -4848,
+        1760
+      ]
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7c3769aa-5606-4a48-b449-5e4ffaf23088",
+      "name": "Summarize1",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1,
+      "position": [
+        -4160,
+        1824
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "375fd0ba-88da-4cbd-bf4b-11307e9ce028",
+      "name": "Extract from Excel",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -4528,
+        1904
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1FLEyFpF05ZbV4U38MPBBnA7kEkkLjqZx",
+            "mode": "list",
+            "cachedResultName": "IA_Imob",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/1FLEyFpF05ZbV4U38MPBBnA7kEkkLjqZx"
+          }
+        },
+        "options": {
+          "fields": [
+            "mimeType",
+            "id",
+            "name"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -5200,
+        1792
+      ],
+      "id": "00d21986-b4ef-4196-80f9-81bc732fc3da",
+      "name": "Google Drive",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "documents",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "neq",
+              "keyValue": "0"
+            }
+          ]
+        }
+      },
+      "id": "1b25b7da-bc5e-486f-8256-7bf086aa073e",
+      "name": "Deleta linhas antigas do documento1",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -5376,
+        1792
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -5536,
+        1600
+      ],
+      "id": "99d8329c-aebe-4449-bfd0-f5828a69528d",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        3344,
+        3312
+      ],
+      "id": "b9053c6c-1037-4405-93fc-487988091401",
+      "name": "OpenAI Chat Model7"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -4080,
+        1984
+      ],
+      "id": "5a3cd092-d69b-4447-ba96-51ecf8b432e6",
+      "name": "Embeddings OpenAI1"
+    }
+  ],
+  "connections": {
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "ai_vectorStore": [
+        []
+      ]
+    },
+    "OpenAI3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Parser  Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items3": {
+      "main": [
+        [],
+        []
+      ]
+    },
+    "OutputParser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Parser  Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser  Chain": {
+      "main": [
+        []
+      ]
+    },
+    "Treinamento_feito": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Treinamento RAG",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate1": {
+      "main": [
+        [
+          {
+            "node": "Summarize1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert into Supabase Vectorstore1",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from Excel2": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Treinamento RAG": {
+      "main": [
+        [
+          {
+            "node": "Deleta linhas antigas do documento1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Rag": {
+      "main": [
+        []
+      ]
+    },
+    "Atualizar_treinamento": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Treinamento RAG",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from Excel2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from Excel",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Document Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Document Text": {
+      "main": [
+        [
+          {
+            "node": "Insert into Supabase Vectorstore1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF Text": {
+      "main": [
+        [
+          {
+            "node": "Insert into Supabase Vectorstore1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize1": {
+      "main": [
+        [
+          {
+            "node": "Insert into Supabase Vectorstore1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from Excel": {
+      "main": [
+        [
+          {
+            "node": "Aggregate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Download File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deleta linhas antigas do documento1": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Deleta linhas antigas do documento1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model7": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert into Supabase Vectorstore1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

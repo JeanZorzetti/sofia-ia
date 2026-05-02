@@ -63,7 +63,7 @@ const NODES = [
 **🔥 LEAD QUENTE** (prioridade máxima — responder agora):
 - Menciona preço, custo, planos, assinar, contratar
 - Pergunta como funciona, como começar, como testar
-- Demonstra dor/problema que a Sofia resolve
+- Demonstra dor/problema que a Polaris IA resolve
 - Conta com +500 seguidores (maior amplificação)
 - Pergunta específica sobre funcionalidades
 
@@ -131,7 +131,7 @@ Você é o Gestor de Leads. Sua missão é responder os leads quentes de forma q
 
 **Tom por tipo de sinal:**
 - "Quanto custa?" → Não dar preço direto. Ex: "Depende do uso! Você faz marketing de conteúdo atualmente?"
-- "Como funciona?" → Dar 1 exemplo concreto + pergunta. Ex: "A Sofia escreve e agenda posts automaticamente. Qual parte do marketing te consome mais tempo?"
+- "Como funciona?" → Dar 1 exemplo concreto + pergunta. Ex: "A Polaris IA escreve e agenda posts automaticamente. Qual parte do marketing te consome mais tempo?"
 - "Quero testar" → Facilitar. Ex: "Ótimo! Posso te explicar como funciona o trial em 2 minutos. O que você mais quer automatizar?"
 - Dor implícita → Validar + oferecer direção. Ex: "Entendo demais essa dor. Você já tentou alguma ferramenta de automação antes?"
 

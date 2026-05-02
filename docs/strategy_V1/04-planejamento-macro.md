@@ -1,4 +1,4 @@
-# Sofia — Planejamento Macro
+# Polaris IA — Planejamento Macro
 
 > Última atualização: 21/02/2026
 > Horizonte: 24 meses
@@ -70,7 +70,7 @@
 |---|---|---|
 | 1 | Blog setup (MDX) | Uma vez |
 | 2 | Artigo pilar: "O que é Orquestração de Agentes IA" | Semana 1 |
-| 3 | Comparativo: "Sofia vs CrewAI vs AutoGen" | Semana 2 |
+| 3 | Comparativo: "Polaris IA vs CrewAI vs AutoGen" | Semana 2 |
 | 4 | Tutorial: "Como Criar Equipe de Agentes IA sem Código" | Semana 3 |
 | 5 | 2 artigos/mês ongoing (SEO Camada 1 e 2) | Contínuo |
 
@@ -93,7 +93,7 @@
 ### KPIs
 - 5 artigos publicados e indexados
 - Top 10 para "orquestração agentes ia" no Google
-- Sofia mencionada em 2+ respostas de LLMs
+- Polaris IA mencionada em 2+ respostas de LLMs
 - 50+ signups
 - 5-10 usuários pagantes
 - MRR: R$ 1.500-3.000
@@ -139,7 +139,7 @@
 ### KPIs (Mês 12)
 - 50+ artigos publicados
 - 10K+ visitantes/mês orgânicos
-- Sofia aparecendo em 5+ respostas de LLMs sobre "multi-agent platforms"
+- Polaris IA aparecendo em 5+ respostas de LLMs sobre "multi-agent platforms"
 - 500+ signups
 - 50-100 pagantes
 - MRR: **R$ 15.000-30.000**

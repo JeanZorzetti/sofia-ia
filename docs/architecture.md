@@ -1,4 +1,4 @@
-# Arquitetura — Sofia
+# Arquitetura — Polaris IA
 
 ## Visão Geral
 

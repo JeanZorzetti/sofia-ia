@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 // ─────────────────────────────────────────────────────────
 // AI Panel — Context-aware AI chat for the IDE
@@ -336,7 +336,7 @@ export function AIPanel({ fileName, filePath, fileContent, onClose, onApplyCode 
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Sparkles size={14} style={{ color: '#8b5cf6' }} />
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#aaa' }}>Sofia IA</span>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#aaa' }}>Polaris IA</span>
                 </div>
                 <div style={{ display: 'flex', gap: '2px' }}>
                     <button

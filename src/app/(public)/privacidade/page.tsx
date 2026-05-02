@@ -1,17 +1,17 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, BrainCircuit } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidade — Sofia AI',
-  description: 'Política de privacidade do Sofia AI. Saiba como coletamos, usamos e protegemos seus dados pessoais em conformidade com a LGPD.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/privacidade' },
+  title: 'Política de Privacidade — Polaris IA',
+  description: 'Política de privacidade do Polaris IA. Saiba como coletamos, usamos e protegemos seus dados pessoais em conformidade com a LGPD.',
+  alternates: { canonical: 'https://polarisia.com.br/privacidade' },
 }
 
 const sections = [
   {
     title: '1. Controlador dos Dados',
-    content: 'A ROI Labs, desenvolvedora do Sofia AI, é a controladora dos seus dados pessoais conforme a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). Para questões relacionadas à privacidade, entre em contato em contato@roilabs.com.br.',
+    content: 'A ROI Labs, desenvolvedora do Polaris IA, é a controladora dos seus dados pessoais conforme a Lei Geral de Proteção de Dados (LGPD — Lei nº 13.709/2018). Para questões relacionadas à privacidade, entre em contato em contato@roilabs.com.br.',
   },
   {
     title: '2. Dados que Coletamos',
@@ -51,7 +51,7 @@ const sections = [
   },
   {
     title: '11. Menores de Idade',
-    content: 'O Sofia AI não é destinado a menores de 18 anos. Não coletamos intencionalmente dados de menores. Se tomarmos conhecimento de que coletamos dados de um menor, excluiremos essas informações imediatamente.',
+    content: 'O Polaris IA não é destinado a menores de 18 anos. Não coletamos intencionalmente dados de menores. Se tomarmos conhecimento de que coletamos dados de um menor, excluiremos essas informações imediatamente.',
   },
   {
     title: '12. Alterações nesta Política',

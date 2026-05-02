@@ -1,4 +1,4 @@
-# Sofia AI — ProductHunt Launch Kit
+﻿# Polaris IA — ProductHunt Launch Kit
 
 > Lançamento planejado para: TBD (alvo: terça-feira, manhã horário PT)
 > Última atualização: 23/02/2026
@@ -23,7 +23,7 @@ Orchestrate AI agent teams that work together on any task
 ## Description (max 260 chars)
 
 ```
-Sofia lets you build visual pipelines where AI agents collaborate — Researcher → Copywriter → Editor. Knowledge Base with RAG, 50+ models, real-time streaming. Free to start, self-hosted available.
+Polaris IA lets you build visual pipelines where AI agents collaborate — Researcher → Copywriter → Editor. Knowledge Base with RAG, 50+ models, real-time streaming. Free to start, self-hosted available.
 ```
 
 **Contagem:** 198 chars — dentro do limite.
@@ -40,11 +40,11 @@ Sofia lets you build visual pipelines where AI agents collaborate — Researcher
 ```markdown
 Hey Product Hunt! 👋 I'm Jean, founder of ROI Labs.
 
-We built Sofia because we were frustrated with every AI orchestration tool out there.
+We built Polaris IA because we were frustrated with every AI orchestration tool out there.
 
 **The problem:** CrewAI and AutoGen are powerful, but they require Python expertise and hours of setup. LangFlow is visual but lacks built-in Knowledge Base, analytics, and real business integrations.
 
-**What Sofia does differently:**
+**What Polaris IA does differently:**
 
 1. **Visual pipeline builder** — drag agents, connect them, define their roles (Researcher, Analyst, Reviewer) without writing code
 
@@ -61,8 +61,8 @@ We built Sofia because we were frustrated with every AI orchestration tool out t
 **Free plan includes:** 3 orchestrations, 5 agents, 1 Knowledge Base, 100 executions/month. No credit card.
 
 **Recent additions:**
-- Public REST API with API Keys — integrate Sofia with Zapier, n8n, Make or any system
-- White-label program — agencies can resell Sofia under their own brand
+- Public REST API with API Keys — integrate Polaris IA with Zapier, n8n, Make or any system
+- White-label program — agencies can resell Polaris IA under their own brand
 - 55+ blog articles covering AI use cases across 15+ industries
 
 We'd love your feedback on what use cases matter most to you. Drop a comment 👇
@@ -108,7 +108,7 @@ Escolher até 5 dos seguintes (ordem de prioridade):
 ## Perguntas para Responder no PH (preparar respostas)
 
 1. **Como você se compara ao CrewAI?**
-   > Sofia tem interface visual (sem código Python), Knowledge Base embutida, analytics por execução e canais integrados como WhatsApp. CrewAI é código-first e não tem essas camadas.
+   > Polaris IA tem interface visual (sem código Python), Knowledge Base embutida, analytics por execução e canais integrados como WhatsApp. CrewAI é código-first e não tem essas camadas.
 
 2. **É open source?**
    > Sim. Self-hosted via Docker Compose disponível. O código-fonte estará no GitHub. A versão cloud tem plano free.
@@ -139,12 +139,12 @@ Escolher até 5 dos seguintes (ordem de prioridade):
 
 ## Links para preparar antes do launch
 
-- **Site:** https://sofiaia.roilabs.com.br
+- **Site:** https://polarisia.com.br
 - **GitHub:** https://github.com/JeanZorzetti/sofia-ia
-- **Docs:** https://sofiaia.roilabs.com.br/docs
-- **Integrações:** https://sofiaia.roilabs.com.br/integrations
-- **OpenAPI spec:** https://sofiaia.roilabs.com.br/api/docs/openapi.json
-- **Planos:** https://sofiaia.roilabs.com.br/#pricing
+- **Docs:** https://polarisia.com.br/docs
+- **Integrações:** https://polarisia.com.br/integrations
+- **OpenAPI spec:** https://polarisia.com.br/api/docs/openapi.json
+- **Planos:** https://polarisia.com.br/#pricing
 
 ## Notas para o dia do launch
 

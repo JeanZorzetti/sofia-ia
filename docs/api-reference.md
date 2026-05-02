@@ -1,4 +1,4 @@
-# Referência de API — Sofia
+# Referência de API — Polaris IA
 
 ## Autenticação
 
@@ -120,7 +120,7 @@ Login: `POST /api/auth/login` → seta cookie automaticamente.
 | Método | Endpoint | Descrição |
 |---|---|---|
 | `POST` | `/api/messages/send` | Envia mensagem WhatsApp |
-| `POST` | `/api/ai/chat` | Chat geral com Sofia |
+| `POST` | `/api/ai/chat` | Chat geral com Polaris IA |
 | `POST` | `/api/ide/chat` | Chat da IDE (multi-model) |
 | `POST` | `/api/chat/widget` | Chat widget embed |
 | `GET` | `/api/health` | Health check |

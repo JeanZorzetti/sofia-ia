@@ -1,4 +1,4 @@
-# Analise de Riscos — V3
+﻿# Analise de Riscos — V3
 
 > Riscos ordenados por probabilidade x impacto. Cada risco tem mitigacao acionavel.
 
@@ -34,7 +34,7 @@ Impacto ↑
 **Mitigacao:**
 1. **Imediato:** Simplificar messaging da landing page (focar em 1 caso de uso, nao plataforma generica)
 2. **Semana 4:** Se < 5 signups → AB test na landing page (hero, CTA, copy)
-3. **Semana 8:** Se zero pagantes → pivotar para consulting model (Sofia como servico: montar orquestracoes para clientes por R$ 500-2000/projeto)
+3. **Semana 8:** Se zero pagantes → pivotar para consulting model (Polaris IA como servico: montar orquestracoes para clientes por R$ 500-2000/projeto)
 4. **Alternativa:** Focar em vertical especifica (ex: agencias de marketing, que ja e o template mais forte)
 
 ---
@@ -151,7 +151,7 @@ Impacto ↑
 2. **Guided experience:** Tooltip tour nas primeiras sessoes
 3. **Focus:** Comunicar 1 caso de uso claro (ex: "Automatize producao de conteudo com IA")
 4. **Templates como porta de entrada:** Nao pedir para criar do zero, oferecer template pronto
-5. **Video de 60s:** "O que e Sofia AI em 1 minuto" embeddado no hero
+5. **Video de 60s:** "O que e Polaris IA em 1 minuto" embeddado no hero
 
 ---
 
@@ -176,7 +176,7 @@ Impacto ↑
 
 ## R9: Competicao (Probabilidade: BAIXA | Impacto: BAIXO)
 
-**Descricao:** CrewAI, Relevance AI, Dify lancam feature ou pricing que torna Sofia irrelevante.
+**Descricao:** CrewAI, Relevance AI, Dify lancam feature ou pricing que torna Polaris IA irrelevante.
 **Causa raiz:** Mercado competitivo, competidores com funding.
 
 **Sinais de alerta:**
@@ -185,8 +185,8 @@ Impacto ↑
 - Usuarios mencionam competidor no feedback
 
 **Mitigacao:**
-1. **Diferencial:** Sofia e a unica plataforma BR com White-label + i18n PT/ES + MercadoPago
-2. **Foco local:** Competidores sao EN-first. Sofia e BR-first.
+1. **Diferencial:** Polaris IA e a unica plataforma BR com White-label + i18n PT/ES + MercadoPago
+2. **Foco local:** Competidores sao EN-first. Polaris IA e BR-first.
 3. **Custo zero:** Groq + free tier = custo de operacao quase zero vs competidores que pagam OpenAI
 4. **Agilidade:** Solo founder pivota em dias, corporacoes pivotam em meses
 5. **Nao competir em features:** Competir em experiencia e caso de uso especifico

@@ -1,11 +1,11 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, BrainCircuit, Terminal, CheckCircle, AlertTriangle } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Self-hosted — Rode o Sofia AI na sua Infraestrutura',
-  description: 'Guia completo para instalar e rodar o Sofia AI na sua própria infraestrutura com Docker Compose. Requisitos, variáveis de ambiente e configuração.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/self-hosted' },
+  title: 'Self-hosted — Rode o Polaris IA na sua Infraestrutura',
+  description: 'Guia completo para instalar e rodar o Polaris IA na sua própria infraestrutura com Docker Compose. Requisitos, variáveis de ambiente e configuração.',
+  alternates: { canonical: 'https://polarisia.com.br/self-hosted' },
 }
 
 const requirements = [
@@ -41,7 +41,7 @@ export default function SelfHostedPage() {
             <Terminal className="w-4 h-4" /> Docker Compose disponível
           </div>
           <h1 className="text-4xl font-bold mb-4">Self-hosted</h1>
-          <p className="text-foreground-tertiary">Rode o Sofia AI na sua própria infraestrutura com controle total.</p>
+          <p className="text-foreground-tertiary">Rode o Polaris IA na sua própria infraestrutura com controle total.</p>
         </div>
       </section>
 

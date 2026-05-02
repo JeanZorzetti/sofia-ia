@@ -1,4 +1,4 @@
-import { MetadataRoute } from 'next'
+﻿import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -46,6 +46,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/dashboard/', '/api/']
       }
     ],
-    sitemap: 'https://sofiaia.roilabs.com.br/sitemap.xml'
+    sitemap: 'https://polarisia.com.br/sitemap.xml'
   }
 }

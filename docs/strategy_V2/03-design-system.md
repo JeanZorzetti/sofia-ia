@@ -189,7 +189,7 @@ Ja esta bom. Apenas garantir que TODOS os componentes usem esses tokens em vez d
 }
 ```
 
-**Nota:** Light mode e P2 (nice-to-have). Dark-first e a identidade visual da Sofia.
+**Nota:** Light mode e P2 (nice-to-have). Dark-first e a identidade visual da Polaris IA.
 
 ---
 

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Mercado Pago integration — SDK client
  * Docs: https://www.mercadopago.com.br/developers/pt/docs
  *
@@ -99,7 +99,7 @@ export const PLANS = {
 function getAppUrl(): string {
   return (
     process.env.NEXT_PUBLIC_APP_URL ||
-    'https://sofiaia.roilabs.com.br'
+    'https://polarisia.com.br'
   )
 }
 
@@ -127,7 +127,7 @@ export async function createCheckoutPreference(
       items: [
         {
           id: `sofia-${plan}-monthly`,
-          title: `Sofia IA — Plano ${planData.name}`,
+          title: `Polaris IA — Plano ${planData.name}`,
           quantity: 1,
           unit_price: planData.priceBRL,
           currency_id: 'BRL',
@@ -177,7 +177,7 @@ export async function createSubscription(
   const result = await preApproval.create({
     body: {
       payer_email: user.email,
-      reason: `Sofia IA — Plano ${planData.name}`,
+      reason: `Polaris IA — Plano ${planData.name}`,
       auto_recurring: {
         frequency: 1,
         frequency_type: 'months',

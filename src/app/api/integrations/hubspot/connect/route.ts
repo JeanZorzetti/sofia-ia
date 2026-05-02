@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
 
 // GET /api/integrations/hubspot/connect — inicia OAuth flow HubSpot
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'}/api/integrations/hubspot/callback`
+  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'}/api/integrations/hubspot/callback`
 
   const scopes = [
     'crm.objects.contacts.read',

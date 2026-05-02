@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
 import { buildNewsletterHtml } from '@/lib/newsletter-template'
 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: `Sofia AI <${process.env.NEWSLETTER_FROM || 'newsletter@roilabs.com.br'}>`,
+          from: `Polaris IA <${process.env.NEWSLETTER_FROM || 'newsletter@roilabs.com.br'}>`,
           to: [email],
           subject,
           html,

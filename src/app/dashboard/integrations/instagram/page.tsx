@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -278,7 +278,7 @@ export default function InstagramIntegrationPage() {
             <h3 className="font-semibold text-white mb-2">3. Configurar Webhook</h3>
             <p>Configure o webhook URL:</p>
             <code className="block mt-1 p-2 bg-black/30 rounded text-xs">
-              https://sofiaia.roilabs.com.br/api/webhook/instagram
+              https://polarisia.com.br/api/webhook/instagram
             </code>
             <p className="mt-2">Inscreva-se nos eventos: messages, messaging_postbacks</p>
           </div>

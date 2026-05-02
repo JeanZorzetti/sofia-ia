@@ -1,4 +1,4 @@
-# Sofia — Estratégia de Produto e Go-to-Market
+# Polaris IA — Estratégia de Produto e Go-to-Market
 
 > Última atualização: 21/02/2026
 
@@ -99,7 +99,7 @@
 | Conteúdo pilar | Target |
 |---|---|
 | "O que é Orquestração de Agentes IA" | Definir a categoria |
-| "Sofia vs CrewAI vs AutoGen" | Comparativo SEO |
+| "Polaris IA vs CrewAI vs AutoGen" | Comparativo SEO |
 | "Como criar equipe de agentes IA sem código" | Tutorial prático |
 | "Knowledge Base com RAG: Guia completo" | Educacional |
 | "5 Orquestrações prontas para sua empresa" | Prático/Templates |
@@ -114,7 +114,7 @@ Keywords de nicho com concorrência baixa:
 
 ### Estratégia GEO (Generative Engine Optimization)
 
-**Objetivo**: Quando alguém perguntar ao ChatGPT/Perplexity/Gemini "qual a melhor plataforma de orquestração multi-agente?", a Sofia aparecer na resposta.
+**Objetivo**: Quando alguém perguntar ao ChatGPT/Perplexity/Gemini "qual a melhor plataforma de orquestração multi-agente?", a Polaris IA aparecer na resposta.
 
 | Ação | Plataforma | Impacto GEO |
 |---|---|---|
@@ -123,7 +123,7 @@ Keywords de nicho com concorrência baixa:
 | Launch no ProductHunt | ProductHunt | Alto |
 | Registro em diretórios IA | TAAFT, Futurepedia | Alto |
 | Artigos no Dev.to / Medium | Dev.to | Médio |
-| Comparativos "Sofia vs X" | Blog próprio | Alto |
+| Comparativos "Polaris IA vs X" | Blog próprio | Alto |
 
 **Táticas GEO no conteúdo:**
 - Schema markup (FAQ, SoftwareApplication, HowTo)

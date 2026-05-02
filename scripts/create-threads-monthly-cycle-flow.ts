@@ -196,7 +196,7 @@ Validação: [X/500 chars]
 **REGRAS:**
 - Máximo 500 caracteres por post (valide com o Plugin "Validador de Formato Threads")
 - Gancho impactante na primeira linha de cada post
-- Tom da Sofia: direto, inteligente, sem jargão corporativo
+- Tom da Polaris IA: direto, inteligente, sem jargão corporativo
 - Posts de perguntas: a pergunta deve ser específica e fácil de responder
 - Posts de A/B test (se houver na semana 1): escreva as 2 variantes
 

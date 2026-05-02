@@ -1,7 +1,7 @@
-# Threads Agency — Roadmap da Agência de Marketing da Sofia
+# Threads Agency — Roadmap da Agência de Marketing da Polaris IA
 
 > **Premissa**: A pasta "Threads" é uma agência de marketing contratada para cuidar do
-> marketing da própria Sofia dentro do Threads. Não é um experimento — é infraestrutura
+> marketing da própria Polaris IA dentro do Threads. Não é um experimento — é infraestrutura
 > de negócio com ROI mensurável e crescimento autônomo como objetivo final.
 
 **Data de criação**: 2026-03-03
@@ -169,7 +169,7 @@ Step 3 — Copywriter
 Step 4 — Editor
   role: "Editor Sênior"
   prompt: "Revise o post. Critérios: autenticidade, impacto do gancho, clareza, ritmo,
-           adequação ao tom da Sofia. Retorne [REJECT] + feedback se precisar de reescrita.
+           adequação ao tom da Polaris IA. Retorne [REJECT] + feedback se precisar de reescrita.
            Valide o formato com o plugin antes de aprovar."
 
 Step 5 — Gestor de Comunidade
@@ -436,10 +436,10 @@ model ThreadsScheduledPost {
 
 ---
 
-### ✅ L6 — Sofia Comenta sobre Si Mesma
+### ✅ L6 — Polaris IA Comenta sobre Si Mesma
 > **CONCLUÍDO em 2026-03-03**
 
-- Orchestration "Meta Content — Sofia em Ação" (`dc2f7ec0`) — 4 etapas: Estrategista (escolhe ângulo narrativo autêntico: "nos bastidores" / "aprendi que..." / "falha e recuperação" / "número surpreendente" / "o que ninguém te conta") → Copywriter (post em 1ª pessoa da Sofia, ≤500 chars, autenticidade acima de perfeição) → Editor (critério: autenticidade > perfeição editorial; reescreve se soar artificial) → Gestor (publica agora ou agenda no melhor horário com `metadata: { tipo: "meta_content", angulo }`)
+- Orchestration "Meta Content — Polaris IA em Ação" (`dc2f7ec0`) — 4 etapas: Estrategista (escolhe ângulo narrativo autêntico: "nos bastidores" / "aprendi que..." / "falha e recuperação" / "número surpreendente" / "o que ninguém te conta") → Copywriter (post em 1ª pessoa da Polaris IA, ≤500 chars, autenticidade acima de perfeição) → Editor (critério: autenticidade > perfeição editorial; reescreve se soar artificial) → Gestor (publica agora ou agenda no melhor horário com `metadata: { tipo: "meta_content", angulo }`)
 - Input: evento/feature/aprendizado da semana (ex: "Flow Mensal rodou pela 1ª vez e agendou 5 posts sem intervenção humana")
 - Exemplos de uso: A/B test results, novo flow criado, flow que rodou automaticamente, dados surpreendentes do Analista
 
@@ -447,11 +447,11 @@ model ThreadsScheduledPost {
 
 ### L7 — Marketplace de Squads
 
-**Visão de produto de longo prazo**: outros usuários da Sofia podem usar o Squad Threads
+**Visão de produto de longo prazo**: outros usuários da Polaris IA podem usar o Squad Threads
 como template para suas próprias agências de conteúdo.
 
 **Fluxo**:
-1. Squad "Threads Agency" vira um template público na Sofia
+1. Squad "Threads Agency" vira um template público na Polaris IA
 2. Novo usuário clona o template → escolhe a conta Threads → configura o tom de voz
 3. Agência está operacional em minutos
 
@@ -464,7 +464,7 @@ do plano Pro vs Starter.
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                    Threads Agency — Sofia                        │
+│                    Threads Agency — Polaris IA                        │
 │                                                                  │
 │  BRAIN LAYER                                                     │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │

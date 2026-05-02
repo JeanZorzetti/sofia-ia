@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 
@@ -27,7 +27,7 @@ export default function OfflinePage() {
       </h1>
 
       <p className="text-white/60 max-w-md mb-2">
-        Não foi possível conectar ao servidor da Sofia AI.
+        Não foi possível conectar ao servidor da Polaris IA.
         Verifique sua conexão com a internet e tente novamente.
       </p>
 
@@ -64,7 +64,7 @@ export default function OfflinePage() {
       {/* Branding */}
       <div className="mt-8">
         <p className="text-white/20 text-sm">
-          Sofia AI — Plataforma de Orquestração de Agentes IA
+          Polaris IA — Plataforma de Orquestração de Agentes IA
         </p>
       </div>
     </div>

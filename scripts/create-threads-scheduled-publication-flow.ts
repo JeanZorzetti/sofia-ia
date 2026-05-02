@@ -39,7 +39,7 @@ const NODES = [
       label: 'Gestor — Publicação da Fila',
       config: {
         agentId: AGENTS.gestor,
-        prompt: `Você é o Gestor de Comunidade da Sofia. É hora de verificar e publicar os posts agendados.
+        prompt: `Você é o Gestor de Comunidade da Polaris IA. É hora de verificar e publicar os posts agendados.
 
 **Processo obrigatório:**
 

@@ -746,15 +746,15 @@ export default function McpPage() {
         </div>
       </div>
 
-      {/* ── Sofia como Servidor MCP ────────────────────────────────────────── */}
+      {/* ── Polaris IA como Servidor MCP ────────────────────────────────────────── */}
       <div className="p-5 bg-white/5 border border-white/10 rounded-xl">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 rounded-lg bg-purple-500/20">
             <Server className="w-5 h-5 text-purple-400" />
           </div>
           <div>
-            <h2 className="text-white font-semibold">Sofia como Servidor MCP</h2>
-            <p className="text-white/50 text-sm">Exponha os agentes da Sofia para sistemas externos via protocolo MCP</p>
+            <h2 className="text-white font-semibold">Polaris IA como Servidor MCP</h2>
+            <p className="text-white/50 text-sm">Exponha os agentes da Polaris IA para sistemas externos via protocolo MCP</p>
           </div>
         </div>
 

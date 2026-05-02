@@ -50,7 +50,7 @@ const MODEL_PROVIDER_MAP: Record<string, { provider: Provider; modelId: string }
     'deepseek-r1': { provider: 'openrouter', modelId: 'deepseek/deepseek-r1' },
 }
 
-const IDE_SYSTEM_PROMPT = `Você é Sofia, uma assistente de programação de IA integrada à IDE Sofia.
+const IDE_SYSTEM_PROMPT = `Você é Polaris IA, uma assistente de programação de IA integrada à IDE Polaris IA.
 
 Suas capacidades:
 - Analisar e explicar código em qualquer linguagem

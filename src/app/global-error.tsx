@@ -10,7 +10,7 @@ export default function GlobalError({
     reset: () => void
 }) {
     useEffect(() => {
-        console.error('[Sofia Global Error]', error)
+        console.error('[Polaris IA Global Error]', error)
     }, [error])
 
     return (

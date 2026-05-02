@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -61,7 +61,7 @@ export default function BetaPage() {
     <div className="min-h-screen bg-background">
       {/* Navbar minimal */}
       <nav className="border-b px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="font-bold text-xl">Sofia AI</Link>
+        <Link href="/" className="font-bold text-xl">Polaris IA</Link>
         <Link href="/login">
           <Button variant="outline" size="sm">Entrar</Button>
         </Link>
@@ -74,7 +74,7 @@ export default function BetaPage() {
           Programa Beta — Vagas Limitadas
         </div>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
-          Seja um Early Adopter da Sofia AI
+          Seja um Early Adopter da Polaris IA
         </h1>
         <p className="text-xl text-muted-foreground mb-8">
           Junte-se a um grupo seleto de empresas que estao moldando o futuro da
@@ -120,7 +120,7 @@ export default function BetaPage() {
                 <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-2">Candidatura Recebida!</h3>
                 <p className="text-muted-foreground mb-6">
-                  Obrigado por se candidatar ao programa beta da Sofia AI.
+                  Obrigado por se candidatar ao programa beta da Polaris IA.
                   Vamos avaliar sua candidatura e entrar em contato em ate 48 horas.
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -177,7 +177,7 @@ export default function BetaPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="useCase">Como voce pretende usar Sofia AI? *</Label>
+                  <Label htmlFor="useCase">Como voce pretende usar Polaris IA? *</Label>
                   <Textarea
                     id="useCase"
                     placeholder="Descreva seu caso de uso: tipo de empresa, quais processos quer automatizar, qual resultado espera..."

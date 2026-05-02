@@ -1,7 +1,7 @@
-'use client'
+﻿'use client'
 
 // ─────────────────────────────────────────────────────────
-// Sofia IDE — Code editor with AI assistance
+// Polaris IA IDE — Code editor with AI assistance
 // ─────────────────────────────────────────────────────────
 
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -295,7 +295,7 @@ export default function IDEPage() {
                         Modo Desktop Necessário
                     </h2>
                     <p style={{ color: '#777', fontSize: '13px', lineHeight: '1.6', marginBottom: '20px' }}>
-                        A IDE com acesso ao sistema de arquivos só funciona na versão Desktop da Sofia.
+                        A IDE com acesso ao sistema de arquivos só funciona na versão Desktop da Polaris IA.
                     </p>
                     <Button variant="outline" onClick={() => window.open('https://github.com/JeanZorzetti/sofia-ia', '_blank')}>
                         <Download className="mr-2 h-4 w-4" />
@@ -320,10 +320,10 @@ export default function IDEPage() {
                 }}>
                     <Code2 size={48} strokeWidth={1} style={{ color: '#3b82f6', margin: '0 auto 16px' }} />
                     <h2 style={{ color: '#fff', fontSize: '22px', fontWeight: 700, marginBottom: '8px' }}>
-                        Sofia IDE
+                        Polaris IA IDE
                     </h2>
                     <p style={{ color: '#777', fontSize: '13px', lineHeight: '1.6', marginBottom: '24px' }}>
-                        Abra um projeto para começar. A Sofia vai analisar seu código com IA
+                        Abra um projeto para começar. A Polaris IA vai analisar seu código com IA
                         e ajudar com refatorações, debugging e sugestões.
                     </p>
                     <Button onClick={selectDirectory} size="lg" style={{
@@ -393,7 +393,7 @@ export default function IDEPage() {
                         fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px',
                         transition: 'all 0.15s',
                     }}
-                    title="Sofia IA (Ctrl+Shift+I)"
+                    title="Polaris IA (Ctrl+Shift+I)"
                 >
                     <Sparkles size={13} />
                     IA

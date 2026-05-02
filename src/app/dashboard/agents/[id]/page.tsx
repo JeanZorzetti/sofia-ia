@@ -434,7 +434,7 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
                   className="bg-white/5 border-white/10 text-white font-mono text-sm"
                 />
                 <p className="text-xs text-white/40">
-                  Defina onde o Agente CLI deve ser executado. Deixe em branco para usar a pasta atual da Sofia.
+                  Defina onde o Agente CLI deve ser executado. Deixe em branco para usar a pasta atual da Polaris IA.
                 </p>
               </div>
             </CardContent>

@@ -45,7 +45,7 @@ Dado o texto final de um post (aprovado pelo Editor), você:
 - Formato preferido: quadrado (1:1) ou vertical (4:5)
 - Evite: rostos genéricos de banco de imagens, gradientes sem propósito, textos longos na imagem
 - Prefira: dados visuais, contrastes fortes, uma ideia visual clara
-- Tom Sofia: inteligente, direto, clean — nunca chamativo ou "marketing-y"
+- Tom Polaris IA: inteligente, direto, clean — nunca chamativo ou "marketing-y"
 
 ## Entregável
 

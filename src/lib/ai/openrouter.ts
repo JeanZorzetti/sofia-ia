@@ -10,7 +10,7 @@ export function getOpenRouterClient(): OpenAI {
             apiKey: process.env.OPENROUTER_API_KEY,
             defaultHeaders: {
                 'HTTP-Referer': 'https://sofia.app', // Required by OpenRouter
-                'X-Title': 'Sofia Next', // Optional
+                'X-Title': 'Polaris IA', // Optional
             },
         })
     }

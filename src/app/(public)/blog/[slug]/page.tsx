@@ -22,10 +22,10 @@ export async function generateMetadata({
 
   if (!post) return { title: 'Post não encontrado' }
 
-  const url = `https://sofiaia.roilabs.com.br/blog/${post.slug}`
+  const url = `https://polarisia.com.br/blog/${post.slug}`
 
   return {
-    title: `${post.title} | Sofia AI Blog`,
+    title: `${post.title} | Polaris IA Blog`,
     description: post.description,
     keywords: post.tags,
     authors: [{ name: post.author }],
@@ -34,12 +34,12 @@ export async function generateMetadata({
       description: post.description,
       type: 'article',
       locale: 'pt_BR',
-      siteName: 'Sofia AI',
+      siteName: 'Polaris IA',
       publishedTime: post.date,
       authors: [post.author],
       tags: post.tags,
       url,
-      images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+      images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
     },
     twitter: {
       card: 'summary_large_image',
@@ -161,24 +161,24 @@ export default async function BlogPostPage({
     author: {
       '@type': 'Organization',
       name: post.author,
-      url: 'https://sofiaia.roilabs.com.br',
+      url: 'https://polarisia.com.br',
     },
     publisher: {
       '@type': 'Organization',
-      name: 'Sofia AI — ROI Labs',
+      name: 'Polaris IA — ROI Labs',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://sofiaia.roilabs.com.br/favicon.ico',
+        url: 'https://polarisia.com.br/favicon.ico',
       },
     },
     datePublished: post.date,
     dateModified: post.date,
     keywords: post.tags.join(', '),
-    url: `https://sofiaia.roilabs.com.br/blog/${post.slug}`,
+    url: `https://polarisia.com.br/blog/${post.slug}`,
     inLanguage: 'pt-BR',
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://sofiaia.roilabs.com.br/blog/${post.slug}`,
+      '@id': `https://polarisia.com.br/blog/${post.slug}`,
     },
   }
 
@@ -254,7 +254,7 @@ export default async function BlogPostPage({
                 <BrainCircuit className="w-6 h-6 text-blue-400" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">
-                Crie sua conta grátis no Sofia IA
+                Crie sua conta grátis no Polaris IA
               </h3>
               <p className="text-foreground-tertiary text-sm mb-5 max-w-md mx-auto">
                 Coloque em prática o que aprendeu. Primeira orquestração em menos de 5 minutos.

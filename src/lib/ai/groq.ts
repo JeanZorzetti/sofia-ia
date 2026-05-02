@@ -11,7 +11,7 @@ export function getGroqClient(): Groq {
   return _groq
 }
 
-const DEFAULT_SYSTEM_PROMPT = `Você é Sofia, uma assistente de IA inteligente e versátil.
+const DEFAULT_SYSTEM_PROMPT = `Você é Polaris IA, uma assistente de IA inteligente e versátil.
 
 Seu objetivo é ajudar de forma empática e profissional. Você deve:
 
@@ -287,7 +287,7 @@ export async function chatWithAgent(
 
   // Check if model is Opencode CLI (e.g. opencode-gemini-2.5-pro, opencode-gpt-4o)
   if (agent.model.startsWith('opencode-')) {
-    // Map Sofia model IDs to opencode provider/model format
+    // Map Polaris IA model IDs to opencode provider/model format
     const opencodeModelMap: Record<string, string> = {
       'opencode-gemini-2.5-pro': 'google/gemini-2.5-pro',
       'opencode-gemini-2.5-flash': 'google/gemini-2.5-flash',

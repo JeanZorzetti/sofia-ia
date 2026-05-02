@@ -41,7 +41,7 @@ export function getAllPosts(): BlogPostMeta[] {
       title: data.title ?? '',
       description: data.description ?? '',
       date: data.date ?? '',
-      author: data.author ?? 'Equipe Sofia',
+      author: data.author ?? 'Equipe Polaris IA',
       tags: data.tags ?? [],
       readTime: data.readTime ?? '5 min',
     } as BlogPostMeta
@@ -63,7 +63,7 @@ export function getPostBySlug(slug: string): BlogPost | null {
     title: data.title ?? '',
     description: data.description ?? '',
     date: data.date ?? '',
-    author: data.author ?? 'Equipe Sofia',
+    author: data.author ?? 'Equipe Polaris IA',
     tags: data.tags ?? [],
     readTime: data.readTime ?? '5 min',
     content,

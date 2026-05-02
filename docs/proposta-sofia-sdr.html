@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sofia IA — SDR no WhatsApp | ROI Labs</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: rgba(255,255,255,0.06);
+    --primary: #7c5cfc;
+    --primary-glow: rgba(124,92,252,0.3);
+    --accent: #00e5c0;
+    --accent-glow: rgba(0,229,192,0.2);
+    --text: #f0f0f5;
+    --muted: #6b6b7b;
+    --gold: #f5c842;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  section { position: relative; z-index: 1; }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: pulse 6s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(124,92,252,0.12);
+    border: 1px solid rgba(124,92,252,0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 13px;
+    color: #a78bfa;
+    margin-bottom: 32px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero-badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  .hero h1 {
+    font-size: clamp(40px, 8vw, 88px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.05;
+    margin-bottom: 24px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero h1 .sofia {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    font-size: clamp(16px, 2.5vw, 20px);
+    color: var(--muted);
+    max-width: 560px;
+    margin: 0 auto 48px;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .price-pill {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(124,92,252,0.15), rgba(0,229,192,0.08));
+    border: 1px solid rgba(124,92,252,0.35);
+    border-radius: 20px;
+    padding: 20px 48px;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .price-pill .label { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 4px; }
+  .price-pill .amount { font-size: 56px; font-weight: 900; color: var(--gold); letter-spacing: -2px; line-height: 1; }
+  .price-pill .sub { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SECTION ── */
+  .section {
+    padding: 100px 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--primary);
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+
+  .section-sub {
+    color: var(--muted);
+    font-size: 17px;
+    max-width: 520px;
+    margin-bottom: 56px;
+  }
+
+  /* ── DELIVERABLES ── */
+  .deliverables {
+    background: linear-gradient(180deg, rgba(124,92,252,0.04) 0%, transparent 100%);
+    border-top: 1px solid var(--border);
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--primary-glow), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .card:hover::before { opacity: 1; }
+  .card:hover { border-color: rgba(124,92,252,0.4); transform: translateY(-4px); box-shadow: 0 20px 60px rgba(124,92,252,0.12); }
+
+  .card-number {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--primary);
+    margin-bottom: 16px;
+  }
+
+  .card-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: rgba(124,92,252,0.12);
+    border: 1px solid rgba(124,92,252,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+
+  .card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+  .card p { color: var(--muted); font-size: 14px; line-height: 1.7; }
+
+  /* ── CARD ESPECIAL (D2 — replicável) ── */
+  .card.featured {
+    background: linear-gradient(135deg, rgba(124,92,252,0.12), rgba(0,229,192,0.05));
+    border-color: rgba(124,92,252,0.3);
+    grid-column: span 2;
+  }
+
+  @media (max-width: 700px) { .card.featured { grid-column: span 1; } }
+
+  .card.featured .card-icon { background: rgba(0,229,192,0.12); border-color: rgba(0,229,192,0.3); }
+
+  /* ── WHAT IS SOFIA ── */
+  .sofia-section { border-top: 1px solid var(--border); }
+
+  .feature-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-top: 0;
+  }
+
+  .feature-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .feature-item .fi-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: rgba(0,229,192,0.1);
+    border: 1px solid rgba(0,229,192,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+
+  .feature-item h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .feature-item p { font-size: 13px; color: var(--muted); }
+
+  /* ── TIMELINE ── */
+  .timeline-section { border-top: 1px solid var(--border); }
+
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--primary), var(--accent), transparent);
+    border-radius: 2px;
+  }
+
+  .tl-item {
+    position: relative;
+    margin-bottom: 32px;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 28px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--primary);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 12px var(--primary-glow);
+  }
+
+  .tl-item .phase {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .tl-item h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .tl-item p { font-size: 14px; color: var(--muted); }
+
+  /* ── SUPPORT ── */
+  .support-section { border-top: 1px solid var(--border); }
+
+  .support-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 640px) { .support-grid { grid-template-columns: 1fr; } }
+
+  .support-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+  }
+
+  .support-card .sc-icon {
+    font-size: 32px;
+    margin-bottom: 14px;
+  }
+
+  .support-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .support-card p { font-size: 14px; color: var(--muted); }
+
+  .support-card.highlight {
+    background: linear-gradient(135deg, rgba(124,92,252,0.1), rgba(0,229,192,0.05));
+    border-color: rgba(124,92,252,0.25);
+  }
+
+  /* ── CTA ── */
+  .cta-section {
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .cta-box {
+    background: linear-gradient(135deg, rgba(124,92,252,0.12), rgba(0,229,192,0.06));
+    border: 1px solid rgba(124,92,252,0.3);
+    border-radius: 24px;
+    padding: 64px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-box::before {
+    content: '';
+    position: absolute;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--primary-glow), transparent 70%);
+    top: -200px; right: -100px;
+    pointer-events: none;
+  }
+
+  .cta-box h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -1px; margin-bottom: 16px; }
+  .cta-box p { color: var(--muted); font-size: 17px; max-width: 480px; margin: 0 auto 40px; }
+
+  .checklist {
+    list-style: none;
+    text-align: left;
+    max-width: 480px;
+    margin: 0 auto 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .checklist li {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 15px;
+  }
+
+  .checklist li .check {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(0,229,192,0.15);
+    border: 1px solid rgba(0,229,192,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--primary), #6040e8);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 16px 36px;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: opacity 0.2s, transform 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    text-align: center;
+    padding: 32px 24px;
+    color: var(--muted);
+    font-size: 13px;
+    position: relative; z-index: 1;
+  }
+
+  footer span { color: var(--primary); font-weight: 600; }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0;
+  }
+
+  /* ── WHATSAPP BOT DEMO ── */
+  .demo-section { border-top: 1px solid var(--border); }
+
+  .chat-mockup {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 24px;
+    max-width: 400px;
+    margin: 0 auto;
+    font-family: monospace;
+  }
+
+  .chat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .chat-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  .chat-name { font-size: 14px; font-weight: 700; }
+  .chat-status { font-size: 12px; color: var(--accent); }
+
+  .msg {
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+  }
+
+  .msg.bot { align-self: flex-start; align-items: flex-start; }
+  .msg.user { align-self: flex-end; align-items: flex-end; margin-left: auto; }
+
+  .msg-bubble {
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .msg.bot .msg-bubble {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px 12px 12px 12px;
+  }
+
+  .msg.user .msg-bubble {
+    background: rgba(124,92,252,0.2);
+    border: 1px solid rgba(124,92,252,0.3);
+    border-radius: 12px 4px 12px 12px;
+    text-align: right;
+  }
+
+  .msg-time { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  .chat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 720px) { .chat-grid { grid-template-columns: 1fr; } }
+
+  .chat-copy h3 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 14px; }
+  .chat-copy p { color: var(--muted); font-size: 15px; line-height: 1.7; margin-bottom: 20px; }
+
+  .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag {
+    background: rgba(0,229,192,0.08);
+    border: 1px solid rgba(0,229,192,0.2);
+    border-radius: 100px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge"><span class="dot"></span> ROI Labs </div>
+  <h1>SDR no WhatsApp<br>com <span class="sofia">Sofia IA</span></h1>
+  <p>Um agente de inteligência artificial que qualifica leads, agenda visitas e responde clientes 24h — automaticamente.</p>
+  <div class="price-pill">
+    <span class="label">Valor do projeto</span>
+    <span class="amount">R$&nbsp;2.500</span>
+    <span class="sub">5 entregáveis inclusos</span>
+  </div>
+</section>
+
+<!-- WHAT IS SOFIA -->
+<section class="sofia-section">
+  <div class="section">
+    <div class="reveal">
+      <p class="section-label">O produto</p>
+      <h2 class="section-title">O que é a Sofia?</h2>
+      <p class="section-sub">Uma IA que atua como SDR no WhatsApp — qualifica leads, agenda e responde clientes 24h, sem pausas e sem custo fixo de salário.</p>
+    </div>
+    <div class="feature-list reveal">
+      <div class="feature-item">
+        <div class="fi-icon">💬</div>
+        <div>
+          <h4>Conversas naturais</h4>
+          <p>Responde como um atendente humano, com contexto e memória da conversa.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">🎯</div>
+        <div>
+          <h4>Qualificação automática</h4>
+          <p>Identifica intenção de compra, faixa de preço e urgência do lead.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">📅</div>
+        <div>
+          <h4>Agendamento de visitas</h4>
+          <p>Coleta disponibilidade e confirma visitas sem intervenção humana.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">🔄</div>
+        <div>
+          <h4>Follow-up inteligente</h4>
+          <p>Recontata leads que não responderam com mensagens personalizadas.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">📊</div>
+        <div>
+          <h4>Painel de gestão</h4>
+          <p>Visualize conversas, leads qualificados e métricas em tempo real.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="fi-icon">⚡</div>
+        <div>
+          <h4>Disponível 24/7</h4>
+          <p>Atende leads fora do horário comercial, fins de semana e feriados.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOT DEMO -->
+<section class="demo-section">
+  <div class="section">
+    <div class="chat-grid">
+      <div class="chat-copy reveal">
+        <p class="section-label">Na prática</p>
+        <h3>Como a Sofia<br>se comporta</h3>
+        <p>A IA conduz a conversa de forma estruturada: recebe o lead, entende a necessidade, apresenta opções e encaminha para o corretor no momento certo.</p>
+        <div class="tag-list">
+          <span class="tag">Português natural</span>
+          <span class="tag">Memória de contexto</span>
+          <span class="tag">Personalidade configurável</span>
+          <span class="tag">Respostas em &lt;3s</span>
+        </div>
+      </div>
+      <div class="chat-mockup reveal">
+        <div class="chat-header">
+          <div class="chat-avatar">🤖</div>
+          <div>
+            <div class="chat-name">Sofia IA</div>
+            <div class="chat-status">● online agora</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;">
+          <div class="msg bot">
+            <div class="msg-bubble">Olá! Sou a Sofia da <strong>[Imobiliária]</strong>. Vi que você se interessou por um dos nossos imóveis. Posso te ajudar? 😊</div>
+            <div class="msg-time">09:02</div>
+          </div>
+          <div class="msg user">
+            <div class="msg-bubble">Sim! Quero um apto de 2 quartos em SP</div>
+            <div class="msg-time">09:03</div>
+          </div>
+          <div class="msg bot">
+            <div class="msg-bubble">Perfeito! Qual a região preferida? E qual seria seu orçamento aproximado? 🏠</div>
+            <div class="msg-time">09:03</div>
+          </div>
+          <div class="msg user">
+            <div class="msg-bubble">Pinheiros, até R$ 600k</div>
+            <div class="msg-time">09:04</div>
+          </div>
+          <div class="msg bot">
+            <div class="msg-bubble">Ótimo! Temos 3 opções incríveis em Pinheiros nessa faixa. Quando você teria disponibilidade para uma visita esta semana? 📅</div>
+            <div class="msg-time">09:04</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DELIVERABLES -->
+<section class="deliverables">
+  <div class="section">
+    <div class="reveal">
+      <p class="section-label">O que você recebe</p>
+      <h2 class="section-title">5 Entregáveis</h2>
+      <p class="section-sub">Tudo o que você precisa para ter a Sofia operando no seu negócio do zero até o go-live.</p>
+    </div>
+    <div class="cards">
+
+      <div class="card featured reveal">
+        <div class="card-number">Entregável 01 + 02</div>
+        <div class="card-icon">🗺️</div>
+        <h3>Fluxo completo e replicável</h3>
+        <p>O fluxo de conversação é construído do jeito que você precisar — adaptado ao seu processo de vendas, linguagem e público. Além disso, o fluxo é documentado e estruturado para ser <strong>replicado em outros clientes e situações distintas</strong>, funcionando como um ativo de negócio que escala além deste projeto.</p>
+      </div>
+
+      <div class="card reveal">
+        <div class="card-number">Entregável 03</div>
+        <div class="card-icon">🎓</div>
+        <h3>Treinamento Sofia</h3>
+        <p>Sessão ao vivo cobrindo: painel de controle, como editar respostas, como adicionar novos imóveis, interpretar métricas e fazer ajustes no dia a dia sem depender de dev.</p>
+      </div>
+
+      <div class="card reveal">
+        <div class="card-number">Entregável 04</div>
+        <div class="card-icon">🛡️</div>
+        <h3>Suporte por 2 meses</h3>
+        <p>Acesso direto via WhatsApp para dúvidas, ajustes no fluxo, correção de comportamentos e melhorias durante os primeiros 2 meses de operação.</p>
+      </div>
+
+      <div class="card reveal">
+        <div class="card-number">Entregável 05</div>
+        <div class="card-icon">🖥️</div>
+        <h3>Sofia na sua VPS</h3>
+        <p>Deploy completo no servidor do cliente: configuração, variáveis de ambiente, banco de dados, integração com WhatsApp (Evolution API) e domínio. Você fica com controle total da infraestrutura.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section class="timeline-section">
+  <div class="section">
+    <div class="reveal">
+      <p class="section-label">Cronograma</p>
+      <h2 class="section-title">Do contrato ao go-live</h2>
+      <p class="section-sub">Processo em 4 etapas para uma entrega previsível e sem surpresas.</p>
+    </div>
+    <div class="timeline">
+      <div class="tl-item reveal">
+        <div class="phase">Fase 1 · Dias 1–3</div>
+        <h3>Briefing & mapeamento</h3>
+        <p>Entendimento do processo de vendas, definição do tom de voz, mapeamento das perguntas mais frequentes e personalização do fluxo.</p>
+      </div>
+      <div class="tl-item reveal">
+        <div class="phase">Fase 2 · Dias 4–7</div>
+        <h3>Construção do fluxo</h3>
+        <p>Desenvolvimento do fluxo de conversação, testes internos e ajustes com base no feedback do cliente.</p>
+      </div>
+      <div class="tl-item reveal">
+        <div class="phase">Fase 3 · Dias 8–10</div>
+        <h3>Deploy na VPS</h3>
+        <p>Instalação e configuração da Sofia no servidor, conexão com o WhatsApp e testes em ambiente de produção.</p>
+      </div>
+      <div class="tl-item reveal">
+        <div class="phase">Fase 4 · Dias 11–14</div>
+        <h3>Treinamento & go-live</h3>
+        <p>Sessão de treinamento gravada, entrega da documentação e ativação oficial com suporte ativo por 2 meses.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SUPPORT -->
+<section class="support-section">
+  <div class="section">
+    <div class="reveal">
+      <p class="section-label">Pós-entrega</p>
+      <h2 class="section-title">Suporte incluso</h2>
+      <p class="section-sub">2 meses de acompanhamento para garantir que a Sofia performa do jeito certo.</p>
+    </div>
+    <div class="support-grid">
+      <div class="support-card highlight reveal">
+        <div class="sc-icon">💬</div>
+        <h3>Canal direto no WhatsApp</h3>
+        <p>Acesso direto comigo para tirar dúvidas, reportar problemas e solicitar pequenos ajustes no fluxo.</p>
+      </div>
+      <div class="support-card reveal">
+        <div class="sc-icon">🔧</div>
+        <h3>Ajustes no fluxo</h3>
+        <p>Até 3 rodadas de ajustes no fluxo de conversação durante o período de suporte.</p>
+      </div>
+      <div class="support-card reveal">
+        <div class="sc-icon">📈</div>
+        <h3>Revisão de métricas</h3>
+        <p>Check-in mensal para analisar taxa de resposta, qualificação e agendamentos gerados pela Sofia.</p>
+      </div>
+      <div class="support-card reveal">
+        <div class="sc-icon">📚</div>
+        <h3>Documentação completa</h3>
+        <p>Guia de uso, arquitetura do fluxo e instruções para manutenção autônoma após o suporte.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="section">
+    <div class="cta-box reveal">
+      <h2>Tudo pronto para começar</h2>
+      <p>Com a Sofia no seu WhatsApp, você nunca mais vai perder um lead por falta de resposta rápida.</p>
+      <ul class="checklist">
+        <li><span class="check">✓</span> Fluxo customizado pro seu negócio</li>
+        <li><span class="check">✓</span> Estrutura replicável para outros clientes</li>
+        <li><span class="check">✓</span> Treinamento gravado incluso</li>
+        <li><span class="check">✓</span> 2 meses de suporte garantido</li>
+        <li><span class="check">✓</span> Deploy na sua VPS com controle total</li>
+      </ul>
+      <div style="font-size:28px;font-weight:900;color:var(--gold);margin-bottom:8px;">R$ 2.500 <span style="font-size:16px;color:var(--muted);font-weight:400;">pagamento único</span></div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:32px;">Sem mensalidade. Sem surpresas.</div>
+      <a href="https://wa.me/5562983443919" class="btn-primary">Falar no WhatsApp →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Desenvolvido por <span>ROI Labs</span> · Sofia IA · 2026</p>
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(
+    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+    { threshold: 0.12 }
+  );
+  reveals.forEach(el => observer.observe(el));
+
+  // Hero auto-visible
+  document.querySelectorAll('.hero .reveal').forEach(el => el.classList.add('visible'));
+</script>
+</body>
+</html>

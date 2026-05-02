@@ -219,7 +219,7 @@ SE LinkedIn tem > 5x mais engajamento que Reddit:
 ### Se traction fraca (MRR < R$1K)
 - Pivotar para vertical especifica (ex: agencias de marketing, escritorios juridicos)
 - Reduzir scope: focar em 1 caso de uso em vez de plataforma generica
-- Considerar consulting model: Sofia como servico (implementar para clientes)
+- Considerar consulting model: Polaris IA como servico (implementar para clientes)
 - Reavaliar pricing: talvez cobrar menos mas por uso
 
 ---

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -18,15 +18,15 @@ import { GradientText } from '@/components/landing/GradientText'
 import { SectionWrapper } from '@/components/landing/SectionWrapper'
 
 export const metadata: Metadata = {
-  title: 'Comunidade Sofia AI — Discord, GitHub e Early Access',
-  description: 'Junte-se à comunidade Sofia AI. Participe do Discord, contribua no GitHub, acesse o programa Early Adopter e fique por dentro de tudo sobre orquestração de agentes IA.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/comunidade' },
+  title: 'Comunidade Polaris IA — Discord, GitHub e Early Access',
+  description: 'Junte-se à comunidade Polaris IA. Participe do Discord, contribua no GitHub, acesse o programa Early Adopter e fique por dentro de tudo sobre orquestração de agentes IA.',
+  alternates: { canonical: 'https://polarisia.com.br/comunidade' },
   openGraph: {
-    title: 'Comunidade Sofia AI',
+    title: 'Comunidade Polaris IA',
     description: 'Discord, GitHub, Early Access e newsletter para quem constrói com agentes IA.',
     type: 'website',
     locale: 'pt_BR',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
 }
@@ -101,7 +101,7 @@ export default function ComunidadePage() {
             <h2 className="text-xl font-bold text-white mb-2">Discord</h2>
             <p className="text-white/50 text-sm mb-5 flex-1">
               O hub central da comunidade. Tire dúvidas, compartilhe suas automações, dê feedback e interaja diretamente
-              com o time da Sofia AI.
+              com o time da Polaris IA.
             </p>
             <div className="space-y-2 mb-6">
               {channels.map((ch) => (
@@ -128,7 +128,7 @@ export default function ComunidadePage() {
             </div>
             <h2 className="text-xl font-bold text-white mb-2">GitHub Open Source</h2>
             <p className="text-white/50 text-sm mb-5 flex-1">
-              O Sofia AI é open source. Contribua com código, abra issues, sugira features e ajude a construir a melhor
+              O Polaris IA é open source. Contribua com código, abra issues, sugira features e ajude a construir a melhor
               plataforma de orquestração multi-agente do Brasil.
             </p>
             <div className="space-y-3 mb-6">
@@ -164,7 +164,7 @@ export default function ComunidadePage() {
             </div>
             <h2 className="text-xl font-bold text-white mb-2">Early Adopter Program</h2>
             <p className="text-white/50 text-sm mb-5 flex-1">
-              Para quem quer fazer parte da história do Sofia AI desde o início. Benefícios exclusivos para os primeiros
+              Para quem quer fazer parte da história do Polaris IA desde o início. Benefícios exclusivos para os primeiros
               adotantes.
             </p>
             <ul className="space-y-2 mb-6">

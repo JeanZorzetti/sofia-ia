@@ -102,7 +102,7 @@ Para cada um dos 5 posts planejados, defina:
 
 Priorize temas que:
 1. Se conectam com o que já funcionou (dados do Analista)
-2. São relevantes para o público da Sofia (empreendedores, marketing, IA)
+2. São relevantes para o público da Polaris IA (empreendedores, marketing, IA)
 3. Têm variação de formato em relação à semana anterior
 
 Termine com: **Tema de destaque da semana** (o post que deve ter mais atenção na produção).`,

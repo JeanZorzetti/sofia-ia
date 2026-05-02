@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
 
 /**
  * GET /api/auth/sso/microsoft

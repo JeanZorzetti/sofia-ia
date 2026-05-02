@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
 
 // GET /api/integrations/google-sheets/connect — inicia OAuth flow Google Sheets
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
   const redirectUri = `${appUrl}/api/integrations/google-sheets/callback`
 
   const scopes = [

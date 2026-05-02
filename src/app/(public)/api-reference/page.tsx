@@ -1,11 +1,11 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, BrainCircuit, Code2, Lock, Zap } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'API Reference — Sofia AI',
-  description: 'Referência completa da API REST do Sofia AI. Autenticação, endpoints de agentes, orquestrações, Knowledge Base e webhooks.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/api-reference' },
+  title: 'API Reference — Polaris IA',
+  description: 'Referência completa da API REST do Polaris IA. Autenticação, endpoints de agentes, orquestrações, Knowledge Base e webhooks.',
+  alternates: { canonical: 'https://polarisia.com.br/api-reference' },
 }
 
 const endpoints = [
@@ -77,10 +77,10 @@ export default function ApiReferencePage() {
             <ArrowLeft className="w-4 h-4" /> Documentação
           </Link>
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-sm text-blue-300 mb-6">
-            <Code2 className="w-4 h-4" /> REST API — Base URL: https://sofiaia.roilabs.com.br
+            <Code2 className="w-4 h-4" /> REST API — Base URL: https://polarisia.com.br
           </div>
           <h1 className="text-4xl font-bold mb-4">API Reference</h1>
-          <p className="text-foreground-tertiary mb-8">Integre o Sofia AI diretamente nas suas aplicações via REST API.</p>
+          <p className="text-foreground-tertiary mb-8">Integre o Polaris IA diretamente nas suas aplicações via REST API.</p>
 
           <div className="glass-card p-5 rounded-xl border border-yellow-500/20 bg-yellow-500/5 mb-10">
             <div className="flex items-start gap-3">

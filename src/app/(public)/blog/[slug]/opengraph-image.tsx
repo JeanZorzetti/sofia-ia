@@ -8,9 +8,9 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const { slug } = await params
   const post = getPostBySlug(slug)
 
-  const title = post?.title ?? 'Blog Sofia AI'
+  const title = post?.title ?? 'Blog Polaris IA'
   const description = post?.description ?? 'Artigos sobre orquestração de agentes IA'
-  const author = post?.author ?? 'Sofia AI'
+  const author = post?.author ?? 'Polaris IA'
   const tag = post?.tags?.[0] ?? 'IA'
   const date = post?.date ? new Date(post.date).toLocaleDateString('pt-BR', { year: 'numeric', month: 'long', day: 'numeric' }) : ''
 
@@ -25,7 +25,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
             <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'linear-gradient(135deg, #3b82f6, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ fontSize: '16px', color: '#fff', fontWeight: '700' }}>S</span>
             </div>
-            <span style={{ fontSize: '18px', fontWeight: '700', color: '#ffffff' }}>Sofia AI</span>
+            <span style={{ fontSize: '18px', fontWeight: '700', color: '#ffffff' }}>Polaris IA</span>
             <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.3)' }}>•</span>
             <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)' }}>Blog</span>
           </div>
@@ -58,7 +58,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
               </div>
             ) : null}
           </div>
-          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.25)' }}>sofiaia.roilabs.com.br/blog</span>
+          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.25)' }}>polarisia.com.br/blog</span>
         </div>
       </div>
     ),

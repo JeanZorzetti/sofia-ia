@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -29,7 +29,7 @@ export default function TelegramIntegrationPage() {
 
   const webhookUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/api/webhook/telegram`
-    : 'https://sofiaia.roilabs.com.br/api/webhook/telegram';
+    : 'https://polarisia.com.br/api/webhook/telegram';
 
   useEffect(() => {
     fetchConfig();

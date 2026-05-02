@@ -9,7 +9,7 @@ export interface McpServerTool {
 export const SOFIA_MCP_TOOLS: McpServerTool[] = [
   {
     name: 'list_agents',
-    description: 'Lista todos os agentes de IA disponíveis na Sofia',
+    description: 'Lista todos os agentes de IA disponíveis na Polaris IA',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -18,7 +18,7 @@ export const SOFIA_MCP_TOOLS: McpServerTool[] = [
   },
   {
     name: 'call_agent',
-    description: 'Envia uma mensagem para um agente de IA da Sofia e retorna a resposta',
+    description: 'Envia uma mensagem para um agente de IA da Polaris IA e retorna a resposta',
     inputSchema: {
       type: 'object',
       properties: {
@@ -30,7 +30,7 @@ export const SOFIA_MCP_TOOLS: McpServerTool[] = [
   },
   {
     name: 'search_knowledge',
-    description: 'Busca em uma base de conhecimento da Sofia por similaridade semântica',
+    description: 'Busca em uma base de conhecimento da Polaris IA por similaridade semântica',
     inputSchema: {
       type: 'object',
       properties: {

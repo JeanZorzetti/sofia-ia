@@ -1,8 +1,8 @@
-/**
+﻿/**
  * Output Webhooks — dispatch notifications after successful orchestration execution.
  *
  * Supported output types:
- *  - webhook: HTTP POST to a custom URL (with HMAC X-Sofia-Signature: sha256=xxx signing)
+ *  - webhook: HTTP POST to a custom URL (with HMAC X-Polaris IA-Signature: sha256=xxx signing)
  *  - email:   send via Resend (uses the existing email utility)
  *  - slack:   HTTP POST to a Slack Incoming Webhook URL
  *
@@ -80,7 +80,7 @@ async function dispatchWebhook(
     const hmac = createHmac('sha256', signingSecret)
     hmac.update(body)
     const digest = hmac.digest('hex')
-    headers['X-Sofia-Signature'] = `sha256=${digest}`
+    headers['X-Polaris IA-Signature'] = `sha256=${digest}`
   }
 
   const res = await fetch(cfg.url, {
@@ -167,7 +167,7 @@ async function dispatchEmail(
     <h3>Resultado:</h3>
     <pre style="background:#f4f4f4;padding:12px;border-radius:6px;white-space:pre-wrap">${outputText}</pre>
     <hr/>
-    <small>Enviado por <a href="https://sofiaia.roilabs.com.br">Sofia AI</a></small>
+    <small>Enviado por <a href="https://polarisia.com.br">Polaris IA</a></small>
   `
 
   const res = await fetch('https://api.resend.com/emails', {
@@ -177,7 +177,7 @@ async function dispatchEmail(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Sofia AI <noreply@sofiaia.roilabs.com.br>',
+      from: 'Polaris IA <noreply@polarisia.com.br>',
       to: [cfg.to],
       subject,
       html,

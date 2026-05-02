@@ -1,4 +1,4 @@
-# Sofia AI — Directory Descriptions
+﻿# Polaris IA — Directory Descriptions
 
 > Textos prontos para submissão em diretórios de IA e ferramentas
 > Última atualização: 22/02/2026
@@ -16,7 +16,7 @@ Visual platform for orchestrating multi-agent AI pipelines. Build agent teams (R
 
 **Full description:**
 ```
-Sofia is a multi-agent AI orchestration platform that lets you build visual pipelines where AI agents collaborate on complex tasks.
+Polaris IA is a multi-agent AI orchestration platform that lets you build visual pipelines where AI agents collaborate on complex tasks.
 
 Key features:
 • Visual pipeline builder — no code required
@@ -36,7 +36,7 @@ Free plan: 3 orchestrations, 5 agents, 1 Knowledge Base, 100 executions/month. N
 
 **Tags:** multi-agent, orchestration, knowledge-base, rag, no-code, self-hosted, groq, openai
 
-**Website:** https://sofiaia.roilabs.com.br
+**Website:** https://polarisia.com.br
 
 ---
 
@@ -51,7 +51,7 @@ Orchestrate AI agent teams that work together on any task — no code required.
 
 **Description:**
 ```
-Sofia is a multi-agent AI orchestration platform for businesses and developers. Build visual pipelines where agents collaborate sequentially, in parallel, or by consensus.
+Polaris IA is a multi-agent AI orchestration platform for businesses and developers. Build visual pipelines where agents collaborate sequentially, in parallel, or by consensus.
 
 Features include a built-in Knowledge Base with semantic search (RAG using pgvector), real-time streaming showing each agent's output, detailed execution analytics (cost per run, tokens, time), and full replay of past executions.
 
@@ -70,7 +70,7 @@ Self-hosted option via Docker Compose. Free plan available — no credit card re
 
 **Category:** AI Tools, Business Software, Developer Tools
 
-**Name:** Sofia AI
+**Name:** Polaris IA
 
 **Short description (for listing):**
 ```
@@ -79,9 +79,9 @@ No-code multi-agent AI orchestration platform with built-in Knowledge Base, stre
 
 **Full description:**
 ```
-Sofia is a web-based platform for building and running multi-agent AI orchestration pipelines without writing code. It lets you create agent teams where each AI has a specific role (Researcher, Copywriter, Analyst, Reviewer) and agents pass results to each other automatically.
+Polaris IA is a web-based platform for building and running multi-agent AI orchestration pipelines without writing code. It lets you create agent teams where each AI has a specific role (Researcher, Copywriter, Analyst, Reviewer) and agents pass results to each other automatically.
 
-Unlike CrewAI or AutoGen — which require Python programming — Sofia provides a visual builder accessible to non-technical users. Unlike LangFlow, it includes a built-in Knowledge Base with real RAG (pgvector semantic search), detailed execution analytics, and native WhatsApp integration.
+Unlike CrewAI or AutoGen — which require Python programming — Polaris IA provides a visual builder accessible to non-technical users. Unlike LangFlow, it includes a built-in Knowledge Base with real RAG (pgvector semantic search), detailed execution analytics, and native WhatsApp integration.
 
 Key differentiators:
 - Real-time SSE streaming showing each agent's progress
@@ -122,10 +122,10 @@ We built a no-code multi-agent AI orchestration platform — here's what we lear
 ---
 title: We built a no-code multi-agent AI orchestration platform — here's what we learned
 published: false
-description: How we built Sofia, a visual multi-agent AI orchestration platform with Knowledge Base RAG, real-time streaming, and execution analytics. What worked, what didn't, and lessons from 8 sprints of development.
+description: How we built Polaris IA, a visual multi-agent AI orchestration platform with Knowledge Base RAG, real-time streaming, and execution analytics. What worked, what didn't, and lessons from 8 sprints of development.
 tags: ai, showdev, productivity, opensource
-cover_image: https://sofiaia.roilabs.com.br/og-image.png
-canonical_url: https://sofiaia.roilabs.com.br
+cover_image: https://polarisia.com.br/og-image.png
+canonical_url: https://polarisia.com.br
 ---
 
 ## The problem we kept running into
@@ -136,11 +136,11 @@ Single-agent solutions (ChatGPT, Claude) are great for simple tasks, but struggl
 
 We wanted something different: a visual platform where non-technical users could build agent teams that actually work with their business data.
 
-So we built **Sofia**.
+So we built **Polaris IA**.
 
-## What Sofia does
+## What Polaris IA does
 
-Sofia is a multi-agent AI orchestration platform. Here's what that means in practice:
+Polaris IA is a multi-agent AI orchestration platform. Here's what that means in practice:
 
 ```
 Input: "Write a blog post about AI trends in 2026"
@@ -175,7 +175,7 @@ Every run logs: total cost in USD, tokens per agent, time per step, success/fail
 
 ### 4. Self-hosted
 
-Full Docker Compose setup. Run Sofia on your own infrastructure. Your data never leaves your servers.
+Full Docker Compose setup. Run Polaris IA on your own infrastructure. Your data never leaves your servers.
 
 ## The tech stack
 
@@ -207,9 +207,9 @@ The moment users connected their product documentation to agents and saw agents 
 
 ## Try it
 
-Sofia is free to start — 3 orchestrations, 5 agents, 1 Knowledge Base, 100 executions/month. No credit card.
+Polaris IA is free to start — 3 orchestrations, 5 agents, 1 Knowledge Base, 100 executions/month. No credit card.
 
-**Website:** https://sofiaia.roilabs.com.br
+**Website:** https://polarisia.com.br
 **GitHub:** https://github.com/JeanZorzetti/sofia-ia
 **Self-hosted:** Docker Compose setup in the repo
 
@@ -237,10 +237,10 @@ Would love your feedback — especially on what use cases would make this most u
 Para diretórios que requerem e-mail ou formulário simples:
 
 ```
-Subject: Tool Submission — Sofia AI (Multi-Agent AI Orchestration Platform)
+Subject: Tool Submission — Polaris IA (Multi-Agent AI Orchestration Platform)
 
-Name: Sofia AI
-Website: https://sofiaia.roilabs.com.br
+Name: Polaris IA
+Website: https://polarisia.com.br
 GitHub: https://github.com/JeanZorzetti/sofia-ia
 Category: AI Agents / Productivity / Developer Tools
 Pricing: Free plan available (no credit card)

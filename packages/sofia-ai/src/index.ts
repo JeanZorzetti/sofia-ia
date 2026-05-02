@@ -1,4 +1,4 @@
-const DEFAULT_BASE_URL = 'https://sofiaia.roilabs.com.br'
+﻿const DEFAULT_BASE_URL = 'https://polarisia.com.br'
 
 export interface SofiaClientOptions {
   apiKey: string
@@ -52,7 +52,7 @@ export interface Orchestration {
 }
 
 /**
- * Sofia AI JavaScript SDK
+ * Polaris IA JavaScript SDK
  *
  * @example
  * ```typescript
@@ -95,7 +95,7 @@ export class SofiaClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: response.statusText }))
-      throw new Error(`Sofia AI API error ${response.status}: ${error.error || response.statusText}`)
+      throw new Error(`Polaris IA API error ${response.status}: ${error.error || response.statusText}`)
     }
 
     return response.json() as Promise<T>

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, Zap, Shield, CheckCircle, Play, ChevronRight, Users, BrainCircuit, Globe, Lock } from 'lucide-react'
 import { GlowingFeaturesGrid } from '@/components/landing/GlowingFeaturesGrid'
@@ -39,12 +39,12 @@ function dbToTemplateCard(o: {
 }
 
 export const metadata: Metadata = {
-  title: 'Sofia — Plataforma de Orquestração de Agentes IA | ROI Labs',
+  title: 'Polaris IA — Plataforma de Orquestração de Agentes IA | ROI Labs',
   description: 'Crie equipes de agentes IA que trabalham juntos para resolver tarefas complexas. Orquestrações multi-agente, Knowledge Base com RAG semântico, IDE multi-modelo e canais de atendimento integrados. Free para começar.',
-  keywords: ['orquestração de agentes ia', 'multi-agent ai', 'agentes ia para empresas', 'knowledge base rag', 'ia generativa', 'crewai alternativa', 'autogen alternativa', 'plataforma ia no-code', 'sofia ia'],
-  openGraph: { title: 'Sofia — Plataforma de Orquestração de Agentes IA', description: 'Crie equipes de agentes IA que colaboram para resolver qualquer tarefa. Mais poderoso que CrewAI. Mais simples que AutoGen.', type: 'website', locale: 'pt_BR', siteName: 'Sofia AI' , images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }]},
-  twitter: { card: 'summary_large_image', title: 'Sofia — Multi-Agent AI Orchestration Platform', description: 'Build AI agent teams that collaborate on complex tasks. Knowledge Base with RAG, multi-model IDE, WhatsApp integration. Free to start.' },
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br' },
+  keywords: ['orquestração de agentes ia', 'multi-agent ai', 'agentes ia para empresas', 'knowledge base rag', 'ia generativa', 'crewai alternativa', 'autogen alternativa', 'plataforma ia no-code', 'Polaris IA'],
+  openGraph: { title: 'Polaris IA — Plataforma de Orquestração de Agentes IA', description: 'Crie equipes de agentes IA que colaboram para resolver qualquer tarefa. Mais poderoso que CrewAI. Mais simples que AutoGen.', type: 'website', locale: 'pt_BR', siteName: 'Polaris IA' , images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }]},
+  twitter: { card: 'summary_large_image', title: 'Polaris IA — Multi-Agent AI Orchestration Platform', description: 'Build AI agent teams that collaborate on complex tasks. Knowledge Base with RAG, multi-model IDE, WhatsApp integration. Free to start.' },
+  alternates: { canonical: 'https://polarisia.com.br' },
 }
 
 export default async function LandingPage() {
@@ -74,7 +74,7 @@ export default async function LandingPage() {
 
   return (
     <div className="bg-background text-foreground">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Sofia AI', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' }, description: 'Plataforma de orquestração de agentes IA com Knowledge Base RAG, IDE multi-modelo e canais integrados.' }) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'SoftwareApplication', name: 'Polaris IA', applicationCategory: 'BusinessApplication', operatingSystem: 'Web', offers: { '@type': 'Offer', price: '0', priceCurrency: 'BRL' }, description: 'Plataforma de orquestração de agentes IA com Knowledge Base RAG, IDE multi-modelo e canais integrados.' }) }} />
 
       {/* Hero */}
       <section className="relative px-6 pt-20 pb-28 overflow-hidden bg-dot-grid">
@@ -163,7 +163,7 @@ export default async function LandingPage() {
       <SectionWrapper id="comparativo">
         <div className="max-w-5xl mx-auto">
           <AnimatedSection>
-            <SectionHeader title="Sofia vs. Concorrentes" description="Por que times escolhem Sofia em vez de CrewAI, AutoGen ou LangFlow?" className="mb-12" />
+            <SectionHeader title="Polaris IA vs. Concorrentes" description="Por que times escolhem Polaris IA em vez de CrewAI, AutoGen ou LangFlow?" className="mb-12" />
           </AnimatedSection>
           <AnimatedSection delay={0.1}>
           <div className="glass-card rounded-xl overflow-hidden">
@@ -172,7 +172,7 @@ export default async function LandingPage() {
                 <thead>
                   <tr className="border-b border-white/10">
                     <th className="text-left p-4 text-white/60 font-medium">Funcionalidade</th>
-                    <th className="p-4 text-center"><div className="flex flex-col items-center gap-1"><span className="font-bold text-white">Sofia</span><span className="text-[10px] text-blue-400">Recomendado</span></div></th>
+                    <th className="p-4 text-center"><div className="flex flex-col items-center gap-1"><span className="font-bold text-white">Polaris IA</span><span className="text-[10px] text-blue-400">Recomendado</span></div></th>
                     <th className="p-4 text-center text-white/40 font-medium">CrewAI</th>
                     <th className="p-4 text-center text-white/40 font-medium">AutoGen</th>
                     <th className="p-4 text-center text-white/40 font-medium">LangFlow</th>

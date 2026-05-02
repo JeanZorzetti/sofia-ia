@@ -1,33 +1,33 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { CheckCircle, ArrowRight, Zap, Globe } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Precios — Sofia AI | Plataforma de Agentes IA',
+  title: 'Precios — Polaris IA | Plataforma de Agentes IA',
   description:
-    'Precios simples y transparentes para Sofia AI. Plan Free para siempre, Pro desde USD 39/mes. Orquestaciones multi-agente, Knowledge Base RAG y más.',
+    'Precios simples y transparentes para Polaris IA. Plan Free para siempre, Pro desde USD 39/mes. Orquestaciones multi-agente, Knowledge Base RAG y más.',
   keywords: [
-    'sofia ai precios',
+    'Polaris IA precios',
     'precio plataforma ia',
     'agentes ia precio',
     'orquestacion ia latinoamerica',
     'software ia empresas precio',
   ],
   openGraph: {
-    title: 'Precios — Sofia AI',
+    title: 'Precios — Polaris IA',
     description: 'Planes simples para escalar con IA. Comienza gratis.',
     locale: 'es_LA',
     type: 'website',
-    url: 'https://sofiaia.roilabs.com.br/es/precios',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    url: 'https://polarisia.com.br/es/precios',
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   alternates: {
-    canonical: 'https://sofiaia.roilabs.com.br/es/precios',
+    canonical: 'https://polarisia.com.br/es/precios',
     languages: {
-      'pt-BR': 'https://sofiaia.roilabs.com.br/preco',
-      'es': 'https://sofiaia.roilabs.com.br/es/precios',
-      'en': 'https://sofiaia.roilabs.com.br/en/pricing',
+      'pt-BR': 'https://polarisia.com.br/preco',
+      'es': 'https://polarisia.com.br/es/precios',
+      'en': 'https://polarisia.com.br/en/pricing',
     },
   },
 }
@@ -109,7 +109,7 @@ export default function PreciosPage() {
       <nav className="border-b border-white/10 sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/es" className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-            Sofia AI
+            Polaris IA
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-white/60">
             <Link href="/es" className="hover:text-white transition-colors">Inicio</Link>

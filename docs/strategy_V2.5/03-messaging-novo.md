@@ -1,4 +1,4 @@
-# Novo Framework de Messaging — Copy para Landing Page
+﻿# Novo Framework de Messaging — Copy para Landing Page
 
 > Regra: Problema antes de solucao. Beneficio antes de feature. Especifico antes de generico.
 > Audience primaria: Donos de agencias de marketing digital (2-15 funcionarios, BR).
@@ -36,12 +36,12 @@ CTA:         "Começar Grátis — sem cartão"
 Badge:       "Novo · Para agencias de marketing"
 
 Headline:    "Sua equipe produz o conteudo.
-              A Sofia cuida do trabalho repetitivo."
+              A Polaris IA cuida do trabalho repetitivo."
 
 Sub:         "Crie pipelines de IA que pesquisam tendencias, escrevem copies
               e revisam posts para todos os seus clientes — automaticamente."
 
-Prova:       "Agencias que usam Sofia economizam 20+ horas por semana por cliente."
+Prova:       "Agencias que usam Polaris IA economizam 20+ horas por semana por cliente."
 
 CTA primario:  "Testar com minha agencia — gratis"
 CTA secundario: "Ver como funciona (2 min) →"
@@ -164,7 +164,7 @@ Feature 6:
 ## Comparativo Section — Reescrita
 
 ### Atual (PROBLEMA)
-Tabela comparando Sofia vs CrewAI vs AutoGen vs LangFlow.
+Tabela comparando Polaris IA vs CrewAI vs AutoGen vs LangFlow.
 
 **Problema:** Quem conhece esses nomes ja tem opiniao formada. Quem nao conhece nao entende a tabela.
 
@@ -174,9 +174,9 @@ Tabela comparando Sofia vs CrewAI vs AutoGen vs LangFlow.
 A maioria dos ICPs vem do ChatGPT, nao de CrewAI.
 
 ```
-Titulo: "ChatGPT e otimo para uma tarefa. Sofia e para processos."
+Titulo: "ChatGPT e otimo para uma tarefa. Polaris IA e para processos."
 
-| | ChatGPT | Sofia AI |
+| | ChatGPT | Polaris IA |
 |---|---------|----------|
 | Lembra o que voce configurou | ❌ Nao | ✅ Sempre |
 | Trabalha com multiplos agentes | ❌ Nao | ✅ Sim |
@@ -216,7 +216,7 @@ Nenhuma prova social real (sem testimonials, sem contagem de usuarios).
 
 **Fase 3 (quando tiver 10+ pagantes):**
 ```
-Logos de empresas que usam Sofia
+Logos de empresas que usam Polaris IA
 Case study: "Como a [Agencia X] triplicou producao sem contratar"
 ```
 
@@ -281,7 +281,7 @@ Urgencia (opcional): "Oferta de lancamento: 30% off no primeiro mes para os
 
 ## Narrativa Central (The Story)
 
-Todo bom copy conta uma historia. A historia da Sofia e:
+Todo bom copy conta uma historia. A historia da Polaris IA e:
 
 ```
 ANTES: "Voce tem uma equipe capaz, um produto incrivel e clientes exigentes.
@@ -293,7 +293,7 @@ ANTES: "Voce tem uma equipe capaz, um produto incrivel e clientes exigentes.
 VIRADA: "E se voce pudesse configurar UMA VEZ como cada tarefa deve ser feita
          e deixar agentes de IA executarem automaticamente a partir dai?"
 
-DEPOIS: "Com Sofia, voce cria pipelines de agentes que conhecem seu negocio,
+DEPOIS: "Com Polaris IA, voce cria pipelines de agentes que conhecem seu negocio,
           acessam seus documentos, se conectam com seus sistemas e entregam
           resultados — sem voce precisar estar la."
 

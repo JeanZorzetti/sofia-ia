@@ -1,6 +1,6 @@
-# Contributing to Sofia AI
+﻿# Contributing to Polaris IA
 
-Thank you for your interest in contributing to Sofia AI! This guide helps you go from zero to your first merged PR.
+Thank you for your interest in contributing to Polaris IA! This guide helps you go from zero to your first merged PR.
 
 ## Table of Contents
 
@@ -73,7 +73,7 @@ These are real tasks that don't require deep knowledge of the codebase:
 | `translation` | Improve EN translations | `src/app/en/` |
 | `test` | Add unit or integration tests | `src/__tests__/` |
 
-**Don't see a task you like?** Ask on [Discord](https://sofiaia.roilabs.com.br/comunidade) in **#contribute** and we'll find something for you.
+**Don't see a task you like?** Ask on [Discord](https://polarisia.com.br/comunidade) in **#contribute** and we'll find something for you.
 
 ---
 
@@ -382,7 +382,7 @@ We welcome PRs that add test coverage. The project target is 60%+ coverage for `
 
 ## Community
 
-- **Discord**: [sofiaia.roilabs.com.br/comunidade](https://sofiaia.roilabs.com.br/comunidade) — chat in **#contribute**
+- **Discord**: [polarisia.com.br/comunidade](https://polarisia.com.br/comunidade) — chat in **#contribute**
 - **GitHub Discussions**: For longer-form technical discussions
 - **Issues**: For bugs and feature requests
 - **Email**: [contato@roilabs.com.br](mailto:contato@roilabs.com.br)
@@ -395,4 +395,4 @@ Be respectful, constructive, and inclusive. We maintain a welcoming environment 
 
 ---
 
-Thank you for contributing to Sofia AI! Every PR, bug report, and suggestion makes the platform better for everyone.
+Thank you for contributing to Polaris IA! Every PR, bug report, and suggestion makes the platform better for everyone.

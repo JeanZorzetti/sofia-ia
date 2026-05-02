@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Loader2, Save, AlertCircle, Key, Chrome, Building2, ExternalLink, Copy, CheckCircle, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br';
 
 interface OAuthSsoConfig {
   provider: 'google' | 'microsoft';

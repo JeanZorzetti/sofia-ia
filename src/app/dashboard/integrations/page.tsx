@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
@@ -44,7 +44,7 @@ const automationPlatforms = [
   {
     id: 'zapier',
     name: 'Zapier',
-    description: 'Conecte Sofia AI a 6.000+ apps sem código via triggers e actions',
+    description: 'Conecte Polaris IA a 6.000+ apps sem código via triggers e actions',
     icon: Zap,
     color: 'text-orange-500',
     bg: 'bg-orange-500/10',
@@ -74,7 +74,7 @@ const automationPlatforms = [
   {
     id: 'api',
     name: 'API Direta',
-    description: 'Use sua API Key para integrar Sofia AI em qualquer sistema',
+    description: 'Use sua API Key para integrar Polaris IA em qualquer sistema',
     icon: Key,
     color: 'text-blue-500',
     bg: 'bg-blue-500/10',
@@ -219,7 +219,7 @@ const credentialFields: Record<string, { key: string; label: string; placeholder
     { key: 'port', label: 'Porta', placeholder: '587' },
     { key: 'user', label: 'Usuário / Email', placeholder: 'seu@email.com' },
     { key: 'password', label: 'Senha / App Password', placeholder: 'Senha do SMTP', type: 'password' },
-    { key: 'fromName', label: 'Nome do Remetente', placeholder: 'Sofia IA' },
+    { key: 'fromName', label: 'Nome do Remetente', placeholder: 'Polaris IA' },
   ],
   claude: [
     { key: 'apiKey', label: 'API Key (Oficial)', placeholder: 'sk-ant-api...', type: 'password' },

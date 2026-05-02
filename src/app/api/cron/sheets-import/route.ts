@@ -126,7 +126,7 @@ export async function GET(request: NextRequest) {
         } catch { /* fallback abaixo */ }
 
         if (!greeting) {
-          greeting = `Olá, ${nome.split(' ')[0]}! 👋 Aqui é a Sofia. Como posso te ajudar hoje?`
+          greeting = `Olá, ${nome.split(' ')[0]}! 👋 Aqui é a Polaris IA. Como posso te ajudar hoje?`
         }
 
         // Enviar WhatsApp

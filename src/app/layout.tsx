@@ -1,4 +1,4 @@
-import './globals.css'
+﻿import './globals.css'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { DesktopProvider } from '@/contexts/DesktopContext'
@@ -9,7 +9,7 @@ import Script from 'next/script'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Sofia AI — Plataforma de Orquestração de Agentes IA',
+  title: 'Polaris IA — Plataforma de Orquestração de Agentes IA',
   description: 'Crie equipes de agentes IA que trabalham juntos. Orquestrações visuais, Knowledge Base com RAG, IDE multi-modelo e integração com WhatsApp. Self-hosted.',
   keywords: ['agentes ia', 'orquestração', 'multi-agente', 'rag', 'knowledge base', 'ia para empresas'],
   icons: {
@@ -20,15 +20,15 @@ export const metadata = {
   openGraph: {
     type: 'website' as const,
     locale: 'pt_BR',
-    siteName: 'Sofia AI',
-    url: 'https://sofiaia.roilabs.com.br',
+    siteName: 'Polaris IA',
+    url: 'https://polarisia.com.br',
   },
   twitter: {
     card: 'summary_large_image' as const,
     site: '@sofiaai_br',
     creator: '@sofiaai_br',
   },
-  metadataBase: new URL('https://sofiaia.roilabs.com.br'),
+  metadataBase: new URL('https://polarisia.com.br'),
 }
 
 export default function RootLayout({
@@ -45,7 +45,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Sofia AI" />
+        <meta name="apple-mobile-web-app-title" content="Polaris IA" />
         <meta name="theme-color" content="#7c3aed" />
         <meta name="mobile-web-app-capable" content="yes" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, Globe, Zap, Heart, Shield, Target, Rocket } from 'lucide-react'
 import { SectionWrapper, SectionHeader } from '@/components/landing/SectionWrapper'
@@ -8,24 +8,24 @@ import { GradientText } from '@/components/landing/GradientText'
 import { AnimatedCounter } from '@/components/landing/AnimatedCounter'
 
 export const metadata: Metadata = {
-  title: 'Sobre a Sofia AI — Quem Somos | ROI Labs',
-  description: 'Sofia AI e ROI Labs: nossa missao, equipe e historia. Construindo a plataforma de orquestracao de agentes IA mais acessivel do Brasil.',
+  title: 'Sobre a Polaris IA — Quem Somos | ROI Labs',
+  description: 'Polaris IA e ROI Labs: nossa missao, equipe e historia. Construindo a plataforma de orquestracao de agentes IA mais acessivel do Brasil.',
   openGraph: {
-    title: 'Sobre a Sofia AI — Plataforma de Orquestracao de Agentes IA',
-    description: 'Conheca a ROI Labs e a historia da Sofia AI, a plataforma brasileira de multi-agent orchestration.',
+    title: 'Sobre a Polaris IA — Plataforma de Orquestracao de Agentes IA',
+    description: 'Conheca a ROI Labs e a historia da Polaris IA, a plataforma brasileira de multi-agent orchestration.',
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Sofia AI',
-    url: 'https://sofiaia.roilabs.com.br/sobre',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    siteName: 'Polaris IA',
+    url: 'https://polarisia.com.br/sobre',
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sobre a Sofia AI — ROI Labs',
+    title: 'Sobre a Polaris IA — ROI Labs',
     description: 'Nossa missao, equipe e historia. Construindo IA para o Brasil.',
   },
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/sobre' },
+  alternates: { canonical: 'https://polarisia.com.br/sobre' },
 }
 
 const values = [
@@ -53,7 +53,7 @@ const values = [
 
 const milestones = [
   { year: '2025 T1', label: 'Fundacao', desc: 'ROI Labs fundada com foco em automacao inteligente para empresas brasileiras' },
-  { year: '2025 T2', label: 'MVP Sofia', desc: 'Primeiros agentes e orquestracoes basicas. Validacao com 10 clientes beta' },
+  { year: '2025 T2', label: 'MVP Polaris IA', desc: 'Primeiros agentes e orquestracoes basicas. Validacao com 10 clientes beta' },
   { year: '2025 T3', label: 'Produto Maduro', desc: 'Knowledge Base (RAG), multi-agente, billing integrado, 50+ usuarios' },
   { year: '2025 T4', label: 'Enterprise', desc: 'SSO, Audit Log, Teams, White-label. Primeiros contratos enterprise' },
   { year: '2026', label: 'Expansao', desc: 'API publica, SDK npm, integracao com HubSpot/Salesforce/Google Sheets/Notion, Beta Program' },
@@ -71,7 +71,7 @@ export default function SobrePage() {
             '@type': 'Organization',
             name: 'ROI Labs',
             url: 'https://roilabs.com.br',
-            logo: 'https://sofiaia.roilabs.com.br/logo.svg',
+            logo: 'https://polarisia.com.br/logo.svg',
             description: 'ROI Labs e uma empresa brasileira de tecnologia especializada em automacao inteligente com IA para negocios de todos os tamanhos.',
             foundingDate: '2025',
             founders: [
@@ -93,7 +93,7 @@ export default function SobrePage() {
             ],
             hasOfferCatalog: {
               '@type': 'OfferCatalog',
-              name: 'Sofia AI — Plataforma de Orquestracao de Agentes IA',
+              name: 'Polaris IA — Plataforma de Orquestracao de Agentes IA',
               itemListElement: [
                 {
                   '@type': 'Offer',
@@ -122,14 +122,14 @@ export default function SobrePage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'WebSite',
-            name: 'Sofia AI',
-            url: 'https://sofiaia.roilabs.com.br',
+            name: 'Polaris IA',
+            url: 'https://polarisia.com.br',
             description: 'Plataforma brasileira de orquestracao de agentes IA. Automatize processos complexos com pipelines de agentes inteligentes.',
             potentialAction: {
               '@type': 'SearchAction',
               target: {
                 '@type': 'EntryPoint',
-                urlTemplate: 'https://sofiaia.roilabs.com.br/blog?q={search_term_string}'
+                urlTemplate: 'https://polarisia.com.br/blog?q={search_term_string}'
               },
               'query-input': 'required name=search_term_string'
             }
@@ -144,7 +144,7 @@ export default function SobrePage() {
         <div className="max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-sm text-blue-300 mb-8">
             <Globe className="w-4 h-4" />
-            Sobre a Sofia AI e a ROI Labs
+            Sobre a Polaris IA e a ROI Labs
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
             Democratizando a{' '}
@@ -166,7 +166,7 @@ export default function SobrePage() {
               Tornar a orquestracao de agentes IA acessivel, confiavel e mensuravel para empresas brasileiras — sem exigir expertise em machine learning, sem lock-in de vendor e sem custos proibitivos.
             </p>
             <p className="text-white/60 leading-relaxed">
-              A Sofia AI nasceu da frustracao com ferramentas que eram ou muito tecnicas (CrewAI, AutoGen, LangChain) ou muito limitadas (chatbot builders sem raciocinio real). Queríamos algo no meio: poderoso o suficiente para casos de uso enterprise, simples o suficiente para um fundador de startup conseguir configurar em 10 minutos.
+              A Polaris IA nasceu da frustracao com ferramentas que eram ou muito tecnicas (CrewAI, AutoGen, LangChain) ou muito limitadas (chatbot builders sem raciocinio real). Queríamos algo no meio: poderoso o suficiente para casos de uso enterprise, simples o suficiente para um fundador de startup conseguir configurar em 10 minutos.
             </p>
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function SobrePage() {
 
       {/* Numeros */}
       <SectionWrapper alt>
-        <SectionHeader title="Sofia AI em numeros" />
+        <SectionHeader title="Polaris IA em numeros" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
           {[
             { n: 50, s: '+', label: 'Artigos no blog', sub: 'SEO e GEO' },
@@ -245,7 +245,7 @@ export default function SobrePage() {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Somos open-source</h2>
           <p className="text-white/60 mb-8 max-w-2xl mx-auto">
-            O codigo da Sofia AI e publico no GitHub sob licenca MIT. Voce pode auditar, contribuir, fazer self-hosted ou usar como base para seu proprio produto.
+            O codigo da Polaris IA e publico no GitHub sob licenca MIT. Voce pode auditar, contribuir, fazer self-hosted ou usar como base para seu proprio produto.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <a

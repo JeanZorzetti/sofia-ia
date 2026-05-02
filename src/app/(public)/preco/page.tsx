@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, Zap, Shield, CheckCircle } from 'lucide-react'
 import { PricingGrid } from '@/components/landing/PricingGrid'
@@ -8,15 +8,15 @@ import { GradientText } from '@/components/landing/GradientText'
 import { plans, pricingFAQ } from '@/data/pricing'
 
 export const metadata: Metadata = {
-  title: 'Preços — Planos Sofia AI | Free, Pro, Business e Enterprise',
-  description: 'Conheça os planos do Sofia AI. Free para começar, Pro por R$297/mês, Business por R$997/mês e Enterprise custom para grandes empresas. Sem surpresas na fatura.',
-  keywords: ['preço sofia ai', 'planos sofia ai', 'quanto custa sofia ai', 'plataforma agentes ia preço', 'orquestração ia gratis', 'sofia pro business enterprise'],
-  openGraph: { title: 'Preços — Sofia AI | Free, Pro e Business', description: 'Comece grátis. Escale conforme cresce. Planos a partir de R$0/mês.', type: 'website', locale: 'pt_BR' , images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }]},
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/preco' },
+  title: 'Preços — Planos Polaris IA | Free, Pro, Business e Enterprise',
+  description: 'Conheça os planos do Polaris IA. Free para começar, Pro por R$297/mês, Business por R$997/mês e Enterprise custom para grandes empresas. Sem surpresas na fatura.',
+  keywords: ['preço Polaris IA', 'planos Polaris IA', 'quanto custa Polaris IA', 'plataforma agentes ia preço', 'orquestração ia gratis', 'sofia pro business enterprise'],
+  openGraph: { title: 'Preços — Polaris IA | Free, Pro e Business', description: 'Comece grátis. Escale conforme cresce. Planos a partir de R$0/mês.', type: 'website', locale: 'pt_BR' , images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }]},
+  alternates: { canonical: 'https://polarisia.com.br/preco' },
 }
 
 const productSchema = {
-  '@context': 'https://schema.org', '@type': 'Product', name: 'Sofia AI',
+  '@context': 'https://schema.org', '@type': 'Product', name: 'Polaris IA',
   description: 'Plataforma de orquestração de agentes IA com Knowledge Base RAG, IDE multi-modelo e canais integrados.',
   offers: [
     { '@type': 'Offer', name: 'Free', price: '0', priceCurrency: 'BRL', availability: 'https://schema.org/InStock' },

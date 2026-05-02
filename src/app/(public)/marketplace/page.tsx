@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -18,7 +18,7 @@ import { AnimatedSection } from '@/components/landing/AnimatedSection'
 import { GradientText } from '@/components/landing/GradientText'
 
 export const metadata: Metadata = {
-  title: 'Marketplace de Templates — Sofia AI | Orquestrações Prontas',
+  title: 'Marketplace de Templates — Polaris IA | Orquestrações Prontas',
   description:
     'Explore e use templates de orquestração prontos para marketing, suporte, jurídico, e-commerce e RH. Comece em segundos com agentes IA pré-configurados.',
   keywords: [
@@ -27,21 +27,21 @@ export const metadata: Metadata = {
     'automação marketing ia',
     'ia jurídico',
     'ia e-commerce',
-    'templates sofia ai',
+    'templates Polaris IA',
     'orquestração no-code',
   ],
   openGraph: {
-    title: 'Marketplace de Templates — Sofia AI',
+    title: 'Marketplace de Templates — Polaris IA',
     description:
       'Templates de orquestração IA prontos para usar. Marketing, suporte, jurídico, e-commerce e mais.',
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Sofia AI',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    siteName: 'Polaris IA',
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   alternates: {
-    canonical: 'https://sofiaia.roilabs.com.br/marketplace',
+    canonical: 'https://polarisia.com.br/marketplace',
   },
 }
 
@@ -247,10 +247,10 @@ export default async function MarketplacePage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'CollectionPage',
-            name: 'Marketplace de Templates — Sofia AI',
+            name: 'Marketplace de Templates — Polaris IA',
             description:
               'Templates de orquestração IA para marketing, suporte, jurídico, e-commerce e RH.',
-            url: 'https://sofiaia.roilabs.com.br/marketplace',
+            url: 'https://polarisia.com.br/marketplace',
           }),
         }}
       />
@@ -317,7 +317,7 @@ export default async function MarketplacePage() {
             </p>
             <div className="flex items-center gap-1 text-xs text-foreground-tertiary">
               <Star className="w-3.5 h-3.5 text-yellow-500/60" />
-              Templates oficiais validados pela equipe Sofia AI
+              Templates oficiais validados pela equipe Polaris IA
             </div>
           </div>
 

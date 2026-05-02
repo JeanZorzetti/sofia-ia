@@ -1,26 +1,26 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, BrainCircuit, Zap, CheckCircle, Star } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Changelog — Sofia AI | Novidades e Atualizações',
-  description: 'Acompanhe todas as novidades, melhorias e correções do Sofia AI. Atualizado regularmente.',
+  title: 'Changelog — Polaris IA | Novidades e Atualizações',
+  description: 'Acompanhe todas as novidades, melhorias e correções do Polaris IA. Atualizado regularmente.',
   openGraph: {
-    title: 'Changelog Sofia AI — Novidades da Plataforma',
-    description: 'Novas features, melhorias e correções do Sofia AI. Orquestração de agentes IA em constante evolução.',
+    title: 'Changelog Polaris IA — Novidades da Plataforma',
+    description: 'Novas features, melhorias e correções do Polaris IA. Orquestração de agentes IA em constante evolução.',
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Sofia AI',
-    url: 'https://sofiaia.roilabs.com.br/changelog',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    siteName: 'Polaris IA',
+    url: 'https://polarisia.com.br/changelog',
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Changelog Sofia AI — Novidades da Plataforma',
-    description: 'Acompanhe todas as novidades, melhorias e correções do Sofia AI.',
+    title: 'Changelog Polaris IA — Novidades da Plataforma',
+    description: 'Acompanhe todas as novidades, melhorias e correções do Polaris IA.',
   },
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/changelog' },
+  alternates: { canonical: 'https://polarisia.com.br/changelog' },
 }
 
 const releases = [
@@ -123,7 +123,7 @@ export default function ChangelogPage() {
             <Zap className="w-4 h-4" /> Atualizado regularmente
           </div>
           <h1 className="text-4xl font-bold mb-4">Changelog</h1>
-          <p className="text-foreground-tertiary">Todas as novidades, melhorias e correções do Sofia AI.</p>
+          <p className="text-foreground-tertiary">Todas as novidades, melhorias e correções do Polaris IA.</p>
         </div>
       </section>
 

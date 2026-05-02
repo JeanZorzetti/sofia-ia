@@ -1,4 +1,4 @@
-# Sofia AI — Mapa de Páginas
+﻿# Polaris IA — Mapa de Páginas
 
 > Documentação de todas as rotas públicas e internas da aplicação.
 > Atualizado: Fevereiro 2026
@@ -12,7 +12,7 @@
 | `/` | `src/app/page.tsx` | Landing page principal com hero, features, comparativo, pricing, templates |
 | `/features` | `src/app/features/page.tsx` | Hub de funcionalidades com grid de 6 features + 6 extras |
 | `/features/orchestrations` | `src/app/features/orchestrations/page.tsx` | Deep dive em orquestração multi-agente |
-| `/comparativo` | `src/app/comparativo/page.tsx` | Sofia AI vs CrewAI vs AutoGen vs LangFlow |
+| `/comparativo` | `src/app/comparativo/page.tsx` | Polaris IA vs CrewAI vs AutoGen vs LangFlow |
 | `/preco` | `src/app/preco/page.tsx` | Planos Free / Pro / Business com FAQ |
 | `/como-funciona` | `src/app/como-funciona/page.tsx` | Guia passo a passo (5 passos + schema HowTo) |
 | `/templates` | `src/app/templates/page.tsx` | Galeria de 9 templates de orquestração |
@@ -31,7 +31,7 @@
 | Arquivo | Título |
 |---------|--------|
 | `o-que-e-orquestracao-de-agentes-ia.mdx` | O que é Orquestração de Agentes IA: Guia Completo |
-| `sofia-vs-crewai-vs-autogen-vs-langflow.mdx` | Sofia AI vs CrewAI vs AutoGen vs LangFlow |
+| `sofia-vs-crewai-vs-autogen-vs-langflow.mdx` | Polaris IA vs CrewAI vs AutoGen vs LangFlow |
 | `como-criar-equipe-agentes-ia-sem-codigo.mdx` | Como Criar uma Equipe de Agentes IA sem Código |
 | `knowledge-base-com-rag.mdx` | Knowledge Base com RAG: O que é e Como Usar |
 | `5-orquestracoes-prontas-para-sua-empresa.mdx` | 5 Orquestrações Prontas para sua Empresa |

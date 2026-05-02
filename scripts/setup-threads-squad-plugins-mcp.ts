@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Configura Plugins e MCP para o Squad Threads.
  *
  * Plugin: Validador de Formato Threads → Copywriter + Editor
@@ -20,7 +20,7 @@ const AGENTS = {
   gestor:     '8d03ebc6-6dcb-447b-9f41-5a78e6f7987f',
 };
 
-const THREADS_MCP_URL = 'https://sofiaia.roilabs.com.br/api/mcp/threads-api';
+const THREADS_MCP_URL = 'https://polarisia.com.br/api/mcp/threads-api';
 
 // ─── Plugin Code ────────────────────────────────────────────────────────────
 

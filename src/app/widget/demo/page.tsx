@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { ChatWidget } from '@/components/widget/ChatWidget'
 
@@ -39,14 +39,14 @@ export default function WidgetDemoPage() {
 <script>
   window.roiLabsConfig = {
     agentId: '00000000-0000-0000-0000-000000000001',
-    apiUrl: 'https://sofiaia.roilabs.com.br/api/chat/widget',
+    apiUrl: 'https://polarisia.com.br/api/chat/widget',
     primaryColor: '#3b82f6',
     position: 'bottom-right',
     title: 'Atendimento',
     subtitle: 'Estamos online'
   };
 </script>
-<script src="https://sofiaia.roilabs.com.br/widget.js"></script>`}
+<script src="https://polarisia.com.br/widget.js"></script>`}
             </pre>
           </div>
         </div>
@@ -59,7 +59,7 @@ export default function WidgetDemoPage() {
         position="bottom-right"
         title="Atendimento ROI Labs"
         subtitle="Estamos online"
-        welcomeMessage="Olá! Sou a Sofia, assistente virtual da ROI Labs. Como posso ajudar você hoje?"
+        welcomeMessage="Olá! Sou a Polaris IA, assistente virtual da ROI Labs. Como posso ajudar você hoje?"
         placeholder="Digite sua mensagem..."
       />
     </div>

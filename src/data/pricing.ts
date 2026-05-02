@@ -1,4 +1,4 @@
-import { PricingPlan } from '@/components/landing/PricingCard'
+﻿import { PricingPlan } from '@/components/landing/PricingCard'
 import { FAQItem } from '@/components/landing/FAQSection'
 
 export const plans: PricingPlan[] = [
@@ -91,5 +91,5 @@ export const pricingFAQ: FAQItem[] = [
   { question: 'Posso mudar de plano a qualquer momento?', answer: 'Sim. Você pode fazer upgrade ou downgrade do seu plano a qualquer momento pelo painel de billing.' },
   { question: 'O que acontece se eu atingir os limites do plano Free?', answer: 'Você receberá uma notificação e poderá fazer upgrade para o plano Pro. Não bloqueamos sua conta sem aviso.' },
   { question: 'Há desconto para pagamento anual?', answer: 'Entre em contato com nossa equipe em contato@roilabs.com.br para condições especiais de contratos anuais.' },
-  { question: 'O Sofia AI oferece self-hosted?', answer: 'Sim. Todos os planos incluem acesso ao Docker Compose para instalação self-hosted na sua infraestrutura.' },
+  { question: 'O Polaris IA oferece self-hosted?', answer: 'Sim. Todos os planos incluem acesso ao Docker Compose para instalação self-hosted na sua infraestrutura.' },
 ]

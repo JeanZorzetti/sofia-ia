@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromApiKey } from '@/lib/api-key-auth'
 import { prisma } from '@/lib/prisma'
 import { logAudit } from '@/lib/audit'
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Fire actual execution asynchronously via internal API
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
     fetch(`${baseUrl}/api/orchestrations/${orchestrationId}/execute`, {
       method: 'POST',
       headers: {

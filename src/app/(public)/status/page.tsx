@@ -1,11 +1,11 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, BrainCircuit, CheckCircle, Clock } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Status — Sofia AI',
-  description: 'Status operacional dos serviços Sofia AI. Verifique a disponibilidade da plataforma, API, banco de dados e integrações.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/status' },
+  title: 'Status — Polaris IA',
+  description: 'Status operacional dos serviços Polaris IA. Verifique a disponibilidade da plataforma, API, banco de dados e integrações.',
+  alternates: { canonical: 'https://polarisia.com.br/status' },
 }
 
 const services = [

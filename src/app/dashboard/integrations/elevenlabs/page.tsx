@@ -39,7 +39,7 @@ export default function ElevenLabsIntegrationPage() {
   const [testing, setTesting] = useState(false);
   const [loadingVoices, setLoadingVoices] = useState(false);
   const [voices, setVoices] = useState<Voice[]>([]);
-  const [testText, setTestText] = useState('Olá! Sou a Sofia, sua assistente virtual.');
+  const [testText, setTestText] = useState('Olá! Sou a Polaris IA, sua assistente virtual.');
   const [config, setConfig] = useState<ElevenLabsConfig>({
     apiKey: '',
     voiceId: '21m00Tcm4TlvDq8ikWAM',

@@ -36,12 +36,12 @@ const NODE_CATALOG: NodeTypeInfo[] = [
     { type: 'trigger_manual', label: 'Trigger Manual', description: 'Execução manual via botão', icon: 'Play', category: 'trigger', inputs: [], outputs: [{ name: 'main' }] },
     { type: 'trigger_webhook', label: 'Webhook', description: 'Recebe dados via HTTP', icon: 'Webhook', category: 'trigger', inputs: [], outputs: [{ name: 'main' }] },
     { type: 'trigger_cron', label: 'Agendamento', description: 'Cron schedule', icon: 'Clock', category: 'trigger', inputs: [], outputs: [{ name: 'main' }] },
-    { type: 'trigger_event', label: 'Evento do Sistema', description: 'Eventos internos da Sofia', icon: 'Zap', category: 'trigger', inputs: [], outputs: [{ name: 'main' }] },
+    { type: 'trigger_event', label: 'Evento do Sistema', description: 'Eventos internos da Polaris IA', icon: 'Zap', category: 'trigger', inputs: [], outputs: [{ name: 'main' }] },
 
     // Actions
     { type: 'action_http', label: 'HTTP Request', description: 'Requisição HTTP/REST', icon: 'Globe', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
     { type: 'action_delay', label: 'Delay', description: 'Aguardar uma duração', icon: 'Timer', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
-    { type: 'action_ai_agent', label: 'Agente IA', description: 'Chamar agente da Sofia', icon: 'Bot', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
+    { type: 'action_ai_agent', label: 'Agente IA', description: 'Chamar agente da Polaris IA', icon: 'Bot', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
     { type: 'action_webhook_response', label: 'Webhook Response', description: 'Responder webhook', icon: 'Reply', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
     { type: 'action_database', label: 'Consulta SQL', description: 'Query no banco de dados', icon: 'Database', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
     { type: 'action_notification', label: 'Notificação', description: 'Enviar notificação', icon: 'Bell', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },

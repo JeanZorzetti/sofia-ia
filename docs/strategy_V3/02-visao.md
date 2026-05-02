@@ -1,4 +1,4 @@
-# Visao V3 — De Produto para Negocio
+﻿# Visao V3 — De Produto para Negocio
 
 > V1 construiu o produto. V2 poliu a experiencia. V3 transforma em negocio.
 
@@ -6,7 +6,7 @@
 
 ## Tese Central
 
-Sofia AI tem **feature parity com competidores internacionais** (CrewAI, Relevance AI, Dify) mas **zero traction**. O problema nao e produto — e distribuicao, conversao e feedback loop.
+Polaris IA tem **feature parity com competidores internacionais** (CrewAI, Relevance AI, Dify) mas **zero traction**. O problema nao e produto — e distribuicao, conversao e feedback loop.
 
 V3 inverte a piramide de prioridades:
 
@@ -62,7 +62,7 @@ SEO ja tem 70+ artigos — agora precisa de canais paralelos:
 - Free tier generoso o suficiente para viralizar
 - "Magic Create" como hero feature (demo publica)
 - Templates como porta de entrada (test-drive na landing)
-- Compartilhamento de resultados ("Powered by Sofia AI")
+- Compartilhamento de resultados ("Powered by Polaris IA")
 - In-app upgrade prompts contextuais
 
 ### Pilar 5: Tech Foundation (Contínuo)

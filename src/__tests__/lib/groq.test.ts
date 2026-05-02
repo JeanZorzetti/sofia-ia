@@ -70,7 +70,7 @@ describe('chatWithSofia()', () => {
   it('should call completions.create and return the content', async () => {
     mockCreate.mockResolvedValueOnce(makeCompletion('Ola! Como posso ajudar?'))
 
-    const result = await chatWithSofia([{ role: 'user', content: 'Oi, Sofia!' }])
+    const result = await chatWithSofia([{ role: 'user', content: 'Oi, Polaris IA!' }])
 
     expect(mockCreate).toHaveBeenCalledTimes(1)
     expect(result.content).toBe('Ola! Como posso ajudar?')

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 // ─────────────────────────────────────────────────────────
 // Flow Templates — Pre-built flow templates gallery
@@ -52,7 +52,7 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
         difficulty: 'Fácil',
         tags: ['email', 'lead', 'webhook'],
         triggerType: 'webhook',
-        variables: { emailSubject: 'Bem-vindo!', senderName: 'Sofia' },
+        variables: { emailSubject: 'Bem-vindo!', senderName: 'Polaris IA' },
         nodes: [
             { id: 'trigger_1', type: 'trigger_webhook', position: { x: 100, y: 200 }, data: { label: 'Webhook', config: {} } },
             { id: 'transform_1', type: 'transform_template', position: { x: 400, y: 200 }, data: { label: 'Template Email', config: { template: 'Olá {{name}}, seja bem-vindo!' } } },
@@ -175,7 +175,7 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
     {
         id: 'ai-classifier',
         name: 'Classificador IA',
-        description: 'Usa Sofia IA para classificar e rotear mensagens automaticamente.',
+        description: 'Usa Polaris IA para classificar e rotear mensagens automaticamente.',
         category: 'ai',
         icon: 'Bot',
         color: '#ec4899',
@@ -185,7 +185,7 @@ export const FLOW_TEMPLATES: FlowTemplate[] = [
         variables: { agentId: '', categories: 'suporte,vendas,financeiro' },
         nodes: [
             { id: 'trigger_1', type: 'trigger_webhook', position: { x: 100, y: 250 }, data: { label: 'Mensagem', config: {} } },
-            { id: 'action_1', type: 'action_ai_agent', position: { x: 400, y: 250 }, data: { label: 'Sofia IA', config: { prompt: 'Classifique: {{message}}. Categorias: {{var.categories}}' } } },
+            { id: 'action_1', type: 'action_ai_agent', position: { x: 400, y: 250 }, data: { label: 'Polaris IA', config: { prompt: 'Classifique: {{message}}. Categorias: {{var.categories}}' } } },
             { id: 'logic_1', type: 'logic_switch', position: { x: 700, y: 250 }, data: { label: 'Rotear', config: { field: 'category' } } },
             { id: 'action_2', type: 'action_notification', position: { x: 1000, y: 100 }, data: { label: 'Suporte', config: { title: 'Novo ticket' } } },
             { id: 'action_3', type: 'action_notification', position: { x: 1000, y: 250 }, data: { label: 'Vendas', config: { title: 'Novo lead' } } },

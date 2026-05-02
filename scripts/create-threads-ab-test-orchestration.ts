@@ -146,7 +146,7 @@ Você é o Editor. Revise AMBAS as variantes.
 **Para cada variante, avalie:**
 1. O gancho realmente faz parar o scroll?
 2. O gancho A e B são genuinamente DIFERENTES na psicologia que ativam?
-3. O corpo é autêntico ao tom da Sofia?
+3. O corpo é autêntico ao tom da Polaris IA?
 4. O CTA é natural?
 5. Limite de 500 chars? (valide com o Plugin)
 6. A e B são realmente comparáveis (mesmo corpo)?

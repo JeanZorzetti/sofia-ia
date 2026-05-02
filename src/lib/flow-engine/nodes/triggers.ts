@@ -113,7 +113,7 @@ export const triggerEvent: NodeDefinition = {
     type: 'trigger_event',
     category: 'trigger',
     label: 'Evento do Sistema',
-    description: 'Disparado por eventos internos da Sofia (ex: agente concluiu, novo lead).',
+    description: 'Disparado por eventos internos da Polaris IA (ex: agente concluiu, novo lead).',
     icon: 'Zap',
     color: 'emerald',
     configFields: [

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Cron: Weekly Digest
  * Runs every Monday at 08:00 BRT (11:00 UTC).
  *
@@ -18,7 +18,7 @@ import { trackEvent } from '@/lib/analytics'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
 
 function buildDigestEmail(firstName: string, stats: {
   executionsThisWeek: number
@@ -51,7 +51,7 @@ function buildDigestEmail(firstName: string, stats: {
 <div style="padding:24px 16px;">
 <div class="w">
 <div class="h">
-  <h1>Sofia IA</h1>
+  <h1>Polaris IA</h1>
   <span>Resumo semanal</span>
 </div>
 <div class="b">
@@ -86,7 +86,7 @@ function buildDigestEmail(firstName: string, stats: {
   </div>
 </div>
 <div class="ft">
-  <p>Sofia IA · <a href="${APP_URL}">sofiaia.roilabs.com.br</a> · <a href="${APP_URL}/dashboard/settings">Cancelar emails</a></p>
+  <p>Polaris IA · <a href="${APP_URL}">polarisia.com.br</a> · <a href="${APP_URL}/dashboard/settings">Cancelar emails</a></p>
 </div>
 </div></div></body></html>`
 }
@@ -142,7 +142,7 @@ export async function GET(req: NextRequest) {
 
     await sendEmail({
       to: user.email,
-      subject: `${firstName}, seu resumo da semana na Sofia IA`,
+      subject: `${firstName}, seu resumo da semana na Polaris IA`,
       html: buildDigestEmail(firstName, { executionsThisWeek, totalAgents, totalOrchestrations }),
     })
 

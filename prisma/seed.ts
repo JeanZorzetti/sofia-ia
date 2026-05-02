@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+﻿import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -30,14 +30,14 @@ async function main() {
   })
   console.log('✅ Admin user criado:', adminUser.email)
 
-  // Criar usuário Sofia (agente)
+  // Criar usuário Polaris IA (agente)
   const sofiaUser = await prisma.user.upsert({
     where: { email: 'sofia@roilabs.com.br' },
     update: {},
     create: {
       email: 'sofia@roilabs.com.br',
       passwordHash,
-      name: 'Sofia IA',
+      name: 'Polaris IA',
       role: 'agent',
       status: 'active',
       permissions: {
@@ -49,7 +49,7 @@ async function main() {
       },
     },
   })
-  console.log('✅ Sofia user criado:', sofiaUser.email)
+  console.log('✅ Polaris IA user criado:', sofiaUser.email)
 
   // Criar configurações padrão para IA
   const aiSettings = await prisma.setting.upsert({
@@ -86,7 +86,7 @@ async function main() {
       category: 'sdr',
       key: 'custom_prompt',
       value: {
-        systemPrompt: `Você é Sofia, uma assistente virtual especializada em atendimento imobiliário.
+        systemPrompt: `Você é Polaris IA, uma assistente virtual especializada em atendimento imobiliário.
 
 Seu objetivo é qualificar leads interessados em imóveis através de conversas naturais e amigáveis pelo WhatsApp.
 
@@ -161,17 +161,17 @@ Lembre-se: você está aqui para ajudar e facilitar a busca do imóvel ideal!`,
   })
   console.log('✅ Notification Settings criado:', notificationSettings.key)
 
-  // Criar Sofia SDR como agente default
+  // Criar Polaris SDR como agente default
   const sofiaAgent = await prisma.agent.upsert({
     where: {
-      id: '00000000-0000-0000-0000-000000000001' // ID fixo para Sofia
+      id: '00000000-0000-0000-0000-000000000001' // ID fixo para Polaris IA
     },
     update: {},
     create: {
       id: '00000000-0000-0000-0000-000000000001',
-      name: 'Sofia SDR',
+      name: 'Polaris SDR',
       description: 'Assistente virtual especializada em atendimento e qualificação de leads imobiliários',
-      systemPrompt: `Você é Sofia, uma assistente virtual especializada em atendimento imobiliário.
+      systemPrompt: `Você é Polaris IA, uma assistente virtual especializada em atendimento imobiliário.
 
 Seu objetivo é qualificar leads interessados em imóveis através de conversas naturais e amigáveis pelo WhatsApp.
 
@@ -229,7 +229,7 @@ Lembre-se: você está aqui para ajudar e facilitar a busca do imóvel ideal!`,
       }
     }
   })
-  console.log('✅ Sofia SDR Agent criado:', sofiaAgent.name)
+  console.log('✅ Polaris SDR Agent criado:', sofiaAgent.name)
 
   // Criar integração WhatsApp default
   const whatsappIntegration = await prisma.integration.upsert({

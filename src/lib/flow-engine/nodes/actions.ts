@@ -122,8 +122,8 @@ export const actionDelay: NodeDefinition = {
 export const actionAiAgent: NodeDefinition = {
     type: 'action_ai_agent',
     category: 'action',
-    label: 'Agente IA (Sofia)',
-    description: 'Envia um prompt a um agente IA da Sofia e retorna a resposta.',
+    label: 'Agente IA (Polaris IA)',
+    description: 'Envia um prompt a um agente IA da Polaris IA e retorna a resposta.',
     icon: 'Bot',
     color: 'blue',
     configFields: [
@@ -338,7 +338,7 @@ export const actionOrchestration: NodeDefinition = {
     type: 'action_orchestration',
     category: 'action',
     label: 'Orquestração Multi-Agente',
-    description: 'Executa uma orquestração multi-agente da Sofia como etapa do flow.',
+    description: 'Executa uma orquestração multi-agente da Polaris IA como etapa do flow.',
     icon: 'Network',
     color: 'purple',
     configFields: [

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // POST /api/beta/apply — salva candidatura ao programa beta
@@ -60,24 +60,24 @@ export async function POST(request: NextRequest) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Sofia AI <noreply@sofiaia.roilabs.com.br>',
+            from: 'Polaris IA <noreply@polarisia.com.br>',
             to: [email],
-            subject: 'Candidatura ao Beta da Sofia AI recebida!',
+            subject: 'Candidatura ao Beta da Polaris IA recebida!',
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
                 <h1 style="color: #6366f1;">Candidatura Recebida!</h1>
                 <p>Olá <strong>${name}</strong>,</p>
-                <p>Recebemos sua candidatura ao programa beta da Sofia AI. Obrigado pelo interesse!</p>
+                <p>Recebemos sua candidatura ao programa beta da Polaris IA. Obrigado pelo interesse!</p>
                 <p>Nossa equipe vai analisar sua candidatura e entrar em contato em até <strong>48 horas</strong>.</p>
                 <p>Enquanto isso, você pode:</p>
                 <ul>
                   <li>Entrar no nosso <a href="https://discord.gg/sofiaia">Discord</a> para acompanhar novidades</li>
-                  <li>Explorar a <a href="https://sofiaia.roilabs.com.br">plataforma</a> com o plano gratuito</li>
+                  <li>Explorar a <a href="https://polarisia.com.br">plataforma</a> com o plano gratuito</li>
                 </ul>
                 <p style="color: #6b7280; font-size: 14px;">
                   Protocolo: ${application.id} | Plano solicitado: ${plan || 'Pro'}
                 </p>
-                <p>Até logo,<br/>Time Sofia AI</p>
+                <p>Até logo,<br/>Time Polaris IA</p>
               </div>
             `,
           }),

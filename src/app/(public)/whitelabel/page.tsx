@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -18,15 +18,15 @@ import { AnimatedSection } from '@/components/landing/AnimatedSection'
 import { GradientText } from '@/components/landing/GradientText'
 
 export const metadata: Metadata = {
-  title: 'White-label Sofia AI — Plataforma de IA com Sua Marca',
-  description: 'Ofereça uma plataforma de agentes IA completa com a sua marca. Sofia AI White-label para agências, consultorias e empresas que querem revender ou incorporar IA ao seu produto.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/whitelabel' },
+  title: 'White-label Polaris IA — Plataforma de IA com Sua Marca',
+  description: 'Ofereça uma plataforma de agentes IA completa com a sua marca. Polaris IA White-label para agências, consultorias e empresas que querem revender ou incorporar IA ao seu produto.',
+  alternates: { canonical: 'https://polarisia.com.br/whitelabel' },
   openGraph: {
-    title: 'Sofia AI White-label — IA com Sua Marca',
+    title: 'Polaris IA White-label — IA com Sua Marca',
     description: 'Plataforma multi-agente completa sob sua marca. Para agências, consultorias e ISVs.',
     type: 'website',
     locale: 'pt_BR',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
 }
@@ -130,7 +130,7 @@ export default function WhitelabelPage() {
 
       {/* Use cases */}
       <SectionWrapper>
-        <SectionHeader title="Quem usa white-label Sofia AI" />
+        <SectionHeader title="Quem usa white-label Polaris IA" />
         <AnimatedSection>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {useCases.map((uc) => (

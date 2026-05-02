@@ -1,4 +1,4 @@
-import { ImageResponse } from 'next/og'
+﻿import { ImageResponse } from 'next/og'
 
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
@@ -14,7 +14,7 @@ export default async function Image() {
           <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #3b82f6, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '20px', color: '#fff', fontWeight: '700' }}>S</span>
           </div>
-          <span style={{ fontSize: '22px', fontWeight: '700', color: '#ffffff', letterSpacing: '-0.5px' }}>Sofia AI</span>
+          <span style={{ fontSize: '22px', fontWeight: '700', color: '#ffffff', letterSpacing: '-0.5px' }}>Polaris IA</span>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, alignItems: 'center', justifyContent: 'center', padding: '0 80px', gap: '20px' }}>
@@ -31,7 +31,7 @@ export default async function Image() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 60px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-          <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.3)' }}>sofiaia.roilabs.com.br</span>
+          <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.3)' }}>polarisia.com.br</span>
           <div style={{ display: 'flex', gap: '24px' }}>
             <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)', padding: '4px 12px', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.1)' }}>Free</span>
             <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)', padding: '4px 12px', borderRadius: '100px', border: '1px solid rgba(255,255,255,0.1)' }}>Pro</span>

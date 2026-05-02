@@ -1,5 +1,5 @@
-/**
- * Plan limit enforcement helpers for Sofia IA.
+﻿/**
+ * Plan limit enforcement helpers for Polaris IA.
  *
  * Plans:
  *   free     — 2 agents, 100 msgs/month, 1 KB

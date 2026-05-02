@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { BrainCircuit, ChevronRight, GitBranch, Bot, Zap } from 'lucide-react'
 import { SectionWrapper, SectionHeader } from '@/components/landing/SectionWrapper'
@@ -10,7 +10,7 @@ import { TemplateCard } from '@/components/landing/TemplateCard'
 import { templates, categories } from '@/data/templates'
 
 export const metadata: Metadata = {
-  title: 'Templates de Orquestração de Agentes IA | Sofia AI',
+  title: 'Templates de Orquestração de Agentes IA | Polaris IA',
   description: 'Galeria de templates prontos de orquestração multi-agente. Marketing, Suporte, Pesquisa, Jurídico e mais. Comece em segundos com pipelines de IA pré-configurados.',
   keywords: [
     'templates orquestração ia',
@@ -19,25 +19,25 @@ export const metadata: Metadata = {
     'template marketing ia',
     'template suporte ia',
     'template pesquisa ia',
-    'sofia ai templates',
+    'Polaris IA templates',
     'agentes ia no-code templates'
   ],
   openGraph: {
-    title: 'Templates de Orquestração de Agentes IA | Sofia AI',
+    title: 'Templates de Orquestração de Agentes IA | Polaris IA',
     description: 'Galeria de pipelines prontos: Marketing, Suporte, Pesquisa, Jurídico e mais. Comece em segundos.',
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Sofia AI',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    siteName: 'Polaris IA',
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AI Orchestration Templates | Sofia AI',
+    title: 'AI Orchestration Templates | Polaris IA',
     description: 'Ready-to-use multi-agent pipelines: Marketing, Support, Research, Legal and more. Start in seconds.'
   },
   alternates: {
-    canonical: 'https://sofiaia.roilabs.com.br/templates'
+    canonical: 'https://polarisia.com.br/templates'
   }
 }
 
@@ -92,9 +92,9 @@ export default function TemplatesPage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'CollectionPage',
-            name: 'Templates de Orquestração de Agentes IA — Sofia AI',
+            name: 'Templates de Orquestração de Agentes IA — Polaris IA',
             description: 'Galeria de pipelines prontos de orquestração multi-agente para Marketing, Suporte, Pesquisa, Jurídico e mais.',
-            url: 'https://sofiaia.roilabs.com.br/templates',
+            url: 'https://polarisia.com.br/templates',
             publisher: { '@type': 'Organization', name: 'ROI Labs', url: 'https://roilabs.com.br' },
             hasPart: templates.map(t => ({
               '@type': 'SoftwareSourceCode',
@@ -171,7 +171,7 @@ export default function TemplatesPage() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white">Mais Populares</h2>
-            <p className="text-sm text-foreground-tertiary">Os templates mais usados pela comunidade Sofia</p>
+            <p className="text-sm text-foreground-tertiary">Os templates mais usados pela comunidade Polaris IA</p>
           </div>
         </div>
         <AnimatedSection>

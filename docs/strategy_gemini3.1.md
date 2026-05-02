@@ -1,6 +1,6 @@
-# Estratégia de Melhoria Estética: Sofia Next (Gemini 3.1 Pro)
+# Estratégia de Melhoria Estética: Polaris IA Next (Gemini 3.1 Pro)
 
-A plataforma Sofia Next já possui uma base tecnológica moderna (Next.js 16, Tailwind v4, Framer Motion, Radix) e uma direção de arte *Dark Premium* que utiliza "glassmorphism" e luzes volumétricas subjacentes (os glow orbs e noise overlays).
+A plataforma Polaris IA Next já possui uma base tecnológica moderna (Next.js 16, Tailwind v4, Framer Motion, Radix) e uma direção de arte *Dark Premium* que utiliza "glassmorphism" e luzes volumétricas subjacentes (os glow orbs e noise overlays).
 
 Para elevar o frontend a um nível visual classe mundial (inspirado no padrão de design super-limpo e high-end visto em empresas como Linear, Vercel e Stripe), aqui está a estratégia formulada para a nossa próxima intervenção:
 

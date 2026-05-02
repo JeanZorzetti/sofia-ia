@@ -4,7 +4,7 @@ import { getAuthFromRequest } from '@/lib/auth'
 import { trackEvent } from '@/lib/analytics'
 import crypto from 'crypto'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
 
 export async function POST(
   req: NextRequest,

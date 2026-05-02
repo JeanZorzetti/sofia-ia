@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { chatWithSofia, chatWithAgent } from '@/lib/groq';
 import { prisma } from '@/lib/prisma';
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Call Sofia AI (compatibilidade com código legado)
+    // Call Polaris IA (compatibilidade com código legado)
     const result = await chatWithSofia(messages, leadContext, customPrompt);
 
     return NextResponse.json({

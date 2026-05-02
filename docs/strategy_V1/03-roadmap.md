@@ -1,4 +1,4 @@
-# Sofia — Roadmap Executável
+﻿# Polaris IA — Roadmap Executável
 
 > Última atualização: 25/02/2026
 > Status: Em execução
@@ -101,7 +101,7 @@
 - ✅ **P0** — Setup do blog (Next.js MDX ou CMS headless)
 - ✅ **P0** — Artigo pilar: "O que é Orquestração de Agentes IA"
   - Formato GEO: answer-first, tabelas, schema FAQ
-- ✅ **P0** — Artigo comparativo: "Sofia vs CrewAI vs AutoGen vs LangFlow"
+- ✅ **P0** — Artigo comparativo: "Polaris IA vs CrewAI vs AutoGen vs LangFlow"
 - ✅ **P1** — "Como Criar uma Equipe de Agentes IA sem Código"
 - ✅ **P1** — "Knowledge Base com RAG: O que é e Como Usar"
 - ✅ **P2** — "5 Orquestrações Prontas para sua Empresa"
@@ -191,7 +191,7 @@
 
 ### Modelo Comercial White-label
 
-O white-label permite que agências, consultorias e ISVs distribuam Sofia com sua própria marca para seus clientes, operando como um canal de vendas indireto da ROI Labs.
+O white-label permite que agências, consultorias e ISVs distribuam Polaris IA com sua própria marca para seus clientes, operando como um canal de vendas indireto da ROI Labs.
 
 #### Estrutura de Planos White-label
 
@@ -289,7 +289,7 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P0** — `/admin/metrics` — signups/dia, plano de cada usuário, MRR estimado, últimos logins
 
 ### Newsletter
-- ✅ **P1** — Template HTML responsivo Sofia AI (pronto para Resend)
+- ✅ **P1** — Template HTML responsivo Polaris IA (pronto para Resend)
 - ✅ **P1** — `POST /api/admin/newsletter/send` — envio para lista de assinantes (admin only)
 
 ### Conteúdo SEO (atingir 50+ artigos)
@@ -329,7 +329,7 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P0** — "Como Automatizar Atendimento ao Cliente com IA em 2026"
 - ✅ **P0** — "Multi-agente vs Single-agente: Quando Usar Cada Abordagem"
 - ✅ **P1** — "Como Criar Workflows de IA sem Programar"
-- ✅ **P1** — "Sofia AI vs n8n vs Zapier: Qual Usar para Automação com IA?"
+- ✅ **P1** — "Polaris IA vs n8n vs Zapier: Qual Usar para Automação com IA?"
 - ✅ **P2** — "10 Prompts de Sistema para Agentes IA de Alta Performance"
 
 ### Distribuição (manual)
@@ -362,9 +362,9 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 
 ### SEO — Camada 2/3 (cadência mensal)
 - ✅ **P0** — "Como Integrar Agentes IA com Slack, Email e Webhooks"
-- ✅ **P0** — "Programa de Afiliados de IA: Como Ganhar Indicando Sofia AI"
+- ✅ **P0** — "Programa de Afiliados de IA: Como Ganhar Indicando Polaris IA"
 - ✅ **P1** — "Google Login vs Email/Senha: Por que Login Social Aumenta Conversão"
-- ✅ **P1** — "Como Usar a API do Sofia AI: Guia para Desenvolvedores"
+- ✅ **P1** — "Como Usar a API do Polaris IA: Guia para Desenvolvedores"
 - ✅ **P2** — "Automação com Slack e IA: Notificações Inteligentes para Times"
 
 ---
@@ -380,7 +380,7 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P0** — OG image padrão do site (`/opengraph-image.tsx`) — 1200×630, branding + tagline + planos
 
 #### Páginas públicas
-- ✅ **P0** — OG dinâmica para a Home (`/`) — título, tagline e branding Sofia AI
+- ✅ **P0** — OG dinâmica para a Home (`/`) — título, tagline e branding Polaris IA
 - ✅ **P0** — OG dinâmica para artigos do blog (`/blog/[slug]`) — título do artigo + autor + data + logo
 - ✅ **P1** — OG dinâmica para páginas de feature (`/features/orchestrations`, `/templates`) — ícone + título da feature
 - ✅ **P1** — OG dinâmica para `/afiliados`, `/whitelabel`, `/enterprise` — headline + benefício principal
@@ -401,7 +401,7 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 
 ## Sprint 15 — Developer Platform + Execuções Agendadas + Agent Memory (Semana 49-52)
 
-**Objetivo**: Transformar Sofia AI de web app em plataforma — API pública real com auth por API key, SDK npm, agendamento de orquestrações (cron), e memória persistente de agentes entre sessões. Estes são os três desbloqueadores de enterprise, integrações nativas e retenção de longo prazo.
+**Objetivo**: Transformar Polaris IA de web app em plataforma — API pública real com auth por API key, SDK npm, agendamento de orquestrações (cron), e memória persistente de agentes entre sessões. Estes são os três desbloqueadores de enterprise, integrações nativas e retenção de longo prazo.
 
 ### Produto — API Pública v1 (developer platform)
 
@@ -419,7 +419,7 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P1** — `GET /api/v1/agents` — listar agentes do tenant
 
 #### HMAC de Webhooks
-- ✅ **P1** — Assinar todos os payloads de webhook de output com `X-Sofia-Signature: sha256=xxx`
+- ✅ **P1** — Assinar todos os payloads de webhook de output com `X-Polaris IA-Signature: sha256=xxx`
 - ✅ **P1** — Documentar verificação de assinatura na página `/docs/api`
 
 ### Produto — Execuções Agendadas (cron)
@@ -451,8 +451,8 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 ### SEO — Camada 2/3 (cadência mensal, 5 artigos)
 - ✅ **P0** — "Como Agendar Execuções de IA: Automatize Relatórios e Conteúdo com Cron Jobs"
 - ✅ **P0** — "Agent Memory: Como Dar Memória Persistente ao Seu Agente IA"
-- ✅ **P1** — "Como Usar a API REST do Sofia AI: Guia Completo com Exemplos"
-- ✅ **P1** — "SDK JavaScript para Agentes IA: Integrando Sofia AI em Qualquer Aplicação"
+- ✅ **P1** — "Como Usar a API REST do Polaris IA: Guia Completo com Exemplos"
+- ✅ **P1** — "SDK JavaScript para Agentes IA: Integrando Polaris IA em Qualquer Aplicação"
 - ✅ **P2** — "Webhook Seguro com HMAC: Verificando Assinaturas de Notificações IA"
 
 ---
@@ -513,7 +513,7 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ⬜ **P2** — Página `/integrations/slack` — como configurar bot Slack recebendo outputs de orquestrações
 
 ### SEO — Camada 2/3 (cadência mensal, 5 artigos)
-- ✅ **P0** — "Como Criar Workspace de IA para seu Time: Guia de Multi-usuário em Sofia AI"
+- ✅ **P0** — "Como Criar Workspace de IA para seu Time: Guia de Multi-usuário em Polaris IA"
 - ✅ **P0** — "Zapier + IA: Como Automatizar Workflows com Agentes de IA sem Código"
 - ✅ **P1** — "RBAC em SaaS: Por que Controle de Acesso por Papel é Essencial para Enterprise"
 - ✅ **P1** — "Audit Log em Aplicações IA: Compliance, Segurança e Rastreabilidade"
@@ -599,7 +599,7 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 
 ## Sprint 18 — SSO + AI Magic Create + PWA + i18n ES (Semana 61-64)
 
-**Objetivo**: Fechar o roadmap macro completo — SSO fecha o ciclo enterprise (RBAC+Audit+SSO), "Magic Create" é o diferencial explícito do macro ("descreva seu processo → Sofia cria a orquestração"), PWA entrega o mobile companion app, e i18n ES abre o mercado Latam (3x Brasil).
+**Objetivo**: Fechar o roadmap macro completo — SSO fecha o ciclo enterprise (RBAC+Audit+SSO), "Magic Create" é o diferencial explícito do macro ("descreva seu processo → Polaris IA cria a orquestração"), PWA entrega o mobile companion app, e i18n ES abre o mercado Latam (3x Brasil).
 
 ### Produto — SSO (Enterprise Sign-On)
 
@@ -658,13 +658,13 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 - ✅ **P0** — "Como Criar Workflows de IA Descrevendo em Linguagem Natural (AI Magic Create)"
 - ✅ **P1** — "PWA vs App Nativo: Por que Progressive Web Apps são o Futuro do SaaS Mobile"
 - ✅ **P1** — "Expansão Latam para SaaS: Por que Espanhol é a Próxima Fronteira da IA no Brasil"
-- ✅ **P2** — "Sofia AI en Español: La Plataforma de Orquestación de Agentes IA para Latinoamérica"
+- ✅ **P2** — "Polaris IA en Español: La Plataforma de Orquestación de Agentes IA para Latinoamérica"
 
 ---
 
 ## Sprint 19 — ERP Integrations + Beta Program + Open-Source Governance + GEO Avançado (Semana 65-68)
 
-**Objetivo**: Sprint de encerramento do planejamento macro original (24 meses). Cobre os últimos 4 itens buildáveis restantes: ERP fecha o trio do integration marketplace (HubSpot ✅, Salesforce ✅, ERP ⬜), beta program formaliza o canal de early adopters, open-source governance cria o moat de comunidade, e GEO avançado persegue o KPI "Sofia em 5+ respostas de LLMs".
+**Objetivo**: Sprint de encerramento do planejamento macro original (24 meses). Cobre os últimos 4 itens buildáveis restantes: ERP fecha o trio do integration marketplace (HubSpot ✅, Salesforce ✅, ERP ⬜), beta program formaliza o canal de early adopters, open-source governance cria o moat de comunidade, e GEO avançado persegue o KPI "Polaris IA em 5+ respostas de LLMs".
 
 ### Produto — ERP Integrations (Google Sheets + Notion + Totvs)
 
@@ -717,7 +717,7 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 
 ### GEO Avançado (Generative Engine Optimization)
 
-> Objetivo do macro: "Sofia aparecendo em 5+ respostas de LLMs sobre multi-agent platforms"
+> Objetivo do macro: "Polaris IA aparecendo em 5+ respostas de LLMs sobre multi-agent platforms"
 
 - ✅ **P0** — `public/llms.txt` — arquivo de contexto para LLMs seguindo o padrão llms.txt: descrição da plataforma, features principais, links canônicos, FAQ
 - ✅ **P0** — JSON-LD structured data em todas as páginas públicas — `SoftwareApplication`, `WebSite`, `BreadcrumbList`
@@ -729,7 +729,7 @@ O integrador tem liberdade total de precificação. Referência de markup sugeri
 
 ### SEO — Camada 2/3 (cadência mensal, 5 artigos)
 - ✅ **P0** — "Google Sheets + IA: Como Ler e Escrever Planilhas com Agentes Inteligentes"
-- ✅ **P0** — "Notion + Agentes IA: Automatize sua Base de Conhecimento com Sofia AI"
+- ✅ **P0** — "Notion + Agentes IA: Automatize sua Base de Conhecimento com Polaris IA"
 - ✅ **P1** — "O que é llms.txt: O Novo Padrão para Otimizar Sites para IA Generativa"
 - ✅ **P1** — "Como Criar um Programa de Beta Testers para seu SaaS: Guia Completo"
 - ✅ **P2** — "Open Source Governance: Como Estruturar Contribuição em Projetos de IA"

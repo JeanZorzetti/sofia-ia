@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -19,25 +19,25 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Como Funciona o Sofia AI — Orquestração de Agentes IA',
-  description: 'Entenda como o Sofia AI funciona: crie agentes com papéis específicos, monte orquestrações visuais, conecte Knowledge Bases e execute pipelines com streaming em tempo real.',
+  title: 'Como Funciona o Polaris IA — Orquestração de Agentes IA',
+  description: 'Entenda como o Polaris IA funciona: crie agentes com papéis específicos, monte orquestrações visuais, conecte Knowledge Bases e execute pipelines com streaming em tempo real.',
   keywords: [
-    'como funciona sofia ai',
+    'como funciona Polaris IA',
     'como funciona orquestração agentes ia',
-    'tutorial sofia ai',
+    'tutorial Polaris IA',
     'passo a passo agentes ia',
     'criar agentes ia sem código',
     'pipeline agentes ia como usar',
   ],
   openGraph: {
-    title: 'Como Funciona o Sofia AI',
+    title: 'Como Funciona o Polaris IA',
     description: 'Do zero à primeira orquestração em 5 minutos. Guia passo a passo.',
     type: 'website',
     locale: 'pt_BR',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/como-funciona' },
+  alternates: { canonical: 'https://polarisia.com.br/como-funciona' },
 }
 
 const steps = [
@@ -79,7 +79,7 @@ const steps = [
     number: '03',
     icon: Database,
     title: 'Conecte sua Knowledge Base',
-    description: 'Faça upload de documentos PDF, DOCX, CSV ou TXT. O Sofia vetoriza automaticamente com embeddings e indexa no pgvector. Seus agentes passam a responder com contexto real do seu negócio.',
+    description: 'Faça upload de documentos PDF, DOCX, CSV ou TXT. A Polaris IA vetoriza automaticamente com embeddings e indexa no pgvector. Seus agentes passam a responder com contexto real do seu negócio.',
     details: [
       'Upload drag-and-drop de documentos',
       'Vetorização automática com embeddings',
@@ -164,8 +164,8 @@ export default function ComoFuncionaPage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'HowTo',
-            name: 'Como usar o Sofia AI para orquestração de agentes IA',
-            description: 'Guia passo a passo para criar e executar orquestrações de agentes IA no Sofia AI.',
+            name: 'Como usar o Polaris IA para orquestração de agentes IA',
+            description: 'Guia passo a passo para criar e executar orquestrações de agentes IA no Polaris IA.',
             step: steps.map((s, i) => ({
               '@type': 'HowToStep',
               position: i + 1,
@@ -190,7 +190,7 @@ export default function ComoFuncionaPage() {
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
             Como funciona o{' '}
             <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Sofia AI
+              Polaris IA
             </span>
           </h1>
           <p className="text-lg text-foreground-tertiary max-w-2xl mx-auto mb-10">

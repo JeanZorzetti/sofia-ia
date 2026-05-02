@@ -1,21 +1,21 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, BrainCircuit } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Termos de Uso — Sofia AI',
-  description: 'Termos de uso da plataforma Sofia AI. Leia antes de utilizar nossos serviços.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/termos' },
+  title: 'Termos de Uso — Polaris IA',
+  description: 'Termos de uso da plataforma Polaris IA. Leia antes de utilizar nossos serviços.',
+  alternates: { canonical: 'https://polarisia.com.br/termos' },
 }
 
 const sections = [
   {
     title: '1. Aceitação dos Termos',
-    content: 'Ao acessar ou usar a plataforma Sofia AI, você concorda em cumprir e ficar vinculado a estes Termos de Uso. Se você não concordar com qualquer parte destes termos, não poderá acessar o serviço. Estes termos se aplicam a todos os visitantes, usuários e outras pessoas que acessam ou usam o serviço.',
+    content: 'Ao acessar ou usar a plataforma Polaris IA, você concorda em cumprir e ficar vinculado a estes Termos de Uso. Se você não concordar com qualquer parte destes termos, não poderá acessar o serviço. Estes termos se aplicam a todos os visitantes, usuários e outras pessoas que acessam ou usam o serviço.',
   },
   {
     title: '2. Descrição do Serviço',
-    content: 'O Sofia AI é uma plataforma de orquestração de agentes de inteligência artificial desenvolvida pela ROI Labs. O serviço inclui ferramentas para criação de agentes IA, orquestração de pipelines, Knowledge Base com RAG semântico, IDE multi-modelo e canais de atendimento integrados.',
+    content: 'O Polaris IA é uma plataforma de orquestração de agentes de inteligência artificial desenvolvida pela ROI Labs. O serviço inclui ferramentas para criação de agentes IA, orquestração de pipelines, Knowledge Base com RAG semântico, IDE multi-modelo e canais de atendimento integrados.',
   },
   {
     title: '3. Conta de Usuário',
@@ -23,7 +23,7 @@ const sections = [
   },
   {
     title: '4. Planos e Pagamentos',
-    content: 'O Sofia AI oferece planos gratuitos e pagos. Os planos pagos são cobrados mensalmente via Mercado Pago (PIX ou cartão de crédito). Você pode cancelar sua assinatura a qualquer momento. O cancelamento será efetivo ao final do período de faturamento vigente. Não realizamos reembolsos proporcionais por cancelamentos antecipados.',
+    content: 'O Polaris IA oferece planos gratuitos e pagos. Os planos pagos são cobrados mensalmente via Mercado Pago (PIX ou cartão de crédito). Você pode cancelar sua assinatura a qualquer momento. O cancelamento será efetivo ao final do período de faturamento vigente. Não realizamos reembolsos proporcionais por cancelamentos antecipados.',
   },
   {
     title: '5. Uso Aceitável',
@@ -31,7 +31,7 @@ const sections = [
   },
   {
     title: '6. Propriedade Intelectual',
-    content: 'O Sofia AI e seu conteúdo original, funcionalidades e recursos são propriedade da ROI Labs e estão protegidos por leis de direitos autorais, marcas registradas e outras leis de propriedade intelectual. O código-fonte está disponível sob licença MIT no GitHub. Você retém todos os direitos sobre o conteúdo que você cria e processa através da plataforma.',
+    content: 'O Polaris IA e seu conteúdo original, funcionalidades e recursos são propriedade da ROI Labs e estão protegidos por leis de direitos autorais, marcas registradas e outras leis de propriedade intelectual. O código-fonte está disponível sob licença MIT no GitHub. Você retém todos os direitos sobre o conteúdo que você cria e processa através da plataforma.',
   },
   {
     title: '7. Privacidade',

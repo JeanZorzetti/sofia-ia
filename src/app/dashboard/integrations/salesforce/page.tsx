@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -190,7 +190,7 @@ export default function SalesforceIntegrationPage() {
         <h3 className="text-white font-medium mb-2">Como configurar no Salesforce</h3>
         <ol className="text-white/70 text-sm space-y-1.5">
           <li><span className="text-blue-400 font-mono">1.</span> No Salesforce Setup, crie um Connected App com OAuth habilitado</li>
-          <li><span className="text-blue-400 font-mono">2.</span> Configure callback URL: <code className="text-white/60">https://sofiaia.roilabs.com.br/api/integrations/salesforce/callback</code></li>
+          <li><span className="text-blue-400 font-mono">2.</span> Configure callback URL: <code className="text-white/60">https://polarisia.com.br/api/integrations/salesforce/callback</code></li>
           <li><span className="text-blue-400 font-mono">3.</span> Copie Consumer Key e Secret para as env vars do Vercel</li>
           <li><span className="text-blue-400 font-mono">4.</span> Clique em &ldquo;Conectar Salesforce&rdquo; acima</li>
         </ol>

@@ -1,4 +1,4 @@
-# ROI Labs Platform - API Documentation
+﻿# ROI Labs Platform - API Documentation
 
 ## Overview
 
@@ -7,7 +7,7 @@ A ROI Labs Platform oferece uma API RESTful completa para integração com siste
 ## Base URL
 
 ```
-Production: https://sofiaia.roilabs.com.br/api
+Production: https://polarisia.com.br/api
 Development: http://localhost:3000/api
 ```
 
@@ -17,7 +17,7 @@ Todas as requisições à API requerem autenticação via API Key no header Auth
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-  https://sofiaia.roilabs.com.br/api/agents
+  https://polarisia.com.br/api/agents
 ```
 
 ### Obtendo uma API Key
@@ -333,7 +333,7 @@ import { ROILabsClient } from '@roilabs/api-client'
 
 const client = new ROILabsClient({
   apiKey: 'YOUR_API_KEY',
-  baseUrl: 'https://sofiaia.roilabs.com.br/api'
+  baseUrl: 'https://polarisia.com.br/api'
 })
 
 // Listar agentes
@@ -372,7 +372,7 @@ result = client.orchestrations.execute(
 Acesse a documentação interativa com Swagger UI:
 
 ```
-https://sofiaia.roilabs.com.br/api-docs
+https://polarisia.com.br/api-docs
 ```
 
 Ou localmente:

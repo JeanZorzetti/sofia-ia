@@ -1,6 +1,6 @@
-export const pt = {
+﻿export const pt = {
   meta: {
-    title: 'Sofia AI — Plataforma de Orquestração de Agentes IA',
+    title: 'Polaris IA — Plataforma de Orquestração de Agentes IA',
     description: 'Crie equipes de agentes IA que trabalham juntos para resolver tarefas complexas. Orquestrações multi-agente, Knowledge Base com RAG e IDE multi-modelo.',
   },
   nav: {

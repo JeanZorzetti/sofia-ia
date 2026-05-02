@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -82,26 +82,26 @@ export async function PATCH(request: NextRequest) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Sofia AI <noreply@sofiaia.roilabs.com.br>',
+            from: 'Polaris IA <noreply@polarisia.com.br>',
             to: [application.email],
-            subject: 'Parabens! Voce foi aprovado no Beta da Sofia AI',
+            subject: 'Parabens! Voce foi aprovado no Beta da Polaris IA',
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
                 <h1 style="color: #6366f1;">Voce foi aprovado!</h1>
                 <p>Ola <strong>${application.name}</strong>,</p>
-                <p>Temos otimas noticias: sua candidatura ao programa beta da Sofia AI foi <strong>aprovada</strong>!</p>
+                <p>Temos otimas noticias: sua candidatura ao programa beta da Polaris IA foi <strong>aprovada</strong>!</p>
                 <p>Como beta tester, voce tem acesso a:</p>
                 <ul>
-                  <li>Plataforma completa em <a href="https://sofiaia.roilabs.com.br">sofiaia.roilabs.com.br</a></li>
+                  <li>Plataforma completa em <a href="https://polarisia.com.br">polarisia.com.br</a></li>
                   <li>Canal privado #beta no <a href="https://discord.gg/sofiaia">Discord</a></li>
                   <li>Badge exclusiva "Beta Tester" no seu perfil</li>
                 </ul>
                 <p>
-                  <a href="https://sofiaia.roilabs.com.br/cadastro" style="background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block;">
+                  <a href="https://polarisia.com.br/cadastro" style="background: #6366f1; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; display: inline-block;">
                     Comecar Agora
                   </a>
                 </p>
-                <p>Bem-vindo ao time,<br/>Time Sofia AI</p>
+                <p>Bem-vindo ao time,<br/>Time Polaris IA</p>
               </div>
             `,
           }),

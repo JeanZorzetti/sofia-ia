@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   Zap,
@@ -11,13 +11,13 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Integracao Zapier | Sofia AI — Automate with 7,000+ Apps',
+  title: 'Integracao Zapier | Polaris IA — Automate with 7,000+ Apps',
   description:
-    'Conecte Sofia AI ao Zapier e automatize workflows com mais de 7.000 apps sem escrever codigo. Guia passo-a-passo completo.',
+    'Conecte Polaris IA ao Zapier e automatize workflows com mais de 7.000 apps sem escrever codigo. Guia passo-a-passo completo.',
   openGraph: {
-    title: 'Sofia AI + Zapier',
+    title: 'Polaris IA + Zapier',
     description: 'Automatize orquestracoes de IA com Zapier. Sem codigo necessario.',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
 }
@@ -27,7 +27,7 @@ const STEPS = [
     num: '1',
     title: 'Gere sua API Key',
     description:
-      'Acesse o dashboard da Sofia AI e gere uma API Key em /dashboard/api-keys. Copie a chave que começa com sk_live_.',
+      'Acesse o dashboard da Polaris IA e gere uma API Key em /dashboard/api-keys. Copie a chave que começa com sk_live_.',
     code: null,
     cta: { label: 'Gerar API Key', href: '/dashboard/api-keys' },
   },
@@ -44,7 +44,7 @@ const STEPS = [
     title: 'Adicione a Action HTTP Request',
     description:
       'Na etapa de Action, escolha "Webhooks by Zapier" > "POST". Configure a URL, adicione o header x-api-key com sua chave e o body JSON.',
-    code: `URL: https://sofiaia.roilabs.com.br/api/v1/integrations/zapier/execute
+    code: `URL: https://polarisia.com.br/api/v1/integrations/zapier/execute
 
 Headers:
   x-api-key: sk_live_SEU_TOKEN
@@ -61,7 +61,7 @@ Body (JSON):
     num: '4',
     title: 'Monitore as execucoes',
     description:
-      'Acompanhe todas as execucoes disparadas pelo Zapier no seu dashboard da Sofia AI em tempo real.',
+      'Acompanhe todas as execucoes disparadas pelo Zapier no seu dashboard da Polaris IA em tempo real.',
     code: null,
     cta: { label: 'Ver Dashboard', href: '/dashboard/orchestrations' },
   },
@@ -71,25 +71,25 @@ const USE_CASES = [
   {
     title: 'CRM → Proposta com IA',
     description:
-      'Novo lead no HubSpot → Zapier dispara orquestracao → Sofia gera proposta personalizada → envia por email.',
+      'Novo lead no HubSpot → Zapier dispara orquestracao → Polaris IA gera proposta personalizada → envia por email.',
     icon: '🎯',
   },
   {
     title: 'Email → Triagem Automatica',
     description:
-      'Email recebido no Gmail → Zapier captura → Sofia classifica e responde → notifica no Slack.',
+      'Email recebido no Gmail → Zapier captura → Polaris IA classifica e responde → notifica no Slack.',
     icon: '📧',
   },
   {
     title: 'Planilha → Analise de Dados',
     description:
-      'Nova linha no Google Sheets → Zapier envia para Sofia → agente analisa e gera resumo → salva em Notion.',
+      'Nova linha no Google Sheets → Zapier envia para Polaris IA → agente analisa e gera resumo → salva em Notion.',
     icon: '📊',
   },
   {
     title: 'Formulario → Onboarding',
     description:
-      'Form TypeForm preenchido → Zapier notifica → Sofia gera sequencia de onboarding personalizada.',
+      'Form TypeForm preenchido → Zapier notifica → Polaris IA gera sequencia de onboarding personalizada.',
     icon: '📋',
   },
 ]
@@ -132,7 +132,7 @@ export default function ZapierIntegrationPage() {
                 Popular
               </span>
             </div>
-            <h1 className="text-3xl font-bold">Sofia AI + Zapier</h1>
+            <h1 className="text-3xl font-bold">Polaris IA + Zapier</h1>
             <p className="text-white/50 mt-1">
               Conecte orquestracoes de IA a 7.000+ apps sem escrever codigo
             </p>
@@ -140,9 +140,9 @@ export default function ZapierIntegrationPage() {
         </div>
 
         <p className="text-white/60 text-lg leading-relaxed mb-12">
-          Com a integracao Zapier, voce pode disparar orquestracoes de IA da Sofia como action
+          Com a integracao Zapier, voce pode disparar orquestracoes de IA da Polaris IA como action
           de qualquer Zap. Quando um formulario e preenchido, um email chega, um lead e criado
-          no CRM ou qualquer outro evento — Sofia entra em acao automaticamente.
+          no CRM ou qualquer outro evento — Polaris IA entra em acao automaticamente.
         </p>
 
         {/* Steps */}
@@ -187,12 +187,12 @@ export default function ZapierIntegrationPage() {
         <section className="mb-16">
           <h2 className="text-2xl font-bold mb-4">Endpoint de Polling (Trigger)</h2>
           <p className="text-white/50 mb-6">
-            Voce tambem pode usar a Sofia como trigger no Zapier via polling. O endpoint abaixo
+            Voce tambem pode usar a Polaris IA como trigger no Zapier via polling. O endpoint abaixo
             retorna as ultimas 10 execucoes concluidas, compativel com o formato de polling do Zapier.
           </p>
           <div className="bg-black/40 rounded-xl p-5 font-mono text-sm overflow-x-auto">
             <pre className="text-white/70 whitespace-pre">{`# Polling trigger: ultimas execucoes concluidas
-GET https://sofiaia.roilabs.com.br/api/v1/integrations/zapier/poll
+GET https://polarisia.com.br/api/v1/integrations/zapier/poll
 Headers:
   x-api-key: sk_live_SEU_TOKEN
 
@@ -235,7 +235,7 @@ Headers:
         <div className="bg-gradient-to-r from-orange-500/10 to-blue-500/10 border border-white/10 rounded-2xl p-8 text-center">
           <h2 className="text-2xl font-bold mb-3">Pronto para automatizar?</h2>
           <p className="text-white/50 mb-6">
-            Gere sua API Key e conecte Sofia AI ao Zapier em menos de 5 minutos.
+            Gere sua API Key e conecte Polaris IA ao Zapier em menos de 5 minutos.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link

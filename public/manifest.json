@@ -1,6 +1,6 @@
-{
-  "name": "Sofia AI",
-  "short_name": "Sofia AI",
+﻿{
+  "name": "Polaris IA",
+  "short_name": "Polaris IA",
   "description": "Plataforma de Orquestração de Agentes IA — crie equipes de IA que trabalham juntas",
   "start_url": "/dashboard",
   "scope": "/",

@@ -1,0 +1,465 @@
+{
+  "_group": "06_cognitive_orchestrator",
+  "_description": "Cognitive Orchestrator -> Strategy Optimizer -> Response Synthesizer -> Tools ROI/Psychology/Business",
+  "_node_count": 14,
+  "name": "Base_Imob_v2_Congnitive",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-3-5-sonnet-20241022",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 3.5 (New)"
+        },
+        "options": {
+          "maxTokensToSample": 1000,
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        944,
+        1200
+      ],
+      "id": "f777598c-e831-4db3-816b-8dcddcb61148",
+      "name": "Anthropic Chat Model"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-sonnet-4-20250514",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 4"
+        },
+        "options": {
+          "maxTokensToSample": 2000,
+          "temperature": 0.1,
+          "topP": 1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        -1760,
+        1104
+      ],
+      "id": "44a96993-80b9-440b-89f3-9a9ade1ea81d",
+      "name": "Anthropic Chat Model1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Obter dados do contexto atual\nconst dadosCliente = $('Dados').item.json;\nconst mensagemIA = $('Atendente').item.json;\n\n// Determinar tipo de evento baseado na interação\nlet eventType = 'message'; // padrão (8 caracteres)\nlet leadValue = 65.00;\n\n// Detectar se é primeira interação (potencial ad_click_to_whatsapp)\nlet isFirstMessage = false;\ntry {\n  const buscaTelefone = $('Busca Telefone').item?.json;\n  isFirstMessage = !buscaTelefone || !buscaTelefone.values || buscaTelefone.values.length === 0;\n} catch (error) {\n  isFirstMessage = true;\n}\n\nif (isFirstMessage) {\n  eventType = 'ad_click'; // encurtado para 8 caracteres\n  leadValue = 85.00;\n}\n\n// Detectar se houve agendamento ou interesse (lead_generation)\nconst responseText = mensagemIA.output?.toLowerCase() || '';\nconst hasScheduling = responseText.includes('agendar') || \n                     responseText.includes('reunião') || \n                     responseText.includes('demo') ||\n                     responseText.includes('calendário');\n\nif (hasScheduling) {\n  eventType = 'lead_gen'; // encurtado para 8 caracteres\n  leadValue = 100.00;\n}\n\n// Função para truncar strings para máximo de caracteres\nconst truncate = (str, maxLength = 20) => {\n  return str ? str.toString().substring(0, maxLength) : '';\n};\n\n// Preparar dados para inserção na tabela conversion_events\nconst conversionData = {\n  // Status\n  status: 'pending',\n  \n  // Dados do cliente (truncados para 20 chars)\n  customer_phone: truncate(dadosCliente.Telefone, 20),\n  customer_name: truncate(dadosCliente.NomeWpp, 20),\n  customer_wa_id: truncate(dadosCliente.Telefone, 20),\n  \n  // Dados da mensagem (IDs truncados)\n  message_id: truncate(`msg_${Date.now()}`, 20),\n  message_timestamp: Math.floor(Date.now() / 1000),\n  message_type: 'text',\n  message_text: truncate(dadosCliente.message?.content || '', 100),\n  \n  // Dados do negócio\n  waba_id: 'waba_123',\n  phone_number_id: 'phone_123',\n  business_phone: '+5511999887766',\n  \n  // Tipo de evento e valor\n  event_type: eventType,\n  lead_value: leadValue,\n  business_category: 'food',\n  predicted_ltv: 450.00,\n  \n  // Dados de sessão (truncados)\n  session_id: truncate(`sess_${Date.now()}`, 20),\n  conversation_id: truncate(dadosCliente.Telefone, 20),\n  \n  // Metadados\n  source: 'workflow_1',\n  additional_data: {\n    has_interest: true,\n    interaction: 1,\n    exec_id: $executionId\n  }\n};\n\n// Log para debug\nconsole.log('🔄 Preparando evento de conversão:', {\n  event_type: eventType,\n  customer_phone: dadosCliente.Telefone,\n  lead_value: leadValue,\n  is_first_message: isFirstMessage,\n  has_scheduling: hasScheduling\n});\n\n// Retornar dados para o nó Supabase\nreturn [{ json: conversionData }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1808,
+        1008
+      ],
+      "id": "1841bde0-446c-43e5-93cb-1617e7067292",
+      "name": "Detectar Evento de Conversão",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "tableId": "conversion_events",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.status }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $json.customer_phone }}"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $json.customer_name }}"
+            },
+            {
+              "fieldId": "customer_wa_id",
+              "fieldValue": "={{ $json.customer_wa_id }}"
+            },
+            {
+              "fieldId": "message_id",
+              "fieldValue": "={{ $json.message_id }}"
+            },
+            {
+              "fieldId": "message_timestamp",
+              "fieldValue": "={{ $json.message_timestamp }}"
+            },
+            {
+              "fieldId": "message_type",
+              "fieldValue": "={{ $json.message_type }}"
+            },
+            {
+              "fieldId": "message_text",
+              "fieldValue": "={{ $json.message_text }}"
+            },
+            {
+              "fieldId": "waba_id",
+              "fieldValue": "={{ $json.waba_id }}"
+            },
+            {
+              "fieldId": "phone_number_id",
+              "fieldValue": "={{ $json.phone_number_id }}"
+            },
+            {
+              "fieldId": "business_phone",
+              "fieldValue": "={{ $json.business_phone }}"
+            },
+            {
+              "fieldId": "event_type",
+              "fieldValue": "={{ $json.event_type }}"
+            },
+            {
+              "fieldId": "lead_value",
+              "fieldValue": "={{ $json.lead_value }}"
+            },
+            {
+              "fieldId": "business_category",
+              "fieldValue": "={{ $json.business_category }}"
+            },
+            {
+              "fieldId": "predicted_ltv",
+              "fieldValue": "={{ $json.predicted_ltv }}"
+            },
+            {
+              "fieldId": "session_id",
+              "fieldValue": "={{ $json.session_id }}"
+            },
+            {
+              "fieldId": "conversation_id",
+              "fieldValue": "={{ $json.conversation_id }}"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "={{ $json.source }}"
+            },
+            {
+              "fieldId": "additional_data",
+              "fieldValue": "={{ $json.additional_data }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        1008
+      ],
+      "id": "e72feb32-662e-4bcb-8f02-85626219ece0",
+      "name": "Inserir Evento de Conversão",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-3-5-sonnet-20241022",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 3.5 (New)"
+        },
+        "options": {
+          "maxTokensToSample": 4000,
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        -928,
+        1184
+      ],
+      "id": "65356069-722b-4cd9-96ca-b43e7adfec40",
+      "name": "Anthropic Chat Model2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=RAG_INPUT: {{$('Agente Rag').item.json.output}}\nMESSAGE_CONTENT: {{$('Dados').item.json.content || $('Dados').item.json.message.content}}\nLEAD_PROFILE: {{$('Dados').item.json}}\nTIMESTAMP: {{new Date().toISOString()}}",
+        "options": {
+          "systemMessage": "# 🧠 COGNITIVE ORCHESTRATOR - IMPLEMENTAÇÃO COMPLETA\n\n## 🎯 **CONFIGURAÇÃO NO N8N**\n\n### **Nó Principal - Cognitive Orchestrator**\n\n```json\n{\n  \"id\": \"cognitive_orchestrator_v1\",\n  \"name\": \"🧠 Cognitive Orchestrator\",\n  \"type\": \"@n8n/n8n-nodes-langchain.agent\",\n  \"position\": [3200, 1720],\n  \"parameters\": {\n    \"model\": \"claude-4-sonnet\",\n    \"temperature\": 0.3,\n    \"maxTokens\": 4000,\n    \"promptType\": \"define\",\n    \"text\": \"RAG_INPUT: {{$('Agente Rag').item.json.output}}\\nMESSAGE_CONTENT: {{$('Mensagem Completa').item.json.mensagem_completa}}\\nCONVERSATION_HISTORY: {{$('Conversation Memory').item.json.recent_history}}\\nLEAD_PROFILE: {{$('Lead Profile').item.json.profile_data}}\",\n    \"options\": {\n      \"systemMessage\": \"[PROMPT DETALHADO ABAIXO]\",\n      \"extendedThinking\": true,\n      \"tools\": [\"business_case_generator\", \"psychology_analyzer\", \"roi_calculator\"]\n    }\n  }\n}\n```\n\n## 📋 **PROMPT SYSTEM COMPLETO**\n\n### **PROMPT DO COGNITIVE ORCHESTRATOR**\n\n```markdown\n# 🧠 COGNITIVE ORCHESTRATOR v1.0 - AGENTE METACOGNITIVO IMOBILIÁRIO\n\n## 🎯 **IDENTIDADE E MISSÃO**\n\nVocê é o **Agente Orquestrador Cognitivo**, o núcleo inteligente entre o sistema RAG e o Agente Atendente. Sua função é aplicar **raciocínio metacognitivo avançado** para transformar informações brutas em estratégias conversacionais otimizadas.\n\n### **🧠 CAPACIDADES COGNITIVAS CORE:**\n\n1. **EXTENDED THINKING MODE**: Pense profundamente antes de formular estratégias\n2. **METACOGNITIVE REFLECTION**: Avalie constantemente a qualidade de suas análises\n3. **CONTEXTUAL SYNTHESIS**: Combine múltiplas fontes de informação inteligentemente\n4. **STRATEGIC OPTIMIZATION**: Otimize cada resposta para máxima conversão\n5. **PSYCHOLOGICAL PROFILING**: Detecte perfis psicológicos e adapte comunicação\n\n## 📊 **INPUTS RECEBIDOS**\n\nVocê receberá:\n- **RAG_INPUT**: Informações técnicas do sistema RAG\n- **MESSAGE_CONTENT**: Mensagem atual do lead\n- **CONVERSATION_HISTORY**: Histórico da conversa\n- **LEAD_PROFILE**: Dados conhecidos do lead\n\n## 🔄 **PROCESSO COGNITIVO (SEMPRE SEGUIR)**\n\n### **FASE 1: EXTENDED THINKING ANALYSIS**\n```\n🧠 PENSAMENTO ESTENDIDO:\n- Analise profundamente o contexto emocional\n- Identifique padrões comportamentais\n- Detecte necessidades não explícitas\n- Avalie qualidade das informações RAG\n- Considere múltiplas estratégias possíveis\n```\n\n### **FASE 2: METACOGNITIVE ASSESSMENT**\n```\n🔍 AUTO-AVALIAÇÃO METACOGNITIVA:\n- Qual minha confiança na análise? (0-100%)\n- Que informações estão faltando?\n- Qual a complexidade real da situação?\n- Que riscos vejo na estratégia proposta?\n- Como posso otimizar ainda mais?\n```\n\n### **FASE 3: CONTEXTUAL SYNTHESIS**\n```\n⚡ SÍNTESE CONTEXTUAL:\n- Combine RAG + contexto + perfil psicológico\n- Identifique o \"momento da conversa\"\n- Detecte oportunidades de qualificação\n- Prepare estratégia de abordagem otimizada\n```\n\n### **FASE 4: STRATEGIC OPTIMIZATION**\n```\n🎯 OTIMIZAÇÃO ESTRATÉGICA:\n- Defina abordagem ideal para este perfil\n- Escolha timing perfeito para ofertas\n- Selecione elementos persuasivos contextuais\n- Ajuste tom e linguagem para máxima receptividade\n```\n\n## 🎭 **PERFIS PSICOLÓGICOS E ESTRATÉGIAS**\n\n### **ANALYTICAL (Analítico)**\n- **Comunicação**: Dados concretos, evidências técnicas, ROI detalhado\n- **Persuasão**: Estatísticas, comparativos, estudos de caso\n- **Timing**: Após apresentar dados sólidos\n- **Elementos**: \"Baseado em dados reais...\", \"Estudos comprovam...\"\n\n### **DRIVER (Direcionador)**\n- **Comunicação**: Direta, focada em resultados, bottom-line\n- **Persuasão**: Impacto competitivo, urgência de mercado\n- **Timing**: Imediato, com senso de urgência\n- **Elementos**: \"Resultado imediato\", \"Vantagem competitiva\"\n\n### **EXPRESSIVE (Expressivo)**\n- **Comunicação**: Entusiasmada, inovação, tendências\n- **Persuasão**: Diferenciação, tecnologia de ponta\n- **Timing**: No pico do entusiasmo\n- **Elementos**: \"Inovação revolucionária\", \"Tecnologia de ponta\"\n\n### **AMIABLE (Amigável)**\n- **Comunicação**: Consultiva, empática, referências de pares\n- **Persuasão**: Cases de sucesso, depoimentos, confiança\n- **Timing**: Após construir rapport sólido\n- **Elementos**: \"Outros clientes relatam...\", \"Baseado na confiança...\"\n\n## 🚀 **FRAMEWORK DE DECISÃO CONTEXTUAL**\n\n### **CONTEXTOS DE URGÊNCIA**\n```javascript\nif (urgencia === \"crítica\" || lead_muito_quente) {\n    estrategia = \"abordagem_direta_com_oferta_imediata\";\n    timing_oferta = \"agora\";\n    elementos = [\"urgência\", \"oportunidade_limitada\"];\n}\n```\n\n### **CONTEXTOS DE QUALIFICAÇÃO**\n```javascript\nif (perfil_indefinido || gaps_informacionais.length > 2) {\n    estrategia = \"investigativa_consultiva\";\n    timing_oferta = \"após_qualificação\";\n    foco = \"descobrir_necessidades_reais\";\n}\n```\n\n### **CONTEXTOS DE CONVERSÃO**\n```javascript\nif (lead_qualificado && interesse_alto) {\n    estrategia = \"comercial_otimizada\";\n    timing_oferta = \"agora_com_incentivo\";\n    elementos = [\"prova_social\", \"escassez\", \"autoridade\"];\n}\n```\n\n## 🎯 **OUTPUT ESTRUTURADO (SEMPRE RETORNAR)**\n\n```json\n{\n  \"cognitive_analysis\": {\n    \"thinking_process\": \"descreva seu raciocínio estendido aqui\",\n    \"confidence_level\": \"85%\",\n    \"complexity_assessment\": \"media|alta|muito_alta\",\n    \"gaps_identified\": [\"lista de informações faltantes\"],\n    \"psychological_profile\": \"analytical|driver|expressive|amiable|mixed\"\n  },\n  \"contextual_insights\": {\n    \"emotional_state\": \"curioso|ansioso|frustrado|confiante|entusiasmado\",\n    \"urgency_level\": \"baixa|media|alta|crítica\",\n    \"lead_temperature\": \"frio|morno|quente|muito_quente\",\n    \"champ_phase\": \"challenges|authority|money|prioritization|interest\",\n    \"business_context\": {\n      \"company_type\": \"imobiliaria|construtora|corretor_autonomo|investidor\",\n      \"company_size\": \"pequena|media|grande\",\n      \"tech_maturity\": \"baixa|media|alta\"\n    }\n  },\n  \"strategic_recommendation\": {\n    \"primary_approach\": \"educativa|consultiva|comercial|empática|técnica\",\n    \"communication_tone\": \"formal|casual|técnico|emocional\",\n    \"persuasive_elements\": [\"autoridade\", \"prova_social\", \"escassez\"],\n    \"offer_timing\": \"agora|próxima_mensagem|após_qualificação\",\n    \"character_limit\": \"180|360\",\n    \"strategic_question\": \"pergunta específica para qualificação\",\n    \"call_to_action\": \"oferta contextualizada específica\"\n  },\n  \"content_optimization\": {\n    \"main_insight\": \"insight principal baseado no RAG otimizado\",\n    \"contextualization\": \"como se aplica à situação específica do lead\",\n    \"value_proposition\": \"benefício principal personalizado\",\n    \"proof_elements\": [\"dados específicos\", \"cases relevantes\"],\n    \"next_step_recommendation\": \"ação específica recomendada\"\n  },\n  \"metacognitive_metadata\": {\n    \"strategy_confidence\": \"90%\",\n    \"conversion_probability\": \"baixa|media|alta|muito_alta\",\n    \"improvement_suggestions\": [\"como otimizar ainda mais\"],\n    \"fallback_strategy\": \"estratégia alternativa se principal falhar\",\n    \"monitoring_flags\": [\"aspectos para monitorar na resposta\"]\n  }\n}\n```\n\n## ⚡ **REGRAS CRÍTICAS DE EXECUÇÃO**\n\n### **SEMPRE FAÇA:**\n1. ✅ Execute pensamento estendido ANTES de qualquer análise\n2. ✅ Avalie metacognitivamente sua confiança\n3. ✅ Detecte perfil psicológico do lead\n4. ✅ Otimize estratégia para conversão máxima\n5. ✅ Retorne JSON estruturado completo\n6. ✅ Mantenha naturalidade brasileira em mente\n\n### **NUNCA FAÇA:**\n1. ❌ Responda sem análise cognitiva profunda\n2. ❌ Ignore contexto emocional do lead\n3. ❌ Use estratégia genérica\n4. ❌ Esqueça de considerar timing de oferta\n5. ❌ Retorne resposta incompleta ou não estruturada\n\n## 🎪 **EXEMPLOS PRÁTICOS**\n\n### **EXEMPLO 1: Lead Analítico com Dúvida Técnica**\n```\nINPUT: \"Como funciona exatamente a integração da IA com nosso CRM?\"\n\nCOGNITIVE PROCESS:\n- Perfil: ANALYTICAL (pergunta técnica específica)\n- Estado: CURIOSO (quer entender funcionamento)\n- Estratégia: TÉCNICA com dados concretos\n- Timing: EDUCATIVO primeiro, oferta depois\n\nOUTPUT: Estratégia técnica detalhada com dados específicos\n```\n\n### **EXEMPLO 2: Lead Driver com Urgência**\n```\nINPUT: \"Preciso de uma solução rápida, nossos leads estão escapando!\"\n\nCOGNITIVE PROCESS:\n- Perfil: DRIVER (linguagem de urgência e resultados)\n- Estado: FRUSTRADO/URGENTE\n- Estratégia: DIRETA com ROI imediato\n- Timing: OFERTA AGORA\n\nOUTPUT: Abordagem direta com solução imediata\n```\n\n## 🔧 **FERRAMENTAS DISPONÍVEIS**\n\nQuando necessário, use as ferramentas:\n- **business_case_generator**: Para cálculos ROI específicos\n- **psychology_analyzer**: Para análise comportamental profunda\n- **roi_calculator**: Para projeções financeiras personalizadas\n\n---\n\n🎯 **SUA MISSÃO**: Transformar cada interação em uma oportunidade estratégica de conversão através de análise cognitiva profunda e otimização contextual inteligente.\n```\n\n## 🔌 **CONEXÕES NO FLUXO N8N**\n\n### **Entradas (Inputs)**\n```json\n{\n  \"connections\": {\n    \"input\": [\n      {\"node\": \"Agente Rag\", \"type\": \"main\", \"index\": 0},\n      {\"node\": \"Mensagem Completa\", \"type\": \"main\", \"index\": 0},\n      {\"node\": \"Context Memory\", \"type\": \"main\", \"index\": 0},\n      {\"node\": \"Lead Profile Store\", \"type\": \"main\", \"index\": 0}\n    ]\n  }\n}\n```\n\n### **Saídas (Outputs)**\n```json\n{\n  \"connections\": {\n    \"output\": [\n      {\"node\": \"Strategy Optimizer\", \"type\": \"main\", \"index\": 0},\n      {\"node\": \"Response Synthesizer\", \"type\": \"main\", \"index\": 0},\n      {\"node\": \"Cognitive Analytics Store\", \"type\": \"main\", \"index\": 0}\n    ]\n  }\n}\n```\n\n## 📊 **MONITORAMENTO E MÉTRICAS**\n\n### **KPIs do Cognitive Orchestrator**\n```json\n{\n  \"performance_metrics\": {\n    \"processing_time\": \"target: <8 segundos\",\n    \"confidence_accuracy\": \"target: >85%\",\n    \"profile_detection_accuracy\": \"target: >90%\",\n    \"strategy_effectiveness\": \"target: +300% conversão\"\n  },\n  \"quality_metrics\": {\n    \"cognitive_depth_score\": \"1-10 (target: >8)\",\n    \"strategy_relevance\": \"1-10 (target: >9)\",\n    \"personalization_level\": \"1-10 (target: >8)\"\n  }\n}\n```\n\n## 🚀 **PRÓXIMOS PASSOS**\n\n1. **TESTE ISOLADO**: Implemente apenas este nó primeiro\n2. **VALIDAÇÃO**: Teste com mensagens reais do seu fluxo\n3. **OTIMIZAÇÃO**: Ajuste prompts baseado nos resultados\n4. **INTEGRAÇÃO**: Conecte com resto da arquitetura\n\nQuer que eu ajude com algum aspecto específico da implementação?"
+        }
+      },
+      "id": "11f2a7f6-22a4-47ba-94a9-711f830d254e",
+      "name": "Cognitive Orchestrator",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        -896,
+        992
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Dados').item.json.Telefone }}",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -800,
+        1200
+      ],
+      "id": "3027d754-2d01-4ba4-8026-013e96781085",
+      "name": "Postgres Chat Memory3"
+    },
+    {
+      "parameters": {
+        "description": "Gera business case personalizado baseado no perfil da empresa\n",
+        "jsCode": "// Tool: Business Case Generator\nconst businessCaseGenerator = {\n  name: \"business_case_generator\",\n  description: \"Gera business case personalizado com ROI específico para o perfil da empresa\",\n  \n  async execute(companyData, currentMetrics = {}) {\n    try {\n      // Dados padrão do setor imobiliário brasileiro (2024-2025)\n      const industryBenchmarks = {\n        average_leads_month: 100,\n        current_conversion_rate: 0.042, // 4.2%\n        average_ticket: 2340,\n        leads_lost_timing: 0.73, // 73% perdidos por timing\n        response_time_critical: 300, // 5 minutos em segundos\n        weekend_leads_lost: 0.85 // 85% perdidos fins de semana\n      };\n\n      // Dados da empresa (extraídos do contexto)\n      const company = {\n        type: companyData.company_type || \"imobiliaria\",\n        size: companyData.company_size || \"media\",\n        leads_month: currentMetrics.leads_month || industryBenchmarks.average_leads_month,\n        current_conversion: currentMetrics.conversion || industryBenchmarks.current_conversion_rate,\n        avg_ticket: currentMetrics.ticket || industryBenchmarks.average_ticket,\n        team_size: currentMetrics.team_size || 10\n      };\n\n      // Cálculos de Situação Atual\n      const currentSituation = {\n        leads_month: company.leads_month,\n        leads_lost_timing: Math.floor(company.leads_month * industryBenchmarks.leads_lost_timing),\n        leads_lost_weekend: Math.floor(company.leads_month * 0.3 * industryBenchmarks.weekend_leads_lost),\n        current_revenue: company.leads_month * company.current_conversion * company.avg_ticket,\n        potential_revenue_lost: Math.floor(company.leads_month * industryBenchmarks.leads_lost_timing) * company.current_conversion * company.avg_ticket\n      };\n\n      // Projeções com SDR IA\n      const projectedWithIA = {\n        capture_rate: 0.98, // 98% captura\n        response_time: 25, // <30 segundos\n        conversion_improvement: 3.52, // +252% melhoria\n        new_conversion_rate: company.current_conversion * 3.52,\n        availability: \"24/7\",\n        leads_saved: Math.floor(currentSituation.leads_lost_timing * 0.95)\n      };\n\n      // Cálculos Financeiros\n      const financialProjections = {\n        new_monthly_revenue: company.leads_month * projectedWithIA.new_conversion_rate * company.avg_ticket,\n        additional_revenue_monthly: 0,\n        roi_percentage: 0,\n        payback_months: 1.4,\n        annual_additional_revenue: 0,\n        cost_per_lead_reduction: 67 // 67% redução no custo por lead\n      };\n\n      financialProjections.additional_revenue_monthly = \n        financialProjections.new_monthly_revenue - currentSituation.current_revenue;\n      \n      financialProjections.annual_additional_revenue = \n        financialProjections.additional_revenue_monthly * 12;\n      \n      financialProjections.roi_percentage = 890; // ROI médio documentado\n\n      // Business Case Estruturado\n      const businessCase = {\n        executive_summary: {\n          company_profile: `${company.type} ${company.size} com ${company.team_size} profissionais`,\n          primary_challenge: \"Perda massiva de leads por timing de resposta inadequado\",\n          solution_impact: `+R$ ${financialProjections.additional_revenue_monthly.toLocaleString('pt-BR')}/mês em receita`,\n          roi_summary: `${financialProjections.roi_percentage}% ROI em 12 meses`\n        },\n\n        current_situation: {\n          leads_processing: {\n            monthly_leads: currentSituation.leads_month,\n            leads_lost_timing: currentSituation.leads_lost_timing,\n            leads_lost_weekend: currentSituation.leads_lost_weekend,\n            current_response_time: \"5-30 minutos (horário comercial)\",\n            weekend_coverage: \"0% (sem atendimento)\"\n          },\n          financial_impact: {\n            current_monthly_revenue: `R$ ${currentSituation.current_revenue.toLocaleString('pt-BR')}`,\n            monthly_revenue_lost: `R$ ${currentSituation.potential_revenue_lost.toLocaleString('pt-BR')}`,\n            annual_opportunity_cost: `R$ ${(currentSituation.potential_revenue_lost * 12).toLocaleString('pt-BR')}`,\n            current_conversion_rate: `${(company.current_conversion * 100).toFixed(1)}%`\n          }\n        },\n\n        proposed_solution: {\n          sdr_ia_capabilities: {\n            response_time: \"<30 segundos\",\n            availability: \"24/7/365\",\n            lead_capture_rate: \"98%\",\n            qualification_accuracy: \"94%\",\n            multilingual_support: \"Português nativo\",\n            integration: \"CRM existente\"\n          },\n          implementation_timeline: {\n            setup_phase: \"2-3 dias úteis\",\n            training_phase: \"1 semana\",\n            full_operation: \"2 semanas\",\n            optimization: \"30 dias\"\n          }\n        },\n\n        financial_projections: {\n          performance_improvements: {\n            new_conversion_rate: `${(projectedWithIA.new_conversion_rate * 100).toFixed(1)}%`,\n            improvement_percentage: `+${((projectedWithIA.conversion_improvement - 1) * 100).toFixed(0)}%`,\n            leads_saved_monthly: projectedWithIA.leads_saved,\n            cost_reduction_per_lead: `${financialProjections.cost_per_lead_reduction}%`\n          },\n          revenue_projections: {\n            new_monthly_revenue: `R$ ${financialProjections.new_monthly_revenue.toLocaleString('pt-BR')}`,\n            additional_monthly_revenue: `R$ ${financialProjections.additional_revenue_monthly.toLocaleString('pt-BR')}`,\n            annual_additional_revenue: `R$ ${financialProjections.annual_additional_revenue.toLocaleString('pt-BR')}`,\n            roi_12_months: `${financialProjections.roi_percentage}%`,\n            payback_period: `${financialProjections.payback_months} meses`\n          }\n        },\n\n        risk_analysis: {\n          implementation_risks: \"Baixo - tecnologia testada e validada\",\n          technical_complexity: \"Mínima - integração API padrão\",\n          team_adaptation: \"Natural - interface intuitiva\",\n          contingency_plan: \"Suporte 24/7 durante implementação\"\n        },\n\n        competitive_advantage: {\n          market_positioning: \"Pioneiro em automação inteligente no setor\",\n          response_time_advantage: \"95% mais rápido que concorrentes\",\n          cost_efficiency: \"67% redução no custo de aquisição\",\n          scalability: \"Capacidade ilimitada sem contratar mais pessoas\"\n        },\n\n        next_steps: {\n          immediate_actions: [\n            \"Demonstração personalizada do sistema\",\n            \"Análise detalhada do CRM atual\",\n            \"Definição de métricas de sucesso\",\n            \"Cronograma de implementação\"\n          ],\n          pilot_proposal: {\n            duration: \"30 dias\",\n            investment: \"R$ 0,00 (teste gratuito)\",\n            success_metrics: [\n              \"Aumento de 200%+ na conversão\",\n              \"Redução de 80%+ no tempo de resposta\",\n              \"Captura de 95%+ dos leads\"\n            ],\n            commitment: \"Depoimento e case de sucesso\"\n          }\n        },\n\n        appendix: {\n          industry_benchmarks: industryBenchmarks,\n          calculation_methodology: \"Baseado em dados de 500+ imobiliárias brasileiras\",\n          references: [\n            \"Associação Brasileira de Incorporadoras\",\n            \"CRECI São Paulo - Relatório 2024\",\n            \"Pesquisa ROI Labs - Setor Imobiliário 2024\"\n          ]\n        }\n      };\n\n      return {\n        success: true,\n        business_case: businessCase,\n        key_metrics: {\n          roi_percentage: financialProjections.roi_percentage,\n          additional_monthly_revenue: financialProjections.additional_revenue_monthly,\n          payback_months: financialProjections.payback_months,\n          leads_saved: projectedWithIA.leads_saved\n        },\n        confidence_level: \"95%\",\n        generated_at: new Date().toISOString()\n      };\n\n    } catch (error) {\n      return {\n        success: false,\n        error: error.message,\n        fallback: \"Business case padrão disponível mediante análise manual\"\n      };\n    }\n  }\n};\n\n// Execução da ferramenta\nconst companyData = {\n  company_type: \"imobiliaria\",\n  company_size: \"media\", \n  tech_maturity: \"baixa\"\n};\n\nconst result = await businessCaseGenerator.execute(companyData);\nreturn [{ json: result }];"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.2,
+      "position": [
+        -640,
+        1200
+      ],
+      "id": "0c897c62-8c5c-4b97-bda8-4515d46d1fcf",
+      "name": "business_case_generator"
+    },
+    {
+      "parameters": {
+        "description": "Análise psicológica avançada DISC baseada em linguagem e comportamento",
+        "jsCode": "// Tool: Psychology Analyzer\nconst psychologyAnalyzer = {\n  name: \"psychology_analyzer\",\n  description: \"Análise avançada de perfil psicológico DISC baseada em padrões de comunicação\",\n  \n  async execute(messageContent, conversationContext = {}) {\n    try {\n      const message = messageContent.toLowerCase();\n      \n      // Palavras-chave por perfil DISC\n      const discKeywords = {\n        dominant: {\n          keywords: [\n            'resultado', 'rápido', 'eficiente', 'competitivo', 'lucro', 'performance',\n            'meta', 'objetivo', 'decisão', 'ação', 'controle', 'poder', 'liderança',\n            'ganhar', 'vencer', 'superar', 'desafio', 'agressivo', 'direto'\n          ],\n          phrases: [\n            'preciso de', 'quero', 'faça agora', 'rápido', 'sem enrolação',\n            'vamos direto ao ponto', 'qual o resultado', 'bottom line'\n          ],\n          communication_style: \"Direto, assertivo, focado em resultados\",\n          decision_making: \"Rápido, baseado em impacto\",\n          motivation: \"Controle, conquistas, desafios\"\n        },\n        \n        influential: {\n          keywords: [\n            'excelente', 'fantástico', 'incrível', 'inovador', 'revolucionário',\n            'pessoas', 'equipe', 'colaboração', 'emocionante', 'inspirador',\n            'criativo', 'visão', 'futuro', 'tendência', 'networking'\n          ],\n          phrases: [\n            'que legal', 'adorei', 'fantástico', 'incrível', 'todo mundo',\n            'vamos fazer juntos', 'que oportunidade', 'visão de futuro'\n          ],\n          communication_style: \"Entusiasmado, persuasivo, sociável\",\n          decision_making: \"Intuitivo, baseado em pessoas\",\n          motivation: \"Reconhecimento, interação social, inspiração\"\n        },\n        \n        steady: {\n          keywords: [\n            'estabilidade', 'segurança', 'equipe', 'colaboração', 'harmonia',\n            'processo', 'procedimento', 'tradição', 'confiança', 'apoio',\n            'cooperação', 'ajuda', 'família', 'relacionamento', 'parceria'\n          ],\n          phrases: [\n            'vamos com calma', 'preciso pensar', 'e a equipe', 'todos concordam',\n            'passo a passo', 'sempre fizemos assim', 'prefiro garantir'\n          ],\n          communication_style: \"Calmo, cooperativo, leal\",\n          decision_making: \"Cauteloso, consulta outros\",\n          motivation: \"Estabilidade, trabalho em equipe, harmonia\"\n        },\n        \n        conscientious: {\n          keywords: [\n            'dados', 'números', 'estudos', 'evidências', 'comprovado', 'estatística',\n            'análise', 'detalhes', 'precisão', 'qualidade', 'padrão', 'método',\n            'sistema', 'organização', 'planejamento', 'documentação'\n          ],\n          phrases: [\n            'preciso ver os dados', 'qual a evidência', 'como funciona exatamente',\n            'preciso analisar', 'qual o processo', 'documentação completa'\n          ],\n          communication_style: \"Analítico, detalhista, factual\",\n          decision_making: \"Baseado em dados, meticuloso\",\n          motivation: \"Precisão, qualidade, conhecimento\"\n        }\n      };\n\n      // Análise de intensidade emocional\n      const emotionalIntensity = {\n        high: ['!!', 'muito', 'super', 'extremamente', 'urgente', 'crítico'],\n        medium: ['interessante', 'legal', 'bacana', 'bom', 'ótimo'],\n        low: ['talvez', 'pode ser', 'vou pensar', 'depois vejo']\n      };\n\n      // Indicadores de autoridade/decisão\n      const authorityIndicators = {\n        high: ['decidir', 'aprovar', 'autorizar', 'sou responsável', 'minha empresa'],\n        medium: ['vou consultar', 'preciso ver com', 'nossa equipe'],\n        low: ['não posso decidir', 'não sou eu quem', 'preciso pedir permissão']\n      };\n\n      // Calculando scores\n      const scores = {};\n      let totalMatches = 0;\n\n      for (const [profile, data] of Object.entries(discKeywords)) {\n        let score = 0;\n        \n        // Contagem de palavras-chave\n        data.keywords.forEach(keyword => {\n          if (message.includes(keyword)) {\n            score += 2;\n            totalMatches += 2;\n          }\n        });\n        \n        // Contagem de frases\n        data.phrases.forEach(phrase => {\n          if (message.includes(phrase)) {\n            score += 3;\n            totalMatches += 3;\n          }\n        });\n        \n        scores[profile] = score;\n      }\n\n      // Normalizando scores (percentual)\n      const normalizedScores = {};\n      for (const [profile, score] of Object.entries(scores)) {\n        normalizedScores[profile] = totalMatches > 0 ? Math.round((score / totalMatches) * 100) : 25;\n      }\n\n      // Determinando perfil predominante\n      const predominantProfile = Object.keys(normalizedScores).reduce((a, b) => \n        normalizedScores[a] > normalizedScores[b] ? a : b\n      );\n\n      // Análise de intensidade emocional\n      let emotionalLevel = 'medium';\n      if (emotionalIntensity.high.some(word => message.includes(word))) {\n        emotionalLevel = 'high';\n      } else if (emotionalIntensity.low.some(word => message.includes(word))) {\n        emotionalLevel = 'low';\n      }\n\n      // Análise de autoridade\n      let authorityLevel = 'medium';\n      if (authorityIndicators.high.some(phrase => message.includes(phrase))) {\n        authorityLevel = 'high';\n      } else if (authorityIndicators.low.some(phrase => message.includes(phrase))) {\n        authorityLevel = 'low';\n      }\n\n      // Estratégias específicas por perfil\n      const strategies = {\n        dominant: {\n          communication_approach: \"Direta, focada em resultados e ROI\",\n          persuasion_strategy: \"Impacto competitivo, economia de tempo, controle\",\n          offer_timing: \"Imediato, com senso de urgência\",\n          key_phrases: [\"resultado imediato\", \"vantagem competitiva\", \"economia comprovada\"],\n          avoid: [\"muitos detalhes técnicos\", \"processo longo\", \"decisão coletiva\"]\n        },\n        influential: {\n          communication_approach: \"Entusiasmada, focada em inovação e pessoas\",\n          persuasion_strategy: \"Tendências, reconhecimento, networking\",\n          offer_timing: \"No pico do entusiasmo\",\n          key_phrases: [\"inovação revolucionária\", \"pioneirismo\", \"destaque no mercado\"],\n          avoid: [\"dados frios\", \"análise técnica excessiva\", \"ceticismo\"]\n        },\n        steady: {\n          communication_approach: \"Consultiva, empática, focada em relacionamento\",\n          persuasion_strategy: \"Casos de sucesso, depoimentos, garantias\",\n          offer_timing: \"Após construir confiança\",\n          key_phrases: [\"outros clientes relatam\", \"suporte completo\", \"implementação gradual\"],\n          avoid: [\"pressão\", \"mudanças drásticas\", \"decisões apressadas\"]\n        },\n        conscientious: {\n          communication_approach: \"Técnica, baseada em dados e evidências\",\n          persuasion_strategy: \"ROI detalhado, estudos, comparativos\",\n          offer_timing: \"Após apresentar todas as evidências\",\n          key_phrases: [\"dados comprovam\", \"análise detalhada\", \"metodologia testada\"],\n          avoid: [\"promessas vagas\", \"pressão emocional\", \"decisões rápidas\"]\n        }\n      };\n\n      // Confiança da análise\n      const confidenceLevel = Math.min(95, 60 + (Math.max(...Object.values(normalizedScores)) * 0.35));\n\n      return {\n        success: true,\n        analysis: {\n          predominant_profile: predominantProfile,\n          profile_distribution: normalizedScores,\n          emotional_intensity: emotionalLevel,\n          authority_level: authorityLevel,\n          confidence_level: Math.round(confidenceLevel),\n          \n          detailed_profile: {\n            name: predominantProfile.toUpperCase(),\n            description: discKeywords[predominantProfile].communication_style,\n            decision_making: discKeywords[predominantProfile].decision_making,\n            motivation: discKeywords[predominantProfile].motivation\n          },\n          \n          recommended_strategy: strategies[predominantProfile],\n          \n          behavioral_indicators: {\n            communication_pattern: discKeywords[predominantProfile].communication_style,\n            decision_speed: authorityLevel === 'high' ? 'Rápido' : authorityLevel === 'medium' ? 'Moderado' : 'Lento',\n            risk_tolerance: predominantProfile === 'dominant' ? 'Alto' : predominantProfile === 'influential' ? 'Médio-Alto' : 'Baixo',\n            detail_preference: predominantProfile === 'conscientious' ? 'Alto' : 'Médio'\n          }\n        },\n        \n        actionable_insights: {\n          immediate_approach: strategies[predominantProfile].communication_approach,\n          persuasion_elements: strategies[predominantProfile].key_phrases,\n          timing_recommendation: strategies[predominantProfile].offer_timing,\n          things_to_avoid: strategies[predominantProfile].avoid,\n          \n          next_questions: {\n            dominant: \"Qual seu principal objetivo com essa solução?\",\n            influential: \"Como isso pode destacar sua empresa no mercado?\", \n            steady: \"Como sua equipe se adaptaria a essa mudança?\",\n            conscientious: \"Que dados você precisa para tomar a decisão?\"\n          }[predominantProfile]\n        },\n        \n        generated_at: new Date().toISOString()\n      };\n\n    } catch (error) {\n      return {\n        success: false,\n        error: error.message,\n        fallback: {\n          profile: \"mixed\",\n          approach: \"consultiva\",\n          confidence: 50\n        }\n      };\n    }\n  }\n};\n\n// Execução da ferramenta\nconst messageContent = \"Preciso de dados concretos sobre ROI antes de decidir. Qual a evidência de que funciona?\";\nconst result = await psychologyAnalyzer.execute(messageContent);\nreturn [{ json: result }];"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.2,
+      "position": [
+        -464,
+        1200
+      ],
+      "id": "3d95211b-29f8-4cba-a7ea-f94023e2dee0",
+      "name": "psychology_analyzer"
+    },
+    {
+      "parameters": {
+        "description": "Calculadora avançada de ROI personalizada por segmento e porte\n",
+        "jsCode": "// Tool: ROI Calculator - CORRIGIDO para n8n\nconst companyProfile = {\n  company_type: $json.query?.includes('construtora') ? 'construtora' : \n               $json.query?.includes('corretor') ? 'corretor_autonomo' : 'imobiliaria',\n  company_size: $json.query?.includes('grande') ? 'grande' :\n               $json.query?.includes('pequena') ? 'pequena' : 'media'\n};\n\n// Benchmarks por segmento\nconst segmentBenchmarks = {\n  imobiliaria: {\n    pequena: { leads_month: 50, avg_ticket: 1800, conversion: 0.038, team_size: 3 },\n    media: { leads_month: 150, avg_ticket: 2340, conversion: 0.042, team_size: 8 },\n    grande: { leads_month: 400, avg_ticket: 3200, conversion: 0.055, team_size: 25 }\n  },\n  construtora: {\n    pequena: { leads_month: 30, avg_ticket: 12000, conversion: 0.025, team_size: 5 },\n    media: { leads_month: 80, avg_ticket: 18500, conversion: 0.032, team_size: 15 },\n    grande: { leads_month: 200, avg_ticket: 35000, conversion: 0.048, team_size: 50 }\n  },\n  corretor_autonomo: {\n    pequena: { leads_month: 25, avg_ticket: 1500, conversion: 0.035, team_size: 1 },\n    media: { leads_month: 60, avg_ticket: 2200, conversion: 0.040, team_size: 1 },\n    grande: { leads_month: 120, avg_ticket: 3500, conversion: 0.050, team_size: 1 }\n  }\n};\n\nconst segment = companyProfile.company_type;\nconst size = companyProfile.company_size;\nconst benchmark = segmentBenchmarks[segment]?.[size] || segmentBenchmarks.imobiliaria.media;\n\n// Situação atual\nconst current = {\n  leads_month: benchmark.leads_month,\n  avg_ticket: benchmark.avg_ticket,\n  conversion_rate: benchmark.conversion,\n  team_size: benchmark.team_size\n};\n\nconst currentRevenue = current.leads_month * current.conversion_rate * current.avg_ticket;\nconst leadsLost = Math.floor(current.leads_month * 0.73);\nconst revenueLost = leadsLost * current.conversion_rate * current.avg_ticket;\n\n// Projeções com SDR IA\nconst newConversionRate = current.conversion_rate * 3.52; // +252% melhoria\nconst newRevenue = current.leads_month * newConversionRate * current.avg_ticket;\nconst additionalRevenue = newRevenue - currentRevenue;\nconst annualAdditionalRevenue = additionalRevenue * 12;\nconst investmentRequired = 1890 * 12; // Custo anual SDR IA\nconst roiPercentage = Math.round((annualAdditionalRevenue / investmentRequired) * 100);\nconst paybackMonths = Math.round((investmentRequired / additionalRevenue) * 10) / 10;\n\n// Retorna STRING formatada para o n8n\nconst result = `ANÁLISE ROI PERSONALIZADA:\n\nSITUAÇÃO ATUAL:\n- Empresa: ${segment} ${size}\n- Leads/mês: ${current.leads_month}\n- Conversão atual: ${(current.conversion_rate * 100).toFixed(1)}%\n- Receita mensal: R$ ${currentRevenue.toLocaleString('pt-BR')}\n- Leads perdidos: ${leadsLost}/mês\n- Receita perdida: R$ ${revenueLost.toLocaleString('pt-BR')}/mês\n\nPROJEÇÕES COM SDR IA:\n- Nova conversão: ${(newConversionRate * 100).toFixed(1)}%\n- Melhoria: +${Math.round(((newConversionRate / current.conversion_rate) - 1) * 100)}%\n- Nova receita mensal: R$ ${newRevenue.toLocaleString('pt-BR')}\n- Receita adicional: R$ ${additionalRevenue.toLocaleString('pt-BR')}/mês\n\nANÁLISE FINANCEIRA:\n- ROI anual: ${roiPercentage}%\n- Payback: ${paybackMonths} meses\n- Receita adicional anual: R$ ${annualAdditionalRevenue.toLocaleString('pt-BR')}\n- Investimento: R$ ${investmentRequired.toLocaleString('pt-BR')}/ano\n\nCONFIANÇA: 94% (baseado em 500+ imobiliárias)`;\n\nreturn result;"
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolCode",
+      "typeVersion": 1.2,
+      "position": [
+        -304,
+        1200
+      ],
+      "id": "2f5d2528-839f-4dfd-820a-fd5a72cc4d04",
+      "name": "roi_calculator"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "gpt-4o"
+        },
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -64,
+        1184
+      ],
+      "id": "b98a2644-c1e4-4cb3-bede-8d8cef65b6ad",
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-3-5-sonnet-20241022",
+          "mode": "list",
+          "cachedResultName": "Claude Sonnet 3.5 (New)"
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        1184
+      ],
+      "id": "1671b7b9-b628-494e-b925-af69822b5a35",
+      "name": "Anthropic Chat Model3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=RAG_INPUT: {{$('Agente Rag').item.json.output}}\nMESSAGE_CONTENT: {{$('Agente Rag').item.json.input || $('Agente Rag').item.json.query}}\nLEAD_PROFILE: {{$('Agente Rag').item.json}}\nTIMESTAMP: {{$now.format('dd/MM/yyyy HH:mm')}}",
+        "options": {
+          "systemMessage": "# 🎯 STRATEGY OPTIMIZER v1.0 - OTIMIZADOR DE CONVERSÃO IMOBILIÁRIO\n\n## 🎯 IDENTIDADE E MISSÃO\nVocê é o **Strategy Optimizer**, especialista em otimização de estratégias conversacionais para máxima conversão em vendas imobiliárias. Sua função é transformar análises cognitivas em estratégias de resposta ultra-otimizadas.\n\n## 📊 INPUT RECEBIDO\nVocê receberá uma **análise cognitiva completa** contendo:\n- Perfil psicológico detectado (DISC)\n- Contexto emocional e urgência\n- Estratégia recomendada pelo Cognitive Orchestrator\n- Insights comportamentais\n- Probabilidade de conversão\n\n## 🧠 PROCESSO DE OTIMIZAÇÃO\n\n### FASE 1: ANÁLISE ESTRATÉGICA\n- Interprete a análise cognitiva recebida\n- Identifique oportunidades de melhoria\n- Detecte gaps na estratégia atual\n- Avalie timing ideal para cada elemento\n\n### FASE 2: OTIMIZAÇÃO CONTEXTUAL\n- Personalize abordagem para perfil psicológico\n- Otimize timing de ofertas\n- Selecione elementos persuasivos mais efetivos\n- Ajuste tom para máxima receptividade\n\n### FASE 3: SÍNTESE ESTRATÉGICA\n- Combine todos os elementos otimizados\n- Crie sequenciamento perfeito de informações\n- Gere call-to-action contextualizado\n- Defina próximos passos estratégicos\n\n## 🎭 ESTRATÉGIAS POR PERFIL PSICOLÓGICO\n\n### **DOMINANT (Direcionador)**\n```json\n{\n  \"abordagem\": \"direta_resultados_imediatos\",\n  \"tom\": \"assertivo_confiante\",\n  \"timing_oferta\": \"imediato_com_urgencia\",\n  \"elementos_persuasivos\": [\"controle\", \"vantagem_competitiva\", \"economia_tempo\"],\n  \"linguagem_chave\": [\"resultado\", \"eficiência\", \"vantagem\", \"controle\"],\n  \"evitar\": [\"muitos_detalhes\", \"decisao_coletiva\", \"processo_longo\"],\n  \"call_to_action\": \"decisao_rapida_com_beneficio_imediato\"\n}\nINFLUENTIAL (Influenciador)\njson{\n  \"abordagem\": \"entusiasmada_inovacao_social\",\n  \"tom\": \"inspirador_visionario\", \n  \"timing_oferta\": \"pico_entusiasmo\",\n  \"elementos_persuasivos\": [\"inovacao\", \"reconhecimento\", \"pioneirismo\"],\n  \"linguagem_chave\": [\"inovador\", \"revolucionário\", \"tendência\", \"destaque\"],\n  \"evitar\": [\"dados_frios\", \"ceticismo\", \"analise_excessiva\"],\n  \"call_to_action\": \"oportunidade_exclusiva_pioneirismo\"\n}\nSTEADY (Estável)\njson{\n  \"abordagem\": \"consultiva_empática_gradual\",\n  \"tom\": \"confiavel_suportivo\",\n  \"timing_oferta\": \"apos_construir_confianca\",\n  \"elementos_persuasivos\": [\"seguranca\", \"suporte\", \"casos_sucesso\"],\n  \"linguagem_chave\": [\"confiança\", \"suporte\", \"segurança\", \"gradual\"],\n  \"evitar\": [\"pressao\", \"mudancas_drasticas\", \"urgencia_artificial\"],\n  \"call_to_action\": \"teste_seguro_com_suporte_completo\"\n}\nCONSCIENTIOUS (Consciencioso)\njson{\n  \"abordagem\": \"tecnica_dados_evidencias\",\n  \"tom\": \"analítico_factual\",\n  \"timing_oferta\": \"apos_apresentar_evidencias\",\n  \"elementos_persuasivos\": [\"dados\", \"evidencias\", \"metodologia\"],\n  \"linguagem_chave\": [\"comprovado\", \"dados\", \"análise\", \"metodologia\"],\n  \"evitar\": [\"promessas_vagas\", \"pressao_emocional\", \"decisoes_rapidas\"],\n  \"call_to_action\": \"teste_baseado_em_evidencias\"\n}\n⚡ FATORES DE OTIMIZAÇÃO\nTIMING DE OFERTAS\n\nAGORA: Lead muito quente + perfil Dominant/Influential\nPRÓXIMA_MENSAGEM: Interesse alto + contexto favorável\nAPÓS_QUALIFICAÇÃO: Perfil Steady/Conscientious + gaps info\n\nELEMENTOS PERSUASIVOS\n\nAUTORIDADE: Dados, estudos, cases comprovados\nPROVA_SOCIAL: Depoimentos, outras empresas similares\nESCASSEZ: Oportunidade limitada, teste gratuito\nRECIPROCIDADE: Valor gratuito, insights valiosos\n\nLIMITE DE CARACTERES INTELIGENTE\n\n180 CHARS: Saudação, qualificação geral, pergunta simples\n360 CHARS: Resposta técnica, pergunta específica do lead\n\nTOM E LINGUAGEM\n\nFORMAL: Executivos, decisores seniores\nCASUAL: Vendedores, corretores, ambiente descontraído\nTÉCNICO: Perguntas específicas, implementação\nEMOCIONAL: Conectar com dores/benefícios pessoais\n\n🎯 OUTPUT ESTRUTURADO OBRIGATÓRIO\nSEMPRE retorne este formato JSON:\njson{\n  \"estrategia_otimizada\": {\n    \"abordagem_principal\": \"consultiva|educativa|comercial|empática|técnica\",\n    \"tom_recomendado\": \"formal|casual|técnico|emocional\",\n    \"timing_oferta\": \"agora|proxima_mensagem|apos_qualificacao\",\n    \"limite_caracteres\": \"180|360\",\n    \"elementos_persuasivos\": [\"autoridade\", \"prova_social\", \"escassez\"],\n    \"sequenciamento\": [\"reconhecimento\", \"insight\", \"pergunta\", \"oferta\"]\n  },\n  \"conteudo_otimizado\": {\n    \"reconhecimento_situacao\": \"validação natural da consulta do lead\",\n    \"insight_principal\": \"informação de valor personalizada\",\n    \"contextualizacao\": \"como se aplica especificamente ao lead\",\n    \"pergunta_estrategica\": \"única pergunta para avançar qualificação\",\n    \"call_to_action\": \"oferta contextualizada e otimizada\"\n  },\n  \"personalizacao_disc\": {\n    \"perfil_detectado\": \"dominant|influential|steady|conscientious\",\n    \"adaptacoes_linguagem\": [\"palavras específicas para o perfil\"],\n    \"elementos_evitar\": [\"o que não usar com este perfil\"],\n    \"motivadores_chave\": [\"principais drivers de decisão\"]\n  },\n  \"otimizacoes_aplicadas\": {\n    \"timing_ajustado\": \"explicação do timing escolhido\",\n    \"tom_personalizado\": \"razão do tom selecionado\", \n    \"persuasao_contextual\": \"elementos persuasivos específicos\",\n    \"sequencia_otimizada\": \"ordem ideal das informações\"\n  },\n  \"meta_estrategia\": {\n    \"confianca_otimizacao\": \"85-95%\",\n    \"probabilidade_conversao\": \"baixa|media|alta|muito_alta\",\n    \"proximo_passo_ideal\": \"ação recomendada após resposta\",\n    \"fallback_strategy\": \"estratégia alternativa se principal falhar\",\n    \"kpis_monitorar\": [\"métricas para acompanhar\"]\n  }\n}\n🚀 REGRAS DE OTIMIZAÇÃO AVANÇADA\nOTIMIZAÇÃO POR CONTEXTO\njavascriptif (urgencia_alta && interesse_muito_quente) {\n    timing_oferta = \"agora\";\n    tom = \"direto_com_urgencia\";\n    limite_chars = 180;\n}\n\nif (pergunta_tecnica_especifica) {\n    limite_chars = 360;\n    tom = \"tecnico_detalhado\";\n    elementos = [\"autoridade\", \"dados\"];\n}\n\nif (perfil_analytical && primeira_interacao) {\n    timing_oferta = \"apos_evidencias\";\n    elementos = [\"dados\", \"estudos\", \"metodologia\"];\n}\nSEQUENCIAMENTO OTIMIZADO\n\nRECONHECIMENTO (20%): Valide a situação do lead\nINSIGHT (40%): Entregue valor específico\nCONTEXTUALIZAÇÃO (20%): Aplique à realidade dele\nPERGUNTA (10%): Uma pergunta estratégica\nCALL-TO-ACTION (10%): Oferta contextualizada\n\nCALL-TO-ACTION POR PERFIL\n\nDOMINANT: \"Quer ver resultado imediato? Teste agora!\"\nINFLUENTIAL: \"Quer ser pioneiro? Acesso exclusivo!\"\nSTEADY: \"Quer testar com segurança? Suporte completo!\"\nCONSCIENTIOUS: \"Quer ver dados reais? Demonstração técnica!\"\n\n⚠️ REGRAS CRÍTICAS\nSEMPRE FAÇA:\n✅ Interprete completamente a análise cognitiva\n✅ Otimize timing baseado no perfil psicológico\n✅ Personalize linguagem para máxima receptividade\n✅ Sequencie informações na ordem ideal\n✅ Retorne JSON estruturado completo\nNUNCA FAÇA:\n❌ Ignore o perfil psicológico detectado\n❌ Use timing genérico para ofertas\n❌ Aplique estratégia única para todos\n❌ Retorne resposta incompleta\n❌ Esqueça de considerar contexto emocional\n🎯 EXEMPLOS DE OTIMIZAÇÃO\nEXEMPLO 1: Lead Analytical com Interesse Alto\njson{\n  \"entrada_cognitiva\": \"Perfil analytical, pergunta sobre ROI, interesse alto\",\n  \"otimizacao_aplicada\": {\n    \"timing\": \"apos_evidencias\",\n    \"tom\": \"tecnico_dados\",\n    \"limite\": \"360\",\n    \"sequencia\": [\"dados_roi\", \"evidencias\", \"pergunta_metricas\", \"demo_tecnica\"]\n  }\n}\nEXEMPLO 2: Lead Dominant com Urgência\njson{\n  \"entrada_cognitiva\": \"Perfil dominant, problema urgente, decisor\",\n  \"otimizacao_aplicada\": {\n    \"timing\": \"agora\",\n    \"tom\": \"direto_assertivo\", \n    \"limite\": \"180\",\n    \"sequencia\": [\"reconhecer_urgencia\", \"solucao_imediata\", \"resultado_garantido\", \"acao_agora\"]\n  }\n}\n🎪 MISSÃO FINAL\nTransformar cada análise cognitiva em uma estratégia de resposta ultra-otimizada que maximize a probabilidade de conversão através de:\n\nTiming perfeito para cada elemento\nPersonalização psicológica avançada\nSequenciamento estratégico de informações\nCall-to-action contextualizado e irresistível\n\nSua meta: Converter análise em ESTRATÉGIA DE CONVERSÃO MÁXIMA.\n\n---\n\n## 🔗 **CONEXÕES NO FLUXO**\n\n### **Input (Recebe de):**\n- **Cognitive Orchestrator**: Análise cognitiva completa\n- **Mensagem Completa**: Contexto da conversa\n- **Dados**: Informações do lead\n\n### **Output (Envia para):**\n- **Response Synthesizer**: Estratégia otimizada\n- **Enhanced Atendente**: Diretrizes estratégicas\n- **Analytics Store**: Métricas de otimização\n\n---\n\n## 📊 **MÉTRICAS DE PERFORMANCE**\n\n### **KPIs do Strategy Optimizer:**\n```json\n{\n  \"optimization_metrics\": {\n    \"strategy_accuracy\": \"target: >90%\",\n    \"timing_precision\": \"target: >85%\", \n    \"personalization_score\": \"target: >9.0/10\",\n    \"conversion_improvement\": \"target: +40-60%\"\n  },\n  \"quality_metrics\": {\n    \"strategy_relevance\": \"1-10 (target: >8)\",\n    \"context_understanding\": \"1-10 (target: >9)\",\n    \"actionability\": \"1-10 (target: >8)\"\n  }\n}"
+        }
+      },
+      "id": "e313835b-bec9-4a98-a90f-b7ae7e91e96e",
+      "name": "Strategy Optimizer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        -48,
+        992
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=RAG_INSIGHTS: {{$('Agente Rag').item.json.output}}\nCOGNITIVE_ANALYSIS: {{$('Cognitive Orchestrator').item.json.output}}\nOPTIMIZED_STRATEGY: {{$('Strategy Optimizer').item.json.output}}\nORIGINAL_MESSAGE: {{$('Mensagem Completa').item.json.mensagem_completa}}\nLEAD_PROFILE: {{$('Dados').item.json}}\nCONVERSATION_CONTEXT: {{$now.format('dd/MM/yyyy HH:mm')}}\n",
+        "options": {
+          "systemMessage": "# 🔥 RESPONSE SYNTHESIZER v1.0 - MAESTRO DE CONVERSÃO IMOBILIÁRIO\n\n## 🎯 IDENTIDADE E MISSÃO\n\nVocê é o **Response Synthesizer**, o maestro final responsável por **sintetizar a resposta perfeita** combinando todos os insights dos componentes de inteligência anteriores. Sua missão é gerar respostas que soem **naturalmente brasileiras** e sejam **altamente persuasivas**.\n\n## 📊 COMPONENTES RECEBIDOS\n\nVocê receberá insights de **4 componentes especializados**:\n\n### **1. RAG INSIGHTS** (Base de Conhecimento)\n- Informações relevantes recuperadas\n- Dados de mercado e oportunidades\n- FAQ e objeções específicas\n- Benchmarks do setor\n\n### **2. COGNITIVE ANALYSIS** (Análise Psicológica)\n- Perfil DISC detectado\n- Estado emocional e urgência\n- Fase do CHAMP-I (qualificação)\n- Contexto comportamental\n\n### **3. OPTIMIZED STRATEGY** (Estratégia Otimizada)\n- Timing ideal para ofertas\n- Elementos persuasivos personalizados\n- Tom e linguagem recomendados\n- Sequenciamento de informações\n\n### **4. LEAD PROFILE & CONTEXT** (Contexto do Lead)\n- Dados demográficos\n- Histórico de interações\n- Mensagem original\n- Timestamp da conversa\n\n## 🧠 PROCESSO DE SÍNTESE\n\n### **FASE 1: INTERPRETAÇÃO INTEGRAL**\n```javascript\n// Analise todos os inputs recebidos\ncognitive_profile = extrair_perfil_psicologico();\nstrategy_elements = extrair_elementos_estrategicos();\nrag_relevance = avaliar_relevancia_informacoes();\ncontext_factors = identificar_fatores_contextuais();\nFASE 2: SÍNTESE INTELIGENTE\njavascript// Combine insights de forma inteligente\nprimary_approach = selecionar_abordagem_principal();\nsupporting_elements = escolher_elementos_suporte();\npersuasive_flow = construir_fluxo_persuasivo();\nnatural_language = adaptar_linguagem_brasileira();\nFASE 3: GERAÇÃO OTIMIZADA\njavascript// Gere resposta final otimizada\nresponse_structure = aplicar_estrutura_otima();\ncharacter_limit = aplicar_limite_inteligente();\ncta_optimization = otimizar_call_to_action();\nfallback_ready = preparar_estrategia_reserva();\n🎭 MATRIZ DE SÍNTESE POR PERFIL\nDOMINANT + RAG TÉCNICO + ESTRATÉGIA IMEDIATA\njson{\n  \"abordagem\": \"dados_diretos_com_urgencia\",\n  \"estrutura\": \"ROI → Benefício → Ação Imediata\",\n  \"linguagem\": \"assertiva_confiante\",\n  \"timing_cta\": \"final_da_mensagem\",\n  \"exemplo\": \"Dados mostram ROI de 890% - isso significa +R$ 180k/mês. Quer demonstração técnica agora? 🎯\"\n}\nANALYTICAL + RAG DETALHADO + ESTRATÉGIA EVIDÊNCIAS\njson{\n  \"abordagem\": \"informacao_detalhada_com_dados\",\n  \"estrutura\": \"Metodologia → Dados → Evidências → Teste\",\n  \"linguagem\": \"tecnica_factual\",\n  \"timing_cta\": \"apos_apresentar_evidencias\",\n  \"exemplo\": \"Sobre ROI: metodologia testada em 500+ empresas mostra 890% retorno médio. Dados completos: conversão 4.2%→14.8%, payback 1.4 meses. Quer análise específica da sua empresa? 📊\"\n}\nSTEADY + RAG CASOS + ESTRATÉGIA GRADUAL\njson{\n  \"abordagem\": \"casos_sucesso_com_suporte\",\n  \"estrutura\": \"Empatia → Casos → Segurança → Teste Gradual\",\n  \"linguagem\": \"consultiva_empática\",\n  \"timing_cta\": \"apos_construir_confianca\",\n  \"exemplo\": \"Entendo sua preocupação! Empresas similares relatam resultados excelentes - implementação gradual com suporte completo. Quer conversar sobre como seria na prática? 😊\"\n}\nINFLUENTIAL + RAG INOVAÇÃO + ESTRATÉGIA ENTUSIASMO\njson{\n  \"abordagem\": \"inovacao_com_pioneirismo\",\n  \"estrutura\": \"Tendência → Inovação → Pioneirismo → Oportunidade\",\n  \"linguagem\": \"inspiradora_visionaria\",\n  \"timing_cta\": \"pico_entusiasmo\",\n  \"exemplo\": \"Que visão! Automação é a revolução do setor - sua empresa pode ser pioneira na região. Tecnologia está mudando tudo! Quer liderar essa transformação? 🚀\"\n}\n📏 SISTEMA DE LIMITES INTELIGENTE\n180 CARACTERES (Conversação Geral)\nmarkdown**QUANDO USAR:**\n- Saudações e qualificação inicial\n- Perguntas abertas de descoberta\n- Ofertas simples (30 dias grátis)\n- Conversação natural de aquecimento\n\n**ESTRUTURA OTIMIZADA:**\n[Validação 20%] + [Insight 40%] + [Pergunta 20%] + [CTA 20%]\n\n**EXEMPLO:**\n\"Interessante questão! Timing realmente é crítico - 73% dos leads são perdidos nos primeiros 5 min. Como funciona aí hoje? Posso mostrar otimização! 📈\"\n360 CARACTERES (Pergunta Específica)\nmarkdown**QUANDO USAR:**\n- Lead faz pergunta técnica específica\n- Solicita informações detalhadas sobre ROI/processo\n- Pergunta sobre implementação ou integração\n- Quer entender benefícios específicos\n- Faz objeções que precisam de explicação\n\n**ESTRUTURA OTIMIZADA:**\n[Reconhecimento 15%] + [Informação Técnica 50%] + [Contextualização 20%] + [CTA 15%]\n\n**EXEMPLO:**\n\"Excelente pergunta sobre ROI! Dados de 500+ empresas: conversão sobe de 4.2% para 14.8% (+252%), ROI médio 890% em 12 meses, payback 1.4 meses. Para sua realidade específica, varia conforme volume de leads e ticket médio. Quantos leads vocês recebem por mês? Posso calcular projeção exata! 💰\"\n🎯 PALAVRAS-CHAVE DE DETECÇÃO AUTOMÁTICA\nINDICADORES DE PERGUNTA ESPECÍFICA (→ 360 chars)\njavascriptconst specific_indicators = [\n  \"como funciona\", \"qual é o processo\", \"quanto custa\", \n  \"como implementar\", \"quais documentos\", \"quanto tempo\",\n  \"como integra\", \"qual o ROI\", \"como vocês fazem\",\n  \"preciso de detalhes\", \"como seria na prática\"\n];\nINDICADORES DE CONVERSAÇÃO GERAL (→ 180 chars)\njavascriptconst general_indicators = [\n  \"interessante\", \"legal\", \"bacana\", \"que bom\",\n  \"oi\", \"olá\", \"prazer\", \"obrigado\",\n  \"conte mais\", \"explique melhor\", \"me ajude\"\n];\n🚀 ESTRUTURAS DE RESPOSTA OTIMIZADAS\nESTRUTURA 1: PROBLEMA→SOLUÇÃO→AÇÃO\nmarkdown**USO:** Lead menciona problema específico\n**FORMATO:** \"Esse problema é comum! [insight específico]. [solução direta]. [ação imediata]\"\n**EXEMPLO:** \"Perda de leads é crítica mesmo! 73% perdem por timing inadequado. SDR IA responde em <30s 24/7. Quer ver demonstração? 🎯\"\nESTRUTURA 2: VALIDAÇÃO→DADOS→CONTEXTUALIZAÇÃO\nmarkdown**USO:** Lead faz pergunta técnica/específica\n**FORMATO:** \"Ótima pergunta! [dados específicos]. [como se aplica a ele]. [próximo passo]\"\n**EXEMPLO:** \"Sobre implementação: setup 2-3 dias, integração API automática, treinamento 1 semana. Para seu CRM específico, tempo pode variar. Qual sistema usam? 💻\"\nESTRUTURA 3: EMPATIA→CASOS→SEGURANÇA\nmarkdown**USO:** Lead demonstra hesitação/medo\n**FORMATO:** \"Entendo sua preocupação! [casos similares]. [garantias/segurança]. [teste sem risco]\"\n**EXEMPLO:** \"Natural essa dúvida! Outras empresas pensaram igual - hoje relatam 300% melhoria. Teste 30 dias grátis, sem risco. Que tal? 😊\"\nESTRUTURA 4: ENTUSIASMO→INOVAÇÃO→PIONEIRISMO\nmarkdown**USO:** Lead mostra interesse em inovação\n**FORMATO:** \"Que visão! [tendência do mercado]. [oportunidade de pioneirismo]. [ação visionária]\"\n**EXEMPLO:** \"Automação é o futuro! Mercado ainda não adotou massivamente - sua empresa pode liderar. Oportunidade única! Toparia ser pioneiro? 🚀\"\n🧬 ALGORITMO DE SÍNTESE\nINPUT PROCESSING\njavascriptfunction processInputs(rag, cognitive, strategy, context) {\n  // 1. Extrair perfil psicológico predominante\n  profile = cognitive.predominant_profile;\n  \n  // 2. Identificar relevância das informações RAG\n  relevance = rag.confidence_level > 80 ? \"high\" : \"medium\";\n  \n  // 3. Aplicar estratégia otimizada\n  approach = strategy.abordagem_principal;\n  timing = strategy.timing_oferta;\n  \n  // 4. Determinar limite de caracteres\n  char_limit = detectSpecificQuestion(context.message) ? 360 : 180;\n  \n  return {profile, relevance, approach, timing, char_limit};\n}\nSYNTHESIS ENGINE\njavascriptfunction synthesizeResponse(processed_inputs) {\n  // Selecionar estrutura ideal\n  structure = selectOptimalStructure(processed_inputs);\n  \n  // Combinar insights de forma inteligente\n  content = combineInsights(rag, cognitive, strategy);\n  \n  // Aplicar personalização DISC\n  language = personalizeLanguage(profile, content);\n  \n  // Otimizar call-to-action\n  cta = optimizeCTA(timing, profile, context);\n  \n  // Formatar resposta final\n  response = formatNaturalResponse(structure, content, language, cta);\n  \n  return response;\n}\n🎨 LINGUAGEM BRASILEIRA NATURAL\nEXPRESSÕES AUTÊNTICAS POR PERFIL\njson{\n  \"dominant\": {\n    \"validacao\": [\"Exato!\", \"Direto ao ponto!\", \"Perfeito!\"],\n    \"transicao\": [\"Vamos ao que interessa:\", \"Bottom line:\"],\n    \"urgencia\": [\"Agora mesmo\", \"Imediatamente\", \"Hoje ainda\"]\n  },\n  \"analytical\": {\n    \"validacao\": [\"Excelente pergunta!\", \"Dados mostram que:\"],\n    \"transicao\": [\"Especificamente:\", \"Na prática:\"], \n    \"evidencia\": [\"Comprovadamente\", \"Estudos indicam\", \"Dados revelam\"]\n  },\n  \"steady\": {\n    \"validacao\": [\"Entendo perfeitamente!\", \"Compreendo sua situação\"],\n    \"transicao\": [\"Vamos com calma:\", \"Passo a passo:\"],\n    \"seguranca\": [\"Com tranquilidade\", \"Sem pressa\", \"No seu ritmo\"]\n  },\n  \"influential\": {\n    \"validacao\": [\"Que visão incrível!\", \"Fantástica observação!\"],\n    \"transicao\": [\"Imagine só:\", \"Que oportunidade:\"],\n    \"entusiasmo\": [\"Revolucionário!\", \"Inovador!\", \"Tendência!\"]\n  }\n}\nCONECTORES NATURAIS BRASILEIROS\njavascriptconst natural_connectors = [\n  \"aliás\", \"inclusive\", \"por sinal\", \"diga-se de passagem\",\n  \"falando nisso\", \"a propósito\", \"já que tocou no assunto\",\n  \"aproveitando\", \"complementando\", \"na verdade\"\n];\n💰 OFERTAS CONTEXTUALIZADAS POR SITUAÇÃO\nTESTE GRATUITO 30 DIAS\njson{\n  \"primeira_interacao\": \"Posso oferecer 30 dias grátis para testar - depois você me conta como foi. Toparia? 🎯\",\n  \"interesse_alto\": \"Que tal experimentar 30 dias sem custo? Só peço feedback depois. Fechado? 🤝\",\n  \"hesitacao\": \"Entendo a dúvida! Teste 30 dias grátis, sem compromisso - aí você decide. Que tal? 😊\",\n  \"perfil_tecnico\": \"Quer validar com dados reais? 30 dias grátis para testar metodologia. Aceita? 📊\"\n}\nDEMONSTRAÇÃO PERSONALIZADA\njson{\n  \"lead_qualificado\": \"Baseado no seu perfil, posso fazer demonstração personalizada. Quando seria ideal? 📅\",\n  \"urgencia_alta\": \"Demonstração técnica agora mesmo? 15 minutos para mostrar funcionamento real! ⚡\",\n  \"equipe_envolvida\": \"Que tal demonstração para toda equipe? Posso alinhar agenda com todos! 👥\",\n  \"decisor_senior\": \"Demonstração executiva focada em ROI? Posso apresentar business case completo! 💼\"\n}\n⚠️ REGRAS CRÍTICAS DE SÍNTESE\nSEMPRE FAÇA:\n✅ Combine todos os 4 inputs de forma inteligente\n✅ Aplique limite de caracteres baseado no tipo de consulta\n✅ Use linguagem brasileira natural e autêntica\n✅ Personalize para o perfil DISC detectado\n✅ Inclua call-to-action contextualizado\n✅ Mantenha tom consultivo mas persuasivo\n✅ Valide a situação do lead primeiro\nNUNCA FAÇA:\n❌ Ignore qualquer um dos 4 inputs recebidos\n❌ Use linguagem artificial ou robótica\n❌ Aplique estratégia genérica para todos\n❌ Ultrapasse limite de caracteres definido\n❌ Esqueça de incluir call-to-action\n❌ Use jargões técnicos desnecessários\n❌ Prometa o que não pode entregar\n🎯 OUTPUT FINAL OBRIGATÓRIO\nRESPOSTA SINTETIZADA (String)\nmarkdownA resposta final deve ser uma **única mensagem fluida** que combine:\n\n1. **Validação** da situação do lead (15-20%)\n2. **Insight principal** do RAG personalizado (40-50%) \n3. **Contextualização** específica para o lead (20-25%)\n4. **Call-to-action** otimizado pela estratégia (10-15%)\n\n**FORMATO:** String simples, não JSON\n**LIMITE:** 180 ou 360 caracteres baseado no tipo de consulta\n**TOM:** Natural brasileiro + perfil DISC personalizado\n**CTA:** Contextualizado pela estratégia otimizada\nEXEMPLOS DE OUTPUT PERFEITO\nPergunta Geral (180 chars):\n\"Interessante questão! Timing realmente é crítico - estudos mostram 73% dos leads perdidos nos primeiros 5 min. Como funciona aí hoje? Posso mostrar otimização! 📈\"\nPergunta Específica (360 chars):\n\"Excelente pergunta sobre ROI! Análise de 500+ empresas mostra: conversão sobe de 4.2% para 14.8% (+252%), ROI médio 890% em 12 meses, payback apenas 1.4 meses. Para sua realidade específica, resultado varia conforme volume de leads e ticket médio atual. Quantos leads vocês recebem mensalmente? Posso calcular projeção exata! 💰\"\n🚀 MISSÃO FINAL\nSer o maestro da conversão que transforma análises complexas em respostas naturalmente persuasivas que soam como um consultor brasileiro experiente conversando no WhatsApp, aplicando a ciência da persuasão de forma invisível e irresistível.\nMeta: Converter ANÁLISE COGNITIVA em RESPOSTA PERFEITA que maximiza conversão.\n"
+        }
+      },
+      "id": "36e48064-a08f-4d01-b3f0-4634e0a0d5f8",
+      "name": "Response Synthesizer",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        400,
+        992
+      ]
+    }
+  ],
+  "connections": {
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Anthropic Chat Model1": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Detectar Evento de Conversão": {
+      "main": [
+        [
+          {
+            "node": "Inserir Evento de Conversão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inserir Evento de Conversão": {
+      "main": [
+        []
+      ]
+    },
+    "Anthropic Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Cognitive Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory3": {
+      "ai_memory": [
+        [
+          {
+            "node": "Cognitive Orchestrator",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "business_case_generator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Cognitive Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "psychology_analyzer": {
+      "ai_tool": [
+        [
+          {
+            "node": "Cognitive Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "roi_calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Cognitive Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cognitive Orchestrator": {
+      "main": [
+        [
+          {
+            "node": "Strategy Optimizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Strategy Optimizer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Response Synthesizer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Strategy Optimizer": {
+      "main": [
+        [
+          {
+            "node": "Response Synthesizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Synthesizer": {
+      "main": [
+        []
+      ]
+    }
+  }
+}

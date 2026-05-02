@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Email service using Resend API.
  * Docs: https://resend.com/docs
  *
@@ -26,7 +26,7 @@ interface ResendResponse {
  */
 export async function sendEmail(options: SendEmailOptions): Promise<{ success: boolean; id?: string; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY
-  const from = options.from || process.env.RESEND_FROM_EMAIL || 'Sofia IA <noreply@roilabs.com.br>'
+  const from = options.from || process.env.RESEND_FROM_EMAIL || 'Polaris IA <noreply@roilabs.com.br>'
 
   if (!apiKey) {
     // Dev fallback — log the email to console
@@ -81,7 +81,7 @@ export function buildWelcomeEmail(userName: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bem-vindo a Sofia IA</title>
+  <title>Bem-vindo a Polaris IA</title>
   <style>
     body { margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     .wrapper { max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 12px; overflow: hidden; }
@@ -106,13 +106,13 @@ export function buildWelcomeEmail(userName: string): string {
   <div style="padding: 32px 16px;">
     <div class="wrapper">
       <div class="header">
-        <h1>Sofia IA</h1>
+        <h1>Polaris IA</h1>
         <p>Plataforma de Orquestracao de Agentes IA</p>
       </div>
       <div class="body">
         <h2>Ola, ${userName}!</h2>
         <p>
-          Bem-vindo a Sofia IA. Sua conta esta pronta e voce ja pode comecar a criar agentes
+          Bem-vindo a Polaris IA. Sua conta esta pronta e voce ja pode comecar a criar agentes
           inteligentes e orquestracoes poderosas.
         </p>
 
@@ -151,15 +151,15 @@ export function buildWelcomeEmail(userName: string): string {
         </div>
 
         <div class="cta">
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'}/dashboard">
+          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'}/dashboard">
             Acessar o Dashboard
           </a>
         </div>
       </div>
       <div class="footer">
         <p>
-          Sofia IA - ROI Labs |
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'}">sofiaia.roilabs.com.br</a>
+          Polaris IA - ROI Labs |
+          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'}">polarisia.com.br</a>
         </p>
         <p style="margin-top: 8px;">Se voce nao se cadastrou, ignore este email.</p>
       </div>
@@ -175,14 +175,14 @@ export function buildWelcomeEmail(userName: string): string {
 export async function sendWelcomeEmail(userEmail: string, userName: string) {
   return sendEmail({
     to: userEmail,
-    subject: `Bem-vindo a Sofia IA, ${userName.split(' ')[0]}!`,
+    subject: `Bem-vindo a Polaris IA, ${userName.split(' ')[0]}!`,
     html: buildWelcomeEmail(userName),
   })
 }
 
 // ─── Drip Email Templates ─────────────────────────────────
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
 
 function emailShell(body: string): string {
   return `<!DOCTYPE html><html lang="pt-BR"><head>
@@ -206,9 +206,9 @@ function emailShell(body: string): string {
 </style></head><body>
 <div style="padding:24px 16px;">
 <div class="w">
-<div class="h"><h1>Sofia IA</h1></div>
+<div class="h"><h1>Polaris IA</h1></div>
 <div class="b">${body}</div>
-<div class="ft"><p>Sofia IA · <a href="${APP_URL}">sofiaia.roilabs.com.br</a> · <a href="${APP_URL}/dashboard/settings">Cancelar emails</a></p></div>
+<div class="ft"><p>Polaris IA · <a href="${APP_URL}">polarisia.com.br</a> · <a href="${APP_URL}/dashboard/settings">Cancelar emails</a></p></div>
 </div></div></body></html>`
 }
 
@@ -233,7 +233,7 @@ export function buildDrip3Email(firstName: string): string {
 <p>Sabia que você pode criar uma orquestração inteira só descrevendo o que quer fazer?</p>
 <div class="hl">
   <h3>Magic Create</h3>
-  <p>Digite algo como: <em>"Quero um pipeline que pesquisa tendências, escreve um post para LinkedIn e revisa o texto"</em> — e a Sofia monta tudo automaticamente.</p>
+  <p>Digite algo como: <em>"Quero um pipeline que pesquisa tendências, escreve um post para LinkedIn e revisa o texto"</em> — e a Polaris IA monta tudo automaticamente.</p>
 </div>
 <p>Uma orquestração com 3 agentes em 30 segundos, sem configurar nada manualmente.</p>
 <div class="cta"><a href="${APP_URL}/dashboard/orchestrations">Tentar o Magic Create →</a></div>
@@ -248,8 +248,8 @@ export function buildDrip7Email(firstName: string, userId: string): string {
 
   return emailShell(`
 <h2>Como está sendo sua experiência?</h2>
-<p>Oi ${firstName}, você está há 7 dias na Sofia IA. Sua opinião importa muito para nós.</p>
-<p><strong>De 0 a 10, qual a probabilidade de você recomendar a Sofia para um colega?</strong></p>
+<p>Oi ${firstName}, você está há 7 dias na Polaris IA. Sua opinião importa muito para nós.</p>
+<p><strong>De 0 a 10, qual a probabilidade de você recomendar a Polaris IA para um colega?</strong></p>
 <div style="margin:20px 0;display:flex;gap:6px;flex-wrap:wrap;">${scores}</div>
 <p style="font-size:12px;color:#64748b;">0 = jamais recomendaria · 10 = com certeza recomendaria</p>
 <p>Se quiser dar um feedback mais detalhado, basta responder este email. Lemos tudo!</p>
@@ -310,7 +310,7 @@ export async function sendDrip7Email(userEmail: string, userName: string, userId
   const firstName = userName.split(' ')[0]
   return sendEmail({
     to: userEmail,
-    subject: `Como está sendo sua experiência com a Sofia?`,
+    subject: `Como está sendo sua experiência com a Polaris IA?`,
     html: buildDrip7Email(firstName, userId),
   })
 }
@@ -319,7 +319,7 @@ export async function sendDrip7Email(userEmail: string, userName: string, userId
 export function buildDrip14Email(firstName: string): string {
   return emailShell(`
 <h2>${firstName}, seu Trial Pro acabou — mas temos uma oferta</h2>
-<p>Você testou a Sofia IA por 7 dias com acesso completo. Espero que tenha gostado!</p>
+<p>Você testou a Polaris IA por 7 dias com acesso completo. Espero que tenha gostado!</p>
 <p>Agora você está no plano Free com limites reduzidos. Para continuar usando sem restrições:</p>
 <div class="hl">
   <h3>Plano Pro — R$ 297/mês</h3>
@@ -335,7 +335,7 @@ export function buildDrip14Email(firstName: string): string {
 export function buildDrip30Email(firstName: string): string {
   return emailShell(`
 <h2>${firstName}, sentimos sua falta</h2>
-<p>Faz um tempo que você não acessa a Sofia IA. Algumas novidades desde que você saiu:</p>
+<p>Faz um tempo que você não acessa a Polaris IA. Algumas novidades desde que você saiu:</p>
 <div class="hl">
   <h3>Magic Create melhorado</h3>
   <p>Agora cria pipelines completos de 5+ agentes a partir de uma descrição simples.</p>

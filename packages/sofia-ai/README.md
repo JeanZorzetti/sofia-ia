@@ -1,6 +1,6 @@
-# sofia-ai SDK
+﻿# sofia-ai SDK
 
-SDK JavaScript/TypeScript oficial para integrar a API REST do [Sofia AI](https://sofiaia.roilabs.com.br) em qualquer aplicação.
+SDK JavaScript/TypeScript oficial para integrar a API REST do [Polaris IA](https://polarisia.com.br) em qualquer aplicação.
 
 ## Instalacao
 
@@ -19,7 +19,7 @@ import { SofiaClient } from 'sofia-ai';
 
 const client = new SofiaClient({
   apiKey: 'sk_live_sua_chave_aqui',
-  // baseUrl: 'https://sofiaia.roilabs.com.br' // opcional
+  // baseUrl: 'https://polarisia.com.br' // opcional
 });
 ```
 
@@ -114,7 +114,7 @@ try {
 
 ## Autenticacao
 
-Gere sua API key em [sofiaia.roilabs.com.br/dashboard/api-keys](https://sofiaia.roilabs.com.br/dashboard/api-keys).
+Gere sua API key em [polarisia.com.br/dashboard/api-keys](https://polarisia.com.br/dashboard/api-keys).
 
 ## Licenca
 

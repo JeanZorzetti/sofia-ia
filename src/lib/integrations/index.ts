@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Integrations Index
  * Exporta todas as integrações disponíveis
  */
@@ -88,7 +88,7 @@ export const integrationTemplates = {
     icon: 'email',
     requiredCredentials: ['host', 'port', 'username', 'password'],
     configFields: [
-      { name: 'fromName', label: 'Nome do Remetente', type: 'text', default: 'Sofia IA' },
+      { name: 'fromName', label: 'Nome do Remetente', type: 'text', default: 'Polaris IA' },
       { name: 'fromEmail', label: 'Email do Remetente', type: 'email', required: true },
     ],
   },

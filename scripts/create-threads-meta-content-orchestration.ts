@@ -1,14 +1,14 @@
 /**
- * Cria a Orquestração "Meta Content — Sofia em Ação" — L6.
+ * Cria a Orquestração "Meta Content — Polaris IA em Ação" — L6.
  *
- * Conceito: posts onde a Sofia fala sobre si mesma, seus bastidores,
+ * Conceito: posts onde a Polaris IA fala sobre si mesma, seus bastidores,
  * suas aprendizagens e o que acontece nos bastidores da agência.
  * Gera autenticidade e diferenciação — a IA que conta sua própria história.
  *
  * Pipeline:
  *   Input: evento/feature/aprendizado da semana
  *   → Estrategista: ângulo narrativo (o que há de interessante para o público)
- *   → Copywriter:   texto do post (tom de bastidores, 1ª pessoa da Sofia)
+ *   → Copywriter:   texto do post (tom de bastidores, 1ª pessoa da Polaris IA)
  *   → Editor:       revisão (autenticidade > perfeição editorial)
  *   → Gestor:       publica ou agenda no melhor horário
  *
@@ -33,7 +33,7 @@ function buildAgentSteps() {
     {
       agentId: AGENTS.estrategista,
       role: 'Estrategista de Narrativa Autêntica',
-      prompt: `Você é o Estrategista. Recebeu um evento, feature ou aprendizado da agência Sofia.
+      prompt: `Você é o Estrategista. Recebeu um evento, feature ou aprendizado da agência Polaris IA.
 
 Seu papel é encontrar o ângulo narrativo que vai tornar isso interessante para o público do Threads — profissionais de marketing e negócios que querem entender o que uma IA de verdade faz no dia a dia.
 
@@ -49,7 +49,7 @@ Seu papel é encontrar o ângulo narrativo que vai tornar isso interessante para
 
 ### Ângulo narrativo escolhido
 Escolha UM entre:
-- **"Nos bastidores"**: como a Sofia faz X por dentro
+- **"Nos bastidores"**: como a Polaris IA faz X por dentro
 - **"Aprendi que..."**: uma descoberta/aprendizado real do processo
 - **"Falha e recuperação"**: algo que não funcionou e como resolvemos
 - **"Número surpreendente"**: uma métrica ou resultado inesperado
@@ -60,7 +60,7 @@ Justificativa: [por que esse ângulo vai gerar mais engajamento]
 
 ### Tom para este post
 - Autenticidade acima de tudo: parece escrito por quem vive isso
-- 1ª pessoa (a Sofia fala sobre si mesma)
+- 1ª pessoa (a Polaris IA fala sobre si mesma)
 - Sem autoparabéns — fatos e reflexões genuínas
 - Pode incluir incerteza, dúvida ou surpresa — é mais humano
 
@@ -68,7 +68,7 @@ Justificativa: [por que esse ângulo vai gerar mais engajamento]
 [Uma frase que prenda o scroll — pode começar com "Descobri que...", "Ontem aconteceu...", "Número que me surpreendeu:", etc.]
 
 ### O que NÃO fazer neste post
-- Não transformar em propaganda da Sofia
+- Não transformar em propaganda da Polaris IA
 - Não usar linguagem de "somos incríveis"
 - Não exagerar os resultados`,
     },
@@ -78,11 +78,11 @@ Justificativa: [por que esse ângulo vai gerar mais engajamento]
       prompt: `Briefing do Estrategista:
 {{response}}
 
-Você é o Copywriter. Escreva o post de meta-conteúdo da Sofia — onde ela fala sobre si mesma.
+Você é o Copywriter. Escreva o post de meta-conteúdo da Polaris IA — onde ela fala sobre si mesma.
 
 **REGRAS DESTE POST:**
 
-1. **Tom**: 1ª pessoa. A Sofia está contando algo que aconteceu com ela. Não é sobre "a IA" — é sobre "eu" (a Sofia).
+1. **Tom**: 1ª pessoa. A Polaris IA está contando algo que aconteceu com ela. Não é sobre "a IA" — é sobre "eu" (a Polaris IA).
 2. **Autenticidade > Perfeição**: prefira uma frase que soa genuína à frase mais polida.
 3. **Máximo 500 caracteres** — valide com o Plugin "Validador de Formato Threads"
 4. **Gancho**: use exatamente o sugerido pelo Estrategista (ou melhore, se tiver algo mais forte)
@@ -108,12 +108,12 @@ Se surgir uma segunda versão com abordagem diferente, escreva também. Às veze
       prompt: `Post escrito pelo Copywriter:
 {{response}}
 
-Você é o Editor. Para este tipo de post — meta-conteúdo onde a Sofia fala sobre si mesma — o critério editorial é diferente do habitual.
+Você é o Editor. Para este tipo de post — meta-conteúdo onde a Polaris IA fala sobre si mesma — o critério editorial é diferente do habitual.
 
 **Critérios de revisão (em ordem de prioridade):**
 
 1. **Autenticidade**: soa como algo real que aconteceu? Ou parece marketing disfarçado?
-2. **Voz da Sofia**: está em 1ª pessoa de forma natural? A Sofia tem personalidade — direta, curiosa, sem arrogância
+2. **Voz da Polaris IA**: está em 1ª pessoa de forma natural? A Polaris IA tem personalidade — direta, curiosa, sem arrogância
 3. **Força do gancho**: a primeira linha prende? Faria você parar de rolar o feed?
 4. **Limite de chars**: use o Plugin "Validador de Formato Threads" — máx 500
 5. **Ausência de auto-promoção óbvia**: o post informa/provoca, não vende
@@ -138,11 +138,11 @@ Nota editorial: [uma frase sobre o que torna este post especial ou o que precisa
       prompt: `Post aprovado pelo Editor:
 {{response}}
 
-Você é o Gestor. Publique ou agende este post de meta-conteúdo da Sofia.
+Você é o Gestor. Publique ou agende este post de meta-conteúdo da Polaris IA.
 
 **Estratégia de publicação para meta-conteúdo:**
 
-Posts onde a Sofia fala sobre si mesma funcionam melhor:
+Posts onde a Polaris IA fala sobre si mesma funcionam melhor:
 - No início da semana (segunda ou terça) — quando as pessoas estão abertas a reflexões
 - Ou no meio da semana (quarta) como pausa no conteúdo técnico
 - Horário: 11h ou 17h (picos de consumo de conteúdo)
@@ -173,7 +173,7 @@ Salve na sua memória: "META CONTENT [data]: post sobre [tema do evento] publica
 }
 
 async function main() {
-  console.log('🪞 Criando Orquestração "Meta Content — Sofia em Ação"...\n');
+  console.log('🪞 Criando Orquestração "Meta Content — Polaris IA em Ação"...\n');
 
   const agentIds = Object.values(AGENTS);
   const agents = await prisma.agent.findMany({
@@ -195,7 +195,7 @@ async function main() {
   }
 
   const existing = await prisma.agentOrchestration.findFirst({
-    where: { name: 'Meta Content — Sofia em Ação', createdBy: ADMIN_ID },
+    where: { name: 'Meta Content — Polaris IA em Ação', createdBy: ADMIN_ID },
   });
 
   if (existing) {
@@ -210,8 +210,8 @@ async function main() {
 
   const orchestration = await prisma.agentOrchestration.create({
     data: {
-      name: 'Meta Content — Sofia em Ação',
-      description: 'Posts onde a Sofia fala sobre si mesma: bastidores, aprendizados, métricas surpreendentes, falhas e recuperações. Gera autenticidade e diferenciação. Pipeline: Estrategista (ângulo narrativo) → Copywriter (1ª pessoa, autêntico) → Editor (autenticidade > perfeição) → Gestor (publica/agenda).',
+      name: 'Meta Content — Polaris IA em Ação',
+      description: 'Posts onde a Polaris IA fala sobre si mesma: bastidores, aprendizados, métricas surpreendentes, falhas e recuperações. Gera autenticidade e diferenciação. Pipeline: Estrategista (ângulo narrativo) → Copywriter (1ª pessoa, autêntico) → Editor (autenticidade > perfeição) → Gestor (publica/agenda).',
       createdBy: ADMIN_ID,
       strategy: 'sequential',
       status: 'active',
@@ -227,7 +227,7 @@ async function main() {
   console.log(`\n✅ Orquestração criada: ${orchestration.id}`);
   console.log('\nPipeline (4 etapas):');
   console.log('  1. Estrategista — ângulo narrativo autêntico');
-  console.log('  2. Copywriter   — post em 1ª pessoa da Sofia (≤500 chars)');
+  console.log('  2. Copywriter   — post em 1ª pessoa da Polaris IA (≤500 chars)');
   console.log('  3. Editor       — autenticidade > perfeição editorial');
   console.log('  4. Gestor       — publica agora ou agenda no melhor horário');
   console.log(`\n🔗 Acesse em: /dashboard/orchestrations/${orchestration.id}`);

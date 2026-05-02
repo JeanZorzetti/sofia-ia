@@ -59,7 +59,7 @@ export function StatusBar({ fileName, line, column, isDirty, encoding = 'UTF-8' 
                         </span>
                     </>
                 )}
-                <span style={{ color: '#3b82f6', fontWeight: 500 }}>Sofia IDE</span>
+                <span style={{ color: '#3b82f6', fontWeight: 500 }}>Polaris IA IDE</span>
             </div>
         </div>
     )

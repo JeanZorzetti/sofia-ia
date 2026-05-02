@@ -6,7 +6,7 @@
 
 ## 1. Filosofia Visual
 
-Sofia e uma plataforma de IA. A estetica deve comunicar:
+Polaris IA e uma plataforma de IA. A estetica deve comunicar:
 - **Inteligencia** — glassmorphism, gradientes sutis, profundidade
 - **Confianca** — espacamento generoso, tipografia limpa, alinhamento perfeito
 - **Premium** — micro-interacoes polidas, transicoes suaves, atencao ao detalhe
@@ -261,7 +261,7 @@ export function GradientText({ children }: { children: React.ReactNode }) {
 ## 8. Loading Aesthetics (P2)
 
 ### 8.1 Logo Loader
-- Logo Sofia com animacao de breathing/pulse durante carregamento
+- Logo Polaris IA com animacao de breathing/pulse durante carregamento
 - Substitui spinner generico
 
 ### 8.2 Skeleton com Shimmer

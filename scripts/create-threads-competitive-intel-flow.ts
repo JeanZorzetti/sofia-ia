@@ -6,7 +6,7 @@
  *       → Analista:     busca tendências virais (web_search)
  *                       analisa padrões de conteúdo de alto engajamento
  *       → Estrategista: incorpora insights ao plano da semana seguinte
- *                       sugere adaptações e ângulos únicos para a Sofia
+ *                       sugere adaptações e ângulos únicos para a Polaris IA
  *
  * Execute: npx tsx scripts/create-threads-competitive-intel-flow.ts
  */
@@ -67,7 +67,7 @@ const NODES = [
 - O que está viralizando: [descrição]
 - Por que funciona: [análise do mecanismo]
 - Exemplo de gancho: [primeira linha de um post viral]
-- Relevância para a Sofia: [alta/média/baixa] — [justificativa]
+- Relevância para a Polaris IA: [alta/média/baixa] — [justificativa]
 
 **Tema 2:** [repetir estrutura]
 
@@ -119,7 +119,7 @@ Você é o Estrategista. Com base nesta inteligência competitiva, atualize e en
 Para cada tendência relevante identificada pelo Analista:
 
 **Tendência: [nome]**
-- Nossa ângulo único: [como a Sofia aborda isso de forma diferente dos demais]
+- Nossa ângulo único: [como a Polaris IA aborda isso de forma diferente dos demais]
 - Post sugerido: [tema + gancho em primeira linha]
 - Posição na semana: [ex: "publicar na quarta às 11h — pico da tendência"]
 - Risco de saturação: [já/quase/ainda não]

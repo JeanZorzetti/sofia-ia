@@ -1,5 +1,5 @@
-/**
- * Spacing Tokens — Sofia AI
+﻿/**
+ * Spacing Tokens — Polaris IA
  * Padding, gap e container tokens para seções landing.
  */
 

@@ -1,5 +1,5 @@
-/**
- * Webhook notification system for Sofia AI.
+﻿/**
+ * Webhook notification system for Polaris IA.
  * Supports Slack, Discord, Email (via Resend), and generic HTTP webhooks.
  */
 
@@ -27,7 +27,7 @@ async function sendSlackWebhook(url: string, payload: WebhookPayload): Promise<b
     execution_started: ':rocket:',
   }
 
-  const text = `${eventEmojis[payload.event] || ':bell:'} *Sofia AI — ${payload.event.replace(/_/g, ' ')}*\n${
+  const text = `${eventEmojis[payload.event] || ':bell:'} *Polaris IA — ${payload.event.replace(/_/g, ' ')}*\n${
     payload.data.orchestrationName
       ? `Orquestração: *${payload.data.orchestrationName}*`
       : ''
@@ -55,7 +55,7 @@ async function sendDiscordWebhook(url: string, payload: WebhookPayload): Promise
   }
 
   const embed = {
-    title: `Sofia AI — ${payload.event.replace(/_/g, ' ')}`,
+    title: `Polaris IA — ${payload.event.replace(/_/g, ' ')}`,
     color: colors[payload.event] || 0x6366f1,
     fields: Object.entries(payload.data)
       .slice(0, 5)
@@ -65,7 +65,7 @@ async function sendDiscordWebhook(url: string, payload: WebhookPayload): Promise
         inline: true,
       })),
     timestamp: payload.timestamp,
-    footer: { text: 'Sofia AI by ROI Labs' },
+    footer: { text: 'Polaris IA by ROI Labs' },
   }
 
   try {
@@ -91,7 +91,7 @@ async function sendEmailWebhook(email: string, payload: WebhookPayload): Promise
 
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; color: #e2e8f0; padding: 24px; border-radius: 12px;">
-      <h2 style="color: #fff; margin: 0 0 16px;">Sofia AI — ${eventLabels[payload.event] || payload.event}</h2>
+      <h2 style="color: #fff; margin: 0 0 16px;">Polaris IA — ${eventLabels[payload.event] || payload.event}</h2>
       <div style="background: #1e293b; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
         ${Object.entries(payload.data)
           .slice(0, 8)
@@ -102,13 +102,13 @@ async function sendEmailWebhook(email: string, payload: WebhookPayload): Promise
           .join('')}
       </div>
       <p style="color: #475569; font-size: 12px;">Evento disparado em: ${new Date(payload.timestamp).toLocaleString('pt-BR')}</p>
-      <p style="color: #475569; font-size: 12px;">Acesse: <a href="https://sofiaia.roilabs.com.br/dashboard" style="color: #6d28d9;">sofiaia.roilabs.com.br</a></p>
+      <p style="color: #475569; font-size: 12px;">Acesse: <a href="https://polarisia.com.br/dashboard" style="color: #6d28d9;">polarisia.com.br</a></p>
     </div>
   `
 
   const result = await sendEmail({
     to: email,
-    subject: `Sofia AI — ${eventLabels[payload.event] || payload.event}`,
+    subject: `Polaris IA — ${eventLabels[payload.event] || payload.event}`,
     html,
   })
 
@@ -122,8 +122,8 @@ async function sendGenericWebhook(url: string, payload: WebhookPayload): Promise
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Sofia-Event': payload.event,
-        'X-Sofia-Timestamp': payload.timestamp,
+        'X-Polaris IA-Event': payload.event,
+        'X-Polaris IA-Timestamp': payload.timestamp,
       },
       body: JSON.stringify(payload),
     })

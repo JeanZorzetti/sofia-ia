@@ -11,7 +11,7 @@ export default function OrchestrationError({
     reset: () => void
 }) {
     useEffect(() => {
-        console.error('[Sofia Orchestrations Error]', error)
+        console.error('[Polaris IA Orchestrations Error]', error)
     }, [error])
 
     return (

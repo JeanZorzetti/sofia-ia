@@ -1,15 +1,15 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Key, ArrowRight, ArrowLeft, ExternalLink } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Integracao Make | Sofia AI — Automate with Make (Integromat)',
+  title: 'Integracao Make | Polaris IA — Automate with Make (Integromat)',
   description:
-    'Conecte Sofia AI ao Make (Integromat) e automatize fluxos com centenas de apps. Guia passo-a-passo com HTTP module.',
+    'Conecte Polaris IA ao Make (Integromat) e automatize fluxos com centenas de apps. Guia passo-a-passo com HTTP module.',
   openGraph: {
-    title: 'Sofia AI + Make',
+    title: 'Polaris IA + Make',
     description: 'Automatize orquestracoes de IA com Make (Integromat).',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
 }
@@ -19,7 +19,7 @@ const STEPS = [
     num: '1',
     title: 'Gere sua API Key',
     description:
-      'No dashboard da Sofia AI, acesse /dashboard/api-keys e gere uma nova chave. Anote o token sk_live_ gerado.',
+      'No dashboard da Polaris IA, acesse /dashboard/api-keys e gere uma nova chave. Anote o token sk_live_ gerado.',
     code: null,
     cta: { label: 'Gerar API Key', href: '/dashboard/api-keys' },
   },
@@ -35,9 +35,9 @@ const STEPS = [
     num: '3',
     title: 'Adicione o modulo HTTP',
     description:
-      'Adicione o modulo "HTTP" > "Make a request". Configure metodo POST, URL do endpoint Sofia AI, e os headers necessarios.',
+      'Adicione o modulo "HTTP" > "Make a request". Configure metodo POST, URL do endpoint Polaris IA, e os headers necessarios.',
     code: `Metodo: POST
-URL: https://sofiaia.roilabs.com.br/api/v1/integrations/zapier/execute
+URL: https://polarisia.com.br/api/v1/integrations/zapier/execute
 
 Headers:
   x-api-key: sk_live_SEU_TOKEN
@@ -64,9 +64,9 @@ Content:
     num: '5',
     title: 'Ative e monitore',
     description:
-      'Ative o cenario no Make e monitore as execucoes tanto no Make quanto no dashboard da Sofia AI.',
+      'Ative o cenario no Make e monitore as execucoes tanto no Make quanto no dashboard da Polaris IA.',
     code: null,
-    cta: { label: 'Dashboard Sofia AI', href: '/dashboard/orchestrations' },
+    cta: { label: 'Dashboard Polaris IA', href: '/dashboard/orchestrations' },
   },
 ]
 
@@ -74,25 +74,25 @@ const USE_CASES = [
   {
     title: 'TypeForm → Analise de Sentimento',
     description:
-      'Formulario preenchido → Make captura respostas → Sofia analisa sentimento e urgencia → atualiza CRM.',
+      'Formulario preenchido → Make captura respostas → Polaris IA analisa sentimento e urgencia → atualiza CRM.',
     icon: '📝',
   },
   {
     title: 'Instagram → Repurposing',
     description:
-      'Post publicado no Instagram → Make detecta → Sofia gera variacoes para LinkedIn, Twitter e newsletter.',
+      'Post publicado no Instagram → Make detecta → Polaris IA gera variacoes para LinkedIn, Twitter e newsletter.',
     icon: '📸',
   },
   {
     title: 'Google Calendar → Briefing',
     description:
-      'Reuniao criada no Google Calendar → Make dispara → Sofia gera briefing automatico com contexto.',
+      'Reuniao criada no Google Calendar → Make dispara → Polaris IA gera briefing automatico com contexto.',
     icon: '📅',
   },
   {
     title: 'Slack → Resumo de Canal',
     description:
-      'Mensagens do Slack coletadas pelo Make → Sofia resume e extrai action items → posta no canal de gestao.',
+      'Mensagens do Slack coletadas pelo Make → Polaris IA resume e extrai action items → posta no canal de gestao.',
     icon: '💬',
   },
 ]
@@ -130,7 +130,7 @@ export default function MakeIntegrationPage() {
             <span className="text-2xl font-bold text-purple-300">M</span>
           </div>
           <div>
-            <h1 className="text-3xl font-bold">Sofia AI + Make</h1>
+            <h1 className="text-3xl font-bold">Polaris IA + Make</h1>
             <p className="text-white/50 mt-1">
               Automacao visual com o modulo HTTP do Make (Integromat)
             </p>
@@ -139,7 +139,7 @@ export default function MakeIntegrationPage() {
 
         <p className="text-white/60 text-lg leading-relaxed mb-12">
           O Make e uma plataforma visual de automacao com centenas de integracoes nativas.
-          Com o modulo HTTP, voce conecta a Sofia AI a qualquer ferramenta em minutos —
+          Com o modulo HTTP, voce conecta a Polaris IA a qualquer ferramenta em minutos —
           sem codigo, sem instalacoes adicionais.
         </p>
 
@@ -206,7 +206,7 @@ export default function MakeIntegrationPage() {
         <div className="bg-purple-500/5 border border-purple-500/20 rounded-xl p-6 mb-12">
           <h3 className="font-semibold text-purple-300 mb-2">Dica: Use Webhooks como Trigger</h3>
           <p className="text-sm text-white/50">
-            Para receber o resultado da execucao em tempo real, configure a Sofia AI para enviar
+            Para receber o resultado da execucao em tempo real, configure a Polaris IA para enviar
             um webhook de saida em /dashboard/settings/webhooks. Adicione o URL de um webhook
             do Make como destino para capturar o output da orquestracao.
           </p>

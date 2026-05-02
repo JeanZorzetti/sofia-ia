@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -16,17 +16,17 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Programa de Afiliados Sofia AI — Ganhe Indicando a Melhor Plataforma de IA',
+  title: 'Programa de Afiliados Polaris IA — Ganhe Indicando a Melhor Plataforma de IA',
   description:
-    'Indique o Sofia AI e ganhe comissão recorrente por cada cliente que você trouxer. Programa de afiliados para agências, consultores e criadores de conteúdo de inteligência artificial.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/afiliados' },
+    'Indique o Polaris IA e ganhe comissão recorrente por cada cliente que você trouxer. Programa de afiliados para agências, consultores e criadores de conteúdo de inteligência artificial.',
+  alternates: { canonical: 'https://polarisia.com.br/afiliados' },
   openGraph: {
-    title: 'Afiliados Sofia AI — Comissão Recorrente por Indicação',
+    title: 'Afiliados Polaris IA — Comissão Recorrente por Indicação',
     description:
       'Ganhe indicando a melhor plataforma de orquestração de agentes IA do Brasil. Comissão recorrente, painel de acompanhamento e suporte dedicado.',
     type: 'website',
     locale: 'pt_BR',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
 }
@@ -68,7 +68,7 @@ const benefits = [
     icon: Users,
     title: 'Ideal para Agências',
     description:
-      'Agências e consultores que já usam Sofia AI para seus clientes podem monetizar a indicação e ainda oferecer um produto premium.',
+      'Agências e consultores que já usam Polaris IA para seus clientes podem monetizar a indicação e ainda oferecer um produto premium.',
     color: 'text-pink-400',
     bg: 'bg-pink-500/10 border-pink-500/20',
   },
@@ -120,13 +120,13 @@ const howItWorks = [
   {
     step: '01',
     title: 'Cadastre-se gratuitamente',
-    description: 'Crie sua conta no Sofia AI. Se já tem conta, acesse o painel e ative o programa de afiliados em um clique.',
+    description: 'Crie sua conta no Polaris IA. Se já tem conta, acesse o painel e ative o programa de afiliados em um clique.',
   },
   {
     step: '02',
     title: 'Copie seu link único',
     description:
-      'No dashboard, você encontra seu link personalizado (sofiaia.roilabs.com.br?ref=SEU_ID). Cada cadastro via esse link é atribuído a você.',
+      'No dashboard, você encontra seu link personalizado (polarisia.com.br?ref=SEU_ID). Cada cadastro via esse link é atribuído a você.',
   },
   {
     step: '03',
@@ -146,13 +146,13 @@ const testimonials = [
   {
     name: 'Rafael Costa',
     role: 'Consultor de Marketing Digital',
-    text: 'Indiquei Sofia AI para 3 clientes da minha carteira e em 2 meses já recuperei o valor da minha própria assinatura. Produto que vende sozinho.',
+    text: 'Indiquei Polaris IA para 3 clientes da minha carteira e em 2 meses já recuperei o valor da minha própria assinatura. Produto que vende sozinho.',
     stars: 5,
   },
   {
     name: 'Ana Lima',
     role: 'Agência de Conteúdo',
-    text: 'Como agência, já usávamos Sofia para produção de conteúdo dos clientes. Quando vi que tinha programa de afiliados, foi natural indicar. Hoje tenho 12 clientes ativos.',
+    text: 'Como agência, já usávamos Polaris IA para produção de conteúdo dos clientes. Quando vi que tinha programa de afiliados, foi natural indicar. Hoje tenho 12 clientes ativos.',
     stars: 5,
   },
   {
@@ -173,7 +173,7 @@ const faqs = [
     a: 'Enquanto o cliente indicado mantiver a assinatura ativa. Se ele fizer upgrade para um plano maior, você ganha mais. Se cancelar, a comissão para.',
   },
   {
-    q: 'Preciso ser cliente do Sofia AI para ser afiliado?',
+    q: 'Preciso ser cliente do Polaris IA para ser afiliado?',
     a: 'Sim, você precisa ter uma conta ativa (plano gratuito ou pago) para participar do programa. Isso garante que você indique com conhecimento de causa.',
   },
   {
@@ -204,7 +204,7 @@ export default function AfiliadosPage() {
             Ganhe indicando
             <br />
             <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-              Sofia AI
+              Polaris IA
             </span>
           </h1>
 
@@ -255,7 +255,7 @@ export default function AfiliadosPage() {
       {/* Benefits */}
       <section className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">Por que ser afiliado Sofia AI</h2>
+          <h2 className="text-3xl font-bold text-center mb-4">Por que ser afiliado Polaris IA</h2>
           <p className="text-white/50 text-center mb-12 max-w-2xl mx-auto">
             Um produto que as pessoas adoram usar é fácil de indicar. E comissão recorrente significa renda que cresce com você.
           </p>

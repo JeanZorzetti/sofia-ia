@@ -1,4 +1,4 @@
-# Produto Next — Features que Desbloqueiam Crescimento
+﻿# Produto Next — Features que Desbloqueiam Crescimento
 
 > Regra V3: So construir features que diretamente aumentam signups, ativacao ou revenue.
 > Nao construir features porque "seria legal ter".
@@ -85,7 +85,7 @@ Cada feature proposta deve responder SIM a pelo menos uma:
 
 | Dia | Trigger | Assunto | Conteudo |
 |-----|---------|---------|----------|
-| D+0 | Signup | "Bem-vindo a Sofia AI!" | Link dashboard + 3 proximos passos |
+| D+0 | Signup | "Bem-vindo a Polaris IA!" | Link dashboard + 3 proximos passos |
 | D+1 | !first_agent | "Crie seu primeiro agente em 2 min" | Video + template sugerido |
 | D+3 | !first_orch | "Experimente o Magic Create" | CTA para criar orquestracao com IA |
 | D+5 | any | "3 templates prontos para testar" | Links para templates populares |
@@ -122,7 +122,7 @@ Cada feature proposta deve responder SIM a pelo menos uma:
 **Implementacao:**
 - Email semanal automatizado:
   ```
-  Sua semana na Sofia AI:
+  Sua semana na Polaris IA:
   - 12 orquestracoes executadas
   - 45 mensagens processadas
   - Agente mais ativo: "Pesquisador"
@@ -136,16 +136,16 @@ Cada feature proposta deve responder SIM a pelo menos uma:
 
 ---
 
-### 2.2 Orchestration Sharing ("Powered by Sofia AI")
+### 2.2 Orchestration Sharing ("Powered by Polaris IA")
 **Impacto:** Viral + Retencao
 **Hipotese:** 5% dos usuarios compartilham resultados, gerando 10 signups/mes.
 
 **Implementacao:**
 - Botao "Compartilhar resultado" no final de cada execucao
-- Gera link publico: `sofiaia.roilabs.com.br/shared/[executionId]`
+- Gera link publico: `polarisia.com.br/shared/[executionId]`
 - Pagina publica mostra: input, agentes que rodaram, output final
 - Footer: "Crie sua propria orquestracao gratis → [Signup CTA]"
-- Badge: "Powered by Sofia AI" com link
+- Badge: "Powered by Polaris IA" com link
 
 **Esforco:** 2 dias
 **Metricas:** Shares, shared page views, signups via shared link

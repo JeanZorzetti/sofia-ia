@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 
-const PRIMARY_DOMAIN = process.env.NEXT_PUBLIC_DOMAIN || 'sofiaia.roilabs.com.br'
+const PRIMARY_DOMAIN = process.env.NEXT_PUBLIC_DOMAIN || 'polarisia.com.br'
 
 /**
  * Middleware de autenticação, tenant isolation e custom domain white-label

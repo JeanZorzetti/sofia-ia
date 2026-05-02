@@ -60,7 +60,7 @@ Todas as outras metricas sao leading indicators do MRR.
 |---------|------------|--------|
 | NPS score | NPS survey | > 40 |
 | Referral signups (via afiliados) | DB ref tracking | 10% dos signups |
-| "Powered by Sofia" clicks | Custom event | 5/semana |
+| "Powered by Polaris IA" clicks | Custom event | 5/semana |
 | GitHub stars | GitHub API | 100 (mes 3), 500 (mes 12) |
 
 ---

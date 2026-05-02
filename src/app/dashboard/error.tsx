@@ -11,7 +11,7 @@ export default function DashboardError({
     reset: () => void
 }) {
     useEffect(() => {
-        console.error('[Sofia Dashboard Error]', error)
+        console.error('[Polaris IA Dashboard Error]', error)
     }, [error])
 
     return (

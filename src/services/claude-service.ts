@@ -191,7 +191,7 @@ export class ClaudeService {
             },
             body: JSON.stringify({
                 uuid: uuid,
-                name: 'Sofia Agent Gen',
+                name: 'Polaris IA Agent Gen',
                 model: webModel, // Use mapped model
                 timezone: 'America/Sao_Paulo',
                 attachments: [],

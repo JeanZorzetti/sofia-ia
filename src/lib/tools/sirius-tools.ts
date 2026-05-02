@@ -1,5 +1,5 @@
 /**
- * Sirius CRM Tools — Tools para agentes Sofia operarem o Sirius via API v1.
+ * Sirius CRM Tools — Tools para agentes Polaris IA operarem o Sirius via API v1.
  *
  * Cada tool mapeia para um endpoint da API v1 do Sirius CRM.
  * Auth via Bearer token (API key gerada no Sirius por organização).

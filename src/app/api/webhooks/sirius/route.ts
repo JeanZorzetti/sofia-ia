@@ -3,7 +3,7 @@
  *
  * Receives events from the Sirius CRM webhook dispatcher
  * (contact.created, deal.stage_changed, deal.idle, whatsapp.message.in, note.created)
- * and routes them to the appropriate Sofia agents for processing.
+ * and routes them to the appropriate Polaris IA agents for processing.
  *
  * Auth: HMAC-SHA256 signature in `x-sirius-signature` header.
  * Event type: `x-sirius-event` header.

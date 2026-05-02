@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Sofia AI — Multi-Agent AI Orchestration Platform',
+  title: 'Polaris IA — Multi-Agent AI Orchestration Platform',
   description:
     'Build teams of AI agents that collaborate to solve complex tasks. Multi-agent orchestration, semantic Knowledge Base with RAG, multi-model IDE, and integrated channels. Free to start.',
   keywords: [
@@ -34,30 +34,30 @@ export const metadata: Metadata = {
     'crewai alternative',
     'autogen alternative',
     'no-code ai platform',
-    'sofia ai',
+    'Polaris IA',
     'ai workflow automation',
   ],
   openGraph: {
-    title: 'Sofia AI — Multi-Agent AI Orchestration Platform',
+    title: 'Polaris IA — Multi-Agent AI Orchestration Platform',
     description:
       'Build AI agent teams that collaborate to solve any task. More powerful than CrewAI. Simpler than AutoGen.',
     type: 'website',
     locale: 'en_US',
-    siteName: 'Sofia AI',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    siteName: 'Polaris IA',
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sofia AI — Multi-Agent AI Orchestration Platform',
+    title: 'Polaris IA — Multi-Agent AI Orchestration Platform',
     description:
       'Build AI agent teams that collaborate on complex tasks. Knowledge Base with RAG, multi-model IDE, WhatsApp integration. Free to start.',
   },
   alternates: {
-    canonical: 'https://sofiaia.roilabs.com.br/en',
+    canonical: 'https://polarisia.com.br/en',
     languages: {
-      'pt-BR': 'https://sofiaia.roilabs.com.br',
-      'en-US': 'https://sofiaia.roilabs.com.br/en',
+      'pt-BR': 'https://polarisia.com.br',
+      'en-US': 'https://polarisia.com.br/en',
     },
   },
 }
@@ -192,7 +192,7 @@ export default function EnLandingPage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'SoftwareApplication',
-            name: 'Sofia AI',
+            name: 'Polaris IA',
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
             offers: {
@@ -353,9 +353,9 @@ export default function EnLandingPage() {
       <section id="comparison" className="px-6 py-24 bg-[#0d0d15]">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Sofia AI vs. Competitors</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Polaris IA vs. Competitors</h2>
             <p className="text-white/40 max-w-xl mx-auto">
-              Why teams choose Sofia over CrewAI, AutoGen, or LangFlow?
+              Why teams choose Polaris IA over CrewAI, AutoGen, or LangFlow?
             </p>
           </div>
 
@@ -367,7 +367,7 @@ export default function EnLandingPage() {
                     <th className="text-left p-4 text-white/60 font-medium">Feature</th>
                     <th className="p-4 text-center">
                       <div className="flex flex-col items-center gap-1">
-                        <span className="font-bold text-white">Sofia AI</span>
+                        <span className="font-bold text-white">Polaris IA</span>
                         <span className="text-[10px] text-blue-400">Recommended</span>
                       </div>
                     </th>
@@ -538,15 +538,15 @@ export default function EnLandingPage() {
               },
               {
                 '@type': 'Question',
-                name: 'Is Sofia AI an alternative to CrewAI?',
+                name: 'Is Polaris IA an alternative to CrewAI?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text: 'Yes. Sofia AI offers everything CrewAI offers (multi-agent orchestration) plus a visual no-code interface, built-in Knowledge Base with RAG, integrated channels (WhatsApp), detailed analytics, and execution replay. It is more complete and accessible.',
+                  text: 'Yes. Polaris IA offers everything CrewAI offers (multi-agent orchestration) plus a visual no-code interface, built-in Knowledge Base with RAG, integrated channels (WhatsApp), detailed analytics, and execution replay. It is more complete and accessible.',
                 },
               },
               {
                 '@type': 'Question',
-                name: 'Can I use Sofia AI for free?',
+                name: 'Can I use Polaris IA for free?',
                 acceptedAnswer: {
                   '@type': 'Answer',
                   text: 'Yes. The Free plan includes 3 orchestrations, 5 agents, 1 Knowledge Base, and 100 executions per month. No credit card required to start.',

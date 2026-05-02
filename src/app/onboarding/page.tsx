@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -220,7 +220,7 @@ export default function OnboardingPage() {
         body: JSON.stringify({ useCase: selectedUseCase }),
       })
 
-      toast.success('Tudo pronto! Bem-vindo a Sofia IA.')
+      toast.success('Tudo pronto! Bem-vindo a Polaris IA.')
       router.push('/dashboard')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro desconhecido'
@@ -275,7 +275,7 @@ export default function OnboardingPage() {
                   <Sparkles className="h-8 w-8 text-violet-400" />
                 </div>
                 <h1 className="text-3xl font-bold text-white mb-2">
-                  Bem-vindo a Sofia IA
+                  Bem-vindo a Polaris IA
                 </h1>
                 <p className="text-white/60">
                   Vamos configurar sua primeira experiencia. Qual e o seu principal caso de uso?

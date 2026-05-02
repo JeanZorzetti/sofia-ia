@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
 import { createSubscription, PLANS, type PlanId } from '@/lib/mercadopago'
 import { prisma } from '@/lib/prisma'
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const returnUrl =
       process.env.NEXT_PUBLIC_APP_URL
         ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`
-        : 'https://sofiaia.roilabs.com.br/dashboard/billing'
+        : 'https://polarisia.com.br/dashboard/billing'
 
     const subscription = await createSubscription(
       plan as Exclude<PlanId, 'free'>,

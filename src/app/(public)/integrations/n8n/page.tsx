@@ -1,21 +1,21 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Key, ArrowRight, ArrowLeft, ExternalLink } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Integracao n8n | Sofia AI — Open Source Workflow Automation',
+  title: 'Integracao n8n | Polaris IA — Open Source Workflow Automation',
   description:
-    'Conecte Sofia AI ao n8n com o HTTP Request node. Guia completo com exemplo de workflow JSON para automacao open source.',
+    'Conecte Polaris IA ao n8n com o HTTP Request node. Guia completo com exemplo de workflow JSON para automacao open source.',
   openGraph: {
-    title: 'Sofia AI + n8n',
+    title: 'Polaris IA + n8n',
     description: 'Automatize orquestracoes de IA com n8n. Open source e self-hosted.',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
 }
 
 const N8N_WORKFLOW_JSON = `{
-  "name": "Sofia AI - Executar Orquestracao",
+  "name": "Polaris IA - Executar Orquestracao",
   "nodes": [
     {
       "parameters": {},
@@ -26,7 +26,7 @@ const N8N_WORKFLOW_JSON = `{
     {
       "parameters": {
         "method": "POST",
-        "url": "https://sofiaia.roilabs.com.br/api/v1/integrations/zapier/execute",
+        "url": "https://polarisia.com.br/api/v1/integrations/zapier/execute",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -55,14 +55,14 @@ const N8N_WORKFLOW_JSON = `{
           ]
         }
       },
-      "name": "Sofia AI - Execute",
+      "name": "Polaris IA - Execute",
       "type": "n8n-nodes-base.httpRequest",
       "position": [460, 300]
     }
   ],
   "connections": {
     "Manual Trigger": {
-      "main": [[ { "node": "Sofia AI - Execute", "type": "main", "index": 0 } ]]
+      "main": [[ { "node": "Polaris IA - Execute", "type": "main", "index": 0 } ]]
     }
   }
 }`
@@ -72,7 +72,7 @@ const STEPS = [
     num: '1',
     title: 'Gere sua API Key',
     description:
-      'Acesse o dashboard da Sofia AI e gere uma API Key em /dashboard/api-keys. A chave comeca com sk_live_.',
+      'Acesse o dashboard da Polaris IA e gere uma API Key em /dashboard/api-keys. A chave comeca com sk_live_.',
     cta: { label: 'Gerar API Key', href: '/dashboard/api-keys' },
   },
   {
@@ -109,25 +109,25 @@ const USE_CASES = [
   {
     title: 'Webhook → Processamento IA',
     description:
-      'Webhook externo recebido → n8n processa → Sofia IA analisa e responde → resultado gravado no banco.',
+      'Webhook externo recebido → n8n processa → Polaris IA analisa e responde → resultado gravado no banco.',
     icon: '🔗',
   },
   {
     title: 'Cron → Relatorio Automatico',
     description:
-      'Execucao agendada pelo n8n toda segunda-feira → Sofia gera relatorio semanal → envia por email.',
+      'Execucao agendada pelo n8n toda segunda-feira → Polaris IA gera relatorio semanal → envia por email.',
     icon: '⏰',
   },
   {
     title: 'Ticket de Suporte → Rascunho',
     description:
-      'Novo ticket no Jira/Zendesk → n8n captura → Sofia gera rascunho de resposta → agente humano revisa.',
+      'Novo ticket no Jira/Zendesk → n8n captura → Polaris IA gera rascunho de resposta → agente humano revisa.',
     icon: '🎫',
   },
   {
     title: 'RSS → Curadoria de Conteudo',
     description:
-      'Feed RSS monitorado pelo n8n → Sofia AI resume e avalia relevancia → postar highlights no Slack.',
+      'Feed RSS monitorado pelo n8n → Polaris IA resume e avalia relevancia → postar highlights no Slack.',
     icon: '📰',
   },
 ]
@@ -173,7 +173,7 @@ export default function N8nIntegrationPage() {
                 Self-hosted
               </span>
             </div>
-            <h1 className="text-3xl font-bold">Sofia AI + n8n</h1>
+            <h1 className="text-3xl font-bold">Polaris IA + n8n</h1>
             <p className="text-white/50 mt-1">
               Automacao open source e self-hosted com o HTTP Request node
             </p>
@@ -182,7 +182,7 @@ export default function N8nIntegrationPage() {
 
         <p className="text-white/60 text-lg leading-relaxed mb-12">
           O n8n e uma plataforma de automacao de workflows open source que pode ser
-          self-hosted para maximo controle. Integre a Sofia AI via HTTP Request node
+          self-hosted para maximo controle. Integre a Polaris IA via HTTP Request node
           para criar workflows poderosos que combinam IA com qualquer ferramenta.
         </p>
 
@@ -256,7 +256,7 @@ export default function N8nIntegrationPage() {
           <h3 className="font-semibold text-green-300 mb-2">n8n Self-Hosted</h3>
           <p className="text-sm text-white/50">
             Se voce usa n8n self-hosted, certifique-se que sua instancia consegue acessar
-            sofiaia.roilabs.com.br. Para ambientes na mesma rede privada, use
+            polarisia.com.br. Para ambientes na mesma rede privada, use
             /api/v1/integrations/zapier/execute com o IP interno, se configurado.
           </p>
         </div>

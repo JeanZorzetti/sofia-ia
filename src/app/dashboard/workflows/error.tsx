@@ -11,7 +11,7 @@ export default function WorkflowsError({
     reset: () => void
 }) {
     useEffect(() => {
-        console.error('[Sofia Workflows Error]', error)
+        console.error('[Polaris IA Workflows Error]', error)
     }, [error])
 
     return (

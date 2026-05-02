@@ -1,5 +1,5 @@
-/**
- * Organization auth helpers for Sofia IA.
+﻿/**
+ * Organization auth helpers for Polaris IA.
  * Used to check membership and permissions within organizations.
  */
 

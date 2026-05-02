@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -209,7 +209,7 @@ export function OnboardingWizard({ open, onClose, userId }: OnboardingWizardProp
             <div className="space-y-4">
               <div className="rounded-lg bg-muted/50 p-6 text-center">
                 <Bot className="mx-auto mb-4 h-16 w-16 text-primary" />
-                <h3 className="mb-2 text-xl font-semibold">Bem-vindo ao Sofia AI!</h3>
+                <h3 className="mb-2 text-xl font-semibold">Bem-vindo ao Polaris IA!</h3>
                 <p className="text-foreground-secondary">
                   Vamos configurar seu primeiro agente de IA. Ele poderá atender clientes, qualificar leads
                   e automatizar processos 24/7.
@@ -257,7 +257,7 @@ export function OnboardingWizard({ open, onClose, userId }: OnboardingWizardProp
                 <Label htmlFor="agentName">Nome do Agente</Label>
                 <Input
                   id="agentName"
-                  placeholder="Ex: Atendente Virtual, Recrutador, Sofia..."
+                  placeholder="Ex: Atendente Virtual, Recrutador, Polaris IA..."
                   value={agentName}
                   onChange={(e) => setAgentName(e.target.value)}
                   className="mt-1"

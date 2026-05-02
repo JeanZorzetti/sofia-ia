@@ -1,4 +1,4 @@
-# Sofia AI — Multi-Agent Orchestration Platform
+﻿# Polaris IA — Multi-Agent Orchestration Platform
 
 > Build AI agent teams that collaborate to solve complex tasks. More powerful than CrewAI. Simpler than AutoGen.
 
@@ -8,13 +8,13 @@
 [![PostgreSQL + pgvector](https://img.shields.io/badge/PostgreSQL-pgvector-336791)](https://github.com/pgvector/pgvector)
 [![Deploy on Vercel](https://img.shields.io/badge/Deploy-Vercel-black)](https://vercel.com)
 
-**[Live Demo](https://sofiaia.roilabs.com.br)** | **[Documentation](#quick-start)** | **[Discord](#community)**
+**[Live Demo](https://polarisia.com.br)** | **[Documentation](#quick-start)** | **[Discord](#community)**
 
 ---
 
-## What is Sofia AI?
+## What is Polaris IA?
 
-Sofia is an open-source platform for orchestrating multiple AI agents to work together on complex tasks. Think of it as a visual workflow builder where each "step" is an intelligent agent with a specific role.
+Polaris IA is an open-source platform for orchestrating multiple AI agents to work together on complex tasks. Think of it as a visual workflow builder where each "step" is an intelligent agent with a specific role.
 
 **Example pipeline:**
 ```
@@ -169,7 +169,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ## Database Setup
 
-Sofia requires PostgreSQL 15+ with the `pgvector` extension for semantic search.
+Polaris IA requires PostgreSQL 15+ with the `pgvector` extension for semantic search.
 
 ```sql
 -- Enable pgvector extension
@@ -272,6 +272,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 ## Made by ROI Labs
 
-Sofia AI is built and maintained by [ROI Labs](https://roilabs.com.br), a Brazilian AI consulting firm.
+Polaris IA is built and maintained by [ROI Labs](https://roilabs.com.br), a Brazilian AI consulting firm.
 
 **Need help deploying or customizing?** [Contact us](mailto:contato@roilabs.com.br)

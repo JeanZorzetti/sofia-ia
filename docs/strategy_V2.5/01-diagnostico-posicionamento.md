@@ -23,7 +23,7 @@ Notas individuais:
 ### Problema 1: A landing fala de solucao antes do problema
 
 **O que esta escrito:**
-> "Sofia — Plataforma de Orquestração de Agentes IA"
+> "Polaris IA — Plataforma de Orquestração de Agentes IA"
 > "Pipelines visuais, RAG semântico, IDE multi-modelo"
 
 **Por que nao funciona:**
@@ -42,7 +42,7 @@ Notas individuais:
 
 **Por que e fatal:**
 1. Assume que o usuario conhece CrewAI e AutoGen (a maioria nao conhece)
-2. Posiciona Sofia como derivativo, nao como categoria
+2. Posiciona Polaris IA como derivativo, nao como categoria
 3. "Meio termo" implica que nao lidera em nada
 4. O usuario pensa: "Por que nao usar o original?"
 
@@ -90,7 +90,7 @@ Notas individuais:
 ## O que a critica NAO disse (e estava errado)
 
 A critica disse "CRUD glorificado de APIs de LLM". Isso e errado tecnicamente:
-- Sofia tem execucao real de pipelines multi-agente com SSE streaming
+- Polaris IA tem execucao real de pipelines multi-agente com SSE streaming
 - Knowledge Base com pgvector (RAG semantico real)
 - Plugin system, agent memory, agent-to-agent delegation
 - 15+ integracoes nativas (HubSpot, Salesforce, Zapier, etc.)

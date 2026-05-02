@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sofia AI - Orquestrações de Agentes IA</title>
+<!-- Load Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config for Custom Colors and Fonts -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              bg: '#080a13', // Deep dark navy/black base
+              card: '#0f1221', // Slightly lighter for the stats card
+              accent: '#6366f1', // Indigoish purple
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'], // Assuming Inter for that clean tech look
+          },
+          backgroundImage: {
+            'grid-pattern': "radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px)",
+            'glow-conic': 'conic-gradient(from 180deg at 50% 50%, #2a8af6 0deg, #a853ba 180deg, #2a8af6 360deg)',
+          }
+        }
+      }
+    }
+  </script>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Custom CSS for specific effects like the grid and text gradients -->
+<style data-purpose="custom-effects">
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0B0C15; /* Requested very dark navy */
+      color: #ffffff;
+      overflow-x: hidden;
+    }
+
+    /* Background Grid Effect */
+    .bg-grid {
+      background-size: 40px 40px;
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%);
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 100%);
+    }
+
+    /* Diagonal Glow Lines - Adjusted for subtlety */
+    .glow-line {
+      position: absolute;
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.1), rgba(168, 85, 247, 0.1), transparent);
+      height: 300px;
+      width: 150%;
+      transform: rotate(-25deg);
+      filter: blur(60px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glassmorphism Card Utility */
+    .glass-card {
+      background: rgba(15, 18, 33, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+<body class="relative min-h-screen flex flex-col">
+<!-- BACKGROUND EFFECTS LAYER -->
+<!-- This absolute container holds the grid and glow effects so they sit behind content -->
+<div aria-hidden="true" class="absolute inset-0 z-0 pointer-events-none">
+<!-- Dotted Grid -->
+<div class="absolute inset-0 bg-grid h-full w-full"></div>
+<!-- Diagonal Glow Line 1 (Top Right) -->
+<div class="glow-line top-[-20%] right-[-20%]"></div>
+<!-- Diagonal Glow Line 2 (Bottom Left) -->
+<div class="glow-line bottom-[-10%] left-[-20%] rotate-[-45deg] opacity-50"></div>
+</div>
+<!-- BEGIN: Header/Navbar -->
+<header class="relative z-50 w-full pt-6 pb-4 px-6 md:px-12">
+<nav class="max-w-7xl mx-auto flex items-center justify-between">
+<!-- Logo Section -->
+<div class="flex items-center gap-3" data-purpose="logo">
+<div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xl" style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);">
+    S
+  </div>
+<span class="text-xl font-bold tracking-tight text-white font-sans">Sofia AI</span>
+</div>
+<!-- Desktop Navigation Links -->
+<div class="hidden lg:flex items-center gap-8 text-sm font-medium text-[#94a3b8]">
+<a class="hover:text-white transition-colors" href="#">Features</a>
+<a class="hover:text-white transition-colors" href="#">Marketplace</a>
+<a class="hover:text-white transition-colors" href="#">Preço</a>
+<a class="hover:text-white transition-colors" href="#">Templates</a>
+<a class="hover:text-white transition-colors" href="#">Blog</a>
+<a class="hover:text-white transition-colors" href="#">Docs</a>
+<a class="bg-white text-black px-5 py-2.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-1 group hover:bg-gray-100" href="#">
+  Começar Grátis
+  <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</a>
+</div>
+<!-- Right Side Actions -->
+<div class="flex items-center gap-6">
+<a class="text-sm font-medium text-gray-300 hover:text-white transition-colors hidden sm:block" href="#">Entrar</a>
+<a class="bg-white text-black px-5 py-2.5 rounded-lg text-sm font-bold transition-colors flex items-center gap-1 group hover:bg-gray-100" href="#">
+  Começar Grátis
+  <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</a>
+</div>
+</nav>
+</header>
+<!-- END: Header/Navbar -->
+<!-- BEGIN: Main Content -->
+<div class="absolute top-0 left-0 right-0 h-[800px] w-full pointer-events-none z-0" style="background: radial-gradient(circle at 50% 30%, rgba(56, 189, 248, 0.15), transparent 60%);"></div><main class="relative z-10 flex-grow flex flex-col items-center justify-center text-center px-4 mt-12 md:mt-20">
+<!-- Hero Text Section -->
+<section class="max-w-4xl mx-auto mb-16" data-purpose="hero-text">
+<!-- Main Headline -->
+<h1 class="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight mb-6 leading-tight text-white">
+Orquestrações de <br class="hidden md:block"/>
+<span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-purple-500 inline-block mt-2 mb-2">Agentes IA</span><br/>
+que funcionam.
+</h1>
+<!-- Subheadline -->
+<p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+        Monte pipelines visuais de agentes que colaboram para resolver tarefas complexas.
+        Knowledge Base com RAG semântico. IDE multi-modelo. Canais integrados.
+      </p>
+<!-- CTA Buttons -->
+<div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+<!-- Primary Button -->
+<button class="bg-white text-black px-8 py-3.5 rounded-lg font-bold text-sm hover:bg-gray-100 transition-colors w-full sm:w-auto shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+    Começar Grátis — sem cartão
+</button>
+<!-- Secondary Button -->
+<button class="bg-transparent border border-white/20 text-white px-6 py-3.5 rounded-lg font-medium text-sm hover:bg-white/10 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto group">
+    Ver como funciona
+    <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="1.5" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
+</button>
+</div>
+</section>
+<!-- BEGIN: Stats Bar -->
+<!-- This section mimics the glassmorphism container at the bottom of the mockup -->
+<section class="w-full max-w-5xl mx-auto px-4 mb-20" data-purpose="features-stats">
+<div class="rounded-[16px] py-10 px-4 border border-white/10 bg-white/[0.03] backdrop-blur-xl">
+<div class="flex flex-col md:flex-row items-center justify-between divide-y md:divide-y-0 md:divide-x divide-white/15 gap-8 md:gap-0">
+<!-- Stat Item 1 -->
+<div class="flex-1 flex flex-col items-center justify-center px-4 w-full h-full">
+<span class="text-5xl md:text-6xl font-extrabold text-white mb-2 tracking-tight">50+</span>
+<span class="text-sm text-gray-400 font-medium">Modelos IA suportados</span>
+</div>
+<!-- Stat Item 2 -->
+<div class="flex-1 flex flex-col items-center justify-center px-4 w-full h-full">
+<span class="text-5xl md:text-6xl font-extrabold text-white mb-2 tracking-tight">pgvector</span>
+<span class="text-sm text-gray-400 font-medium">Busca semântica real</span>
+</div>
+<!-- Stat Item 3 -->
+<div class="flex-1 flex flex-col items-center justify-center px-4 w-full h-full">
+<span class="text-5xl md:text-6xl font-extrabold text-white mb-2 tracking-tight">3</span>
+<span class="text-sm text-gray-400 font-medium text-center">Estratégias de orquestração</span>
+</div>
+<!-- Stat Item 4 -->
+<div class="flex-1 flex flex-col items-center justify-center px-4 w-full h-full">
+<span class="text-5xl md:text-6xl font-extrabold text-white mb-2 tracking-tight">Free</span>
+<span class="text-sm text-gray-400 font-medium">Para começar</span>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Stats Bar -->
+</main>
+<!-- END: Main Content -->
+</body></html>

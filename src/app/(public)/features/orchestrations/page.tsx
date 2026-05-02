@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -21,8 +21,8 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Orquestração de Agentes IA — Como Funciona | Sofia AI',
-  description: 'Entenda como a orquestração multi-agente da Sofia funciona. Pipelines sequenciais, paralelos e de consenso. Cada agente com papel específico, streaming em tempo real e analytics completo.',
+  title: 'Orquestração de Agentes IA — Como Funciona | Polaris IA',
+  description: 'Entenda como a orquestração multi-agente da Polaris IA funciona. Pipelines sequenciais, paralelos e de consenso. Cada agente com papel específico, streaming em tempo real e analytics completo.',
   keywords: [
     'orquestração de agentes ia',
     'multi-agent orchestration',
@@ -31,24 +31,24 @@ export const metadata: Metadata = {
     'agentes sequenciais',
     'agentes paralelos',
     'streaming sse agentes',
-    'sofia ai features'
+    'Polaris IA features'
   ],
   openGraph: {
-    title: 'Orquestração de Agentes IA — Como Funciona | Sofia AI',
+    title: 'Orquestração de Agentes IA — Como Funciona | Polaris IA',
     description: 'Pipelines visuais de agentes que colaboram. Sequencial, paralelo ou consenso. Streaming em tempo real. Analytics por execução.',
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Sofia AI',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    siteName: 'Polaris IA',
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Multi-Agent Orchestration — How It Works | Sofia AI',
+    title: 'Multi-Agent Orchestration — How It Works | Polaris IA',
     description: 'Visual pipelines where each AI agent has a specific role. Sequential, parallel or consensus strategies. Real-time streaming.'
   },
   alternates: {
-    canonical: 'https://sofiaia.roilabs.com.br/features/orchestrations'
+    canonical: 'https://polarisia.com.br/features/orchestrations'
   }
 }
 
@@ -178,16 +178,16 @@ export default function OrchestrationFeaturePage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'TechArticle',
-            headline: 'Orquestração de Agentes IA — Como Funciona na Sofia',
-            description: 'Guia completo sobre como a orquestração multi-agente funciona na plataforma Sofia AI. Estratégias sequencial, paralela e de consenso.',
+            headline: 'Orquestração de Agentes IA — Como Funciona na Polaris IA',
+            description: 'Guia completo sobre como a orquestração multi-agente funciona na plataforma Polaris IA. Estratégias sequencial, paralela e de consenso.',
             author: {
               '@type': 'Organization',
               name: 'ROI Labs'
             },
             publisher: {
               '@type': 'Organization',
-              name: 'Sofia AI',
-              url: 'https://sofiaia.roilabs.com.br'
+              name: 'Polaris IA',
+              url: 'https://polarisia.com.br'
             }
           })
         }}
@@ -218,10 +218,10 @@ export default function OrchestrationFeaturePage() {
               },
               {
                 '@type': 'Question',
-                name: 'Preciso saber programar para usar orquestrações na Sofia AI?',
+                name: 'Preciso saber programar para usar orquestrações na Polaris IA?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text: 'Não. A Sofia AI oferece uma interface visual no-code para criar e executar orquestrações. Você define os agentes, seus papéis e a estratégia de execução sem escrever código. Para casos avançados, existe uma API REST e SDK JavaScript.'
+                  text: 'Não. A Polaris IA oferece uma interface visual no-code para criar e executar orquestrações. Você define os agentes, seus papéis e a estratégia de execução sem escrever código. Para casos avançados, existe uma API REST e SDK JavaScript.'
                 }
               },
               {
@@ -237,7 +237,7 @@ export default function OrchestrationFeaturePage() {
                 name: 'Como funciona o streaming em tempo real nas orquestrações?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text: 'Sofia AI usa Server-Sent Events (SSE) para transmitir o output de cada agente em tempo real, conforme ele é gerado pelo modelo de linguagem. Você vê cada agente "pensando" ao vivo, com feedback visual granular por etapa do pipeline.'
+                  text: 'Polaris IA usa Server-Sent Events (SSE) para transmitir o output de cada agente em tempo real, conforme ele é gerado pelo modelo de linguagem. Você vê cada agente "pensando" ao vivo, com feedback visual granular por etapa do pipeline.'
                 }
               }
             ]
@@ -378,7 +378,7 @@ export default function OrchestrationFeaturePage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">3 Estratégias de Orquestração</h2>
             <p className="text-foreground-tertiary max-w-2xl mx-auto">
-              Cada tarefa tem uma estratégia ideal. Sofia suporta as três — você escolhe na hora de montar o pipeline.
+              Cada tarefa tem uma estratégia ideal. Polaris IA suporta as três — você escolhe na hora de montar o pipeline.
             </p>
           </div>
 
@@ -480,7 +480,7 @@ export default function OrchestrationFeaturePage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Diferenciais que Importam</h2>
             <p className="text-foreground-tertiary max-w-xl mx-auto">
-              O que torna as orquestrações da Sofia diferentes de qualquer outra solução no mercado.
+              O que torna as orquestrações da Polaris IA diferentes de qualquer outra solução no mercado.
             </p>
           </div>
 
@@ -558,7 +558,7 @@ export default function OrchestrationFeaturePage() {
               },
               {
                 '@type': 'Question',
-                name: 'Os agentes da Sofia podem acessar Knowledge Base?',
+                name: 'Os agentes da Polaris IA podem acessar Knowledge Base?',
                 acceptedAnswer: {
                   '@type': 'Answer',
                   text: 'Sim. Agentes podem ser vinculados a Knowledge Bases e usar RAG com pgvector para busca semântica durante a execução.'

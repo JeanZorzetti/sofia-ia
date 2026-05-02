@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   GitBranch,
@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Sofia AI — Plataforma de Orquestación de Agentes IA | Latinoamérica',
+  title: 'Polaris IA — Plataforma de Orquestación de Agentes IA | Latinoamérica',
   description:
     'Crea equipos de agentes IA que trabajan juntos para resolver tareas complejas. Orquestaciones multi-agente, Base de Conocimiento con RAG semántico e IDE multi-modelo. Gratis para empezar.',
   keywords: [
@@ -26,32 +26,32 @@ export const metadata: Metadata = {
     'ia generativa',
     'alternativa crewai en español',
     'automatizacion ia',
-    'sofia ia espanol',
+    'Polaris IA espanol',
     'inteligencia artificial empresas latam',
   ],
   openGraph: {
-    title: 'Sofia AI — Plataforma de Orquestación de Agentes IA',
+    title: 'Polaris IA — Plataforma de Orquestación de Agentes IA',
     description:
       'Crea equipos de agentes IA que colaboran para resolver cualquier tarea. Más poderoso que CrewAI. Más simple que AutoGen.',
     type: 'website',
     locale: 'es_LA',
-    siteName: 'Sofia AI',
-    url: 'https://sofiaia.roilabs.com.br/es',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    siteName: 'Polaris IA',
+    url: 'https://polarisia.com.br/es',
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Sofia AI — Multi-Agent AI Orchestration Platform (Español)',
+    title: 'Polaris IA — Multi-Agent AI Orchestration Platform (Español)',
     description:
       'Crea equipos de agentes IA que colaboran. Base de Conocimiento RAG, IDE multi-modelo, WhatsApp. Gratis para empezar.',
   },
   alternates: {
-    canonical: 'https://sofiaia.roilabs.com.br/es',
+    canonical: 'https://polarisia.com.br/es',
     languages: {
-      'pt-BR': 'https://sofiaia.roilabs.com.br/',
-      'es': 'https://sofiaia.roilabs.com.br/es',
-      'en': 'https://sofiaia.roilabs.com.br/en',
+      'pt-BR': 'https://polarisia.com.br/',
+      'es': 'https://polarisia.com.br/es',
+      'en': 'https://polarisia.com.br/en',
     },
   },
 }
@@ -97,7 +97,7 @@ const features = [
     icon: Code2,
     title: 'API REST Completa',
     description:
-      'Integra Sofia AI en tus sistemas existentes con nuestra API REST documentada y SDKs en múltiples lenguajes.',
+      'Integra Polaris IA en tus sistemas existentes con nuestra API REST documentada y SDKs en múltiples lenguajes.',
     color: 'text-orange-400',
     bg: 'bg-orange-500/10',
     border: 'border-orange-500/20',
@@ -120,7 +120,7 @@ export default function EsLandingPage() {
       <nav className="border-b border-white/10 sticky top-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link href="/es" className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-            Sofia AI
+            Polaris IA
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm text-white/60">
             <Link href="/es#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</Link>
@@ -234,7 +234,7 @@ export default function EsLandingPage() {
               Listo para automatizar con IA?
             </h2>
             <p className="text-white/60 text-xl mb-8">
-              Únete a más de 500 empresas que ya utilizan Sofia AI para orquestar sus procesos con inteligencia artificial.
+              Únete a más de 500 empresas que ya utilizan Polaris IA para orquestar sus procesos con inteligencia artificial.
             </p>
             <Link
               href="/register"

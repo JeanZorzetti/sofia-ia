@@ -1,14 +1,14 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Zap, Key, Terminal, Code, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'API Reference — Sofia AI',
-  description: 'Documentação completa da API REST do Sofia AI. Autentique com API key e integre agentes e orquestrações de IA em qualquer aplicação.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/docs/api' },
+  title: 'API Reference — Polaris IA',
+  description: 'Documentação completa da API REST do Polaris IA. Autentique com API key e integre agentes e orquestrações de IA em qualquer aplicação.',
+  alternates: { canonical: 'https://polarisia.com.br/docs/api' },
 }
 
-const BASE_URL = 'https://sofiaia.roilabs.com.br'
+const BASE_URL = 'https://polarisia.com.br'
 
 export default function ApiDocsPage() {
   return (
@@ -23,7 +23,7 @@ export default function ApiDocsPage() {
             API v1 — Referência Completa
           </div>
           <h1 className="text-4xl font-bold text-white mb-4">
-            API REST do Sofia AI
+            API REST do Polaris IA
           </h1>
           <p className="text-xl text-white/50 max-w-2xl">
             Integre agentes e orquestrações de IA em qualquer aplicação usando nossa API REST. Autentique com uma API key e comece em minutos.

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromApiKey } from '@/lib/api-key-auth'
 import { SOFIA_MCP_TOOLS, executeSofiaMcpTool } from '@/lib/mcp/server'
 
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({
-    name: 'Sofia AI — MCP Server',
+    name: 'Polaris IA — MCP Server',
     version: '1.0.0',
     protocol: '2024-11-05',
     tools: SOFIA_MCP_TOOLS.map(t => t.name),

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { GitBranch, Database, BrainCircuit, MessageSquare, BarChart3, Code2, ArrowRight, ArrowLeft, CheckCircle, Zap, Globe, Shield, RefreshCw, FileText, Bot, Layers } from 'lucide-react'
 import { CTASection } from '@/components/landing/CTASection'
@@ -6,11 +6,11 @@ import { SectionWrapper } from '@/components/landing/SectionWrapper'
 import { GradientText } from '@/components/landing/GradientText'
 
 export const metadata: Metadata = {
-  title: 'Features — Tudo que o Sofia AI oferece | ROI Labs',
-  description: 'Conheça todas as funcionalidades do Sofia AI: orquestração multi-agente, Knowledge Base com RAG semântico, IDE multi-modelo, inbox unificado, analytics e muito mais.',
-  keywords: ['features sofia ai', 'funcionalidades orquestração agentes ia', 'knowledge base rag', 'ide multi-modelo ia', 'inbox whatsapp ia', 'analytics agentes ia'],
-  openGraph: { title: 'Features — Tudo que o Sofia AI oferece', description: 'Orquestração multi-agente, Knowledge Base RAG, IDE multi-modelo, inbox unificado e analytics. Tudo em uma plataforma.', type: 'website', locale: 'pt_BR' , images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }]},
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/features' },
+  title: 'Features — Tudo que o Polaris IA oferece | ROI Labs',
+  description: 'Conheça todas as funcionalidades do Polaris IA: orquestração multi-agente, Knowledge Base com RAG semântico, IDE multi-modelo, inbox unificado, analytics e muito mais.',
+  keywords: ['features Polaris IA', 'funcionalidades orquestração agentes ia', 'knowledge base rag', 'ide multi-modelo ia', 'inbox whatsapp ia', 'analytics agentes ia'],
+  openGraph: { title: 'Features — Tudo que o Polaris IA oferece', description: 'Orquestração multi-agente, Knowledge Base RAG, IDE multi-modelo, inbox unificado e analytics. Tudo em uma plataforma.', type: 'website', locale: 'pt_BR' , images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }]},
+  alternates: { canonical: 'https://polarisia.com.br/features' },
 }
 
 const features = [
@@ -34,7 +34,7 @@ const extras = [
 export default function FeaturesPage() {
   return (
     <div className="bg-background text-foreground">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebPage', name: 'Features — Sofia AI', description: 'Todas as funcionalidades da plataforma Sofia AI de orquestração de agentes IA.', url: 'https://sofiaia.roilabs.com.br/features' }) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebPage', name: 'Features — Polaris IA', description: 'Todas as funcionalidades da plataforma Polaris IA de orquestração de agentes IA.', url: 'https://polarisia.com.br/features' }) }} />
 
       {/* Hero */}
       <section className="px-6 pt-20 pb-16 text-center">

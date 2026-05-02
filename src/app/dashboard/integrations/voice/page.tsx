@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -31,7 +31,7 @@ export default function VoiceIntegrationPage() {
 
   const webhookUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/api/webhook/twilio`
-    : 'https://sofiaia.roilabs.com.br/api/webhook/twilio';
+    : 'https://polarisia.com.br/api/webhook/twilio';
 
   useEffect(() => {
     fetchConfig();

@@ -1,10 +1,10 @@
-# Sofia AI — Governance
+﻿# Polaris IA — Governance
 
 > Last updated: 2026-02-25
 
 ## Overview
 
-Sofia AI follows the **Benevolent Dictator for Life (BDFL)** model, common in successful open-source projects like Python and Django. The founder and primary maintainer has final say on all decisions, while actively seeking community input through RFCs and discussions.
+Polaris IA follows the **Benevolent Dictator for Life (BDFL)** model, common in successful open-source projects like Python and Django. The founder and primary maintainer has final say on all decisions, while actively seeking community input through RFCs and discussions.
 
 ## Decision-Making Structure
 

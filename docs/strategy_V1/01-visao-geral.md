@@ -1,12 +1,12 @@
-# Sofia — Visão Geral do Produto
+# Polaris IA — Visão Geral do Produto
 
 > Última atualização: 21/02/2026
 
-## O que é a Sofia
+## O que é a Polaris IA
 
-Sofia é uma **plataforma de orquestração de agentes IA** que permite criar equipes de agentes inteligentes que trabalham juntos, visualmente, sem código.
+Polaris IA é uma **plataforma de orquestração de agentes IA** que permite criar equipes de agentes inteligentes que trabalham juntos, visualmente, sem código.
 
-Diferente de chatbots tradicionais ou ferramentas de automação simples, a Sofia permite que empresas criem **workflows multi-agente** onde cada agente tem um papel especializado (pesquisador, redator, analista, atendente), sua própria base de conhecimento, e colabora com outros agentes para executar processos complexos.
+Diferente de chatbots tradicionais ou ferramentas de automação simples, a Polaris IA permite que empresas criem **workflows multi-agente** onde cada agente tem um papel especializado (pesquisador, redator, analista, atendente), sua própria base de conhecimento, e colabora com outros agentes para executar processos complexos.
 
 ## Produto Estrela
 
@@ -74,4 +74,4 @@ Diferente de chatbots tradicionais ou ferramentas de automação simples, a Sofi
          Chatbot/Bot      Orquestração IA
 ```
 
-**Sofia ocupa o quadrante "Orquestração IA + Preço acessível"** — onde não há player dominante no Brasil.
+**Polaris IA ocupa o quadrante "Orquestração IA + Preço acessível"** — onde não há player dominante no Brasil.

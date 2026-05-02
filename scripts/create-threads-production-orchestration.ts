@@ -152,7 +152,7 @@ Avalie em ordem:
 2. **Autenticidade** — soa humano ou parece gerado por IA?
 3. **Fluidez** — a leitura é natural e o ritmo funciona?
 4. **Potencial de engajamento** — vai gerar resposta, compartilhamento ou salvamento?
-5. **Adequação ao tom da Sofia** — inteligente, direto, sem arrogância
+5. **Adequação ao tom da Polaris IA** — inteligente, direto, sem arrogância
 6. **Formato** — valide com o Plugin "Validador de Formato Threads"
 
 Se o post não atingir o padrão, responda com:

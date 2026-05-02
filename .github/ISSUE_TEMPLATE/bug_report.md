@@ -1,6 +1,6 @@
----
+﻿---
 name: Bug Report
-about: Report a bug in Sofia AI
+about: Report a bug in Polaris IA
 title: '[BUG] '
 labels: bug
 assignees: ''
@@ -33,7 +33,7 @@ If applicable, add screenshots to help explain your problem.
 - OS: [e.g. Windows 11, Ubuntu 22.04, macOS 14]
 - Browser: [e.g. Chrome 121, Firefox 122]
 - Node.js version: [e.g. 20.11]
-- Sofia version/commit: [e.g. main branch, commit abc123]
+- Polaris IA version/commit: [e.g. main branch, commit abc123]
 
 ## Additional Context
 

@@ -1,4 +1,4 @@
-# Security Policy
+﻿# Security Policy
 
 ## Supported Versions
 
@@ -55,18 +55,18 @@ We do not currently offer a formal bug bounty program. However, we deeply apprec
 
 ### Security Best Practices for Integrators
 
-When using Sofia AI:
+When using Polaris IA:
 - Rotate API keys regularly
 - Use the minimum required OAuth scopes
 - Enable SSO and require MFA for enterprise deployments
 - Review the audit log regularly for suspicious activity
-- Do not expose your Sofia AI API keys in client-side code
+- Do not expose your Polaris IA API keys in client-side code
 
 ### Scope
 
 The following are in scope:
-- Sofia AI platform (sofiaia.roilabs.com.br)
-- Sofia AI API (sofiaia.roilabs.com.br/api/*)
+- Polaris IA platform (polarisia.com.br)
+- Polaris IA API (polarisia.com.br/api/*)
 - This GitHub repository
 
 The following are out of scope:
@@ -76,4 +76,4 @@ The following are out of scope:
 
 ---
 
-Thank you for helping keep Sofia AI and our users safe.
+Thank you for helping keep Polaris IA and our users safe.

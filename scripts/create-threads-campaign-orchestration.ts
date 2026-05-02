@@ -29,7 +29,7 @@ function buildAgentSteps() {
     {
       agentId: AGENTS.estrategista,
       role: 'Diretor de Estratégia de Campanha',
-      prompt: `Você é o Diretor de Estratégia. Recebeu um briefing de campanha para o Threads da Sofia.
+      prompt: `Você é o Diretor de Estratégia. Recebeu um briefing de campanha para o Threads da Polaris IA.
 
 **Seu entregável — Plano de Campanha Completo:**
 
@@ -138,7 +138,7 @@ Você é o Editor Sênior. Revise TODOS os posts da campanha com critério edito
 1. Força do gancho — faz parar o scroll?
 2. Autenticidade — soa humano?
 3. Coerência com o arco — encaixa na narrativa da campanha?
-4. Adequação ao tom da Sofia — inteligente, direto, sem arrogância
+4. Adequação ao tom da Polaris IA — inteligente, direto, sem arrogância
 5. Limite de caracteres — valide com o Plugin "Validador de Formato Threads"
 6. CTA (para posts finais) — é natural e não invasivo?
 
@@ -250,7 +250,7 @@ async function main() {
       status: 'active',
       agents: buildAgentSteps(),
       config: {
-        inputLabel: 'Briefing da campanha (ex: "Campanha de lançamento do Plano Pro — 10 posts em 2 semanas, foco em conversão, tema: como a Sofia multiplica resultados de marketing")',
+        inputLabel: 'Briefing da campanha (ex: "Campanha de lançamento do Plano Pro — 10 posts em 2 semanas, foco em conversão, tema: como a Polaris IA multiplica resultados de marketing")',
         showCost: true,
         allowFeedbackLoop: false,
       },

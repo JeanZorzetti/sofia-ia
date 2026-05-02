@@ -1,20 +1,20 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, ArrowLeft, CheckCircle, Star, Zap, Award, TrendingUp, Shield, Gift, Handshake, Building2 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Programa de Parceiros — Sofia AI | Bronze, Silver, Gold',
-  description: 'Junte-se ao programa de parceiros Sofia AI. Revenda, integre ou indique e ganhe comissões recorrentes. Tiers Bronze, Silver e Gold com benefícios exclusivos.',
-  keywords: ['programa parceiros sofia ai', 'revenda ia', 'afiliados ia', 'parceiro roilabs', 'comissão ia'],
+  title: 'Programa de Parceiros — Polaris IA | Bronze, Silver, Gold',
+  description: 'Junte-se ao programa de parceiros Polaris IA. Revenda, integre ou indique e ganhe comissões recorrentes. Tiers Bronze, Silver e Gold com benefícios exclusivos.',
+  keywords: ['programa parceiros Polaris IA', 'revenda ia', 'afiliados ia', 'parceiro roilabs', 'comissão ia'],
   openGraph: {
-    title: 'Programa de Parceiros Sofia AI',
+    title: 'Programa de Parceiros Polaris IA',
     description: 'Ganhe comissões recorrentes revendendo a plataforma de orquestração de agentes IA mais completa do Brasil.',
     type: 'website',
     locale: 'pt_BR',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/parceiros' },
+  alternates: { canonical: 'https://polarisia.com.br/parceiros' },
 }
 
 const tiers = [
@@ -78,7 +78,7 @@ const tiers = [
       'Gerente de parceria dedicado',
       'SLA 4h garantido',
       'Co-venda (demos conjuntas)',
-      'Página de parceiro no site Sofia AI',
+      'Página de parceiro no site Polaris IA',
       'Acesso ao roadmap privado',
       'Contrato de parceria formal',
     ],
@@ -89,7 +89,7 @@ const tiers = [
 const howItWorks = [
   { step: '01', title: 'Cadastre-se', desc: 'Preencha o formulário de interesse. Nossa equipe entra em contato em até 24h.' },
   { step: '02', title: 'Receba seu link', desc: 'Ganhe acesso ao portal de parceiros com seu link único de afiliado rastreável.' },
-  { step: '03', title: 'Indique clientes', desc: 'Compartilhe Sofia AI com sua rede. Cada cliente que assinar gera comissão sua.' },
+  { step: '03', title: 'Indique clientes', desc: 'Compartilhe Polaris IA com sua rede. Cada cliente que assinar gera comissão sua.' },
   { step: '04', title: 'Receba recorrente', desc: 'Comissões depositadas mensalmente enquanto o cliente permanecer ativo.' },
 ]
 
@@ -137,7 +137,7 @@ export default function ParceirosPage() {
             </span>
           </h1>
           <p className="text-lg text-foreground-tertiary max-w-xl mx-auto mb-10">
-            Indique Sofia AI, cresça com seus clientes e ganhe comissões recorrentes todo mês enquanto eles ficarem ativos.
+            Indique Polaris IA, cresça com seus clientes e ganhe comissões recorrentes todo mês enquanto eles ficarem ativos.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-white/50">
             {[
@@ -219,7 +219,7 @@ export default function ParceirosPage() {
           <Building2 className="w-10 h-10 text-white/20 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-3">Quer mais? Conheça o White-label</h2>
           <p className="text-foreground-tertiary text-sm mb-6 max-w-xl mx-auto">
-            Além de indicar, revenda Sofia AI com sua própria marca. Margem bruta de 40–70%.
+            Além de indicar, revenda Polaris IA com sua própria marca. Margem bruta de 40–70%.
           </p>
           <Link href="/whitelabel" className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium">
             Saiba mais sobre White-label <ArrowRight className="w-4 h-4" />

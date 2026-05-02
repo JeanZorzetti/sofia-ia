@@ -1,5 +1,5 @@
-/**
- * Design Tokens — Sofia AI
+﻿/**
+ * Design Tokens — Polaris IA
  * Fonte única de verdade para cores, status e brand.
  * Use estes tokens em vez de classes Tailwind hardcoded.
  */

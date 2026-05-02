@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   Zap,
@@ -16,25 +16,25 @@ import { AnimatedSection } from '@/components/landing/AnimatedSection'
 import { GradientText } from '@/components/landing/GradientText'
 
 export const metadata: Metadata = {
-  title: 'Integrações | Sofia AI — Conecte com Zapier, n8n, Make e mais',
+  title: 'Integrações | Polaris IA — Conecte com Zapier, n8n, Make e mais',
   description:
-    'Integre a Sofia AI com as ferramentas que você já usa: Zapier, n8n, Make, Slack, Discord e qualquer sistema via REST API. Sem código necessário.',
+    'Integre a Polaris IA com as ferramentas que você já usa: Zapier, n8n, Make, Slack, Discord e qualquer sistema via REST API. Sem código necessário.',
   openGraph: {
-    title: 'Integrações Sofia AI',
-    description: 'Conecte Sofia AI com Zapier, n8n, Make, Slack, Discord e API REST.',
+    title: 'Integrações Polaris IA',
+    description: 'Conecte Polaris IA com Zapier, n8n, Make, Slack, Discord e API REST.',
     type: 'website',
     locale: 'pt_BR',
-    siteName: 'Sofia AI',
-    url: 'https://sofiaia.roilabs.com.br/integrations',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    siteName: 'Polaris IA',
+    url: 'https://polarisia.com.br/integrations',
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Integrações Sofia AI — Zapier, n8n, Make e mais',
-    description: 'Conecte Sofia AI com as ferramentas que você já usa. REST API inclusa.',
+    title: 'Integrações Polaris IA — Zapier, n8n, Make e mais',
+    description: 'Conecte Polaris IA com as ferramentas que você já usa. REST API inclusa.',
   },
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/integrations' },
+  alternates: { canonical: 'https://polarisia.com.br/integrations' },
 }
 
 const INTEGRATIONS = [
@@ -44,7 +44,7 @@ const INTEGRATIONS = [
     logo: null,
     logoText: 'Zapier',
     description:
-      'Conecte Sofia AI a 7.000+ apps sem código. Dispare orquestrações quando um formulário é preenchido, um email chega ou uma nova linha aparece na planilha.',
+      'Conecte Polaris IA a 7.000+ apps sem código. Dispare orquestrações quando um formulário é preenchido, um email chega ou uma nova linha aparece na planilha.',
     how: 'Use o webhook do Zapier como trigger ou action. Envie um POST para `/api/public/orchestrations/:id/run` com sua API Key.',
     useCases: [
       'Novo lead no CRM → gera proposta com IA',
@@ -61,7 +61,7 @@ const INTEGRATIONS = [
     logo: null,
     logoText: 'n8n',
     description:
-      'Automação de fluxos open-source e self-hosted. Use o nó HTTP Request para chamar a API da Sofia e integrar com qualquer sistema interno.',
+      'Automação de fluxos open-source e self-hosted. Use o nó HTTP Request para chamar a API da Polaris IA e integrar com qualquer sistema interno.',
     how: 'Adicione um nó HTTP Request no seu workflow n8n apontando para `/api/public/orchestrations/:id/run` com header `x-api-key`.',
     useCases: [
       'Webhook externo → processa com IA → grava no banco',
@@ -79,7 +79,7 @@ const INTEGRATIONS = [
     logoText: 'Make',
     description:
       'Plataforma visual de automação com módulos HTTP. Construa cenários que acionam orquestrações de IA em resposta a qualquer evento.',
-    how: 'Use o módulo HTTP > Make a Request no Make, configure método POST, URL da API Sofia e header `x-api-key` com sua chave.',
+    how: 'Use o módulo HTTP > Make a Request no Make, configure método POST, URL da API Polaris IA e header `x-api-key` com sua chave.',
     useCases: [
       'Formulário TypeForm → análise de sentimento + CRM',
       'Post no Instagram → repurposing de conteúdo automático',
@@ -129,7 +129,7 @@ const INTEGRATIONS = [
     logo: null,
     logoText: '</> API',
     description:
-      'Integre a Sofia AI em qualquer sistema com nossa REST API. Perfeita para aplicações customizadas, scripts e integrações que não têm plataforma de automação.',
+      'Integre a Polaris IA em qualquer sistema com nossa REST API. Perfeita para aplicações customizadas, scripts e integrações que não têm plataforma de automação.',
     how: 'Gere uma API Key em /dashboard/api-keys, use como header `x-api-key` e chame os endpoints disponíveis.',
     useCases: [
       'Aplicativo interno chama orquestração via backend',
@@ -185,7 +185,7 @@ export default function IntegrationsPage() {
             Integrações nativas e via API
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            Conecte Sofia AI com{' '}
+            Conecte Polaris IA com{' '}
             <GradientText>as ferramentas que você usa</GradientText>
           </h1>
           <p className="text-lg text-foreground-tertiary max-w-2xl mx-auto mb-10">
@@ -237,7 +237,7 @@ export default function IntegrationsPage() {
       <SectionWrapper>
         <SectionHeader
           title="Integrações disponíveis"
-          description="Qualquer plataforma que suporte HTTP pode se integrar com a Sofia AI"
+          description="Qualquer plataforma que suporte HTTP pode se integrar com a Polaris IA AI"
         />
         <AnimatedSection>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -306,17 +306,17 @@ export default function IntegrationsPage() {
           </p>
           <div className="bg-black/40 rounded-xl p-5 font-mono text-sm overflow-x-auto">
             <pre className="text-white/80 whitespace-pre">{`# 1. Listar suas orquestrações
-curl https://sofiaia.roilabs.com.br/api/public/orchestrations \\
+curl https://polarisia.com.br/api/public/orchestrations \\
   -H "x-api-key: sk_live_SEU_TOKEN"
 
 # 2. Disparar uma execução
-curl -X POST https://sofiaia.roilabs.com.br/api/public/orchestrations/ID/run \\
+curl -X POST https://polarisia.com.br/api/public/orchestrations/ID/run \\
   -H "x-api-key: sk_live_SEU_TOKEN" \\
   -H "Content-Type: application/json" \\
   -d '{"input": "Crie um briefing para lançamento do produto X"}'
 
 # 3. Verificar o resultado
-curl https://sofiaia.roilabs.com.br/api/public/executions/EXECUTION_ID \\
+curl https://polarisia.com.br/api/public/executions/EXECUTION_ID \\
   -H "x-api-key: sk_live_SEU_TOKEN"`}</pre>
           </div>
           <div className="flex gap-4 mt-6">
@@ -338,7 +338,7 @@ curl https://sofiaia.roilabs.com.br/api/public/executions/EXECUTION_ID \\
 
       <CTASection
         title="Pronto para integrar?"
-        description="Crie sua conta gratuita, gere uma API Key e conecte Sofia AI ao seu fluxo de trabalho hoje."
+        description="Crie sua conta gratuita, gere uma API Key e conecte Polaris IA ao seu fluxo de trabalho hoje."
         primaryCta={{ label: 'Criar Conta Grátis', href: '/login' }}
       />
     </div>

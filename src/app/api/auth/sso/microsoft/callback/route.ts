@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { signToken, setAuthCookie } from '@/lib/auth'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
 const REDIRECT_URI = `${APP_URL}/api/auth/sso/microsoft/callback`
 
 /**

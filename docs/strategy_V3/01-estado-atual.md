@@ -1,13 +1,13 @@
-# Estado Atual — Auditoria Completa (Fev/2026)
+﻿# Estado Atual — Auditoria Completa (Fev/2026)
 
-> Sofia AI: Plataforma de Orquestracao de Agentes IA
-> Deploy: sofiaia.roilabs.com.br | GitHub: JeanZorzetti/sofia-ia
+> Polaris IA: Plataforma de Orquestracao de Agentes IA
+> Deploy: polarisia.com.br | GitHub: JeanZorzetti/sofia-ia
 
 ---
 
 ## Resumo Executivo
 
-Sofia AI e uma plataforma completa de orquestracao multi-agente com:
+Polaris IA e uma plataforma completa de orquestracao multi-agente com:
 - **522 arquivos TypeScript/TSX**
 - **176 rotas de API** (27 dominios)
 - **110+ paginas** (App Router)
@@ -252,10 +252,10 @@ SectionWrapper, FeatureCard, FeatureGrid, PricingCard, PricingGrid, CTASection, 
 
 ## 8. Conclusao
 
-Sofia AI tem **profundidade tecnica excepcional** — 19 sprints de features + 8 sprints de UI/UX produziram um produto que rivaliza com CrewAI, AutoGen e Relevance AI em funcionalidade.
+Polaris IA tem **profundidade tecnica excepcional** — 19 sprints de features + 8 sprints de UI/UX produziram um produto que rivaliza com CrewAI, AutoGen e Relevance AI em funcionalidade.
 
 O **gap nao e produto**. O gap e:
-1. **Ninguem sabe que Sofia existe** (distribuicao)
+1. **Ninguem sabe que Polaris IA existe** (distribuicao)
 2. **Ninguem paga** (conversao)
 3. **Nao sabemos se alguem usa** (observability)
 

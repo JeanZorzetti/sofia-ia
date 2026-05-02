@@ -1,11 +1,11 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, GitBranch, AlertTriangle, Network, BookOpen } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Agent-to-Agent Protocol — Sofia AI Docs',
-  description: 'Como agentes Sofia AI se comunicam e delegam tarefas entre si. Entenda o protocolo de delegação, limites de profundidade e como configurar.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/docs/agent-to-agent' },
+  title: 'Agent-to-Agent Protocol — Polaris IA Docs',
+  description: 'Como agentes Polaris IA se comunicam e delegam tarefas entre si. Entenda o protocolo de delegação, limites de profundidade e como configurar.',
+  alternates: { canonical: 'https://polarisia.com.br/docs/agent-to-agent' },
 }
 
 export default function DocsAgentToAgentPage() {
@@ -29,7 +29,7 @@ export default function DocsAgentToAgentPage() {
           </div>
           <div className="space-y-4 text-foreground-tertiary text-sm">
             <p>
-              Todos os agentes Sofia AI têm acesso à tool <code className="bg-white/10 px-1.5 py-0.5 rounded text-white text-xs">delegate_to_agent</code>. Quando o agente considera que uma tarefa exige expertise específica de outro agente, ele pode chamar essa tool com o ID do agente alvo e a mensagem a ser processada.
+              Todos os agentes Polaris IA têm acesso à tool <code className="bg-white/10 px-1.5 py-0.5 rounded text-white text-xs">delegate_to_agent</code>. Quando o agente considera que uma tarefa exige expertise específica de outro agente, ele pode chamar essa tool com o ID do agente alvo e a mensagem a ser processada.
             </p>
             <div className="p-4 glass-card rounded-xl">
               <div className="text-xs text-white/40 mb-2 font-mono">Fluxo de uma delegação:</div>

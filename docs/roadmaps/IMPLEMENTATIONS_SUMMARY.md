@@ -1,4 +1,4 @@
-# Resumo das Implementações - Sofia Next
+# Resumo das Implementações - Polaris IA
 
 **Data:** 11 de Fevereiro de 2026  
 **Status:** Todas as 5 implementações concluídas ✅
@@ -113,7 +113,7 @@ export const GET = withAll(handler, {
 1. Criar app no Facebook Developers
 2. Obter Page Access Token
 3. Configurar webhook no dashboard do Facebook
-4. Adicionar integração no dashboard Sofia:
+4. Adicionar integração no dashboard Polaris IA:
    - Tipo: Instagram
    - pageId, pageAccessToken, webhookVerifyToken, appSecret
 
@@ -146,7 +146,7 @@ export const GET = withAll(handler, {
 ### Como configurar:
 1. Criar bot com @BotFather no Telegram
 2. Obter bot token
-3. Adicionar integração no dashboard Sofia:
+3. Adicionar integração no dashboard Polaris IA:
    - Tipo: Telegram
    - botToken: seu_token_aqui
 4. Configurar webhook: `GET /api/webhook/telegram?action=setup`

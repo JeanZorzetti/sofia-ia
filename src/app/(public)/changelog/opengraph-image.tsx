@@ -1,4 +1,4 @@
-import { ImageResponse } from 'next/og'
+﻿import { ImageResponse } from 'next/og'
 
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
@@ -13,7 +13,7 @@ export default async function Image() {
           <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'linear-gradient(135deg, #3b82f6, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: '16px', color: '#fff', fontWeight: '700' }}>S</span>
           </div>
-          <span style={{ fontSize: '18px', fontWeight: '700', color: '#ffffff' }}>Sofia AI</span>
+          <span style={{ fontSize: '18px', fontWeight: '700', color: '#ffffff' }}>Polaris IA</span>
         </div>
 
         <div style={{ display: 'flex', flex: 1, padding: '0 60px', alignItems: 'center', gap: '60px' }}>
@@ -23,7 +23,7 @@ export default async function Image() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <span style={{ fontSize: '58px', fontWeight: '800', color: '#ffffff', lineHeight: '1.1', letterSpacing: '-2px' }}>Novidades</span>
-              <span style={{ fontSize: '58px', fontWeight: '800', lineHeight: '1.1', letterSpacing: '-2px', background: 'linear-gradient(90deg, #60a5fa, #a78bfa)', backgroundClip: 'text', color: 'transparent' }}>do Sofia AI</span>
+              <span style={{ fontSize: '58px', fontWeight: '800', lineHeight: '1.1', letterSpacing: '-2px', background: 'linear-gradient(90deg, #60a5fa, #a78bfa)', backgroundClip: 'text', color: 'transparent' }}>do Polaris IA</span>
             </div>
             <div style={{ display: 'flex' }}>
               <span style={{ fontSize: '19px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.5', maxWidth: '500px' }}>Acompanhe todas as novas features, melhorias e correcoes da plataforma.</span>
@@ -51,7 +51,7 @@ export default async function Image() {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 60px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.3)' }}>sofiaia.roilabs.com.br/changelog</span>
+          <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.3)' }}>polarisia.com.br/changelog</span>
           <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.25)' }}>Atualizado semanalmente</span>
         </div>
       </div>

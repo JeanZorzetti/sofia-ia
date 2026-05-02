@@ -1,17 +1,17 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-static'
 
 const spec = {
   openapi: '3.0.3',
   info: {
-    title: 'Sofia AI — Public API',
+    title: 'Polaris IA — Public API',
     description:
-      'REST API for programmatic access to Sofia AI orchestrations, agents and executions. Authenticate with an API key from /dashboard/api-keys.',
+      'REST API for programmatic access to Polaris IA orchestrations, agents and executions. Authenticate with an API key from /dashboard/api-keys.',
     version: '1.0.0',
     contact: {
-      name: 'Sofia AI Support',
-      url: 'https://sofiaia.roilabs.com.br/contato',
+      name: 'Polaris IA Support',
+      url: 'https://polarisia.com.br/contato',
     },
     license: {
       name: 'MIT',
@@ -20,7 +20,7 @@ const spec = {
   },
   servers: [
     {
-      url: 'https://sofiaia.roilabs.com.br',
+      url: 'https://polarisia.com.br',
       description: 'Production',
     },
   ],

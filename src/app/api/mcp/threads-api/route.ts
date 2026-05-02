@@ -657,7 +657,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   return NextResponse.json({
-    name: 'Sofia — Threads MCP Server',
+    name: 'Polaris IA — Threads MCP Server',
     version: '1.0.0',
     protocol: '2024-11-05',
     tools: THREADS_MCP_TOOLS.map((t) => t.name),

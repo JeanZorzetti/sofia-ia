@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -45,7 +45,7 @@ export default function MakeIntegrationPage() {
   }, [])
 
   const firstKey = apiKeys[0]
-  const baseUrl = 'https://sofiaia.roilabs.com.br'
+  const baseUrl = 'https://polarisia.com.br'
   const authHeader = firstKey ? `Bearer ${firstKey.keyPreview}` : 'Bearer sk-xxxxxxxxxxxxxxxx'
 
   const httpModuleConfig = JSON.stringify({
@@ -108,7 +108,7 @@ export default function MakeIntegrationPage() {
       {/* Conceito */}
       <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
         <h3 className="text-white font-medium mb-2">Arquitetura no Make</h3>
-        <p className="text-white/60 text-sm">No Make, você usa o módulo <strong className="text-purple-400">HTTP → Make a request</strong> para chamar a API do Sofia AI. É possível criar cenários que disparam orquestrações, consultam resultados e encadeiam com outros apps.</p>
+        <p className="text-white/60 text-sm">No Make, você usa o módulo <strong className="text-purple-400">HTTP → Make a request</strong> para chamar a API do Polaris IA. É possível criar cenários que disparam orquestrações, consultam resultados e encadeiam com outros apps.</p>
       </div>
 
       {/* Passo 1 */}

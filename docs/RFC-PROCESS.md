@@ -1,10 +1,10 @@
-# RFC Process — Sofia AI
+﻿# RFC Process — Polaris IA
 
 > RFC = Request for Comments
 
 ## What is an RFC?
 
-An RFC is a document describing a significant change to Sofia AI — whether architectural, product-level, or behavioral. The RFC process allows the community to review and discuss major decisions before implementation begins.
+An RFC is a document describing a significant change to Polaris IA — whether architectural, product-level, or behavioral. The RFC process allows the community to review and discuss major decisions before implementation begins.
 
 ## When to Write an RFC
 

@@ -26,7 +26,7 @@ O copy so funciona quando o leitor pensa: "Isso foi escrito para MIM."
 **Dor real:**
 "Passamos 70% do tempo produzindo o mesmo tipo de conteudo repetidamente. Meu time de copywriters faz a mesma pesquisa, o mesmo briefing, o mesmo post para cada cliente, so mudando nome e nicho. E tedioso e nao escala."
 
-**Como Sofia resolve:**
+**Como Polaris IA resolve:**
 - Pipeline Marketing (Pesquisador → Copywriter → Revisor) em 45s
 - Knowledge Base por cliente (briefing, tom de voz, restricoes)
 - Output via webhook direto no Slack ou Notion do cliente
@@ -48,8 +48,8 @@ O copy so funciona quando o leitor pensa: "Isso foi escrito para MIM."
 **Dor real:**
 "Cada cliente quer automacao de IA customizada. Eu sei construir com LangChain, mas demora semanas de setup. Quero uma plataforma onde eu configuro, entrego e o cliente usa — sem eu ficar no meio suportando servidor."
 
-**Como Sofia resolve:**
-- White-label: entrega Sofia como "sua propria plataforma" para clientes
+**Como Polaris IA resolve:**
+- White-label: entrega Polaris IA como "sua propria plataforma" para clientes
 - Multi-tenancy: cada cliente isolado
 - API publica: integra com sistemas dos clientes
 - Onboarding autonomo do cliente final
@@ -70,7 +70,7 @@ O copy so funciona quando o leitor pensa: "Isso foi escrito para MIM."
 **Dor real:**
 "Precisamos automatizar nosso processo de [qualificacao de leads / geracao de relatorios / onboarding de usuarios]. Sei que preciso de agentes de IA mas nao tenho engenheiro de ML, e montar com LangChain ia levar 3 meses."
 
-**Como Sofia resolve:**
+**Como Polaris IA resolve:**
 - Magic Create: descreve o processo, gera a orquestracao automaticamente
 - API publica: integra com sistemas existentes
 - Execucoes agendadas: roda automaticamente
@@ -92,7 +92,7 @@ O copy so funciona quando o leitor pensa: "Isso foi escrito para MIM."
 **Dor real:**
 "Perco muito tempo em tarefas que poderiam ser automatizadas. Pesquisar, redigir, revisar, enviar. Uso ChatGPT mas cada vez tenho que colar o prompt do zero."
 
-**Como Sofia resolve:**
+**Como Polaris IA resolve:**
 - Agentes com memory (lembra contexto do cliente)
 - Orquestracoes que fazem pipeline completo com 1 click
 - Templates prontos para caso de uso especifico

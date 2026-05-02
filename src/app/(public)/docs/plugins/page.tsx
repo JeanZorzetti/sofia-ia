@@ -1,11 +1,11 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, Code2, Play, Shield, Layers } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Plugins — Sofia AI Docs',
-  description: 'Como criar e usar plugins JavaScript customizados nos agentes Sofia AI. Estenda os agentes com funções locais, sem chamadas externas.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/docs/plugins' },
+  title: 'Plugins — Polaris IA Docs',
+  description: 'Como criar e usar plugins JavaScript customizados nos agentes Polaris IA. Estenda os agentes com funções locais, sem chamadas externas.',
+  alternates: { canonical: 'https://polarisia.com.br/docs/plugins' },
 }
 
 const PLAN_LIMITS = [

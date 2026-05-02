@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+﻿import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getSessionUser } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -131,8 +131,8 @@ export default async function AdminPage() {
       <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image src="/logo-icon.svg" alt="Sofia AI" width={28} height={28} />
-            <span className="font-bold text-white">Sofia AI</span>
+            <Image src="/logo-icon.svg" alt="Polaris IA" width={28} height={28} />
+            <span className="font-bold text-white">Polaris IA</span>
             <span className="text-white/20 mx-1">/</span>
             <span className="text-white/60 text-sm">Admin</span>
           </div>
@@ -155,7 +155,7 @@ export default async function AdminPage() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold">Painel Administrativo</h1>
-          <p className="text-white/40 text-sm mt-1">Visão geral da plataforma Sofia AI</p>
+          <p className="text-white/40 text-sm mt-1">Visão geral da plataforma Polaris IA</p>
         </div>
 
         {/* Stats Grid */}

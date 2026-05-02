@@ -11,7 +11,7 @@ export default function KnowledgeError({
     reset: () => void
 }) {
     useEffect(() => {
-        console.error('[Sofia Knowledge Error]', error)
+        console.error('[Polaris IA Knowledge Error]', error)
     }, [error])
 
     return (

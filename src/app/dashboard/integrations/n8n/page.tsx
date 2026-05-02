@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -45,13 +45,13 @@ export default function N8nIntegrationPage() {
   }, [])
 
   const firstKey = apiKeys[0]
-  const baseUrl = 'https://sofiaia.roilabs.com.br'
+  const baseUrl = 'https://polarisia.com.br'
   const authHeader = firstKey ? `Bearer ${firstKey.keyPreview}` : 'Bearer sk-xxxxxxxxxxxxxxxx'
 
   const httpRequestNode = JSON.stringify({
     nodes: [
       {
-        name: "Execute Sofia Orchestration",
+        name: "Execute Polaris IA Orchestration",
         type: "n8n-nodes-base.httpRequest",
         parameters: {
           method: "POST",
@@ -141,15 +141,15 @@ export default function N8nIntegrationPage() {
 
       {/* Conceito */}
       <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
-        <h3 className="text-white font-medium mb-2">Por que n8n + Sofia AI?</h3>
-        <p className="text-white/60 text-sm">n8n é open-source e pode rodar self-hosted. Ideal para times que precisam de privacidade de dados. O node <strong className="text-green-400">HTTP Request</strong> integra diretamente com a API REST do Sofia AI.</p>
+        <h3 className="text-white font-medium mb-2">Por que n8n + Polaris IA?</h3>
+        <p className="text-white/60 text-sm">n8n é open-source e pode rodar self-hosted. Ideal para times que precisam de privacidade de dados. O node <strong className="text-green-400">HTTP Request</strong> integra diretamente com a API REST do Polaris IA.</p>
       </div>
 
       {/* Passo 1 */}
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <span className="w-7 h-7 rounded-full bg-green-500/20 text-green-400 text-sm font-bold flex items-center justify-center">1</span>
-          <h2 className="text-lg font-semibold text-white">Criar API Key no Sofia AI</h2>
+          <h2 className="text-lg font-semibold text-white">Criar API Key no Polaris IA</h2>
         </div>
         <p className="text-white/60 text-sm ml-10">Acesse <Link href="/dashboard/api-keys" className="text-green-400 hover:underline">Dashboard → API Keys</Link> e crie uma key. Copie o valor completo (exibido apenas uma vez).</p>
       </div>
@@ -222,7 +222,7 @@ export default function N8nIntegrationPage() {
       {/* Dica self-hosted */}
       <div className="p-4 bg-green-500/5 border border-green-500/20 rounded-lg">
         <h3 className="text-green-400 font-medium mb-2 text-sm">Dica: n8n Self-Hosted</h3>
-        <p className="text-white/60 text-xs">Rodando n8n localmente? Use <code className="text-green-400">WEBHOOK_URL</code> e certifique-se que seu servidor tem acesso externo para receber callbacks. O Sofia AI está hospedado em Vercel (HTTPS).</p>
+        <p className="text-white/60 text-xs">Rodando n8n localmente? Use <code className="text-green-400">WEBHOOK_URL</code> e certifique-se que seu servidor tem acesso externo para receber callbacks. O Polaris IA está hospedado em Vercel (HTTPS).</p>
       </div>
 
       {/* Links */}

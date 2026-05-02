@@ -1,10 +1,10 @@
-interface LogoMarkProps {
+﻿interface LogoMarkProps {
   size?: number
   className?: string
 }
 
 /**
- * Sofia AI icon mark — stylized S inside a blue-to-purple rounded square.
+ * Polaris IA icon mark — stylized S inside a blue-to-purple rounded square.
  * Use <LogoMark /> for the icon alone, or <Logo /> for icon + wordmark.
  */
 export function LogoMark({ size = 32, className }: LogoMarkProps) {
@@ -17,7 +17,7 @@ export function LogoMark({ size = 32, className }: LogoMarkProps) {
       height={size}
       fill="none"
       className={className}
-      aria-label="Sofia AI"
+      aria-label="Polaris IA"
     >
       <defs>
         <linearGradient id={`${id}-bg`} x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
@@ -67,7 +67,7 @@ export function Logo({ size = 32, className, iconOnly = false }: LogoProps) {
         style={{ fontSize: size * 0.6, lineHeight: 1 }}
         className="font-bold tracking-tight text-white"
       >
-        Sofia AI
+        Polaris IA
       </span>
     </div>
   )

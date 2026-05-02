@@ -1,4 +1,4 @@
-# ROI Labs Platform - Roadmap
+﻿# ROI Labs Platform - Roadmap
 
 > De SDR Imobiliario para Plataforma Completa de IA e Automacao para Empresas
 
@@ -72,14 +72,14 @@ ROI Labs Platform
 
 ## FASE 2 - Agentes de IA Generalizados (Semana 3-4)
 
-**Objetivo:** Expandir de "Sofia SDR" para plataforma de criacao de agentes multi-proposito.
+**Objetivo:** Expandir de "Polaris SDR" para plataforma de criacao de agentes multi-proposito.
 
 ### 2.1 Modelo de Agente
 - [x] Criar tabela Prisma `Agent` (id, name, description, systemPrompt, model, temperature, channels, knowledgeBaseId, status, createdBy, config JSON)
 - [x] Criar tabela `AgentChannel` (agentId, channel: whatsapp|webchat|email, config JSON)
 - [x] CRUD API `/api/agents` (GET, POST)
 - [x] CRUD API `/api/agents/[id]` (GET, PUT, DELETE)
-- [x] Migrar Sofia SDR como agente default na seed
+- [x] Migrar Polaris SDR como agente default na seed
 
 ### 2.2 Pagina de Agentes
 - [x] Nova pagina `/dashboard/agents` - lista de agentes com status (ativo/inativo/teste)

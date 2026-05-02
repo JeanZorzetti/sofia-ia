@@ -1,11 +1,11 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, ArrowRight, BrainCircuit, BookOpen, Code2, GitBranch, Database, MessageSquare, Settings, Zap, ExternalLink, Github, Users, Star } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Documentação — Sofia AI',
-  description: 'Documentação completa do Sofia AI. Guias de início rápido, referência de API, configuração de agentes, orquestrações, Knowledge Base e muito mais.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/documentacao' },
+  title: 'Documentação — Polaris IA',
+  description: 'Documentação completa do Polaris IA. Guias de início rápido, referência de API, configuração de agentes, orquestrações, Knowledge Base e muito mais.',
+  alternates: { canonical: 'https://polarisia.com.br/documentacao' },
 }
 
 const sections = [
@@ -42,7 +42,7 @@ const sections = [
   {
     icon: Code2,
     title: 'API Reference',
-    desc: 'Integre o Sofia AI com suas aplicações via REST API.',
+    desc: 'Integre o Polaris IA com suas aplicações via REST API.',
     links: [
       { label: 'Autenticação', href: '/api-reference' },
       { label: 'Endpoints de agentes', href: '/api-reference' },
@@ -62,7 +62,7 @@ const sections = [
   {
     icon: Settings,
     title: 'Self-hosted',
-    desc: 'Rode o Sofia AI na sua própria infraestrutura.',
+    desc: 'Rode o Polaris IA na sua própria infraestrutura.',
     links: [
       { label: 'Requisitos de sistema', href: '/self-hosted' },
       { label: 'Docker Compose', href: '/self-hosted' },
@@ -84,7 +84,7 @@ export default function DocumentacaoPage() {
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Documentação</span>
           </h1>
-          <p className="text-lg text-foreground-tertiary">Tudo que você precisa para usar e integrar o Sofia AI.</p>
+          <p className="text-lg text-foreground-tertiary">Tudo que você precisa para usar e integrar o Polaris IA.</p>
         </div>
       </section>
 
@@ -118,7 +118,7 @@ export default function DocumentacaoPage() {
                 <Github className="w-4 h-4 text-green-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-white text-sm">Sofia AI e Open Source</h3>
+                <h3 className="font-semibold text-white text-sm">Polaris IA e Open Source</h3>
                 <p className="text-[10px] text-white/40">MIT License — livre para usar, modificar e distribuir</p>
               </div>
               <span className="ml-auto flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
@@ -126,7 +126,7 @@ export default function DocumentacaoPage() {
               </span>
             </div>
             <p className="text-sm text-white/50 mb-4">
-              O codigo-fonte completo da Sofia AI esta disponivel no GitHub. Contribua com features,
+              O codigo-fonte completo da Polaris IA esta disponivel no GitHub. Contribua com features,
               reporte bugs, ou faca o fork para criar sua propria versao.
             </p>
             <div className="grid sm:grid-cols-3 gap-3 mb-4">

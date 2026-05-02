@@ -1,4 +1,4 @@
-# Modelos de IA — Sofia
+# Modelos de IA — Polaris IA
 
 ## Providers
 

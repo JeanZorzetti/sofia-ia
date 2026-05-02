@@ -1,4 +1,4 @@
-# Sofia AI — Contexto para Claude
+﻿# Polaris IA — Contexto para Claude
 
 ## Regras Gerais
 
@@ -8,7 +8,7 @@
 
 ## Projeto
 SaaS de IA para atendimento WhatsApp. Next.js 16 App Router + Prisma + Groq SDK.
-- **Deploy**: EasyPanel (Docker) em `sofiaia.roilabs.com.br`
+- **Deploy**: EasyPanel (Docker) em `polarisia.com.br`
 - **DB**: PostgreSQL via Prisma (host: `31.97.23.166:5499`)
 - **GitHub**: `JeanZorzetti/sofia-ia`
 

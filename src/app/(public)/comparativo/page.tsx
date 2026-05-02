@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import {
   ArrowRight,
@@ -11,8 +11,8 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Sofia AI vs CrewAI vs AutoGen vs LangFlow — Comparativo Completo',
-  description: 'Compare Sofia AI com CrewAI, AutoGen e LangFlow em usabilidade, preço, features e suporte. Veja por que times brasileiros escolhem Sofia para orquestração de agentes IA.',
+  title: 'Polaris IA vs CrewAI vs AutoGen vs LangFlow — Comparativo Completo',
+  description: 'Compare Polaris IA com CrewAI, AutoGen e LangFlow em usabilidade, preço, features e suporte. Veja por que times brasileiros escolhem Polaris IA para orquestração de agentes IA.',
   keywords: [
     'sofia vs crewai',
     'sofia vs autogen',
@@ -23,14 +23,14 @@ export const metadata: Metadata = {
     'melhor plataforma agentes ia',
   ],
   openGraph: {
-    title: 'Sofia AI vs CrewAI vs AutoGen vs LangFlow',
+    title: 'Polaris IA vs CrewAI vs AutoGen vs LangFlow',
     description: 'Comparativo completo entre as principais plataformas de orquestração de agentes IA. Interface visual, RAG, multi-canal e preço.',
     type: 'website',
     locale: 'pt_BR',
-    images: [{ url: 'https://sofiaia.roilabs.com.br/opengraph-image', width: 1200, height: 630, alt: 'Sofia AI — Orquestração de Agentes IA' }],
+    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/comparativo' },
+  alternates: { canonical: 'https://polarisia.com.br/comparativo' },
 }
 
 const comparisons = [
@@ -50,7 +50,7 @@ const comparisons = [
 
 const tools = [
   {
-    name: 'Sofia AI',
+    name: 'Polaris IA',
     tagline: 'Orquestração visual com RAG e multi-canal',
     pros: [
       'Interface visual no-code completa',
@@ -132,18 +132,18 @@ export default function ComparativoPage() {
             mainEntity: [
               {
                 '@type': 'Question',
-                name: 'Sofia AI é melhor que CrewAI?',
+                name: 'Polaris IA é melhor que CrewAI?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text: 'Depende do uso. Sofia AI oferece interface visual no-code, Knowledge Base com RAG embutido, WhatsApp integrado e analytics detalhado — tudo sem código. CrewAI é mais flexível para desenvolvedores Python avançados, mas exige programação e não tem interface visual nem RAG nativo.',
+                  text: 'Depende do uso. Polaris IA oferece interface visual no-code, Knowledge Base com RAG embutido, WhatsApp integrado e analytics detalhado — tudo sem código. CrewAI é mais flexível para desenvolvedores Python avançados, mas exige programação e não tem interface visual nem RAG nativo.',
                 },
               },
               {
                 '@type': 'Question',
-                name: 'Qual a diferença entre Sofia AI e LangFlow?',
+                name: 'Qual a diferença entre Polaris IA e LangFlow?',
                 acceptedAnswer: {
                   '@type': 'Answer',
-                  text: 'Ambos têm interface visual, mas Sofia AI é focada em orquestração de agentes com RAG semântico, streaming SSE, replay de execuções e canais de atendimento (WhatsApp). LangFlow é um builder de fluxos baseado em LangChain, sem RAG simplificado nem canais integrados.',
+                  text: 'Ambos têm interface visual, mas Polaris IA é focada em orquestração de agentes com RAG semântico, streaming SSE, replay de execuções e canais de atendimento (WhatsApp). LangFlow é um builder de fluxos baseado em LangChain, sem RAG simplificado nem canais integrados.',
                 },
               },
             ],
@@ -163,7 +163,7 @@ export default function ComparativoPage() {
             <Zap className="w-4 h-4" /> Comparativo atualizado — Fevereiro 2026
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Sofia AI vs{' '}
+            Polaris IA vs{' '}
             <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               CrewAI, AutoGen e LangFlow
             </span>
@@ -180,7 +180,7 @@ export default function ComparativoPage() {
           <div className="glass-card p-6 rounded-xl border border-blue-500/20 bg-blue-500/5">
             <p className="text-blue-300 font-semibold text-sm mb-2">⚡ TL;DR</p>
             <p className="text-white/80 text-sm leading-relaxed">
-              <strong className="text-white">Sofia AI</strong> é a única plataforma com interface visual no-code, Knowledge Base RAG embutido, streaming SSE por agente, multi-canal (WhatsApp) e analytics detalhado — tudo sem escrever código.
+              <strong className="text-white">Polaris IA</strong> é a única plataforma com interface visual no-code, Knowledge Base RAG embutido, streaming SSE por agente, multi-canal (WhatsApp) e analytics detalhado — tudo sem escrever código.
               CrewAI e AutoGen são frameworks Python para devs. LangFlow tem UI, mas sem RAG nem canais integrados.
             </p>
           </div>
@@ -199,7 +199,7 @@ export default function ComparativoPage() {
                     <th className="text-left p-4 text-white/60 font-medium w-2/5">Funcionalidade</th>
                     <th className="p-4 text-center">
                       <div className="flex flex-col items-center gap-1">
-                        <span className="font-bold text-white">Sofia AI</span>
+                        <span className="font-bold text-white">Polaris IA</span>
                         <span className="text-[10px] text-blue-400 flex items-center gap-0.5"><Star className="w-2.5 h-2.5" /> Recomendado</span>
                       </div>
                     </th>

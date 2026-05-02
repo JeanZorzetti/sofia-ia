@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { saveOAuthConnection } from '@/lib/integrations/oauth'
 
 // GET /api/integrations/notion/callback — recebe code do OAuth Notion
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get('state')
   const error = searchParams.get('error')
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
 
   if (error) {
     return NextResponse.redirect(

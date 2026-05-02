@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Newsletter Subscribe API
  * POST /api/newsletter/subscribe — public endpoint
  * Body: { email, name?, source? }
@@ -19,19 +19,19 @@ function buildNewsletterConfirmationEmail(name?: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bem-vindo a Newsletter da Sofia AI</title>
+  <title>Bem-vindo a Newsletter da Polaris IA</title>
 </head>
 <body style="margin:0;padding:0;background:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
   <div style="padding:32px 16px;">
     <div style="max-width:560px;margin:0 auto;background:#1e293b;border-radius:12px;overflow:hidden;">
       <div style="background:linear-gradient(135deg,#6d28d9 0%,#3b82f6 100%);padding:32px;text-align:center;">
-        <h1 style="color:#fff;font-size:24px;font-weight:700;margin:0 0 8px;">Sofia AI</h1>
+        <h1 style="color:#fff;font-size:24px;font-weight:700;margin:0 0 8px;">Polaris IA</h1>
         <p style="color:rgba(255,255,255,0.8);font-size:15px;margin:0;">Newsletter de IA e Automacao</p>
       </div>
       <div style="padding:32px;">
         <h2 style="color:#f1f5f9;font-size:20px;margin:0 0 12px;">Ola, ${displayName}!</h2>
         <p style="color:#94a3b8;font-size:15px;line-height:1.6;margin:0 0 16px;">
-          Voce agora faz parte da newsletter da Sofia AI. Toda semana voce recebe:
+          Voce agora faz parte da newsletter da Polaris IA. Toda semana voce recebe:
         </p>
         <ul style="color:#94a3b8;font-size:14px;line-height:1.8;padding-left:20px;margin:0 0 24px;">
           <li>Novidades sobre IA e automacao</li>
@@ -40,19 +40,19 @@ function buildNewsletterConfirmationEmail(name?: string): string {
           <li>Tutoriais e guias praticos</li>
         </ul>
         <div style="text-align:center;margin:24px 0;">
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'}/login"
+          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'}/login"
              style="display:inline-block;background:linear-gradient(135deg,#6d28d9,#3b82f6);color:#fff;text-decoration:none;font-weight:600;font-size:15px;padding:14px 28px;border-radius:8px;">
-            Comecar a usar Sofia AI gratis
+            Comecar a usar Polaris IA gratis
           </a>
         </div>
       </div>
       <div style="padding:20px 32px;border-top:1px solid #334155;text-align:center;">
         <p style="color:#475569;font-size:12px;margin:0;">
-          Sofia AI - ROI Labs |
-          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'}" style="color:#6d28d9;text-decoration:none;">sofiaia.roilabs.com.br</a>
+          Polaris IA - ROI Labs |
+          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'}" style="color:#6d28d9;text-decoration:none;">polarisia.com.br</a>
         </p>
         <p style="color:#374151;font-size:11px;margin:8px 0 0;">
-          Voce se inscreveu em sofiaia.roilabs.com.br. Para cancelar, responda com "cancelar".
+          Voce se inscreveu em polarisia.com.br. Para cancelar, responda com "cancelar".
         </p>
       </div>
     </div>
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
     // Send confirmation email (non-blocking)
     sendEmail({
       to: cleanEmail,
-      subject: 'Bem-vindo a newsletter da Sofia AI!',
+      subject: 'Bem-vindo a newsletter da Polaris IA!',
       html: buildNewsletterConfirmationEmail(name),
     }).catch((err) => console.error('[Newsletter] Email error:', err))
 

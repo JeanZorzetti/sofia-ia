@@ -216,7 +216,7 @@ async function main() {
       status: 'active',
       agents: buildAgentSteps(),
       config: {
-        inputLabel: 'Tema e objetivo do post (ex: "Automação de marketing — mostrar que a Sofia executa 5 posts/semana sem intervenção humana, objetivo: curiosidade + replies")',
+        inputLabel: 'Tema e objetivo do post (ex: "Automação de marketing — mostrar que a Polaris IA executa 5 posts/semana sem intervenção humana, objetivo: curiosidade + replies")',
         showCost: true,
         allowFeedbackLoop: false,
       },

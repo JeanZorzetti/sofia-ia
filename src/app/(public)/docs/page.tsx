@@ -1,11 +1,11 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, Zap, Key, BookOpen, Code, Globe, Terminal, Puzzle, GitBranch, Rocket } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Documentação — Sofia AI',
-  description: 'Guia de início rápido, referência da API REST e exemplos de integração da Sofia AI.',
-  alternates: { canonical: 'https://sofiaia.roilabs.com.br/docs' },
+  title: 'Documentação — Polaris IA',
+  description: 'Guia de início rápido, referência da API REST e exemplos de integração da Polaris IA.',
+  alternates: { canonical: 'https://polarisia.com.br/docs' },
 }
 
 export default function DocsPage() {
@@ -45,10 +45,10 @@ export default function DocsPage() {
           <section id="intro">
             <div className="flex items-center gap-3 mb-4">
               <BookOpen className="w-6 h-6 text-blue-400" />
-              <h1 className="text-3xl font-bold text-white">Documentação Sofia AI</h1>
+              <h1 className="text-3xl font-bold text-white">Documentação Polaris IA</h1>
             </div>
             <p className="text-foreground-tertiary leading-relaxed mb-6">
-              A Sofia AI fornece uma API REST para gerenciar e executar orquestrações de agentes programaticamente.
+              A Polaris IA fornece uma API REST para gerenciar e executar orquestrações de agentes programaticamente.
               Use a API para integrar IA multi-agente diretamente nos seus sistemas, pipelines e aplicações.
             </p>
             <div className="grid sm:grid-cols-3 gap-4 mb-6">
@@ -93,7 +93,7 @@ export default function DocsPage() {
             <ol className="space-y-5 text-sm">
               <li>
                 <div className="text-white font-medium mb-1">1. Crie sua conta e acesse o dashboard</div>
-                <div className="text-foreground-tertiary mb-2">Registre-se em <Link href="/register" className="text-blue-400 hover:underline">sofiaia.roilabs.com.br/register</Link> e crie sua primeira orquestração.</div>
+                <div className="text-foreground-tertiary mb-2">Registre-se em <Link href="/register" className="text-blue-400 hover:underline">polarisia.com.br/register</Link> e crie sua primeira orquestração.</div>
               </li>
               <li>
                 <div className="text-white font-medium mb-1">2. Gere uma API Key</div>
@@ -101,12 +101,12 @@ export default function DocsPage() {
               </li>
               <li>
                 <div className="text-white font-medium mb-1">3. Liste suas orquestrações</div>
-                <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`curl https://sofiaia.roilabs.com.br/api/public/orchestrations \\
+                <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`curl https://polarisia.com.br/api/public/orchestrations \\
   -H "X-API-Key: SUA_API_KEY"`}</pre>
               </li>
               <li>
                 <div className="text-white font-medium mb-1">4. Execute uma orquestração</div>
-                <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`curl -X POST https://sofiaia.roilabs.com.br/api/public/orchestrations/ID/run \\
+                <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`curl -X POST https://polarisia.com.br/api/public/orchestrations/ID/run \\
   -H "X-API-Key: SUA_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"input": "Crie um relatório de mercado sobre IA no Brasil"}'`}</pre>
@@ -279,7 +279,7 @@ export default function DocsPage() {
                 <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`import requests
 
 API_KEY = "SUA_API_KEY"
-BASE = "https://sofiaia.roilabs.com.br/api/public"
+BASE = "https://polarisia.com.br/api/public"
 headers = {"X-API-Key": API_KEY}
 
 # Listar orquestrações
@@ -306,7 +306,7 @@ while True:
               <div>
                 <p className="text-xs text-white/40 mb-2">JavaScript / Node.js</p>
                 <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`const API_KEY = process.env.SOFIA_API_KEY;
-const BASE = "https://sofiaia.roilabs.com.br/api/public";
+const BASE = "https://polarisia.com.br/api/public";
 const h = { "X-API-Key": API_KEY, "Content-Type": "application/json" };
 
 // Executar orquestração

@@ -82,7 +82,7 @@ export default function NpsWidget({ executionCount }: { executionCount?: number 
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
             <div>
-              <p className="font-semibold text-gray-800 text-sm">Voce recomendaria a Sofia?</p>
+              <p className="font-semibold text-gray-800 text-sm">Voce recomendaria a Polaris IA?</p>
               <p className="text-xs text-gray-500 mt-0.5">0 = nada provavel, 10 = com certeza</p>
             </div>
             <button

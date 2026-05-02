@@ -5,7 +5,7 @@ import { getOrgMembership, isAdmin } from '@/lib/org-auth'
 import { logAudit, getIpFromRequest, getUserAgentFromRequest } from '@/lib/audit'
 import { sendEmail } from '@/lib/email'
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
 
 // GET /api/organizations/[slug]/invites — list pending invites
 export async function GET(
@@ -110,7 +110,7 @@ export async function POST(
     const acceptUrl = `${APP_URL}/dashboard/invites/accept?token=${invite.token}`
     await sendEmail({
       to: email,
-      subject: `Convite para ${membership.org.name} no Sofia IA`,
+      subject: `Convite para ${membership.org.name} no Polaris IA`,
       html: buildInviteEmail({
         orgName: membership.org.name,
         inviterName: user.name || user.email,
@@ -161,14 +161,14 @@ function buildInviteEmail({
   <div style="padding:32px 16px;max-width:600px;margin:0 auto;">
     <div style="background:#1e293b;border-radius:12px;overflow:hidden;">
       <div style="background:linear-gradient(135deg,#6d28d9 0%,#3b82f6 100%);padding:40px 32px;text-align:center;">
-        <h1 style="color:#fff;font-size:24px;font-weight:700;margin:0 0 8px;">Sofia IA</h1>
+        <h1 style="color:#fff;font-size:24px;font-weight:700;margin:0 0 8px;">Polaris IA</h1>
         <p style="color:rgba(255,255,255,0.8);font-size:16px;margin:0;">Convite para workspace colaborativo</p>
       </div>
       <div style="padding:32px;">
         <h2 style="color:#f1f5f9;font-size:20px;margin:0 0 12px;">Você foi convidado!</h2>
         <p style="color:#94a3b8;font-size:15px;line-height:1.6;margin:0 0 16px;">
           <strong style="color:#e2e8f0;">${inviterName}</strong> convidou você para participar da organização
-          <strong style="color:#e2e8f0;">${orgName}</strong> no Sofia IA como <strong style="color:#a78bfa;">${roleLabel}</strong>.
+          <strong style="color:#e2e8f0;">${orgName}</strong> no Polaris IA como <strong style="color:#a78bfa;">${roleLabel}</strong>.
         </p>
         <div style="text-align:center;margin:32px 0;">
           <a href="${acceptUrl}" style="display:inline-block;background:linear-gradient(135deg,#6d28d9,#3b82f6);color:#fff;text-decoration:none;font-weight:600;font-size:16px;padding:14px 32px;border-radius:8px;">
@@ -178,7 +178,7 @@ function buildInviteEmail({
         <p style="color:#64748b;font-size:13px;margin:0;text-align:center;">Este convite expira em ${expires}.</p>
       </div>
       <div style="padding:24px 32px;text-align:center;border-top:1px solid #334155;">
-        <p style="color:#475569;font-size:13px;margin:0;">Sofia IA - ROI Labs</p>
+        <p style="color:#475569;font-size:13px;margin:0;">Polaris IA - ROI Labs</p>
       </div>
     </div>
   </div>

@@ -1,8 +1,8 @@
-import type { I18nStrings } from './pt'
+﻿import type { I18nStrings } from './pt'
 
 export const en: I18nStrings = {
   meta: {
-    title: 'Sofia AI — Multi-Agent Orchestration Platform',
+    title: 'Polaris IA — Multi-Agent Orchestration Platform',
     description: 'Build AI agent teams that work together to solve complex tasks. Multi-agent orchestrations, Knowledge Base with RAG, and multi-model IDE.',
   },
   nav: {

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
 
 // GET /api/integrations/salesforce/connect — inicia OAuth flow Salesforce
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sofiaia.roilabs.com.br'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
   const redirectUri = `${appUrl}/api/integrations/salesforce/callback`
 
   const state = Buffer.from(JSON.stringify({ userId: auth.id })).toString('base64url')

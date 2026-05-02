@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -45,7 +45,7 @@ export default function ZapierIntegrationPage() {
   }, [])
 
   const firstKey = apiKeys[0]
-  const baseUrl = 'https://sofiaia.roilabs.com.br'
+  const baseUrl = 'https://polarisia.com.br'
   const authHeader = firstKey ? `Bearer ${firstKey.keyPreview}` : 'Bearer sk-xxxxxxxxxxxxxxxx'
 
   const pollExample = JSON.stringify([
@@ -77,7 +77,7 @@ export default function ZapierIntegrationPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Integração com Zapier</h1>
-            <p className="text-white/60 text-sm">Conecte Sofia AI a 6.000+ apps sem código</p>
+            <p className="text-white/60 text-sm">Conecte Polaris IA a 6.000+ apps sem código</p>
           </div>
         </div>
       </div>
@@ -119,7 +119,7 @@ export default function ZapierIntegrationPage() {
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <span className="w-7 h-7 rounded-full bg-orange-500/20 text-orange-400 text-sm font-bold flex items-center justify-center">1</span>
-          <h2 className="text-lg font-semibold text-white">Criar API Key no Sofia AI</h2>
+          <h2 className="text-lg font-semibold text-white">Criar API Key no Polaris IA</h2>
         </div>
         <p className="text-white/60 text-sm ml-10">Acesse <Link href="/dashboard/api-keys" className="text-orange-400 hover:underline">Dashboard → API Keys</Link> e crie uma key com escopo <code className="text-green-400">read,execute</code>.</p>
       </div>

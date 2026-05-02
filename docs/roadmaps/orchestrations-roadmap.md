@@ -1,4 +1,4 @@
-# Roadmap: Melhorias em Orquestrações - Sofia
+# Roadmap: Melhorias em Orquestrações - Polaris IA
 
 ## Diagnóstico do Estado Atual
 

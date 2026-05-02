@@ -1,0 +1,748 @@
+{
+  "_group": "07_sticky_notes",
+  "_description": "Notas de documentacao visual do workflow",
+  "_node_count": 48,
+  "name": "Base_Imob_v2_Congnitive",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# Agente IA",
+        "height": 80,
+        "width": 196,
+        "color": 5
+      },
+      "id": "5c580158-537c-4c96-9ad7-17a1a9ee0974",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 620,
+        "width": 820
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        864,
+        832
+      ],
+      "typeVersion": 1,
+      "id": "d9e11e5d-d332-457b-a694-7c962b4f3f55",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 620,
+        "width": 1920,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2240,
+        832
+      ],
+      "typeVersion": 1,
+      "id": "2b3c8292-f3b5-4552-aaa6-d6db8eb82ca4",
+      "name": "Sticky Note18"
+    },
+    {
+      "parameters": {
+        "content": "# Divisão de Mensagens Inteligente - Texto",
+        "height": 80,
+        "width": 736,
+        "color": 5
+      },
+      "id": "0767dac4-18df-42a2-af3a-ba0232ecd29b",
+      "name": "Sticky Note19",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2288,
+        864
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 400,
+        "width": 2440,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1728,
+        1488
+      ],
+      "typeVersion": 1,
+      "id": "5443628b-c599-4ba3-a2f8-e4f9e8aa9199",
+      "name": "Sticky Note44"
+    },
+    {
+      "parameters": {
+        "content": "# AVISAR NOVO LEAD NO GRUPO",
+        "height": 80,
+        "width": 656,
+        "color": 5
+      },
+      "id": "7d2719d8-658b-4041-83c5-173172e56015",
+      "name": "Sticky Note45",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1744,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 380,
+        "width": 2440,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1728,
+        400
+      ],
+      "typeVersion": 1,
+      "id": "a4218189-ca49-42ec-8ca3-e8d191dab5d2",
+      "name": "Sticky Note54"
+    },
+    {
+      "parameters": {
+        "content": "# Cadastra Chat Supabase",
+        "height": 80,
+        "width": 450,
+        "color": 5
+      },
+      "id": "b8ecf5b5-3bef-4465-af48-773d06273051",
+      "name": "Sticky Note55",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1744,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 620,
+        "width": 980,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2848,
+        832
+      ],
+      "typeVersion": 1,
+      "id": "c5608b29-8786-4140-baff-6873654788ab",
+      "name": "Sticky Note17"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 660,
+        "width": 960,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3856,
+        784
+      ],
+      "typeVersion": 1,
+      "id": "4b432a41-efe7-4345-984a-b7e025575355",
+      "name": "Sticky Note20"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 440,
+        "width": 740,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -5840,
+        1008
+      ],
+      "typeVersion": 1,
+      "id": "40cf39be-873f-4dfd-88c4-16a8dfc6713e",
+      "name": "Sticky Note22"
+    },
+    {
+      "parameters": {
+        "content": "# Cadastrar Lead Supa Base",
+        "height": 80,
+        "width": 596,
+        "color": 4
+      },
+      "id": "7ab74698-7c62-420c-8740-4f5f841b3dc0",
+      "name": "Sticky Note23",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5840,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 500,
+        "width": 1120,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -5040,
+        944
+      ],
+      "typeVersion": 1,
+      "id": "c3a7d303-9095-4e04-9272-75dbd582824f",
+      "name": "Sticky Note26"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        48,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "45b32536-ca73-4c7a-b37d-0e52e15e5cd3",
+      "name": "Sticky Note31"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        848,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "e0f8a3ef-a568-4fc8-bcd8-f432b8115f10",
+      "name": "Sticky Note33"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1088,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "03c3261b-23bb-445c-bd91-6d2f1f15eb44",
+      "name": "Sticky Note37"
+    },
+    {
+      "parameters": {
+        "content": "# Pausar IA",
+        "height": 80,
+        "width": 216,
+        "color": 4
+      },
+      "id": "80193eaa-088e-4d1c-8212-2084b0dd19b9",
+      "name": "Sticky Note41",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -5040,
+        944
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1104,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "78cc139e-ac4d-461c-b00c-3ae952618da7",
+      "name": "Sticky Note40"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1360,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "35642d09-9591-4c5c-bfa6-8bd0af170152",
+      "name": "Sticky Note48"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        64,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "e0d773cc-6ce1-4cd7-bb4b-3fbc05b51631",
+      "name": "Sticky Note49"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        592,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "428cd6a7-26d7-4dbc-808d-571946cf76d9",
+      "name": "Sticky Note50"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        560,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "06dfd2c1-f55c-4711-97cd-c24a79664dd8",
+      "name": "Sticky Note56"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "af58ef70-15ac-4ac7-bde8-c39afd8465e1",
+      "name": "Sticky Note57"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        832,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "0314d94e-d717-4571-b929-acfbb7fdf83e",
+      "name": "Sticky Note65"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 200
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        304,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "501da896-34ab-4bb4-ab8c-66ef27ea1619",
+      "name": "Sticky Note66"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 440,
+        "width": 600,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -6496,
+        1008
+      ],
+      "typeVersion": 1,
+      "id": "66c3c20d-9293-410d-86dd-8a8a1d83c914",
+      "name": "Sticky Note32"
+    },
+    {
+      "parameters": {
+        "content": "## WEBHOOK & ROTAS",
+        "height": 80,
+        "width": 276,
+        "color": 4
+      },
+      "id": "03386156-1714-4fab-b954-bcb82e8dffb9",
+      "name": "Sticky Note67",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -6480,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# Mensagem Picotada",
+        "height": 80,
+        "width": 396,
+        "color": 4
+      },
+      "id": "a5d968b4-40b3-42c7-b64a-6d643568ae9d",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2848,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# Filtro de mensagem",
+        "height": 80,
+        "width": 356,
+        "color": 4
+      },
+      "id": "722ca572-6731-4cf8-87fc-a41308d3c9f2",
+      "name": "Sticky Note7",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -3856,
+        784
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## Agente treinamento RAG, ativação automática como o texto: TreinoIA1212:",
+        "height": 840,
+        "width": 2940
+      },
+      "id": "a9a23560-c81f-45b2-a26a-75518d5aa0e0",
+      "name": "Sticky Note11",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -5840,
+        1504
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "# Ferramentaspara apagar\n\n",
+        "height": 80,
+        "width": 496,
+        "color": 3
+      },
+      "id": "860f9ade-4592-4a05-8406-fca3d9179738",
+      "name": "Sticky Note9",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        32,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# Agente RAG",
+        "height": 80,
+        "width": 336
+      },
+      "id": "e5ab890c-bda9-41f7-86ea-9e7ed3903593",
+      "name": "Sticky Note10",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1808,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 380,
+        "width": 1680,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "d466c8c1-1587-4b9a-b2f8-b67f33a73e75",
+      "name": "Sticky Note12"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 380,
+        "width": 1680,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        400
+      ],
+      "typeVersion": 1,
+      "id": "d0fd2ca5-18d0-4f2f-adb7-e230380132b7",
+      "name": "Sticky Note13"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 620,
+        "width": 820
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1824,
+        832
+      ],
+      "typeVersion": 1,
+      "id": "31989a2e-221e-4995-8897-c663663e3a77",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 840,
+        "width": 2720,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2848,
+        1504
+      ],
+      "typeVersion": 1,
+      "id": "3d4c7b35-6883-476c-9645-6b66c758cb28",
+      "name": "Sticky Note58"
+    },
+    {
+      "parameters": {
+        "content": "# Follow up Whatsapp",
+        "height": 80,
+        "width": 393,
+        "color": 4
+      },
+      "id": "3283aa0c-0817-4ddd-b943-8851e7fa6778",
+      "name": "Sticky Note59",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2784,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# Agendamento",
+        "height": 80,
+        "width": 283,
+        "color": 5
+      },
+      "id": "5bc5e258-7e4f-42ff-8218-c3d754ce580e",
+      "name": "Sticky Note15",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2768,
+        2512
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 801,
+        "width": 2703,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2848,
+        2400
+      ],
+      "typeVersion": 1,
+      "id": "e3ee12ab-757c-4e1a-b749-25d2f16f62eb",
+      "name": "Sticky Note14"
+    },
+    {
+      "parameters": {
+        "content": "# AVISO REUNIÃO CHEGANDO",
+        "height": 80,
+        "width": 551.2183277924504,
+        "color": 5
+      },
+      "id": "f2f88a03-1e95-4411-829a-980f14f32cca",
+      "name": "Sticky Note27",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        1968
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 840,
+        "width": 2443,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1728,
+        1920
+      ],
+      "typeVersion": 1,
+      "id": "97ffd145-586d-4d8d-90ed-a096a6b588b0",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# CAPTAÇÃO DE CLIENTES",
+        "height": 80,
+        "width": 551.2183277924504,
+        "color": 5
+      },
+      "id": "e12f1e1b-2ec6-47d3-9716-31ba66793047",
+      "name": "Sticky Note30",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        2864
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 820,
+        "width": 2443,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1728,
+        2832
+      ],
+      "typeVersion": 1,
+      "id": "39ca77ee-91c2-44d5-aa22-32cdc5944d76",
+      "name": "Sticky Note16"
+    },
+    {
+      "parameters": {
+        "content": "# Ferramentas para criar\n\n",
+        "height": 80,
+        "width": 456,
+        "color": 4
+      },
+      "id": "3a31f68e-44a6-48cc-b2e5-b2ad69ac8adb",
+      "name": "Sticky Note8",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        64,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 620,
+        "width": 480,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1728,
+        832
+      ],
+      "typeVersion": 1,
+      "id": "16b1b2b0-1b1e-46d2-93b6-b2ae9b56bb99",
+      "name": "Sticky Note21"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 620,
+        "width": 820
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -960,
+        832
+      ],
+      "typeVersion": 1,
+      "id": "1baeeb25-c4c2-4cb2-8d89-5ad68400a570",
+      "name": "Sticky Note24"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 620,
+        "width": 440
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -96,
+        832
+      ],
+      "typeVersion": 1,
+      "id": "614c69b6-ade6-4b89-92fa-a78a1f0564c3",
+      "name": "Sticky Note25"
+    },
+    {
+      "parameters": {
+        "content": "",
+        "height": 620,
+        "width": 440
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        384,
+        832
+      ],
+      "typeVersion": 1,
+      "id": "bb24dba9-6cc6-40e9-8286-5fc38163334d",
+      "name": "Sticky Note28"
+    }
+  ],
+  "connections": {}
+}
