@@ -1,0 +1,17 @@
+.git
+.gitignore
+.env
+.env.*
+node_modules
+.next
+npm-debug.log*
+README.md
+docs/
+scripts/
+*.test.ts
+*.spec.ts
+__tests__/
+.eslintrc*
+jest.config*
+playwright.config*
+tsconfig.electron.json
