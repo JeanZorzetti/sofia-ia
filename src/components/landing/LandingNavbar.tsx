@@ -24,8 +24,8 @@ export function LandingNavbar() {
           <Image
             src="/logos/Design sem nome (13).png"
             alt="Polaris IA"
-            width={273}
-            height={40}
+            width={137}
+            height={20}
             style={{ filter: 'brightness(0) invert(1)' }}
             priority
           />
