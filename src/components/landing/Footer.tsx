@@ -11,7 +11,7 @@ export function Footer() {
           <div>
             <div className="mb-3">
               <Image
-                src="/logos/Design sem nome (13).png"
+                src="/logos/polaris-logo-trimmed.png"
                 alt="Polaris IA"
                 width={200}
                 height={29}

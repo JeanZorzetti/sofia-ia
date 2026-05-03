@@ -22,7 +22,7 @@ export function LandingNavbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <Image
-            src="/logos/Design sem nome (13).png"
+            src="/logos/polaris-logo-trimmed.png"
             alt="Polaris IA"
             width={137}
             height={20}
@@ -79,7 +79,7 @@ export function LandingNavbar() {
               <div className="flex items-center justify-between mb-8">
                 <Link href="/" className="flex items-center" onClick={() => setMobileOpen(false)}>
                   <Image
-                    src="/logos/Design sem nome (13).png"
+                    src="/logos/polaris-logo-trimmed.png"
                     alt="Polaris IA"
                     width={200}
                     height={29}
