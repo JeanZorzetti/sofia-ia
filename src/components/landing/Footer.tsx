@@ -9,9 +9,14 @@ export function Footer() {
         <div className="flex flex-col md:flex-row items-start justify-between gap-8 mb-12">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-2.5 mb-3">
-              <Image src="/logos/kit/polaris-icon-120.png" alt="Polaris IA" width={28} height={28} />
-              <span className="font-bold text-white">Polaris IA</span>
+            <div className="mb-3">
+              <Image
+                src="/logos/Design sem nome (13).png"
+                alt="Polaris IA"
+                width={200}
+                height={29}
+                style={{ filter: 'brightness(0) invert(1)' }}
+              />
             </div>
             <p className="text-foreground-tertiary text-sm max-w-xs">
               Plataforma de orquestração de agentes IA com Knowledge Base, IDE multi-modelo e canais integrados.

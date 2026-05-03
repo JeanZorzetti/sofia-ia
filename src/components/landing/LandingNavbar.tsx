@@ -20,9 +20,15 @@ export function LandingNavbar() {
     <nav className="navbar-glass sticky top-0 z-50 px-6 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5">
-          <Image src="/logos/kit/polaris-icon-120.png" alt="" width={28} height={28} aria-hidden="true" />
-          <span className="font-bold text-white text-lg tracking-tight">Polaris IA</span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/logos/Design sem nome (13).png"
+            alt="Polaris IA"
+            width={273}
+            height={40}
+            style={{ filter: 'brightness(0) invert(1)' }}
+            priority
+          />
         </Link>
 
         {/* Desktop links */}
@@ -71,9 +77,14 @@ export function LandingNavbar() {
             </SheetTrigger>
             <SheetContent side="right" className="w-72 bg-background border-border p-6">
               <div className="flex items-center justify-between mb-8">
-                <Link href="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
-                  <Image src="/logos/kit/polaris-icon-120.png" alt="" width={24} height={24} aria-hidden="true" />
-                  <span className="font-bold text-white">Polaris IA</span>
+                <Link href="/" className="flex items-center" onClick={() => setMobileOpen(false)}>
+                  <Image
+                    src="/logos/Design sem nome (13).png"
+                    alt="Polaris IA"
+                    width={200}
+                    height={29}
+                    style={{ filter: 'brightness(0) invert(1)' }}
+                  />
                 </Link>
                 <button
                   onClick={() => setMobileOpen(false)}
