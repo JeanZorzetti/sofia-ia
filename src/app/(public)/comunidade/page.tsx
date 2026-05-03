@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     description: 'Discord, GitHub, Early Access e newsletter para quem constrói com agentes IA.',
     type: 'website',
     locale: 'pt_BR',
-    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
+    images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
 }

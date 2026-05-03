@@ -21,7 +21,7 @@ export function LandingNavbar() {
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5">
-          <Image src="/logos/polaris-icon.png" alt="" width={28} height={28} aria-hidden="true" />
+          <Image src="/logos/kit/polaris-icon-120.png" alt="" width={28} height={28} aria-hidden="true" />
           <span className="font-bold text-white text-lg tracking-tight">Polaris IA</span>
         </Link>
 
@@ -72,7 +72,7 @@ export function LandingNavbar() {
             <SheetContent side="right" className="w-72 bg-background border-border p-6">
               <div className="flex items-center justify-between mb-8">
                 <Link href="/" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
-                  <Image src="/logos/polaris-icon.png" alt="" width={24} height={24} aria-hidden="true" />
+                  <Image src="/logos/kit/polaris-icon-120.png" alt="" width={24} height={24} aria-hidden="true" />
                   <span className="font-bold text-white">Polaris IA</span>
                 </Link>
                 <button

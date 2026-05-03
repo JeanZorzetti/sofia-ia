@@ -6,9 +6,10 @@ interface LogoMarkProps {
 }
 
 export function LogoMark({ size = 32, className }: LogoMarkProps) {
+  const src = size > 40 ? '/logos/kit/polaris-icon-120.png' : '/logos/kit/polaris-icon-32.png'
   return (
     <Image
-      src="/logos/polaris-icon.png"
+      src={src}
       alt="Polaris IA"
       width={size}
       height={size}

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: 'Preços — Planos Polaris IA | Free, Pro, Business e Enterprise',
   description: 'Conheça os planos do Polaris IA. Free para começar, Pro por R$297/mês, Business por R$997/mês e Enterprise custom para grandes empresas. Sem surpresas na fatura.',
   keywords: ['preço Polaris IA', 'planos Polaris IA', 'quanto custa Polaris IA', 'plataforma agentes ia preço', 'orquestração ia gratis', 'sofia pro business enterprise'],
-  openGraph: { title: 'Preços — Polaris IA | Free, Pro e Business', description: 'Comece grátis. Escale conforme cresce. Planos a partir de R$0/mês.', type: 'website', locale: 'pt_BR' , images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }]},
+  openGraph: { title: 'Preços — Polaris IA | Free, Pro e Business', description: 'Comece grátis. Escale conforme cresce. Planos a partir de R$0/mês.', type: 'website', locale: 'pt_BR' , images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }]},
   alternates: { canonical: 'https://polarisia.com.br/preco' },
 }
 

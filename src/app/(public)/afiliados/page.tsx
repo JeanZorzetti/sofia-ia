@@ -26,7 +26,7 @@ export const metadata: Metadata = {
       'Ganhe indicando a melhor plataforma de orquestração de agentes IA do Brasil. Comissão recorrente, painel de acompanhamento e suporte dedicado.',
     type: 'website',
     locale: 'pt_BR',
-    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
+    images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
 }

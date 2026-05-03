@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Polaris IA + Zapier',
     description: 'Automatize orquestracoes de IA com Zapier. Sem codigo necessario.',
-    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
+    images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
 }

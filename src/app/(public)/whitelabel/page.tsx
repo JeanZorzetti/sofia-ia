@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     description: 'Plataforma multi-agente completa sob sua marca. Para agências, consultorias e ISVs.',
     type: 'website',
     locale: 'pt_BR',
-    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
+    images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
 }

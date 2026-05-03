@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     description: 'Do zero à primeira orquestração em 5 minutos. Guia passo a passo.',
     type: 'website',
     locale: 'pt_BR',
-    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
+    images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   alternates: { canonical: 'https://polarisia.com.br/como-funciona' },

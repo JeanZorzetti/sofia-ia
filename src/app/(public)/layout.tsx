@@ -3,7 +3,7 @@ import { LandingNavbar } from '@/components/landing/LandingNavbar'
 import { Footer } from '@/components/landing/Footer'
 
 const OG_IMAGE = {
-  url: 'https://polarisia.com.br/opengraph-image',
+  url: '/logos/kit/og-image.png',
   width: 1200,
   height: 630,
   alt: 'Polaris IA — Orquestração de Agentes IA',
@@ -11,7 +11,7 @@ const OG_IMAGE = {
 
 export const metadata: Metadata = {
   openGraph: { images: [OG_IMAGE] },
-  twitter: { card: 'summary_large_image', images: ['https://polarisia.com.br/opengraph-image'] },
+  twitter: { card: 'summary_large_image', images: ['/logos/kit/og-image.png'] },
 }
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {

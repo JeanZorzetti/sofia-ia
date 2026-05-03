@@ -131,7 +131,7 @@ export default async function AdminPage() {
       <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#0a0a0f]/80 backdrop-blur-xl px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <Image src="/logos/polaris-icon.png" alt="Polaris IA" width={28} height={28} />
+            <Image src="/logos/kit/polaris-icon-120.png" alt="Polaris IA" width={28} height={28} />
             <span className="font-bold text-white">Polaris IA</span>
             <span className="text-white/20 mx-1">/</span>
             <span className="text-white/60 text-sm">Admin</span>

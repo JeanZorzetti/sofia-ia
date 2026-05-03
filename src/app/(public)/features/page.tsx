@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Features — Tudo que o Polaris IA oferece | ROI Labs',
   description: 'Conheça todas as funcionalidades do Polaris IA: orquestração multi-agente, Knowledge Base com RAG semântico, IDE multi-modelo, inbox unificado, analytics e muito mais.',
   keywords: ['features Polaris IA', 'funcionalidades orquestração agentes ia', 'knowledge base rag', 'ide multi-modelo ia', 'inbox whatsapp ia', 'analytics agentes ia'],
-  openGraph: { title: 'Features — Tudo que o Polaris IA oferece', description: 'Orquestração multi-agente, Knowledge Base RAG, IDE multi-modelo, inbox unificado e analytics. Tudo em uma plataforma.', type: 'website', locale: 'pt_BR' , images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }]},
+  openGraph: { title: 'Features — Tudo que o Polaris IA oferece', description: 'Orquestração multi-agente, Knowledge Base RAG, IDE multi-modelo, inbox unificado e analytics. Tudo em uma plataforma.', type: 'website', locale: 'pt_BR' , images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }]},
   alternates: { canonical: 'https://polarisia.com.br/features' },
 }
 

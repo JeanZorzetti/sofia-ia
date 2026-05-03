@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     locale: 'es_LA',
     type: 'website',
     url: 'https://polarisia.com.br/es/precios',
-    images: [{ url: 'https://polarisia.com.br/opengraph-image', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
+    images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
   alternates: {

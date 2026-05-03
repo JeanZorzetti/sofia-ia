@@ -13,20 +13,25 @@ export const metadata = {
   description: 'Crie equipes de agentes IA que trabalham juntos. Orquestrações visuais, Knowledge Base com RAG, IDE multi-modelo e integração com WhatsApp. Self-hosted.',
   keywords: ['agentes ia', 'orquestração', 'multi-agente', 'rag', 'knowledge base', 'ia para empresas'],
   icons: {
-    icon: '/logos/polaris-icon.png',
-    shortcut: '/logos/polaris-icon.png',
-    apple: '/logos/polaris-icon.png',
+    icon: [
+      { url: '/logos/kit/polaris-icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/logos/kit/polaris-icon-16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    shortcut: '/logos/kit/polaris-icon-32.png',
+    apple: '/logos/kit/apple-touch-icon.png',
   },
   openGraph: {
     type: 'website' as const,
     locale: 'pt_BR',
     siteName: 'Polaris IA',
     url: 'https://polarisia.com.br',
+    images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
   },
   twitter: {
     card: 'summary_large_image' as const,
     site: '@sofiaai_br',
     creator: '@sofiaai_br',
+    images: ['/logos/kit/og-image.png'],
   },
   metadataBase: new URL('https://polarisia.com.br'),
 }
