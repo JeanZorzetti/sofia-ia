@@ -10,7 +10,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2.5 mb-3">
-              <Image src="/logo-icon.svg" alt="Polaris IA" width={28} height={28} />
+              <Image src="/logos/polaris-icon.png" alt="Polaris IA" width={28} height={28} />
               <span className="font-bold text-white">Polaris IA</span>
             </div>
             <p className="text-foreground-tertiary text-sm max-w-xs">

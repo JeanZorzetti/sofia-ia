@@ -13,9 +13,9 @@ export const metadata = {
   description: 'Crie equipes de agentes IA que trabalham juntos. Orquestrações visuais, Knowledge Base com RAG, IDE multi-modelo e integração com WhatsApp. Self-hosted.',
   keywords: ['agentes ia', 'orquestração', 'multi-agente', 'rag', 'knowledge base', 'ia para empresas'],
   icons: {
-    icon: '/logo-icon.svg',
-    shortcut: '/logo-icon.svg',
-    apple: '/logo-icon.svg',
+    icon: '/logos/polaris-icon.png',
+    shortcut: '/logos/polaris-icon.png',
+    apple: '/logos/polaris-icon.png',
   },
   openGraph: {
     type: 'website' as const,

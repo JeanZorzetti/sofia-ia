@@ -71,7 +71,7 @@ export default function SobrePage() {
             '@type': 'Organization',
             name: 'ROI Labs',
             url: 'https://roilabs.com.br',
-            logo: 'https://polarisia.com.br/logo.svg',
+            logo: 'https://polarisia.com.br/logos/polaris-icon.png',
             description: 'ROI Labs e uma empresa brasileira de tecnologia especializada em automacao inteligente com IA para negocios de todos os tamanhos.',
             foundingDate: '2025',
             founders: [
