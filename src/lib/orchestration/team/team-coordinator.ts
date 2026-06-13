@@ -56,9 +56,15 @@ export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
       // ── PLANNING (Lead) ──
       const board0 = await store.listTasks(runId)
       const msgs0 = await store.listMessages(runId)
-      const leadOut = await chat(lead.agentId, [
-        { role: 'user', content: buildLeadContext(mission, board0, msgs0, members) },
-      ])
+      let leadOut: ChatResult
+      try {
+        leadOut = await chat(lead.agentId, [
+          { role: 'user', content: buildLeadContext(mission, board0, msgs0, members) },
+        ])
+      } catch (e) {
+        if (isRateLimit(e)) { await finish('rate_limited', null, 'Rate limit durante planejamento'); return }
+        throw e
+      }
       track(leadOut)
 
       let actions: LeadAction[]
@@ -72,6 +78,7 @@ export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
             summary: a.summary ?? null, content: a.summary ?? '', kind: 'message',
           })
         } else if (a.type === 'task') {
+          // Seed = current total task count, so successive @TASKs in a turn round-robin across workers.
           const seed = (await store.listTasks(runId)).length
           const assignee = resolveAssignee(workers, a.assignTo, seed)
           const created = await store.createTask(runId, {
@@ -115,6 +122,7 @@ export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
         })
         await store.addMessage(runId, {
           fromMemberId: worker.id, toMemberId: reviewer?.id ?? lead.id,
+          // message-log entry only — the full output is persisted in task.result
           summary: `Concluí: ${t.title}`, content: out.message.slice(0, 2000), kind: 'message', taskId: t.id,
         })
       }
@@ -158,11 +166,30 @@ export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
       const board = await store.listTasks(runId)
       if (isBoardSettled(board)) {
         if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
-        const conso = await chat(lead.agentId, [{ role: 'user', content: buildConsolidationPrompt(board) }])
+        let conso: ChatResult
+        try {
+          conso = await chat(lead.agentId, [{ role: 'user', content: buildConsolidationPrompt(board) }])
+        } catch (e) {
+          // Work is done and approved — don't lose it if the final synthesis call fails.
+          // Fall back to a partial summary; surface rate-limits as such, else complete.
+          const partial = board
+            .filter((t: TaskRow) => t.status === 'done')
+            .map((t: TaskRow) => `### ${t.title}\n${t.result ?? ''}`)
+            .join('\n\n')
+          await finish(
+            isRateLimit(e) ? 'rate_limited' : 'completed',
+            partial || null,
+            isRateLimit(e) ? 'Rate limit durante consolidação' : null,
+          )
+          return
+        }
         track(conso)
         await finish('completed', conso.message)
         return
       }
+      // Lead declared @DONE with no tasks at all (e.g. trivial mission) — accept it.
+      // (The anti-stall sentinel above is gated on `!doneAction`, so an empty board with
+      //  a @DONE action reaches here intentionally; it is NOT dead code.)
       if (doneAction && board.length === 0) {
         await finish('completed', doneAction.text || leadOut.message)
         return
