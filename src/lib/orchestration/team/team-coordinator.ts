@@ -1,0 +1,184 @@
+// src/lib/orchestration/team/team-coordinator.ts
+// Lead-orchestrated team coordination loop. Synchronous, in-process.
+// Depends only on an injected TeamStore + ChatFn (see team-store.ts / team-types.ts).
+
+import type { ChatFn, ChatResult, LeadAction, TaskRow } from './team-types'
+import type { TeamStore } from './team-store'
+import { parseLeadActions, parseReviewVerdict } from './team-protocol'
+import { buildLeadContext, buildTaskPrompt, buildReviewPrompt, buildConsolidationPrompt } from './team-prompts'
+import { resolveAssignee, isBoardSettled, isRateLimit } from './team-board'
+
+const COST_PER_1M_TOKENS = 0.5
+
+export interface RunTeamDeps {
+  store: TeamStore
+  chat: ChatFn
+  now?: () => number
+}
+
+export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
+  const { store, chat, now = () => Date.now() } = deps
+
+  const loaded = await store.loadRun(runId)
+  if (!loaded) throw new Error(`TeamRun ${runId} not found`)
+  const { mission, config, members } = loaded
+
+  const lead = members.find(m => m.role === 'lead')
+  if (!lead) throw new Error('Team has no lead member')
+  const workers = members.filter(m => m.role === 'worker')
+  if (workers.length === 0) throw new Error('Team has no worker members')
+  const reviewer = members.find(m => m.role === 'reviewer') ?? null
+
+  const startMs = now()
+  let tokensUsed = 0
+  let turnsUsed = 0
+
+  const track = (r: ChatResult) => { tokensUsed += r.usage?.total_tokens ?? 0 }
+  const cancelled = async () => (await store.getRunStatus(runId)) === 'cancelled'
+  const finish = (status: Parameters<TeamStore['finishRun']>[1]['status'], output?: string | null, error?: string | null) =>
+    store.finishRun(runId, {
+      status,
+      output: output ?? null,
+      error: error ?? null,
+      turnsUsed,
+      tokensUsed,
+      estimatedCost: (tokensUsed / 1_000_000) * COST_PER_1M_TOKENS,
+      durationMs: now() - startMs,
+    })
+
+  await store.setRunRunning(runId)
+
+  try {
+    for (let turn = 0; turn < config.maxTurns; turn++) {
+      turnsUsed = turn + 1
+      if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
+
+      // ── PLANNING (Lead) ──
+      const board0 = await store.listTasks(runId)
+      const msgs0 = await store.listMessages(runId)
+      const leadOut = await chat(lead.agentId, [
+        { role: 'user', content: buildLeadContext(mission, board0, msgs0, members) },
+      ])
+      track(leadOut)
+
+      let actions: LeadAction[]
+      try { actions = parseLeadActions(leadOut.message) } catch { actions = [] }
+
+      for (const a of actions) {
+        if (a.type === 'message') {
+          const to = a.to ? (workers.find(w => w.agentName.toLowerCase() === a.to!.toLowerCase()) ?? null) : null
+          await store.addMessage(runId, {
+            fromMemberId: lead.id, toMemberId: to?.id ?? null,
+            summary: a.summary ?? null, content: a.summary ?? '', kind: 'message',
+          })
+        } else if (a.type === 'task') {
+          const seed = (await store.listTasks(runId)).length
+          const assignee = resolveAssignee(workers, a.assignTo, seed)
+          const created = await store.createTask(runId, {
+            title: a.title ?? 'Tarefa', body: a.body ?? null,
+            assigneeId: assignee?.id ?? null, status: 'todo',
+          })
+          await store.addMessage(runId, {
+            fromMemberId: lead.id, toMemberId: assignee?.id ?? null,
+            summary: a.title ?? null, content: a.body ?? a.title ?? '', kind: 'assignment', taskId: created.id,
+          })
+        }
+      }
+
+      const doneAction = actions.find(a => a.type === 'done')
+
+      // Anti-stall: lead emitted neither tasks nor @DONE and the board is empty.
+      let boardNow = await store.listTasks(runId)
+      if (boardNow.length === 0 && !doneAction) {
+        await store.createTask(runId, {
+          title: 'Missão', body: leadOut.message, assigneeId: workers[0].id, status: 'todo',
+        })
+        boardNow = await store.listTasks(runId)
+      }
+
+      // ── EXECUTION (Workers) ──
+      const todo = boardNow.filter(t => t.status === 'todo' && t.assigneeId && workers.some(w => w.id === t.assigneeId))
+      for (const t of todo) {
+        if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
+        const worker = workers.find(w => w.id === t.assigneeId)!
+        await store.updateTask(t.id, { status: 'doing' })
+        let out: ChatResult
+        try {
+          out = await chat(worker.agentId, [{ role: 'user', content: buildTaskPrompt(t, t.reviewNote) }])
+        } catch (e) {
+          if (isRateLimit(e)) { await finish('rate_limited', null, 'Rate limit durante execução'); return }
+          throw e
+        }
+        track(out)
+        await store.updateTask(t.id, {
+          status: reviewer ? 'review' : 'done', result: out.message, reviewNote: null,
+        })
+        await store.addMessage(runId, {
+          fromMemberId: worker.id, toMemberId: reviewer?.id ?? lead.id,
+          summary: `Concluí: ${t.title}`, content: out.message.slice(0, 2000), kind: 'message', taskId: t.id,
+        })
+      }
+
+      // ── REVIEW (Reviewer) ──
+      if (reviewer) {
+        const toReview = (await store.listTasks(runId)).filter(t => t.status === 'review')
+        for (const t of toReview) {
+          if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
+          let out: ChatResult
+          try {
+            out = await chat(reviewer.agentId, [{ role: 'user', content: buildReviewPrompt(t) }])
+          } catch (e) {
+            if (isRateLimit(e)) { await finish('rate_limited', null, 'Rate limit durante review'); return }
+            throw e
+          }
+          track(out)
+          const verdict = parseReviewVerdict(out.message)
+          if (verdict.approved) {
+            await store.updateTask(t.id, { status: 'done' })
+            await store.addMessage(runId, {
+              fromMemberId: reviewer.id, toMemberId: t.assigneeId, summary: 'Aprovado',
+              content: '@APPROVE', kind: 'review', taskId: t.id,
+            })
+          } else {
+            const nextRetry = t.retryCount + 1
+            const reason = verdict.reason ?? 'Refazer'
+            await store.updateTask(t.id, {
+              status: nextRetry <= config.retryCap ? 'todo' : 'rejected',
+              reviewNote: reason, retryCount: nextRetry,
+            })
+            await store.addMessage(runId, {
+              fromMemberId: reviewer.id, toMemberId: t.assigneeId, summary: 'Rejeitado',
+              content: reason, kind: 'review', taskId: t.id,
+            })
+          }
+        }
+      }
+
+      // ── SETTLE / CONSOLIDATE ──
+      const board = await store.listTasks(runId)
+      if (isBoardSettled(board)) {
+        if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
+        const conso = await chat(lead.agentId, [{ role: 'user', content: buildConsolidationPrompt(board) }])
+        track(conso)
+        await finish('completed', conso.message)
+        return
+      }
+      if (doneAction && board.length === 0) {
+        await finish('completed', doneAction.text || leadOut.message)
+        return
+      }
+      // else: pending work remains (e.g. a retry re-queued to todo) → next turn.
+    }
+
+    // maxTurns reached without settling.
+    const board = await store.listTasks(runId)
+    const partial = board
+      .filter((t: TaskRow) => t.status === 'done')
+      .map((t: TaskRow) => `### ${t.title}\n${t.result ?? ''}`)
+      .join('\n\n')
+    await finish('completed', `⚠️ Teto de ${config.maxTurns} turnos atingido.\n\n${partial}`)
+  } catch (e) {
+    await finish('failed', null, (e as Error)?.message ?? 'Erro desconhecido')
+    throw e
+  }
+}
