@@ -51,13 +51,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (owned !== agentIds.length) {
         return NextResponse.json({ success: false, error: 'Algum agente não pertence a você' }, { status: 400 })
       }
-      await prisma.teamMember.deleteMany({ where: { teamId: id } })
-      await prisma.teamMember.createMany({
-        data: members.map((m, i) => ({
-          teamId: id, agentId: m.agentId, role: m.role,
-          model: m.model ?? null, effort: m.effort ?? null, position: m.position ?? i,
-        })),
-      })
+      await prisma.$transaction([
+        prisma.teamMember.deleteMany({ where: { teamId: id } }),
+        prisma.teamMember.createMany({
+          data: members.map((m, i) => ({
+            teamId: id, agentId: m.agentId, role: m.role,
+            model: m.model ?? null, effort: m.effort ?? null, position: m.position ?? i,
+          })),
+        }),
+      ])
     }
 
     const team = await prisma.team.update({
