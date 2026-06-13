@@ -91,6 +91,9 @@ CREATE INDEX "team_members_team_id_idx" ON "team_members"("team_id");
 CREATE INDEX "team_members_agent_id_idx" ON "team_members"("agent_id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "team_members_team_id_agent_id_key" ON "team_members"("team_id", "agent_id");
+
+-- CreateIndex
 CREATE INDEX "team_runs_team_id_idx" ON "team_runs"("team_id");
 
 -- CreateIndex
@@ -137,4 +140,7 @@ ALTER TABLE "team_messages" ADD CONSTRAINT "team_messages_from_member_id_fkey" F
 
 -- AddForeignKey
 ALTER TABLE "team_messages" ADD CONSTRAINT "team_messages_to_member_id_fkey" FOREIGN KEY ("to_member_id") REFERENCES "team_members"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "team_messages" ADD CONSTRAINT "team_messages_task_id_fkey" FOREIGN KEY ("task_id") REFERENCES "team_tasks"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 

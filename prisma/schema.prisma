@@ -1344,6 +1344,7 @@ model TeamMember {
   messagesFrom  TeamMessage[] @relation("MessagesFrom")
   messagesTo    TeamMessage[] @relation("MessagesTo")
 
+  @@unique([teamId, agentId])
   @@index([teamId])
   @@index([agentId])
   @@map("team_members")
@@ -1388,8 +1389,9 @@ model TeamTask {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  run      TeamRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
-  assignee TeamMember? @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  run      TeamRun       @relation(fields: [runId], references: [id], onDelete: Cascade)
+  assignee TeamMember?   @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
+  messages TeamMessage[]
 
   @@index([runId])
   @@index([status])
@@ -1410,6 +1412,7 @@ model TeamMessage {
   run        TeamRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
   fromMember TeamMember? @relation("MessagesFrom", fields: [fromMemberId], references: [id], onDelete: SetNull)
   toMember   TeamMember? @relation("MessagesTo", fields: [toMemberId], references: [id], onDelete: SetNull)
+  task       TeamTask?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
 
   @@index([runId])
   @@index([createdAt])
