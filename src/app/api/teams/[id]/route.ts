@@ -1,0 +1,93 @@
+// src/app/api/teams/[id]/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { getAuthFromRequest } from '@/lib/auth'
+import { validateRoster, type RosterInput } from '@/lib/orchestration/team/team-roster'
+
+async function ownTeam(id: string, userId: string) {
+  return prisma.team.findFirst({ where: { id, createdBy: userId } })
+}
+
+// GET /api/teams/[id]
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const auth = await getAuthFromRequest(request)
+    if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    const { id } = await params
+
+    const team = await prisma.team.findFirst({
+      where: { id, createdBy: auth.id },
+      include: {
+        members: { include: { agent: { select: { id: true, name: true } } }, orderBy: { position: 'asc' } },
+        runs: { orderBy: { createdAt: 'desc' }, take: 10 },
+      },
+    })
+    if (!team) return NextResponse.json({ success: false, error: 'Team not found' }, { status: 404 })
+    return NextResponse.json({ success: true, data: team })
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Failed to fetch team'
+    return NextResponse.json({ success: false, error: msg }, { status: 500 })
+  }
+}
+
+// PATCH /api/teams/[id] — update name/description/config and optionally replace roster
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const auth = await getAuthFromRequest(request)
+    if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    const { id } = await params
+    if (!(await ownTeam(id, auth.id))) return NextResponse.json({ success: false, error: 'Team not found' }, { status: 404 })
+
+    const body = await request.json()
+    const { name, description, config, members } = body as {
+      name?: string; description?: string; config?: Record<string, unknown>; members?: RosterInput[]
+    }
+
+    if (members !== undefined) {
+      const rosterError = validateRoster(members)
+      if (rosterError) return NextResponse.json({ success: false, error: rosterError }, { status: 400 })
+      const agentIds = [...new Set(members.map(m => m.agentId))]
+      const owned = await prisma.agent.count({ where: { id: { in: agentIds }, createdBy: auth.id } })
+      if (owned !== agentIds.length) {
+        return NextResponse.json({ success: false, error: 'Algum agente não pertence a você' }, { status: 400 })
+      }
+      await prisma.teamMember.deleteMany({ where: { teamId: id } })
+      await prisma.teamMember.createMany({
+        data: members.map((m, i) => ({
+          teamId: id, agentId: m.agentId, role: m.role,
+          model: m.model ?? null, effort: m.effort ?? null, position: m.position ?? i,
+        })),
+      })
+    }
+
+    const team = await prisma.team.update({
+      where: { id },
+      data: {
+        ...(name !== undefined ? { name } : {}),
+        ...(description !== undefined ? { description } : {}),
+        ...(config !== undefined ? { config: config as object } : {}),
+      },
+      include: { members: { include: { agent: { select: { name: true } } }, orderBy: { position: 'asc' } } },
+    })
+    return NextResponse.json({ success: true, data: team })
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Failed to update team'
+    return NextResponse.json({ success: false, error: msg }, { status: 500 })
+  }
+}
+
+// DELETE /api/teams/[id] — archive
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const auth = await getAuthFromRequest(request)
+    if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    const { id } = await params
+    if (!(await ownTeam(id, auth.id))) return NextResponse.json({ success: false, error: 'Team not found' }, { status: 404 })
+
+    await prisma.team.update({ where: { id }, data: { status: 'archived' } })
+    return NextResponse.json({ success: true, data: { id, status: 'archived' } })
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : 'Failed to archive team'
+    return NextResponse.json({ success: false, error: msg }, { status: 500 })
+  }
+}
