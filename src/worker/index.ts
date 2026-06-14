@@ -33,6 +33,7 @@ const baseChat = (agentId: string, messages: unknown, ctx: unknown, opts: unknow
   chatWithAgent(agentId, messages as never, ctx as never, opts as never)
 
 async function failRun(runId: string, message: string): Promise<void> {
+  console.error(`[worker] ${runId} failed: ${message}`)
   await prisma.teamRun
     .update({ where: { id: runId }, data: { status: 'failed', error: message, completedAt: new Date() } })
     .catch(() => {})
@@ -56,16 +57,19 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
   const branch = `polaris/run-${runId}`
 
   // SETUP — clone + branch. Failure here means the run can't start.
+  // setupRepo returns the EFFECTIVE base (the repo's real default if `base` is absent).
+  let effectiveBase = base
   try {
-    await setupRepo(sandbox, {
+    const setup = await setupRepo(sandbox, {
       repoUrl, token, branch, base, workdir: WORKDIR, authorName: AUTHOR_NAME, authorEmail: AUTHOR_EMAIL,
     })
+    effectiveBase = setup.base
   } catch (e) {
     await failRun(runId, `Setup do repositório falhou: ${(e as Error)?.message ?? e}`)
     return
   }
   await prisma.teamRun
-    .update({ where: { id: runId }, data: { sandboxId: sandbox.id, branch } })
+    .update({ where: { id: runId }, data: { sandboxId: sandbox.id, branch, baseBranch: effectiveBase } })
     .catch(() => {})
 
   // EXECUTION — agents edit files inside the repo dir; coordinator unchanged.
@@ -92,7 +96,7 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
       where: { runId }, select: { title: true, status: true }, orderBy: { position: 'asc' },
     })
     const pr = await openPullRequest({
-      repoUrl, token, head: branch, base,
+      repoUrl, token, head: branch, base: effectiveBase,
       title: buildPrTitle(finished.mission),
       body: buildPrBody(finished.mission, tasks, result.changedFiles),
       draft: true,

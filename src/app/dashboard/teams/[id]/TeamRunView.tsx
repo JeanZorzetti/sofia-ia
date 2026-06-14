@@ -71,6 +71,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [messages, setMessages] = useState<Msg[]>([])
   const [status, setStatus] = useState<string>('')
   const [output, setOutput] = useState<string | null>(null)
+  const [runError, setRunError] = useState<string | null>(null)
   const [metrics, setMetrics] = useState<Metrics>({ turnsUsed: null, tokensUsed: null, estimatedCost: null, durationMs: null })
   const [running, setRunning] = useState(false)
   const esRef = useRef<EventSource | null>(null)
@@ -100,7 +101,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
 
   function openStream(rid: string, assumeRunning: boolean) {
     esRef.current?.close()
-    setTasks([]); setMessages([]); setOutput(null); setTerminal([]); setDelivery(EMPTY_DELIVERY)
+    setTasks([]); setMessages([]); setOutput(null); setRunError(null); setTerminal([]); setDelivery(EMPTY_DELIVERY)
     setMetrics({ turnsUsed: null, tokensUsed: null, estimatedCost: null, durationMs: null })
     setRunning(assumeRunning)
     const es = new EventSource(`/api/teams/${teamId}/runs/${rid}/stream`)
@@ -110,7 +111,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
     es.addEventListener('message', e => setMessages(prev => [...prev, JSON.parse((e as MessageEvent).data)]))
     es.addEventListener('status', e => {
       const d = JSON.parse((e as MessageEvent).data)
-      setStatus(d.status); setOutput(d.output)
+      setStatus(d.status); setOutput(d.output); setRunError(d.error ?? null)
       setMetrics({ turnsUsed: d.turnsUsed, tokensUsed: d.tokensUsed, estimatedCost: d.estimatedCost, durationMs: d.durationMs })
       setDelivery({
         repoUrl: d.repoUrl ?? null, branch: d.branch ?? null, prUrl: d.prUrl ?? null,
@@ -424,6 +425,16 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           </div>
         </div>
       </div>
+
+      {/* Run error (failed / rate-limited / git delivery error) */}
+      {runError && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/[0.05] p-4">
+          <h2 className="font-semibold text-white text-sm mb-2 flex items-center gap-2">
+            <XCircle className="h-4 w-4 text-red-400" /> Erro
+          </h2>
+          <pre className="whitespace-pre-wrap break-words text-[13px] text-red-300/90 font-mono">{runError}</pre>
+        </div>
+      )}
 
       {/* Final delivery */}
       {output && (

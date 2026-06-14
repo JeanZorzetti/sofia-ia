@@ -150,21 +150,47 @@ async function run(sandbox: Sandbox, cmd: string, label: string): Promise<string
 
 // ── Orchestration (worker-side) ─────────────────────────────────────────────
 
-/** Clone the repo into `workdir`, create the working branch, set the commit identity. */
-export async function setupRepo(sandbox: Sandbox, input: SetupRepoInput): Promise<void> {
+/**
+ * Clone the repo into `workdir`, create the working branch, set the commit identity.
+ * Robust to the repo's actual default branch (main/master/…): it only pins the
+ * requested base if that branch really exists on the remote, otherwise it clones
+ * the default branch and uses that as the base. Returns the EFFECTIVE base branch
+ * (what the PR must target). Empty repos (no commits) fail with a clear message.
+ */
+export async function setupRepo(sandbox: Sandbox, input: SetupRepoInput): Promise<{ base: string }> {
   const { token, branch, base, workdir, authorName, authorEmail } = input
   const cloneUrl = toCloneUrl(input.repoUrl)
   const auth = authHeaderArgs(token)
+  const wd = shQuote(workdir)
 
-  // Clone the base branch (shallow) with the token only in the HTTP header.
-  await run(
-    sandbox,
-    `git ${auth} clone --depth 50 --branch ${shQuote(base)} ${shQuote(cloneUrl)} ${shQuote(workdir)}`,
-    'clone',
-  )
-  await run(sandbox, `git -C ${shQuote(workdir)} checkout -b ${shQuote(branch)}`, 'checkout')
-  await run(sandbox, `git -C ${shQuote(workdir)} config user.name ${shQuote(authorName)}`, 'config name')
-  await run(sandbox, `git -C ${shQuote(workdir)} config user.email ${shQuote(authorEmail)}`, 'config email')
+  // Does the requested base exist on the remote? (ls-remote needs auth for private repos.)
+  let cloneArgs = '--depth 50'
+  let effectiveBase = ''
+  if (base) {
+    const ls = await sandbox.exec(`git ${auth} ls-remote --heads ${shQuote(cloneUrl)} ${shQuote(base)}`)
+    if (ls.exitCode === 0 && ls.stdout.trim()) {
+      cloneArgs += ` --branch ${shQuote(base)}`
+      effectiveBase = base
+    }
+  }
+
+  // Clone (token only in the HTTP header). If base didn't exist, clones the default branch.
+  await run(sandbox, `git ${auth} clone ${cloneArgs} ${shQuote(cloneUrl)} ${wd}`, 'clone')
+
+  // Reject empty repos — can't branch off / PR against nothing.
+  const head = await sandbox.exec(`git -C ${wd} rev-parse HEAD`)
+  if (head.exitCode !== 0) {
+    throw new Error('Repositório vazio (sem commits). Adicione um commit inicial (ex.: README) antes de usar o code-team.')
+  }
+  // If the requested base wasn't found, the effective base is the cloned default branch.
+  if (!effectiveBase) {
+    effectiveBase = (await run(sandbox, `git -C ${wd} rev-parse --abbrev-ref HEAD`, 'default-branch')).trim()
+  }
+
+  await run(sandbox, `git -C ${wd} checkout -b ${shQuote(branch)}`, 'checkout')
+  await run(sandbox, `git -C ${wd} config user.name ${shQuote(authorName)}`, 'config name')
+  await run(sandbox, `git -C ${wd} config user.email ${shQuote(authorEmail)}`, 'config email')
+  return { base: effectiveBase }
 }
 
 /** Stage everything, commit (if there are changes), push the branch. */

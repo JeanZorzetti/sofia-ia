@@ -95,22 +95,55 @@ async function main() {
   // ── setupRepo ────────────────────────────────────────────────────
   console.log('setupRepo')
   {
-    const sbx = scriptedSandbox()
-    await setupRepo(sbx, {
+    // base exists on remote → clone --branch, returns that base
+    const sbx = scriptedSandbox(cmd => {
+      if (cmd.includes('ls-remote')) return { stdout: 'abc\trefs/heads/main' }
+      if (cmd.includes('rev-parse HEAD')) return { stdout: 'sha123\n' }
+      return {}
+    })
+    const res = await setupRepo(sbx, {
       repoUrl: 'https://github.com/octo/demo', token: 'ghp_TEST',
       branch: 'polaris/run-r1', base: 'main', workdir: '/home/user/repo',
       authorName: 'Polaris Teams', authorEmail: 'polaris@x.com',
     })
+    assert.deepEqual(res, { base: 'main' })
     const cmds = sbx.calls.map(c => c.cmd)
-    assert.equal(cmds.length, 4)
-    assert.ok(cmds[0].includes('clone') && cmds[0].includes('http.extraHeader'))
-    assert.ok(cmds[0].includes("--branch 'main'") && cmds[0].includes("'https://github.com/octo/demo.git'"))
-    assert.ok(cmds[0].includes("'/home/user/repo'"))
-    assert.ok(!cmds[0].includes('ghp_TEST'), 'token must not appear raw in clone')
-    assert.ok(cmds[1].includes("checkout -b 'polaris/run-r1'"))
-    assert.ok(cmds[2].includes("config user.name 'Polaris Teams'"))
-    assert.ok(cmds[3].includes('config user.email'))
-    ok('clone (header auth) → branch → identity, token never raw')
+    const clone = cmds.find(c => c.includes('clone'))!
+    assert.ok(clone.includes('http.extraHeader') && clone.includes("--branch 'main'"))
+    assert.ok(clone.includes("'https://github.com/octo/demo.git'") && clone.includes("'/home/user/repo'"))
+    assert.ok(!clone.includes('ghp_TEST'), 'token must not appear raw in clone')
+    assert.ok(cmds.some(c => c.includes("checkout -b 'polaris/run-r1'")))
+    assert.ok(cmds.some(c => c.includes("config user.name 'Polaris Teams'")))
+    assert.ok(cmds.some(c => c.includes('config user.email')))
+    ok('base exists → clone --branch, header auth, returns requested base')
+  }
+  {
+    // requested base absent → clone default, base = repo default (master)
+    const sbx = scriptedSandbox(cmd => {
+      if (cmd.includes('ls-remote')) return { stdout: '' } // base not found
+      if (cmd.includes('rev-parse HEAD')) return { stdout: 'sha\n' }
+      if (cmd.includes('rev-parse --abbrev-ref HEAD')) return { stdout: 'master\n' }
+      return {}
+    })
+    const res = await setupRepo(sbx, {
+      repoUrl: 'owner/repo', token: 't', branch: 'b', base: 'main',
+      workdir: '/w', authorName: 'n', authorEmail: 'e',
+    })
+    assert.deepEqual(res, { base: 'master' })
+    assert.ok(!sbx.calls.some(c => c.cmd.includes('--branch')), 'no --branch when base absent')
+    ok('base absent → clones default, returns repo default branch')
+  }
+  {
+    // empty repo → rev-parse HEAD fails → clear error
+    const sbx = scriptedSandbox(cmd => {
+      if (cmd.includes('ls-remote')) return { stdout: '' }
+      if (cmd.includes('rev-parse HEAD')) return { exitCode: 128, stderr: 'unknown revision' }
+      return {}
+    })
+    await assert.rejects(() => setupRepo(sbx, {
+      repoUrl: 'owner/repo', token: 't', branch: 'b', base: 'main', workdir: '/w', authorName: 'n', authorEmail: 'e',
+    }), /vazio/)
+    ok('empty repo → throws a clear "repositório vazio" error')
   }
   {
     const sbx = scriptedSandbox(cmd => (cmd.includes('clone') ? { exitCode: 128, stderr: 'auth failed' } : {}))
