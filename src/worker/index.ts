@@ -20,7 +20,7 @@ import { createCodeChatFn } from '@/lib/orchestration/team/code-agent'
 import { chatWithAgent } from '@/lib/ai/groq'
 import { getSandboxProvider } from '@/lib/sandbox'
 import type { Sandbox } from '@/lib/sandbox/types'
-import { setupRepo, commitAndPush, openPullRequest, buildPrBody } from '@/lib/git/repo-lifecycle'
+import { setupRepo, commitAndPush, openPullRequest, buildPrBody, captureWorkingDiff } from '@/lib/git/repo-lifecycle'
 
 const concurrency = Number(process.env.CODE_RUN_CONCURRENCY ?? 2)
 
@@ -74,9 +74,14 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
 
   // EXECUTION — agents edit files inside the repo dir; coordinator unchanged.
   // Share ONE store so the code-agent can stream partial artifacts mid-loop (C2.1).
+  // C3: inject getTaskDiff so the reviewer sees the real working-tree diff (vs base).
   const store = createPrismaTeamStore()
   const codeChat = createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store })
-  await runTeam(runId, { store, chat: codeChat })
+  await runTeam(runId, {
+    store,
+    chat: codeChat,
+    getTaskDiff: () => captureWorkingDiff(sandbox, { workdir: WORKDIR, base: effectiveBase }),
+  })
 
   // TEARDOWN — commit/push/PR only if the run completed and produced a diff.
   const finished = await prisma.teamRun.findUnique({

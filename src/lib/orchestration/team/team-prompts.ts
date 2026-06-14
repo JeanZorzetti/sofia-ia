@@ -4,6 +4,7 @@
 // the member's own systemPrompt provides its persona.
 
 import type { MemberCtx, TaskRow, MessageRow } from './team-types'
+import type { ChangedFile } from '../../git/repo-lifecycle'
 
 const DIRECTIVE_CONTRACT = `
 Responda SOMENTE com diretivas, uma por linha:
@@ -77,7 +78,40 @@ export function buildTaskPrompt(task: TaskRow, feedback: string | null): string 
   return parts.join('\n')
 }
 
-export function buildReviewPrompt(task: TaskRow): string {
+/**
+ * Render the captured per-file diff (C3) for the reviewer prompt. Each file shows
+ * its status + the capped unified patch; binary/over-budget files are flagged
+ * instead of dumping content. Returns '' when there's nothing to show, so the
+ * caller can fall back to the text-only review (chat-runs / C0 / empty diff).
+ */
+export function renderDiffForReview(files: ChangedFile[]): string {
+  if (!files || files.length === 0) return ''
+  const parts: string[] = []
+  for (const f of files) {
+    if (f.binary) {
+      parts.push(`### ${f.status} ${f.path}\n(arquivo binário — sem patch textual)`)
+    } else if (f.patch) {
+      const note = f.truncated ? ' (truncado — patch maior que o limite)' : ''
+      parts.push(`### ${f.status} ${f.path}${note}\n\`\`\`diff\n${f.patch}\n\`\`\``)
+    } else {
+      const note = f.truncated ? ' (omitido — diff total acima do limite)' : ''
+      parts.push(`### ${f.status} ${f.path}${note}`)
+    }
+  }
+  return parts.join('\n\n')
+}
+
+export function buildReviewPrompt(task: TaskRow, diff?: ChangedFile[]): string {
+  const rendered = renderDiffForReview(diff ?? [])
+  // The diff block is purely ADDITIVE: with no diff the output is byte-identical
+  // to the pre-C3 prompt (chat-runs / C0 unchanged).
+  const diffSection = rendered
+    ? [
+        `\n## Diff das mudanças (código real)\n${rendered}`,
+        '',
+        'Avalie o DIFF acima além do texto: confira se as mudanças cumprem a tarefa e não introduzem erros.',
+      ]
+    : []
   return [
     'Você é o REVIEWER do time. Avalie criticamente o trabalho do Worker.',
     '',
@@ -85,6 +119,7 @@ export function buildReviewPrompt(task: TaskRow): string {
     task.body ? `\n${task.body}` : '',
     '',
     `## Resultado entregue pelo Worker\n${task.result ?? '(vazio)'}`,
+    ...diffSection,
     '',
     'Responda SOMENTE com uma diretiva:',
     '@APPROVE  — se o resultado cumpre a tarefa',

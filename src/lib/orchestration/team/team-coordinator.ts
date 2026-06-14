@@ -4,6 +4,8 @@
 
 import type { ChatFn, ChatResult, LeadAction, TaskRow } from './team-types'
 import type { TeamStore } from './team-store'
+// type-only: does NOT pull git/sandbox runtime into the coordinator (invariant C).
+import type { ChangedFile } from '../../git/repo-lifecycle'
 import { parseLeadActions, parseReviewVerdict } from './team-protocol'
 import { buildLeadContext, buildTaskPrompt, buildReviewPrompt, buildConsolidationPrompt } from './team-prompts'
 import { resolveAssignee, isBoardSettled, isRateLimit } from './team-board'
@@ -13,11 +15,15 @@ const COST_PER_1M_TOKENS = 0.5
 export interface RunTeamDeps {
   store: TeamStore
   chat: ChatFn
+  /** C3: capture the working-tree diff (vs base) to feed the reviewer the real
+   *  changes. Injected by the worker on repo-bound code-runs; undefined for
+   *  chat-runs and repo-less code-runs (C0) → reviewer stays text-only. */
+  getTaskDiff?: () => Promise<ChangedFile[]>
   now?: () => number
 }
 
 export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
-  const { store, chat, now = () => Date.now() } = deps
+  const { store, chat, getTaskDiff, now = () => Date.now() } = deps
 
   const loaded = await store.loadRun(runId)
   if (!loaded) throw new Error(`TeamRun ${runId} not found`)
@@ -134,11 +140,20 @@ export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
       // ── REVIEW (Reviewer) ──
       if (reviewer) {
         const toReview = (await store.listTasks(runId)).filter(t => t.status === 'review')
+        // C3: capture the working-tree diff ONCE per review pass (it's the same
+        // accumulated state for every task being reviewed this turn). Best-effort:
+        // a diff failure must never block the gate, so fall back to [] (text-only).
+        const diff = toReview.length > 0 && getTaskDiff ? await getTaskDiff().catch(() => []) : []
         for (const t of toReview) {
           if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
+          // Persist what the reviewer sees so the UI can show it (best-effort, merged
+          // with the command log via the store; never blocks the review).
+          if (diff.length > 0) {
+            await store.updateTask(t.id, { artifacts: { reviewDiff: diff } }).catch(() => {})
+          }
           let out: ChatResult
           try {
-            out = await chat(reviewer.agentId, [{ role: 'user', content: buildReviewPrompt(t) }], undefined, { model: reviewer.model, effort: reviewer.effort })
+            out = await chat(reviewer.agentId, [{ role: 'user', content: buildReviewPrompt(t, diff) }], undefined, { model: reviewer.model, effort: reviewer.effort })
           } catch (e) {
             if (isRateLimit(e)) { await finish('rate_limited', null, 'Rate limit durante review'); return }
             throw e

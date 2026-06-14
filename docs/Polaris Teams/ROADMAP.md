@@ -150,23 +150,19 @@ Binário `claude-multimodel`, spawn via `child_process`, `node-pty`, `ssh2`, cas
 
 ---
 
-**C3 — Code-review com diff 🔜 (PRÓXIMA FATIA — plano/gancho).**
+**C3 — Code-review com diff ✅ ENTREGUE (2026-06-14, aguardando validação E2E).**
 
 *Objetivo:* o **Reviewer** do time deixa de avaliar só o texto do worker e passa a avaliar o **diff real** das mudanças — um gate de aprovação sobre o que de fato mudou, antes do PR. Ref. conceitual: módulo `review` da `agent-teams-controller`.
 
-*O que reusa (não reescrever):* todo C0/C1/C2 — o loop de reviewer **já existe** no coordinator (`runTeam` faz `status:'review'` → reviewer → `@APPROVE`/`@REJECT` → retry); o **conteúdo do diff por-arquivo já é capturado** (C2: `changedFiles[].patch`); `team-prompts.ts` monta os prompts; `TeamTask.artifacts` carrega os comandos. O reviewer **hoje** recebe o `result`/texto do worker — falta dar a ele o **diff**.
+*O que reusou (não reescreveu):* todo C0/C1/C2 — o loop de reviewer **já existia** no coordinator (`status:'review'` → reviewer → `@APPROVE`/`@REJECT` → retry); os helpers de diff (`parseChangedFiles`/`attachDiffs`/`capPatch`/`DEFAULT_DIFF_CAPS`) já existiam em `repo-lifecycle.ts`; `team-prompts.ts` montava os prompts; `TeamTask.artifacts` (Json) carregava os comandos.
 
-*Net-new desta fatia:* injetar o diff (ou um resumo/seleção dele, respeitando teto de tokens) no **prompt do reviewer**; possivelmente capturar o diff **por-task** (não só no teardown final) pra o reviewer ver as mudanças daquela task; ajustar o gate de aprovação pra considerar o diff.
+*O que foi construído:* novo helper **`captureWorkingDiff(sandbox, {workdir, base})`** em `repo-lifecycle.ts` (roda `git diff <base>` no **working tree**, não `origin/<base>..HEAD`, porque o code-agent edita mas não commita por-task; best-effort → `[]` em qualquer falha). Coordinator ganhou **`RunTeamDeps.getTaskDiff?`** (injeção, `import type` de `ChangedFile` — sem trazer git/sandbox p/ o coordinator); no bloco REVIEW captura o diff **uma vez por passada** e passa a `buildReviewPrompt(task, diff)`. `buildReviewPrompt` ganhou 2º param + `renderDiffForReview` (patch capado em bloco ```diff```, flags binário/truncado); **sem diff → output byte-idêntico ao legado** (chat-runs/C0 intactos). Diff persistido em `TeamTask.artifacts.reviewDiff` (store faz **merge raso** p/ não esmagar `commands` do C2.1). Testes puros em `scripts/c3-verify.ts` (15 asserções).
 
-*Decisões a fechar no spec do C3 (confirmar escopo com o usuário ANTES de codar):*
-1. **Fonte do diff pro reviewer:** o diff final do run (teardown, já existe) **vs diff por-task** capturado no momento do review (mais preciso, mas exige rodar `git diff` por task no sandbox — mexe no fluxo do code-agent/coordinator).
-2. **O que entra no prompt:** patch bruto truncado **vs** resumo estruturado (arquivos + hunks principais) pra caber no contexto e não estourar tokens/custo.
-3. **Granularidade do gate:** reviewer aprova/rejeita o **run inteiro** (hoje é por-task) **vs** por-arquivo/por-task com o diff respectivo.
-4. **Reviewer = code-agent ou chat puro?** ele precisa rodar comandos no sandbox (ex.: `git diff`, rodar testes) **vs** só raciocinar sobre o diff que recebe pronto (mais barato/simples).
-5. **Modelo de dados:** estender (consistente com C0/C1/C2) — provavelmente reusar `TeamTask.artifacts`/`reviewNote` e o `changedFiles`, sem tabelas novas.
-6. **Custo/limites:** teto de tokens do diff no prompt do reviewer (diffs grandes = caro); reusar os budgets do C2 (`capPatch`).
+*Decisões tomadas (confirmadas com o usuário):* (1) diff **por-task no sandbox** no momento do review; (1b) **working tree vs base** (diff acumulado, zero mudança no code-agent); (2) **patch bruto capado** (reusa `capPatch`+`DEFAULT_DIFF_CAPS`), sem resumo estruturado; (3) gate **por-task** (máquina de estados intacta); (4) reviewer **chat puro** (raciocina sobre o diff pronto, não vira code-agent); (5) **estende `TeamTask.artifacts`** (Json), SEM migração; (6) **budgets do C2** (500 linhas/64KB por arquivo, 512KB total, 50 arquivos).
 
-*Esforço:* Médio · *Risco:* Baixo-Médio (reusa o loop de review existente + o diff já capturado; o risco sobe se for diff por-task, que mexe no fluxo). **Começar a sessão confirmando o escopo + as 6 decisões** antes de escrever spec ou código.
+*Invariante mantida:* coordinator quase intacto (campo injetado + ~4 linhas no bloco REVIEW); `runTeam` continua sem importar git/sandbox em runtime. **Sem deps novas, sem migração.**
+
+*Esforço (realizado):* Médio · *Risco:* Baixo (reusou o loop de review + os helpers de diff existentes). **Pendente:** validação E2E em `JeanZorzetti/repo-de-teste` (com o usuário, modelo pago barato) — confirmar que o reviewer cita o diff e que `artifacts.reviewDiff` é populado.
 
 ---
 
@@ -195,7 +191,7 @@ Era: execução da Polaris síncrona/in-process (sem fila). **C0 trouxe a fila d
 4. ~~Sub-projeto C, fatia C1 (Git → Pull Request)~~ — ✅ **FEITO e VALIDADO EM PROD** (2026-06-14). PR draft #1 aberto pelo code-team. Ver "Fatias do Sub-projeto C → C1".
 5. ~~Sub-projeto C, fatia C2 (terminal/diff streaming rico)~~ — ✅ **FEITO e VALIDADO EM PROD** (2026-06-14). xterm.js + diff2html, batch. Ver "Fatias do Sub-projeto C → C2".
 6. ~~Sub-projeto C, fatia C2.1 (streaming incremental)~~ — ✅ **FEITO e VALIDADO EM PROD** (2026-06-14). Terminal ao vivo + diff no fim sem reload. Ver "Fatias do Sub-projeto C → C2.1".
-7. **Agora: Sub-projeto C, fatia C3 (code-review com diff)** — ver "Fatias do Sub-projeto C → C3" acima. **Começar a sessão confirmando o escopo + as 6 decisões** (fonte do diff, o que entra no prompt, granularidade do gate, reviewer code-agent vs chat, modelo de dados, custo/limites) antes de escrever spec ou código.
+7. ~~Sub-projeto C, fatia C3 (code-review com diff)~~ — ✅ **ENTREGUE** (2026-06-14), aguardando validação E2E. Reviewer agora vê o `git diff <base>` (working tree) capturado por-task; `captureWorkingDiff` + `RunTeamDeps.getTaskDiff` (injeção) + `buildReviewPrompt(task,diff)`. Sem deps/migração. Ver "Fatias do Sub-projeto C → C3".
 
 > Cadência mantida: um sprint por sessão; cada fatia do C tem seu próprio spec/plano.
 

@@ -31,8 +31,10 @@ export interface UpdateTaskInput {
   reviewNote?: string | null
   retryCount?: number
   assigneeId?: string | null
-  /** Code-run side-channel (commands executed in the sandbox). */
-  artifacts?: CodeArtifacts
+  /** Code-run side-channel. Partial so a C3 review-diff write (reviewDiff only)
+   *  and a C2.1 command-log write (commands only) are each valid on their own;
+   *  the store shallow-merges them so neither clobbers the other. */
+  artifacts?: Partial<CodeArtifacts>
 }
 
 export interface AddMessageInput {
@@ -166,13 +168,25 @@ export function createPrismaTeamStore(): TeamStore {
       // `artifacts` is a Prisma Json column; only touch it when explicitly provided
       // (undefined = leave as-is, so chat-runs never write the field).
       const { artifacts, ...rest } = data
+      let artifactsData: Prisma.InputJsonValue | undefined
+      if (artifacts !== undefined) {
+        // C3: a review-diff write must NOT clobber the command log the code-agent
+        // already streamed (C2.1), and vice-versa. Shallow-merge with the current
+        // artifacts so each key (`commands` / `reviewDiff`) is preserved.
+        const onlyReviewDiff = artifacts.commands === undefined && artifacts.reviewDiff !== undefined
+        if (onlyReviewDiff) {
+          const cur = await prisma.teamTask.findUnique({ where: { id: taskId }, select: { artifacts: true } })
+          const prev = (cur?.artifacts && typeof cur.artifacts === 'object' ? cur.artifacts : {}) as Record<string, unknown>
+          artifactsData = { ...prev, reviewDiff: artifacts.reviewDiff } as unknown as Prisma.InputJsonValue
+        } else {
+          artifactsData = artifacts as unknown as Prisma.InputJsonValue
+        }
+      }
       await prisma.teamTask.update({
         where: { id: taskId },
         data: {
           ...rest,
-          ...(artifacts !== undefined
-            ? { artifacts: artifacts as unknown as Prisma.InputJsonValue }
-            : {}),
+          ...(artifactsData !== undefined ? { artifacts: artifactsData } : {}),
         },
       })
     },

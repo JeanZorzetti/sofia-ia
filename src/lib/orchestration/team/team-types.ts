@@ -66,9 +66,25 @@ export interface CommandRun {
   ms: number
 }
 
-/** Side-channel artifacts a code-agent turn produces (logs now; diff/PR in later slices). */
+/** One changed file as seen by the reviewer (C3). Mirrors `ChangedFile` from
+ *  git/repo-lifecycle, kept here so team-types stays free of git/sandbox imports. */
+export interface ReviewDiffFile {
+  path: string
+  status: string
+  patch?: string
+  truncated?: boolean
+  binary?: boolean
+}
+
+/** Side-channel artifacts a code-agent turn produces.
+ *  - `commands`: shell commands run in the sandbox (C2/C2.1) — always present on
+ *    a code-agent ChatResult.
+ *  - `reviewDiff`: the per-file working-tree diff shown to the reviewer (C3),
+ *    written separately at review time (see UpdateTaskInput, which accepts a
+ *    Partial<CodeArtifacts> so a reviewDiff-only write doesn't require commands). */
 export interface CodeArtifacts {
   commands: CommandRun[]
+  reviewDiff?: ReviewDiffFile[]
 }
 
 export interface ChatResult {

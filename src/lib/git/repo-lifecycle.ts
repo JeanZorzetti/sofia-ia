@@ -246,6 +246,37 @@ export function attachDiffs(changedFiles: ChangedFile[], fullPatch: string, caps
   })
 }
 
+/**
+ * Capture the WORKING-TREE diff against the base, per file, capped (C3).
+ * Used to feed the reviewer the real changes mid-run — BEFORE any commit, so it
+ * diffs `<base>` (the cloned base branch, e.g. `main`/`master`), NOT
+ * `origin/<base>..HEAD` like `commitAndPush`. Because the code-agent edits files
+ * but does not commit per-task, this is the diff accumulated since the base (it
+ * includes earlier approved tasks' changes — the reviewer sees the real state).
+ *
+ * Fully best-effort: any failure (non-zero exit, exception) returns `[]` so a
+ * diff problem never blocks the review. Pure-ish — unit-tested with a fake
+ * sandbox in scripts/c3-verify.ts.
+ */
+export async function captureWorkingDiff(
+  sandbox: Sandbox,
+  opts: { workdir: string; base: string; caps?: DiffCaps },
+): Promise<ChangedFile[]> {
+  const wd = shQuote(opts.workdir)
+  const baseRef = shQuote(opts.base)
+  try {
+    const nameStatus = await sandbox.exec(`git -C ${wd} diff --name-status ${baseRef}`)
+    if (nameStatus.exitCode !== 0) return []
+    const changedFiles = parseChangedFiles(nameStatus.stdout)
+    if (changedFiles.length === 0) return []
+    const full = await sandbox.exec(`git -C ${wd} diff ${baseRef}`)
+    if (full.exitCode !== 0) return changedFiles // name-only is still useful to the reviewer
+    return attachDiffs(changedFiles, full.stdout, opts.caps ?? DEFAULT_DIFF_CAPS)
+  } catch {
+    return []
+  }
+}
+
 /** Markdown body for the PR: mission + completed tasks + changed files. */
 export function buildPrBody(
   mission: string,
