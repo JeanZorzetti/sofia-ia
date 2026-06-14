@@ -86,7 +86,7 @@ Binário `claude-multimodel`, spawn via `child_process`, `node-pty`, `ssh2`, cas
 
 ## Sub-projeto C — Code Factory (vertical nova) 🏭
 
-> **STATUS: ✅ Fatia C0 ENTREGUE E VALIDADA EM PROD (2026-06-14).** E2E confirmado: code-team rodou `echo/cat/ls` num sandbox E2B (dashboard E2B mostrou 1 sandbox subindo e sendo destruído), terminal ao vivo, run `completed` 3.2s/$0.0028, com llama-3.3-70b (Groq). Infra provisionada: Redis durável, E2B (`E2B_API_KEY`), serviço worker EasyPanel (`Dockerfile.worker`, start `npm run worker`), migração aplicada. Spec em `Sub-projeto C - C0 spec.md`. C0 = thread vertical fina: fila durável **BullMQ** (sobre o `ioredis` do stack, só code-runs; chat-runs seguem no `after()`), porta **`SandboxProvider`** + impl **E2B** (`src/lib/sandbox/`), **code-agent ChatFn** (loop `@RUN`/`@DONE` no sandbox, `src/lib/orchestration/team/code-agent.ts` + `code-protocol.ts`, 12/12 testes tsx), **worker** separado (`src/worker/index.ts`, start `npm run worker`), schema `TeamRun.mode/sandboxId` + `TeamTask.artifacts`, evento SSE `terminal` + painel de terminal + toggle Chat/Código na run view. Coordinator (`runTeam`) **intacto**. **Pré-deploy:** provisionar Redis (`REDIS_URL`), conta E2B (`E2B_API_KEY`), serviço worker na EasyPanel, `prisma migrate deploy`. Próximas fatias: **C1** git · **C2** terminal/diff rico · **C3** code-review com diff.
+> **STATUS: ✅ Fatias C0 + C1 ENTREGUES E VALIDADAS EM PROD (2026-06-14).** C1: code-team clonou `JeanZorzetti/repo-de-teste`, criou `hello.txt` e abriu **PR draft #1** (ver bloco C1 abaixo). C0: code-team rodou `echo/cat/ls` num sandbox E2B (dashboard E2B mostrou 1 sandbox subindo e sendo destruído), terminal ao vivo, run `completed` 3.2s/$0.0028, com llama-3.3-70b (Groq). Infra provisionada: Redis durável, E2B (`E2B_API_KEY`), serviço worker EasyPanel (`Dockerfile.worker`, start `npm run worker`), migração aplicada. Spec em `Sub-projeto C - C0 spec.md`. C0 = thread vertical fina: fila durável **BullMQ** (sobre o `ioredis` do stack, só code-runs; chat-runs seguem no `after()`), porta **`SandboxProvider`** + impl **E2B** (`src/lib/sandbox/`), **code-agent ChatFn** (loop `@RUN`/`@DONE` no sandbox, `src/lib/orchestration/team/code-agent.ts` + `code-protocol.ts`, 12/12 testes tsx), **worker** separado (`src/worker/index.ts`, start `npm run worker`), schema `TeamRun.mode/sandboxId` + `TeamTask.artifacts`, evento SSE `terminal` + painel de terminal + toggle Chat/Código na run view. Coordinator (`runTeam`) **intacto**. **Pré-deploy:** provisionar Redis (`REDIS_URL`), conta E2B (`E2B_API_KEY`), serviço worker na EasyPanel, `prisma migrate deploy`. Próximas fatias: **C1** git · **C2** terminal/diff rico · **C3** code-review com diff.
 
 **Objetivo:** permitir que um Team rode agentes de **CÓDIGO** (não só LLM) — versão cloud da Agent Teams AI / "software house na nuvem". Casa com a tese da **Estética Fábrica**.
 
@@ -105,33 +105,44 @@ Binário `claude-multimodel`, spawn via `child_process`, `node-pty`, `ssh2`, cas
 
 ---
 
-**C1 — Git: do sandbox pro Pull Request 🔜 (PRÓXIMA FATIA — plano/gancho).**
+**C1 — Git: do sandbox pro Pull Request ✅ ENTREGUE E VALIDADA EM PROD (2026-06-14).**
 
-*Objetivo:* o code-team deixa de operar num sandbox vazio e passa a trabalhar sobre um **repositório real** — clona, cria branch, os agentes editam arquivos (já via `@RUN`), e o trabalho vira **commit + push + Pull Request**. É o que transforma o C0 ("roda comando") em "entrega código de verdade", casando com a tese da Estética Fábrica.
+*Validado E2E:* code-team rodou sobre `JeanZorzetti/repo-de-teste`, criou `hello.txt` e abriu **PR draft #1** (branch `polaris/run-<id>`, 1 commit à frente de `main`, autor "Polaris Teams"). Spec/plano detalhado no plano da Sessão 4 (`~/.claude/plans/...tranquil-unicorn.md`).
 
-*O que reusa (não reescrever):* todo o C0 — o sandbox já executa shell, então `git`/`gh` são "só mais comandos"; o que muda é **lifecycle do repo** (setup/teardown em volta do `runTeam`) + **auth/segredos**.
+*O que foi construído:* **lifecycle do repo no worker**, em volta do `runTeam` (coordinator **INTACTO**): setup (clone + branch) → `runTeam` (agentes editam no repo via `@RUN`, com `cwd`=workdir) → teardown (commit/push/PR). Módulo `src/lib/git/repo-lifecycle.ts` (`setupRepo`/`commitAndPush`/`openPullRequest` + helpers puros; 23 testes tsx em `scripts/c1-verify.ts`). Schema: `TeamRun` ganhou `repoUrl/baseBranch/branch/commitSha/prUrl/prNumber/changedFiles` (migração `20260614130000_code_factory_c1` aplicada em prod). UI: campos de repo no criar/editar time + painel "Entrega de código" (branch + link do PR + arquivos alterados) + banner de erro da run.
 
-*Net-new desta fatia:*
-- **Provisionamento do repo:** o worker clona o repo no sandbox **antes** do `runTeam` (setup) e cria a branch de trabalho (ex.: `polaris/run-<runId>`).
-- **Auth git + manejo de segredo** (o ponto sensível — o C0 proíbe injetar segredo no sandbox, e o agente roda comando arbitrário lá dentro).
-- **Teardown:** commit das mudanças + push + abertura de PR, com sumário do run no corpo do PR.
-- **Captura de diff** (básica nesta fatia: arquivos alterados + link do PR; diff visual rico fica no C2).
-- **Schema:** `TeamRun.repoUrl/branch/commitSha/prUrl` + binding de repo (provavelmente em `Team.config`).
-- **UI:** mostrar branch + link do PR (+ lista de arquivos alterados) na run view.
+*Decisões tomadas (confirmadas com o usuário):* (1) **GitHub-only** (git CLI clone/push + GitHub REST API pro PR, sem `gh`); (2) **worker faz push/PR, token NUNCA no contexto do agente** — token via `http.extraHeader` (não persiste no `.git/config`/remote); (3) **PAT classic/fine-grained no env do worker** (`GITHUB_TOKEN`), nada no DB; (4) binding **híbrido** (`Team.config.repoUrl/defaultBranch` + override por-run); (5) **1 branch/run + PR draft**, título/corpo derivados do sumário do run; (6) **estender models** (sem tabelas novas).
 
-*Decisões a fechar no spec do C1 (confirmar escopo com o usuário ANTES de codar):*
-1. **Provider git:** GitHub-only nesta fatia (via `gh` CLI ou GitHub REST API)?
-2. **Auth:** PAT fine-grained vs GitHub App (installation token). Onde guardar (env global do worker vs `Team.config` cifrado)?
-3. **Binding do repo:** code-team amarrado a **um repo** (`Team.config.repoUrl`) vs URL **por-run** (na missão)?
-4. **Quem faz push/PR — worker ou agente?** ⚠️ *Decisão de segurança.* Recomendação inicial: **worker faz clone/push/PR** (token NUNCA entra no sandbox — o agente só edita arquivos localmente; o worker re-adiciona o remote com token curto na hora do push). Alternativa (token efêmero no sandbox + `@RUN git push`) é mais simples mas expõe o token ao agente.
-5. **Estratégia de branch/commit/PR:** 1 branch por run; mensagem de commit/PR derivada do sumário do run; PR como draft?
-6. **Modelo de dados:** estender `TeamRun` + `Team.config` (consistente com a decisão (d) do C0 — estender, não criar tabelas).
+*Gotchas resolvidos no E2E (importante p/ próximas fatias):*
+- (a) clone rígido `--branch main` quebra em repo cujo default é `master` ou que está **vazio** → agora detecta o default via `ls-remote` (clona `--branch` só se existir, senão o default) e dá erro claro se o repo for vazio. Retorna o **base efetivo** pro PR.
+- (b) **o agente commita sozinho** dentro do sandbox (working tree fica limpa) → o teardown decide a entrega por **commits à frente do base** (`rev-list origin/<base>..HEAD`), não por working tree suja; só commita o que ficou pendente; diff vem de `base..HEAD`.
+- (c) erro de provider em code-run era **engolido** no branch OpenRouter → run "Concluído" **falso** sem PR → agora code-run **propaga** o erro (vira `rate_limited`/`failed` honesto, com motivo no banner).
 
-*Esforço:* Médio-Alto · *Risco:* Médio (auth/segredo é o que assusta; sandbox/worker/agente já provados no C0).
+*Também entregue nesta sessão (em serviço do E2E):* **provider Ollama** (`ollama/<modelo>` → endpoint OpenAI-compat self-hosted via `OLLAMA_BASE_URL`); **`rawText` p/ code-runs** (desliga as tools/escrita-de-arquivo do branch OpenRouter em modelos coder/qwen — rodariam na FS do worker, não no sandbox → quebravam o `@RUN`); modelos pagos baratos no catálogo (`openai/gpt-4o-mini`, `deepseek/deepseek-chat`).
+
+*Aprendizado de modelo (relevante p/ operar):* OpenRouter `:free` dá **429** sob a rajada de chamadas do code-team (não é cobrança — é cota do tier free). Reviewer + `maxTurns` altos = mais chamadas. Para velocidade/confiabilidade: modelo cloud **pago barato**; Ollama é fallback self-hosted (lento na CPU 7B). **Pendência opcional:** expor `maxTurns`/`retryCap` no editor de time (hoje default 6/2, fixo) p/ poder enxugar chamadas.
+
+*Esforço (realizado):* Médio-Alto · *Risco real:* a segurança (token) foi tranquila; o que deu trabalho foi o lifecycle do git (default branch, agente commitando, swallow de erro) — tudo resolvido e coberto por testes.
 
 ---
 
-**C2 — Terminal/diff streaming rico ⏳.** Substituir o painel de terminal simples por xterm-like + **diff viewer** (lado a lado), streaming incremental. Ref. conceitual: xterm/node-pty do desktop (não porta — recriar web) + `node-diff3`.
+**C2 — Terminal/diff streaming rico 🔜 (PRÓXIMA FATIA — plano/gancho).**
+
+*Objetivo:* substituir o terminal "pre" simples e a lista de nomes de arquivo do C1 por uma experiência rica: **terminal estilo xterm** (mono, cores, agrupado por task) e **diff viewer** das mudanças (lado a lado / unificado), idealmente com **streaming incremental** (ver comandos/saída e diffs surgindo durante a run, não só no fim).
+
+*O que reusa (não reescrever):* todo C0/C1 — sandbox/worker/code-agent/fila; o evento SSE `terminal` (hoje por-task, em lote) + painel "Entrega de código"; `TeamTask.artifacts` (logs de comando) e `TeamRun.changedFiles` (lista de arquivos). O `git diff` no sandbox já dá o conteúdo do diff — é "só mais um comando".
+
+*Net-new desta fatia:* captura do **conteúdo do diff** (não só nomes) — ex.: `git diff origin/<base>..HEAD` no teardown, por arquivo; **diff viewer** no run view; terminal com render melhor (cores ANSI / agrupamento); opcional: streaming **incremental** (escrever artifacts/diff parciais durante o loop + evento SSE).
+
+*Decisões a fechar no spec do C2 (confirmar escopo com o usuário ANTES de codar):*
+1. **Escopo de streaming:** incremental de verdade (saída por-comando ao vivo + diff parcial, mexe no code-agent escrevendo artifacts mid-loop, maior risco) **vs batch melhorado** (captura no fim, só com UI rica)?
+2. **Diff viewer:** componente próprio (unified, sem dep) **vs lib** (`react-diff-viewer-continued`/`diff2html`) — dep nova = risco OneDrive (lembrar `--package-lock-only`).
+3. **Terminal:** evoluir o painel atual (sem dep, "xterm-like" no CSS) **vs `xterm.js`** de verdade (dep + addons).
+4. **Fonte/armazenamento do diff:** capturar `git diff` no sandbox e **persistir** (em `TeamRun`/`artifacts`, truncado) vs **buscar do PR** no GitHub sob demanda (sem guardar). Tamanho do diff é a preocupação.
+5. **Granularidade/limites:** diff por-arquivo vs patch único; teto de tamanho/linhas (truncar diffs grandes).
+6. **Modelo de dados:** estender (consistente com C0/C1) — provavelmente um campo de diff/patch em `TeamRun` ou dentro de `artifacts`, sem tabelas novas.
+
+*Esforço:* Médio · *Risco:* Baixo-Médio (UI + captura de diff; sem o auth/segredo do C1). O que sobe o risco é o streaming incremental — pode virar um **C2.1** se o batch já entregar valor.
 
 **C3 — Code-review com diff ⏳.** O Reviewer do time avalia o **diff** (não só o texto do worker): gate de aprovação sobre as mudanças reais antes do PR. Ref. conceitual: módulo `review` da `agent-teams-controller`.
 
@@ -159,8 +170,9 @@ Era: execução da Polaris síncrona/in-process (sem fila). **C0 trouxe a fila d
 1. ~~Sub-projeto A (Teams Core)~~ — ✅ **FEITO** (2026-06-13).
 2. ~~Sub-projeto B (Teams UX), núcleo + gestão/disponibilidade~~ — ✅ **FEITO** (2026-06-14). Falta só Slice 6 (drag-drop, deferido) e o que não foi portado (tool-approval/logs).
 3. ~~Sub-projeto C, fatia C0 (durable code-run + sandbox)~~ — ✅ **FEITO e VALIDADO EM PROD** (2026-06-14).
-4. **Agora: Sub-projeto C, fatia C1 (Git → Pull Request)** — ver "Fatias do Sub-projeto C → C1" acima. **Começar a sessão confirmando o escopo + as 6 decisões** (provider git, auth, binding de repo, push por worker vs agente, estratégia de branch/PR, modelo de dados) antes de escrever spec ou código.
-5. Depois: C2 (terminal/diff rico) → C3 (code-review com diff).
+4. ~~Sub-projeto C, fatia C1 (Git → Pull Request)~~ — ✅ **FEITO e VALIDADO EM PROD** (2026-06-14). PR draft #1 aberto pelo code-team. Ver "Fatias do Sub-projeto C → C1".
+5. **Agora: Sub-projeto C, fatia C2 (terminal/diff streaming rico)** — ver "Fatias do Sub-projeto C → C2" acima. **Começar a sessão confirmando o escopo + as 6 decisões** (escopo de streaming, diff viewer, terminal, fonte/armazenamento do diff, granularidade, modelo de dados) antes de escrever spec ou código.
+6. Depois: C3 (code-review com diff).
 
 > Cadência mantida: um sprint por sessão; cada fatia do C tem seu próprio spec/plano.
 
