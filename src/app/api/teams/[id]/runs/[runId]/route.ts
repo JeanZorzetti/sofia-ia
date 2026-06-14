@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
+import { reconcileStaleRun } from '@/lib/orchestration/team/team-reconcile'
 
 async function ownRun(teamId: string, runId: string, userId: string) {
   return prisma.teamRun.findFirst({ where: { id: runId, teamId, team: { createdBy: userId } } })
@@ -14,6 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     const { id, runId } = await params
 
+    await reconcileStaleRun(runId)
     const run = await prisma.teamRun.findFirst({
       where: { id: runId, teamId: id, team: { createdBy: auth.id } },
       include: { tasks: { orderBy: { position: 'asc' } }, messages: { orderBy: { createdAt: 'asc' } } },

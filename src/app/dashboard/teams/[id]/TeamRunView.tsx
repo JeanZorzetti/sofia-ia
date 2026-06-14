@@ -53,26 +53,25 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   async function startRun() {
     if (!mission.trim()) return
     setRunning(true); setTasks([]); setMessages([]); setOutput(null); setStatus('pending')
-    // The POST runs synchronously; open the stream first so we capture progress.
-    const pending = fetch(`/api/teams/${teamId}/run`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mission }),
-    })
-    // We don't yet have the runId until POST returns; poll the latest run via the response.
-    const res = await pending
-    const json = await res.json()
-    if (json.success && json.data) {
-      setRunId(json.data.id)
-      openStream(json.data.id)
-      setTasks((json.data.tasks ?? []).map((t: { id: string; title: string; status: string; assigneeId: string | null; retryCount: number; reviewNote: string | null; result: string | null }) => ({
-        id: t.id, title: t.title, status: t.status, assigneeId: t.assigneeId,
-        retryCount: t.retryCount, reviewNote: t.reviewNote, resultPreview: (t.result ?? '').slice(0, 300),
-      })))
-      setMessages((json.data.messages ?? []).map((m: Msg) => m))
-      setStatus(json.data.status)
-      setOutput(json.data.output ?? null)
+    // The POST kicks off the run in the background and returns { runId } immediately.
+    // Progress arrives via the SSE stream; `running` stays true until 'done'/'error'.
+    try {
+      const res = await fetch(`/api/teams/${teamId}/run`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mission }),
+      })
+      const json = await res.json()
+      if (json.success && json.data?.runId) {
+        setRunId(json.data.runId)
+        openStream(json.data.runId)
+      } else {
+        setStatus(json.error ?? 'failed')
+        setRunning(false)
+      }
+    } catch {
+      setStatus('failed')
+      setRunning(false)
     }
-    setRunning(false)
   }
 
   return (

@@ -2,6 +2,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
+import { reconcileStaleRun } from '@/lib/orchestration/team/team-reconcile'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!auth) return new Response('Unauthorized', { status: 401 })
   const { id, runId } = await params
 
+  await reconcileStaleRun(runId)
   const run = await prisma.teamRun.findFirst({ where: { id: runId, teamId: id, team: { createdBy: auth.id } } })
   if (!run) return new Response('Run not found', { status: 404 })
 

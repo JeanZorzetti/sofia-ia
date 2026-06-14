@@ -1,12 +1,15 @@
 // src/app/api/teams/[id]/run/route.ts
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
 
-// Allow up to 5 minutes for the synchronous coordination loop.
+// The coordination loop runs in the background (after the response is flushed).
+// maxDuration still caps the post-response work on platforms that enforce it;
+// on the EasyPanel Docker server it is effectively unbounded.
 export const maxDuration = 300
 
-// POST /api/teams/[id]/run — create a run and execute it synchronously
+// POST /api/teams/[id]/run — create a run and execute it in the background.
+// Returns { runId } immediately; clients follow progress via the SSE stream.
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const auth = await getAuthFromRequest(request)
@@ -28,25 +31,26 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const run = await prisma.teamRun.create({ data: { teamId: id, mission, status: 'pending' } })
 
-    const { runTeam } = await import('@/lib/orchestration/team/team-coordinator')
-    const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
-    const { chatWithAgent } = await import('@/lib/ai/groq')
-
-    try {
-      await runTeam(run.id, {
-        store: createPrismaTeamStore(),
-        chat: (agentId, messages, ctx) => chatWithAgent(agentId, messages as never, ctx),
-      })
-    } catch (err) {
-      // runTeam already persisted status='failed'; log and continue to return the run.
-      console.error('[Teams] run failed:', err)
-    }
-
-    const finalRun = await prisma.teamRun.findUnique({
-      where: { id: run.id },
-      include: { tasks: { orderBy: { position: 'asc' } }, messages: { orderBy: { createdAt: 'asc' } } },
+    // Execute the coordinator AFTER the response is sent. The coordinator writes
+    // every board/message/status transition to the DB, so the SSE stream reflects
+    // progress live. No durable queue yet — orphaned runs (process restart) are
+    // reconciled by TTL on read (see team-reconcile.ts).
+    after(async () => {
+      try {
+        const { runTeam } = await import('@/lib/orchestration/team/team-coordinator')
+        const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
+        const { chatWithAgent } = await import('@/lib/ai/groq')
+        await runTeam(run.id, {
+          store: createPrismaTeamStore(),
+          chat: (agentId, messages, ctx) => chatWithAgent(agentId, messages as never, ctx),
+        })
+      } catch (err) {
+        // runTeam already persisted status='failed' on throw; this is a log net.
+        console.error('[Teams] background run failed:', err)
+      }
     })
-    return NextResponse.json({ success: true, data: finalRun })
+
+    return NextResponse.json({ success: true, data: { runId: run.id, status: 'pending' } }, { status: 202 })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Failed to run team'
     console.error('Error running team:', error)
