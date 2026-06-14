@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { configAvailability } from '@/lib/ai/model-availability';
 
 export async function GET(request: NextRequest) {
     try {
@@ -72,9 +73,17 @@ export async function GET(request: NextRequest) {
             );
         }
 
+        // Attach instant, config-based availability so the Teams picker / Models
+        // page can flag models whose provider isn't configured. Live confirmation
+        // (incl. CLI providers) is done on demand via POST /api/models/test.
+        const data = models.map(m => {
+            const a = configAvailability(m.id);
+            return { ...m, availability: a.status, availabilityReason: a.reason };
+        });
+
         return NextResponse.json({
             success: true,
-            data: models
+            data
         });
 
     } catch (error) {

@@ -37,6 +37,8 @@ import {
   BarChart2,
   Megaphone,
   Code2,
+  Cpu,
+  Users2,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
@@ -86,6 +88,8 @@ const menuSections: MenuSection[] = [
       { href: '/dashboard/knowledge',      label: 'Knowledge Base', icon: Database },
       { href: '/dashboard/workflows',      label: 'Workflows',     icon: Workflow },
       { href: '/dashboard/orchestrations', label: 'Orquestrações', icon: Users },
+      { href: '/dashboard/models',         label: 'Modelos',       icon: Cpu },
+      { href: '/dashboard/teams',          label: 'Teams',         icon: Users2 },
       { href: '/dashboard/files',          label: 'IDE',           icon: Terminal },
       { href: '/dashboard/integrations',   label: 'Integrações',   icon: Plug },
     ],
