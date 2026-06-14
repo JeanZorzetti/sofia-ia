@@ -3,11 +3,15 @@
 
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import {
   ArrowLeft, Crown, Hammer, ShieldCheck, Cpu, Send, Loader2, Rocket,
   ClipboardList, MessageSquare, CheckCircle2, XCircle, History, Sparkles,
-  Clock, Coins, Repeat,
+  Clock, Coins, Repeat, Network,
 } from 'lucide-react'
+
+// ReactFlow must be client-only (no SSR) to avoid hydration/measure issues.
+const TeamGraph = dynamic(() => import('./TeamGraph'), { ssr: false })
 
 interface Member { id: string; role: string; model: string | null; effort: string | null; agent: { id: string; name: string } }
 interface Team { id: string; name: string; members: Member[] }
@@ -128,6 +132,12 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const done = tasks.filter(t => t.status === 'done').length
   const total = tasks.length
   const pct = total ? Math.round((done / total) * 100) : (running ? 8 : 0)
+
+  // The "active" member drives the graph highlight: whoever holds a doing task,
+  // else the latest message sender — only while the run is live.
+  const doingTask = tasks.find(t => t.status === 'doing')
+  const lastMsg = messages[messages.length - 1]
+  const activeId = running ? (doingTask?.assigneeId ?? lastMsg?.fromMemberId ?? null) : null
 
   return (
     <div className="space-y-6 p-6 max-w-6xl mx-auto">
@@ -263,7 +273,14 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+        <div className="space-y-4">
+          {team && team.members.length > 0 && (
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+              <h2 className="font-semibold text-white text-sm mb-2 flex items-center gap-2"><Network className="h-4 w-4 text-white/40" /> Topologia</h2>
+              <TeamGraph members={team.members.map(m => ({ id: m.id, role: m.role, name: m.agent.name }))} activeId={activeId} />
+            </div>
+          )}
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4">
           <h2 className="font-semibold text-white text-sm mb-3 flex items-center gap-2"><History className="h-4 w-4 text-white/40" /> Execuções</h2>
           <div className="space-y-2 max-h-[420px] overflow-y-auto custom-scrollbar pr-1">
             {history.length === 0 && <p className="text-white/30 text-sm">Nenhuma execução ainda.</p>}
@@ -282,6 +299,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
                 <div className="text-[12px] text-white/70 mt-1 line-clamp-2">{r.mission}</div>
               </button>
             ))}
+          </div>
           </div>
         </div>
       </div>
