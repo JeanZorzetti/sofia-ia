@@ -74,14 +74,13 @@ Binário `claude-multimodel`, spawn via `child_process`, `node-pty`, `ssh2`, cas
 
 **Esforço:** Médio · **Risco:** Baixo-Médio (adaptar componentes Electron→web) · **Dependências:** **precisa do A** para ter dado real (dá pra prototipar com mock antes).
 
-### Pendências de B (próxima iteração) ⏳
-Itens de gestão/fluxo que faltam para o B ficar "redondo" antes de partir pro C:
-1. **Excluir times** — UI no `/dashboard/teams`. Backend já existe (`DELETE /api/teams/[id]` faz archive `status='archived'`); falta o botão + confirmação. (Avaliar: archive vs delete real.)
-2. **Editar times** — UI de edição (nome + roster + modelo/effort por membro). Backend já existe (`PATCH /api/teams/[id]`, substitui roster inteiro). Extrair o editor de roster do criar-time num componente compartilhado (reuso criar/editar).
-3. **Verificação de disponibilidade de modelo** — **antes de /teams no fluxo de trabalho.** Hoje o picker oferece TODOS os modelos de `/api/models` mesmo que o provider não esteja configurado/alcançável → o run falha em tempo de execução. Precisa checar disponibilidade (config de chaves/integrações e/ou ping) e refletir no picker (e idealmente uma etapa "Modelos" no fluxo). *Design a confirmar.*
-4. **Navegação:** `/dashboard/teams` **não está no Sidebar** (página órfã hoje). Adicionar em "Plataforma" perto de "Orquestrações" — e "Modelos" antes de "Teams" se virar etapa própria.
-5. **Slice 6 — drag-drop human-in-the-loop** (kanban arrastável + `PATCH` de task): **deferido por decisão** (2026-06-14) — board é dirigido por agente (valor marginal) + dep nova (`@dnd-kit`, risco OneDrive). Reabrir só se sentir falta.
-6. **Não portado da Agent Teams AI (avaliar se vale):** tool-approval sheet (human-in-the-loop), painel de logs de execução.
+### Pendências de B
+1. ~~**Excluir times**~~ — ✅ FEITO (2026-06-14). Botão + confirmação; reusa `DELETE /api/teams/[id]` (archive `status='archived'`, a lista filtra `active`).
+2. ~~**Editar times**~~ — ✅ FEITO (2026-06-14). Modal de edição via `PATCH /api/teams/[id]`; editor de roster extraído num `RosterEditor` compartilhado (criar/editar).
+3. ~~**Verificação de disponibilidade de modelo**~~ — ✅ FEITO (2026-06-14). `src/lib/ai/model-availability.ts` (`providerOf` espelha o roteamento do `chatWithAgent` + status por config); `/api/models` retorna `availability`; `POST /api/models/test` faz ping ao vivo; página `/dashboard/models`. Picker desabilita indisponíveis.
+4. ~~**Navegação**~~ — ✅ FEITO (2026-06-14). Sidebar ganhou "Modelos" (antes) e "Teams" em "Plataforma".
+5. **Slice 6 — drag-drop human-in-the-loop** (kanban arrastável + `PATCH` de task): **deferido por decisão** (2026-06-14) — board é dirigido por agente (valor marginal) + dep nova (`@dnd-kit`, risco OneDrive). ⏳ Reabrir só se sentir falta.
+6. **Não portado da Agent Teams AI (avaliar se vale):** tool-approval sheet (human-in-the-loop), painel de logs de execução. ⏳
 
 ---
 
@@ -93,17 +92,48 @@ Itens de gestão/fluxo que faltam para o B ficar "redondo" antes de partir pro C
 
 **Natureza:** **produto novo, não import.** O runtime de código da Agent Teams AI (`claude-multimodel` + `child_process` + filesystem local) **não porta para web**. Precisa ser reconstruído como serviço cloud.
 
-**O que é net-new (infra pesada):**
-- Sandbox isolado por run (avaliar E2B / Daytona / Modal / Firecracker / Docker-per-run).
-- Integração git (clone/branch/commit/PR) + exec seguro de comandos.
-- Streaming de terminal/diff para a UI (substitui xterm/node-pty do desktop).
-- Workflow de code review com diff (ref. conceitual: `agent-teams-controller` módulo `review` + `node-diff3`).
+**O que reusa (já construído no C0):**
+- O spine de coordenação do **A** (`runTeam` intacto, roster, board, reviewer loop) — invocado via o seam `ChatFn`.
+- A UX do **B** (kanban, feed, grafo) + o novo painel de terminal.
+- A infra do **C0**: porta `SandboxProvider` + impl E2B (`src/lib/sandbox/`), fila BullMQ + worker (`src/lib/queue/`, `src/worker/index.ts`, `Dockerfile.worker`), code-agent loop (`code-agent.ts`/`code-protocol.ts`), schema `TeamRun.mode/sandboxId` + `TeamTask.artifacts`.
 
-**O que reusa:**
-- O spine de coordenação do **A** (roster, message bus, board, reviewer loop) — mesmo cérebro, runtime diferente.
-- A UX do **B** (kanban, timeline, grafo) — só troca o painel de saída por terminal/diff.
+**Esforço:** Alto · **Risco:** Alto · **Dependências:** A, B e C0 prontos. Spec e plano por fatia, um sprint por sessão.
 
-**Esforço:** Alto · **Risco:** Alto · **Dependências:** **A e B prontos.** Provavelmente exige fila assíncrona (BullMQ/Temporal) — hoje a execução da Polaris é síncrona/in-process. Spec e plano **próprios**, em track separado.
+### Fatias do Sub-projeto C
+
+**C0 — Durable code-run + sandbox exec ✅ ENTREGUE (2026-06-14).** Ver bloco STATUS acima e `Sub-projeto C - C0 spec.md`. Um code-team roda comandos shell num sandbox E2B via fila durável, com terminal ao vivo. **Sandbox é 1-por-run** (filesystem persiste entre tasks).
+
+---
+
+**C1 — Git: do sandbox pro Pull Request 🔜 (PRÓXIMA FATIA — plano/gancho).**
+
+*Objetivo:* o code-team deixa de operar num sandbox vazio e passa a trabalhar sobre um **repositório real** — clona, cria branch, os agentes editam arquivos (já via `@RUN`), e o trabalho vira **commit + push + Pull Request**. É o que transforma o C0 ("roda comando") em "entrega código de verdade", casando com a tese da Estética Fábrica.
+
+*O que reusa (não reescrever):* todo o C0 — o sandbox já executa shell, então `git`/`gh` são "só mais comandos"; o que muda é **lifecycle do repo** (setup/teardown em volta do `runTeam`) + **auth/segredos**.
+
+*Net-new desta fatia:*
+- **Provisionamento do repo:** o worker clona o repo no sandbox **antes** do `runTeam` (setup) e cria a branch de trabalho (ex.: `polaris/run-<runId>`).
+- **Auth git + manejo de segredo** (o ponto sensível — o C0 proíbe injetar segredo no sandbox, e o agente roda comando arbitrário lá dentro).
+- **Teardown:** commit das mudanças + push + abertura de PR, com sumário do run no corpo do PR.
+- **Captura de diff** (básica nesta fatia: arquivos alterados + link do PR; diff visual rico fica no C2).
+- **Schema:** `TeamRun.repoUrl/branch/commitSha/prUrl` + binding de repo (provavelmente em `Team.config`).
+- **UI:** mostrar branch + link do PR (+ lista de arquivos alterados) na run view.
+
+*Decisões a fechar no spec do C1 (confirmar escopo com o usuário ANTES de codar):*
+1. **Provider git:** GitHub-only nesta fatia (via `gh` CLI ou GitHub REST API)?
+2. **Auth:** PAT fine-grained vs GitHub App (installation token). Onde guardar (env global do worker vs `Team.config` cifrado)?
+3. **Binding do repo:** code-team amarrado a **um repo** (`Team.config.repoUrl`) vs URL **por-run** (na missão)?
+4. **Quem faz push/PR — worker ou agente?** ⚠️ *Decisão de segurança.* Recomendação inicial: **worker faz clone/push/PR** (token NUNCA entra no sandbox — o agente só edita arquivos localmente; o worker re-adiciona o remote com token curto na hora do push). Alternativa (token efêmero no sandbox + `@RUN git push`) é mais simples mas expõe o token ao agente.
+5. **Estratégia de branch/commit/PR:** 1 branch por run; mensagem de commit/PR derivada do sumário do run; PR como draft?
+6. **Modelo de dados:** estender `TeamRun` + `Team.config` (consistente com a decisão (d) do C0 — estender, não criar tabelas).
+
+*Esforço:* Médio-Alto · *Risco:* Médio (auth/segredo é o que assusta; sandbox/worker/agente já provados no C0).
+
+---
+
+**C2 — Terminal/diff streaming rico ⏳.** Substituir o painel de terminal simples por xterm-like + **diff viewer** (lado a lado), streaming incremental. Ref. conceitual: xterm/node-pty do desktop (não porta — recriar web) + `node-diff3`.
+
+**C3 — Code-review com diff ⏳.** O Reviewer do time avalia o **diff** (não só o texto do worker): gate de aprovação sobre as mudanças reais antes do PR. Ref. conceitual: módulo `review` da `agent-teams-controller`.
 
 ---
 
@@ -119,19 +149,20 @@ A (Teams Core)  →  B (Teams UX)  →  C (Code Factory)
 - **C** é a aposta de nova vertical, construída só depois da fundação (A) e da UX (B) provadas.
 - Cada seta é uma **sessão de brainstorm→spec→plano→implementação separada** (um sprint por vez).
 
-### Gap técnico transversal a vigiar
-A execução da Polaris hoje é **síncrona/in-process** (sem fila). A e B aguentam assim; **C quase certamente exige fila assíncrona** (BullMQ/Temporal + Redis, que já está no stack). Decidir a fila no spec do C, não antes.
+### Gap técnico transversal — ✅ resolvido (parcialmente) no C0
+Era: execução da Polaris síncrona/in-process (sem fila). **C0 trouxe a fila durável (BullMQ + Redis), mas só para code-runs** — chat-runs (A/B) seguem no `after()` + reconciliação por TTL, que aguenta bem. Migrar chat-runs pra fila é limpeza opcional, não urgente.
 
 ---
 
 ## Próximos passos (cadência acordada: um sprint por sessão)
 
 1. ~~Sub-projeto A (Teams Core)~~ — ✅ **FEITO** (2026-06-13).
-2. ~~Sub-projeto B (Teams UX), núcleo~~ — ✅ **FEITO** (2026-06-14).
-3. **Agora: fechar as "Pendências de B"** (acima) — excluir/editar times, verificação de disponibilidade de modelo (antes de /teams) e nav no Sidebar. Iteração de gestão/fluxo, não um sub-projeto novo.
-4. **Depois: Sub-projeto C (Code Factory)** — produto novo, spec/plano próprios. É onde entra a **fila durável** (BullMQ/Temporal + Redis) que foi adiada de propósito (o B usa `after()` in-process + reconciliação por TTL).
+2. ~~Sub-projeto B (Teams UX), núcleo + gestão/disponibilidade~~ — ✅ **FEITO** (2026-06-14). Falta só Slice 6 (drag-drop, deferido) e o que não foi portado (tool-approval/logs).
+3. ~~Sub-projeto C, fatia C0 (durable code-run + sandbox)~~ — ✅ **FEITO e VALIDADO EM PROD** (2026-06-14).
+4. **Agora: Sub-projeto C, fatia C1 (Git → Pull Request)** — ver "Fatias do Sub-projeto C → C1" acima. **Começar a sessão confirmando o escopo + as 6 decisões** (provider git, auth, binding de repo, push por worker vs agente, estratégia de branch/PR, modelo de dados) antes de escrever spec ou código.
+5. Depois: C2 (terminal/diff rico) → C3 (code-review com diff).
 
-> Decisão de cadência mantida: um sprint por sessão; C tratado como produto novo com seu próprio spec.
+> Cadência mantida: um sprint por sessão; cada fatia do C tem seu próprio spec/plano.
 
 ## Verificação deste roadmap
-Não há código a rodar — o entregável é o mapa. Validação = revisão humana de que a decomposição A→B→C e o escopo de cada fatia batem com a intenção, antes de abrir a sessão de spec do A.
+Não há código a rodar — o entregável é o mapa. Validação = revisão humana de que a decomposição (A→B→C, e as fatias C0→C1→C2→C3) e o escopo batem com a intenção, antes de abrir a sessão de spec de cada fatia.
