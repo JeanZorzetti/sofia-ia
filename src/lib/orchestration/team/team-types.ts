@@ -65,9 +65,16 @@ export interface ChatResult {
 
 export type ChatMessageInput = { role: 'user' | 'assistant' | 'system'; content: string }
 
+/** Per-call execution overrides for a team member (model/effort). */
+export interface ChatOptions {
+  model?: string | null
+  effort?: string | null
+}
+
 /** Injectable execution primitive (real impl: chatWithAgent). */
 export type ChatFn = (
   agentId: string,
   messages: ChatMessageInput[],
   leadContext?: Record<string, unknown>,
+  options?: ChatOptions,
 ) => Promise<ChatResult>

@@ -105,7 +105,7 @@ export async function chatWithAgent(
   agentId: string,
   messages: ChatMessage[],
   leadContext?: Record<string, any>,
-  options?: { useVectorSearch?: boolean }
+  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null }
 ) {
   const { prisma } = await import('@/lib/prisma')
 
@@ -118,6 +118,16 @@ export async function chatWithAgent(
   if (!agent) {
     throw new Error('Agent not found')
   }
+
+  // Per-call overrides (Polaris Teams sets model/effort per member). Mutating the
+  // in-memory agent record makes every downstream provider branch (Claude CLI,
+  // Opencode, OpenRouter, Groq) honor the chosen model without touching each one.
+  if (options?.model) {
+    agent.model = options.model
+  }
+  // `effort` maps to reasoning_effort on reasoning-capable models (applied on the
+  // OpenRouter path below); ignored by providers that don't support it.
+  const reasoningEffort = options?.effort || null
 
   // Construir prompt do sistema
   let systemPrompt = agent.systemPrompt
@@ -414,6 +424,7 @@ REGRAS PARA ESCREVER CÓDIGO:
           temperature: agent.temperature,
           max_tokens: 8192,
           ...(apiTools ? { tools: apiTools } : {}),
+          ...(reasoningEffort ? { reasoning_effort: reasoningEffort as 'low' | 'medium' | 'high' } : {}),
         })
 
         const responseMessage = completion.choices[0]?.message

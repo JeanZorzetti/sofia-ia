@@ -60,7 +60,7 @@ export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
       try {
         leadOut = await chat(lead.agentId, [
           { role: 'user', content: buildLeadContext(mission, board0, msgs0, members) },
-        ])
+        ], undefined, { model: lead.model, effort: lead.effort })
       } catch (e) {
         if (isRateLimit(e)) { await finish('rate_limited', null, 'Rate limit durante planejamento'); return }
         throw e
@@ -111,7 +111,7 @@ export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
         await store.updateTask(t.id, { status: 'doing' })
         let out: ChatResult
         try {
-          out = await chat(worker.agentId, [{ role: 'user', content: buildTaskPrompt(t, t.reviewNote) }])
+          out = await chat(worker.agentId, [{ role: 'user', content: buildTaskPrompt(t, t.reviewNote) }], undefined, { model: worker.model, effort: worker.effort })
         } catch (e) {
           if (isRateLimit(e)) { await finish('rate_limited', null, 'Rate limit durante execução'); return }
           throw e
@@ -134,7 +134,7 @@ export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
           if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
           let out: ChatResult
           try {
-            out = await chat(reviewer.agentId, [{ role: 'user', content: buildReviewPrompt(t) }])
+            out = await chat(reviewer.agentId, [{ role: 'user', content: buildReviewPrompt(t) }], undefined, { model: reviewer.model, effort: reviewer.effort })
           } catch (e) {
             if (isRateLimit(e)) { await finish('rate_limited', null, 'Rate limit durante review'); return }
             throw e
@@ -168,7 +168,7 @@ export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
         if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
         let conso: ChatResult
         try {
-          conso = await chat(lead.agentId, [{ role: 'user', content: buildConsolidationPrompt(board) }])
+          conso = await chat(lead.agentId, [{ role: 'user', content: buildConsolidationPrompt(board) }], undefined, { model: lead.model, effort: lead.effort })
         } catch (e) {
           // Work is done and approved — don't lose it if the final synthesis call fails.
           // Fall back to a partial summary; surface rate-limits as such, else complete.

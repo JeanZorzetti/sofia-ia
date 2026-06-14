@@ -42,7 +42,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         const { chatWithAgent } = await import('@/lib/ai/groq')
         await runTeam(run.id, {
           store: createPrismaTeamStore(),
-          chat: (agentId, messages, ctx) => chatWithAgent(agentId, messages as never, ctx),
+          chat: (agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts),
         })
       } catch (err) {
         // runTeam already persisted status='failed' on throw; this is a log net.
