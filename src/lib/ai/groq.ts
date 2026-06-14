@@ -339,6 +339,27 @@ export async function chatWithAgent(
     }
   }
 
+  // Check if model is Ollama (e.g. ollama/qwen2.5:7b-instruct) — route to the
+  // self-hosted OpenAI-compatible endpoint. MUST come before the '/' OpenRouter
+  // check below (ollama ids contain '/'). Plain text completion: the code-team
+  // parses @RUN/@DONE from the text, so no native tool-calling is needed here.
+  if (agent.model.startsWith('ollama/')) {
+    const { getOllamaClient } = await import('@/lib/ai/ollama')
+    const ollamaModel = agent.model.slice('ollama/'.length)
+    const completion = await getOllamaClient().chat.completions.create({
+      model: ollamaModel,
+      messages: [{ role: 'system', content: systemPrompt }, ...messages],
+      temperature: agent.temperature,
+      max_tokens: 4096,
+    })
+    return {
+      message: completion.choices[0]?.message?.content || '',
+      model: agent.model,
+      usage: completion.usage,
+      confidence: 0.85,
+    }
+  }
+
   // Check if model is OpenRouter (e.g. arcee-ai/trinity or deepseek/deepseek-r1)
   // Heuristic: models with '/' (vendor/model) are treated as OpenRouter, unless specific exceptions exist.
   if (agent.model.includes('/')) {

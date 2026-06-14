@@ -33,6 +33,12 @@ export async function POST(request: NextRequest) {
           model: modelId, messages: [{ role: 'user', content: 'ping' }], max_tokens: 1,
         })
         status = 'available'; reason = 'Respondeu ao ping'
+      } else if (family === 'ollama') {
+        const { getOllamaClient } = await import('@/lib/ai/ollama')
+        await getOllamaClient().chat.completions.create({
+          model: modelId.slice('ollama/'.length), messages: [{ role: 'user', content: 'ping' }], max_tokens: 1,
+        })
+        status = 'available'; reason = 'Respondeu ao ping'
       } else {
         // CLI-backed providers depend on the binary on the host — don't spawn it
         // here (would risk hanging the request); report as unverifiable by API.

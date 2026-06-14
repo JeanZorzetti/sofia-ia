@@ -26,6 +26,8 @@ export async function GET(request: NextRequest) {
             { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', provider: 'OpenRouter' },
             { id: 'arcee-ai/trinity-large-preview:free', name: 'Trinity Large Preview (Free)', provider: 'OpenRouter' },
             { id: 'qwen/qwen3-coder:free', name: 'Qwen 3 Coder 480B (Free)', provider: 'OpenRouter' },
+            // Ollama (self-hosted, OpenAI-compatible) — no Groq rate limits
+            { id: 'ollama/qwen2.5:7b-instruct', name: 'Qwen 2.5 7B Instruct (Ollama)', provider: 'Ollama' },
             // Claude Code CLI models — all available via local CLI with --model flag
             { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', provider: 'Claude Code' },
             { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', provider: 'Claude Code' },

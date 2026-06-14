@@ -15,13 +15,14 @@ export interface ModelAvailability {
   reason: string
 }
 
-export type ProviderFamily = 'groq' | 'openrouter' | 'claude-cli' | 'opencode'
+export type ProviderFamily = 'groq' | 'openrouter' | 'claude-cli' | 'opencode' | 'ollama'
 
 /** Provider routing — mirrors the branching in chatWithAgent() so availability
  *  matches how a run would actually dispatch the model. */
 export function providerOf(modelId: string): ProviderFamily {
   if (modelId.startsWith('claude-')) return 'claude-cli'
   if (modelId.startsWith('opencode-')) return 'opencode'
+  if (modelId.startsWith('ollama/')) return 'ollama' // before '/' check (ollama ids contain '/')
   if (modelId.includes('/')) return 'openrouter'
   return 'groq'
 }
@@ -37,6 +38,10 @@ export function configAvailability(modelId: string): ModelAvailability {
       return process.env.OPENROUTER_API_KEY
         ? { status: 'available', reason: 'OPENROUTER_API_KEY configurada' }
         : { status: 'unavailable', reason: 'OPENROUTER_API_KEY ausente' }
+    case 'ollama':
+      return process.env.OLLAMA_BASE_URL
+        ? { status: 'available', reason: 'OLLAMA_BASE_URL configurada' }
+        : { status: 'unavailable', reason: 'OLLAMA_BASE_URL ausente' }
     case 'claude-cli':
       return { status: 'unknown', reason: 'CLI Claude — depende do host; use "testar"' }
     case 'opencode':
