@@ -21,6 +21,16 @@ Regras:
 - Não invente saídas: rode comandos para verificar. Finalize com @DONE e um resumo do que foi feito.
 `.trim()
 
+// Appended when the run works on a cloned git repository (Sub-projeto C — C1):
+// the agent edits files in the current directory; delivery (commit/push/PR) is
+// handled automatically by the system, so the agent must NOT touch git remotes.
+const REPO_CONTEXT_PROMPT = `
+IMPORTANTE — você está dentro de um REPOSITÓRIO git já clonado no diretório atual (a branch de trabalho já existe).
+- Edite os arquivos do repositório para cumprir a missão (crie/altere arquivos via shell).
+- NÃO rode \`git push\`, \`git remote\`, \`git clone\` nem configure credenciais — o commit, o push e o Pull Request são feitos AUTOMATICAMENTE pelo sistema depois que você finalizar.
+- \`git status\`/\`git diff\` locais são permitidos para conferir suas mudanças.
+`.trim()
+
 export interface CodeChatFnOptions {
   /** Max LLM↔sandbox round-trips per member turn. */
   maxSteps?: number
@@ -28,9 +38,12 @@ export interface CodeChatFnOptions {
   perCommandTimeoutMs?: number
   /** Truncate each stream when feeding output back to the model (chars). */
   maxOutputChars?: number
+  /** Working directory for every command — the cloned repo dir on code-runs (C1).
+   *  Undefined keeps the sandbox default cwd (C0 behavior). */
+  workdir?: string
 }
 
-const DEFAULTS: Required<CodeChatFnOptions> = {
+const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir'> = {
   maxSteps: 8,
   perCommandTimeoutMs: 120_000,
   maxOutputChars: 4_000,
@@ -49,14 +62,18 @@ function formatObservation(c: CommandRun, maxChars: number): string {
 }
 
 /** Prepend the exec protocol to the first user message (robust regardless of how
- *  the base ChatFn treats a separate `system` message). */
-function injectProtocol(messages: ChatMessageInput[]): ChatMessageInput[] {
+ *  the base ChatFn treats a separate `system` message). On code-runs bound to a
+ *  repo, also append the repo-context rules (don't touch git remotes). */
+function injectProtocol(messages: ChatMessageInput[], withRepoContext: boolean): ChatMessageInput[] {
   const working = messages.map(m => ({ ...m }))
+  const preamble = withRepoContext
+    ? `${CODE_PROTOCOL_PROMPT}\n\n${REPO_CONTEXT_PROMPT}`
+    : CODE_PROTOCOL_PROMPT
   const firstUser = working.find(m => m.role === 'user')
   if (firstUser) {
-    firstUser.content = `${CODE_PROTOCOL_PROMPT}\n\n---\n\n${firstUser.content}`
+    firstUser.content = `${preamble}\n\n---\n\n${firstUser.content}`
   } else {
-    working.unshift({ role: 'user', content: CODE_PROTOCOL_PROMPT })
+    working.unshift({ role: 'user', content: preamble })
   }
   return working
 }
@@ -72,9 +89,10 @@ export function createCodeChatFn(
   options: CodeChatFnOptions = {},
 ): ChatFn {
   const { maxSteps, perCommandTimeoutMs, maxOutputChars } = { ...DEFAULTS, ...options }
+  const { workdir } = options
 
   return async (agentId, messages, leadContext, chatOptions) => {
-    const working = injectProtocol(messages)
+    const working = injectProtocol(messages, Boolean(workdir))
     const commands: CommandRun[] = []
     let totalTokens = 0
     let lastModel = chatOptions?.model ?? ''
@@ -91,7 +109,7 @@ export function createCodeChatFn(
 
       const observations: string[] = []
       for (const r of runs) {
-        const res = await sandbox.exec(r.command!, { timeoutMs: perCommandTimeoutMs })
+        const res = await sandbox.exec(r.command!, { timeoutMs: perCommandTimeoutMs, cwd: workdir })
         const entry: CommandRun = {
           cmd: r.command!, stdout: res.stdout, stderr: res.stderr, exitCode: res.exitCode, ms: res.ms,
         }

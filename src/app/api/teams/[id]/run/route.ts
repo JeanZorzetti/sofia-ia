@@ -30,7 +30,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!mission) return NextResponse.json({ success: false, error: 'Missão é obrigatória' }, { status: 400 })
     const mode = body?.mode === 'code' ? 'code' : 'chat'
 
-    const run = await prisma.teamRun.create({ data: { teamId: id, mission, status: 'pending', mode } })
+    // Repo binding (Sub-projeto C — C1): hybrid resolution — Team.config default,
+    // overridable per-run via the request body. Only meaningful for code-runs.
+    // The git token is NEVER stored here; it lives only in the worker env.
+    let repoUrl: string | null = null
+    let baseBranch: string | null = null
+    if (mode === 'code') {
+      const cfg = (team.config && typeof team.config === 'object' ? team.config : {}) as Record<string, unknown>
+      const pick = (...vals: unknown[]) => vals.map(v => (typeof v === 'string' ? v.trim() : '')).find(Boolean) ?? ''
+      repoUrl = pick(body?.repoUrl, cfg.repoUrl) || null
+      if (repoUrl) baseBranch = pick(body?.base, cfg.defaultBranch) || 'main'
+    }
+
+    const run = await prisma.teamRun.create({
+      data: { teamId: id, mission, status: 'pending', mode, repoUrl, baseBranch },
+    })
 
     if (mode === 'code') {
       // Code-runs go through a DURABLE queue (BullMQ/Redis) consumed by a separate

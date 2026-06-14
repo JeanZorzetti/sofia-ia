@@ -1357,6 +1357,15 @@ model TeamRun {
   status        String    @default("pending") @db.VarChar(20)
   mode          String    @default("chat") @db.VarChar(20) // 'chat' | 'code' (Sub-projeto C)
   sandboxId     String?   @map("sandbox_id") @db.VarChar(255) // code-runs: the run's sandbox id
+  // Git lifecycle (Sub-projeto C — C1): the worker clones repoUrl, works on `branch`,
+  // and on success opens a PR (`prUrl`) against `baseBranch`. Token is never stored here.
+  repoUrl       String?   @map("repo_url") @db.Text         // resolved repo (Team.config default or per-run override)
+  baseBranch    String?   @map("base_branch") @db.VarChar(255) // PR target branch (default: main)
+  branch        String?   @db.VarChar(255)                  // working branch: polaris/run-<id>
+  commitSha     String?   @map("commit_sha") @db.VarChar(64)
+  prUrl         String?   @map("pr_url") @db.Text
+  prNumber      Int?      @map("pr_number")
+  changedFiles  Json?     @map("changed_files")             // [{path,status}] from git diff --name-status
   output        String?   @db.Text
   turnsUsed     Int?      @map("turns_used")
   tokensUsed    Int?      @map("tokens_used")

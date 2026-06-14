@@ -3,12 +3,41 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Users, Plus, Loader2, ArrowRight, Pencil, Trash2, X } from 'lucide-react'
+import { Users, Plus, Loader2, ArrowRight, Pencil, Trash2, X, GitBranch } from 'lucide-react'
 import RosterEditor, {
   INHERIT, rosterToMembers, type AgentLite, type ModelOption, type RosterRow,
 } from './RosterEditor'
 
 interface TeamLite { id: string; name: string; description: string | null; _count: { runs: number } }
+
+// Merge optional repo binding (Sub-projeto C — C1) into a team's config Json,
+// preserving any other keys (e.g. maxTurns/retryCap) and dropping empty values.
+function mergeRepoConfig(base: Record<string, unknown>, repoUrl: string, defaultBranch: string): Record<string, unknown> {
+  const cfg = { ...base }
+  const r = repoUrl.trim(); const b = defaultBranch.trim()
+  if (r) cfg.repoUrl = r; else delete cfg.repoUrl
+  if (b) cfg.defaultBranch = b; else delete cfg.defaultBranch
+  return cfg
+}
+
+// Optional repo binding fields, shared by the create form and the edit modal.
+function RepoBindingFields({ repoUrl, defaultBranch, onRepoUrl, onDefaultBranch }: {
+  repoUrl: string; defaultBranch: string; onRepoUrl: (v: string) => void; onDefaultBranch: (v: string) => void
+}) {
+  const inputCls = 'w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30'
+  return (
+    <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.02] p-3">
+      <p className="text-xs text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+        <GitBranch className="h-3.5 w-3.5" /> Repositório · code-runs (opcional)
+      </p>
+      <input className={inputCls} placeholder="github.com/owner/repo" value={repoUrl} onChange={e => onRepoUrl(e.target.value)} />
+      <input className={inputCls} placeholder="Branch base (default: main)" value={defaultBranch} onChange={e => onDefaultBranch(e.target.value)} />
+      <p className="text-[11px] text-white/30">
+        Se preenchido, missões em modo <span className="text-white/50">Código</span> clonam este repo e abrem um Pull Request com as mudanças. O token do GitHub fica só no servidor (worker), nunca exposto aos agentes.
+      </p>
+    </div>
+  )
+}
 
 export default function TeamsPage() {
   const [teams, setTeams] = useState<TeamLite[]>([])
@@ -19,6 +48,8 @@ export default function TeamsPage() {
   // create
   const [name, setName] = useState('')
   const [roster, setRoster] = useState<RosterRow[]>([])
+  const [repoUrl, setRepoUrl] = useState('')
+  const [defaultBranch, setDefaultBranch] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -26,6 +57,9 @@ export default function TeamsPage() {
   const [editId, setEditId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editRoster, setEditRoster] = useState<RosterRow[]>([])
+  const [editConfig, setEditConfig] = useState<Record<string, unknown>>({})
+  const [editRepoUrl, setEditRepoUrl] = useState('')
+  const [editDefaultBranch, setEditDefaultBranch] = useState('')
   const [editError, setEditError] = useState<string | null>(null)
   const [editSaving, setEditSaving] = useState(false)
 
@@ -49,11 +83,11 @@ export default function TeamsPage() {
     try {
       const res = await fetch('/api/teams', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, members: rosterToMembers(roster) }),
+        body: JSON.stringify({ name, members: rosterToMembers(roster), config: mergeRepoConfig({}, repoUrl, defaultBranch) }),
       })
       const json = await res.json()
       if (!json.success) { setError(json.error); return }
-      setName(''); setRoster([])
+      setName(''); setRoster([]); setRepoUrl(''); setDefaultBranch('')
       await load()
     } catch {
       setError('Erro de conexão')
@@ -62,6 +96,7 @@ export default function TeamsPage() {
 
   async function openEdit(teamId: string) {
     setEditId(teamId); setEditError(null); setEditName(''); setEditRoster([])
+    setEditConfig({}); setEditRepoUrl(''); setEditDefaultBranch('')
     const res = await fetch(`/api/teams/${teamId}`)
     const json = await res.json()
     if (json.success) {
@@ -69,6 +104,10 @@ export default function TeamsPage() {
       setEditRoster((json.data.members ?? []).map((m: { agentId: string; role: RosterRow['role']; model: string | null; effort: string | null }) => ({
         agentId: m.agentId, role: m.role, model: m.model ?? INHERIT, effort: m.effort ?? INHERIT,
       })))
+      const cfg = (json.data.config && typeof json.data.config === 'object' ? json.data.config : {}) as Record<string, unknown>
+      setEditConfig(cfg)
+      setEditRepoUrl(typeof cfg.repoUrl === 'string' ? cfg.repoUrl : '')
+      setEditDefaultBranch(typeof cfg.defaultBranch === 'string' ? cfg.defaultBranch : '')
     }
   }
 
@@ -78,7 +117,10 @@ export default function TeamsPage() {
     try {
       const res = await fetch(`/api/teams/${editId}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editName, members: rosterToMembers(editRoster) }),
+        body: JSON.stringify({
+          name: editName, members: rosterToMembers(editRoster),
+          config: mergeRepoConfig(editConfig, editRepoUrl, editDefaultBranch),
+        }),
       })
       const json = await res.json()
       if (!json.success) { setEditError(json.error); return }
@@ -134,6 +176,7 @@ export default function TeamsPage() {
             Effort só afeta modelos de raciocínio (Claude/OpenRouter). Disponibilidade dos modelos em <Link href="/dashboard/models" className="text-blue-400 hover:underline">Modelos</Link>.
           </p>
         </div>
+        <RepoBindingFields repoUrl={repoUrl} defaultBranch={defaultBranch} onRepoUrl={setRepoUrl} onDefaultBranch={setDefaultBranch} />
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <button
           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors"
@@ -207,6 +250,7 @@ export default function TeamsPage() {
               onChange={e => setEditName(e.target.value)}
             />
             <RosterEditor agents={agents} models={models} value={editRoster} onChange={setEditRoster} />
+            <RepoBindingFields repoUrl={editRepoUrl} defaultBranch={editDefaultBranch} onRepoUrl={setEditRepoUrl} onDefaultBranch={setEditDefaultBranch} />
             {editError && <p className="text-red-400 text-sm">{editError}</p>}
             <div className="flex items-center gap-2 justify-end">
               <button onClick={() => setEditId(null)} className="px-4 py-2 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/10 transition-colors">Cancelar</button>

@@ -90,11 +90,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             lastMsgCount = current.messages.length
           }
 
-          // Status / metrics
+          // Status / metrics (+ git delivery fields for code-runs — Sub-projeto C C1)
           send('status', {
             status: current.status, output: current.output, error: current.error,
             turnsUsed: current.turnsUsed, tokensUsed: current.tokensUsed,
             estimatedCost: current.estimatedCost, durationMs: current.durationMs,
+            repoUrl: current.repoUrl, branch: current.branch, prUrl: current.prUrl,
+            commitSha: current.commitSha, changedFiles: current.changedFiles,
           })
 
           if (current.status !== lastStatus && TERMINAL.has(current.status)) {

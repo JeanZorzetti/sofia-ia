@@ -8,6 +8,7 @@ import {
   ArrowLeft, Crown, Hammer, ShieldCheck, Cpu, Send, Loader2, Rocket,
   ClipboardList, MessageSquare, CheckCircle2, XCircle, History, Sparkles,
   Clock, Coins, Repeat, Network, Terminal as TerminalIcon, MessageCircle, Code2,
+  GitBranch, GitPullRequest, ExternalLink,
 } from 'lucide-react'
 
 // ReactFlow must be client-only (no SSR) to avoid hydration/measure issues.
@@ -21,7 +22,14 @@ interface Msg { id: string; fromMemberId: string | null; toMemberId: string | nu
 interface Metrics { turnsUsed: number | null; tokensUsed: number | null; estimatedCost: number | null; durationMs: number | null }
 interface CommandRun { cmd: string; stdout: string; stderr: string; exitCode: number; ms: number }
 interface TerminalTask { taskId: string; title: string; artifacts: { commands: CommandRun[] } }
+interface ChangedFile { path: string; status: string }
+interface Delivery { repoUrl: string | null; branch: string | null; prUrl: string | null; commitSha: string | null; changedFiles: ChangedFile[] }
 type RunMode = 'chat' | 'code'
+
+const EMPTY_DELIVERY: Delivery = { repoUrl: null, branch: null, prUrl: null, commitSha: null, changedFiles: [] }
+const FILE_STATUS_COLOR: Record<string, string> = {
+  A: 'text-emerald-400', M: 'text-amber-400', D: 'text-red-400', R: 'text-blue-400',
+}
 
 const COLUMNS: { key: string; label: string; dot: string }[] = [
   { key: 'todo', label: 'A fazer', dot: 'bg-white/30' },
@@ -59,6 +67,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [runId, setRunId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<BoardTask[]>([])
   const [terminal, setTerminal] = useState<TerminalTask[]>([])
+  const [delivery, setDelivery] = useState<Delivery>(EMPTY_DELIVERY)
   const [messages, setMessages] = useState<Msg[]>([])
   const [status, setStatus] = useState<string>('')
   const [output, setOutput] = useState<string | null>(null)
@@ -91,7 +100,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
 
   function openStream(rid: string, assumeRunning: boolean) {
     esRef.current?.close()
-    setTasks([]); setMessages([]); setOutput(null); setTerminal([])
+    setTasks([]); setMessages([]); setOutput(null); setTerminal([]); setDelivery(EMPTY_DELIVERY)
     setMetrics({ turnsUsed: null, tokensUsed: null, estimatedCost: null, durationMs: null })
     setRunning(assumeRunning)
     const es = new EventSource(`/api/teams/${teamId}/runs/${rid}/stream`)
@@ -103,6 +112,10 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
       const d = JSON.parse((e as MessageEvent).data)
       setStatus(d.status); setOutput(d.output)
       setMetrics({ turnsUsed: d.turnsUsed, tokensUsed: d.tokensUsed, estimatedCost: d.estimatedCost, durationMs: d.durationMs })
+      setDelivery({
+        repoUrl: d.repoUrl ?? null, branch: d.branch ?? null, prUrl: d.prUrl ?? null,
+        commitSha: d.commitSha ?? null, changedFiles: Array.isArray(d.changedFiles) ? d.changedFiles : [],
+      })
     })
     es.addEventListener('done', () => { es.close(); setRunning(false); loadTeam() })
     es.addEventListener('error', () => { es.close(); setRunning(false) })
@@ -304,6 +317,54 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Code delivery (code-runs bound to a repo — Sub-projeto C C1): branch + PR + changed files */}
+      {(delivery.branch || delivery.prUrl || delivery.changedFiles.length > 0) && (
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-3">
+          <h2 className="font-semibold text-white text-sm flex items-center gap-2">
+            <GitPullRequest className="h-4 w-4 text-blue-400" /> Entrega de código
+          </h2>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            {delivery.branch && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/70 font-mono">
+                <GitBranch className="h-3 w-3" /> {delivery.branch}
+              </span>
+            )}
+            {delivery.commitSha && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white/50 font-mono">
+                {delivery.commitSha.slice(0, 7)}
+              </span>
+            )}
+            {delivery.prUrl ? (
+              <a
+                href={delivery.prUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 transition-colors font-medium"
+              >
+                <GitPullRequest className="h-3 w-3" /> Abrir Pull Request <ExternalLink className="h-3 w-3" />
+              </a>
+            ) : (
+              running && delivery.branch && <span className="text-white/40">PR será aberto ao concluir…</span>
+            )}
+          </div>
+          {delivery.changedFiles.length > 0 && (
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-white/40 mb-1.5">
+                {delivery.changedFiles.length} arquivo(s) alterado(s)
+              </div>
+              <div className="space-y-1 max-h-[200px] overflow-y-auto custom-scrollbar pr-1 font-mono text-[12px]">
+                {delivery.changedFiles.map((f, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className={`w-4 text-center ${FILE_STATUS_COLOR[f.status] ?? 'text-white/40'}`}>{f.status}</span>
+                    <span className="text-white/70 break-all">{f.path}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
