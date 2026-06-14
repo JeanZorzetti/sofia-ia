@@ -73,8 +73,10 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
     .catch(() => {})
 
   // EXECUTION — agents edit files inside the repo dir; coordinator unchanged.
-  const codeChat = createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR })
-  await runTeam(runId, { store: createPrismaTeamStore(), chat: codeChat })
+  // Share ONE store so the code-agent can stream partial artifacts mid-loop (C2.1).
+  const store = createPrismaTeamStore()
+  const codeChat = createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store })
+  await runTeam(runId, { store, chat: codeChat })
 
   // TEARDOWN — commit/push/PR only if the run completed and produced a diff.
   const finished = await prisma.teamRun.findUnique({
@@ -135,8 +137,9 @@ const worker = new Worker<CodeRunJob>(
         await prisma.teamRun
           .update({ where: { id: runId }, data: { sandboxId: sandbox.id } })
           .catch(() => {}) // best-effort metadata write
-        const codeChat = createCodeChatFn(sandbox, baseChat)
-        await runTeam(runId, { store: createPrismaTeamStore(), chat: codeChat })
+        const store = createPrismaTeamStore()
+        const codeChat = createCodeChatFn(sandbox, baseChat, { store })
+        await runTeam(runId, { store, chat: codeChat })
       }
     } finally {
       await sandbox.close().catch(() => {}) // always tear down — avoids leaked/charged sandboxes

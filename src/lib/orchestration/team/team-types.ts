@@ -89,6 +89,12 @@ export interface ChatOptions {
    *  code-block writing). The code-agent executes everything in the sandbox via
    *  @RUN, so a provider running its own tools on the worker FS would be wrong. */
   rawText?: boolean
+  /** Live streaming side-channel (Sub-projeto C — C2.1): identifies the task being
+   *  executed so the code-agent can persist partial artifacts mid-loop. Passed via
+   *  OPTIONS (not leadContext) so chatWithAgent — which only reads model/effort/
+   *  rawText/useVectorSearch — ignores it and chat-runs stay unaffected. */
+  taskId?: string
+  runId?: string
 }
 
 /** Injectable execution primitive (real impl: chatWithAgent). */

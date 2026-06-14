@@ -111,7 +111,9 @@ export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
         await store.updateTask(t.id, { status: 'doing' })
         let out: ChatResult
         try {
-          out = await chat(worker.agentId, [{ role: 'user', content: buildTaskPrompt(t, t.reviewNote) }], undefined, { model: worker.model, effort: worker.effort })
+          // taskId/runId ride in OPTIONS (not leadContext) so the code-agent can persist
+          // partial artifacts mid-loop (C2.1); chatWithAgent ignores unknown option keys.
+          out = await chat(worker.agentId, [{ role: 'user', content: buildTaskPrompt(t, t.reviewNote) }], undefined, { model: worker.model, effort: worker.effort, taskId: t.id, runId })
         } catch (e) {
           if (isRateLimit(e)) { await finish('rate_limited', null, 'Rate limit durante execução'); return }
           throw e

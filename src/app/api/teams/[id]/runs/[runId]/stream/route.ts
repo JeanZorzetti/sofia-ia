@@ -23,8 +23,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   let isClosed = false
   let lastTaskSig = ''
   let lastMsgCount = 0
-  let lastStatus = ''
   let lastTermSig = ''
+  let terminalSeenAt = 0 // first tick we observed a terminal status (C2.1 delivery grace)
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -99,13 +99,23 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             commitSha: current.commitSha, changedFiles: current.changedFiles,
           })
 
-          if (current.status !== lastStatus && TERMINAL.has(current.status)) {
-            send('done', { status: current.status, output: current.output })
-            isClosed = true
-            if (intervalId) { clearInterval(intervalId); intervalId = null }
-            try { controller.close() } catch { /* already closed */ }
+          // Close on terminal status — but for code-runs bound to a repo, keep the
+          // stream open until the teardown writes the delivery (diff/PR) so it arrives
+          // live without a manual reload (Sub-projeto C — C2.1). A grace cap avoids a
+          // hung stream if the teardown never settles. The `status` event above already
+          // ships changedFiles/prUrl each tick, so no extra event is needed.
+          if (TERMINAL.has(current.status)) {
+            if (terminalSeenAt === 0) terminalSeenAt = Date.now()
+            const awaitingDelivery =
+              current.mode === 'code' && !!current.repoUrl && current.status === 'completed' &&
+              current.changedFiles === null && !current.prUrl && !current.error
+            if (!awaitingDelivery || Date.now() - terminalSeenAt > 45_000) {
+              send('done', { status: current.status, output: current.output })
+              isClosed = true
+              if (intervalId) { clearInterval(intervalId); intervalId = null }
+              try { controller.close() } catch { /* already closed */ }
+            }
           }
-          lastStatus = current.status
         } catch (err) {
           pollErrors++
           console.error('Error polling team run:', err)

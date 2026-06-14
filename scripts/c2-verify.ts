@@ -6,6 +6,9 @@ import {
   splitUnifiedDiff, isBinaryDiff, capPatch, attachDiffs, commitAndPush,
   type ChangedFile,
 } from '../src/lib/git/repo-lifecycle'
+import { createCodeChatFn } from '../src/lib/orchestration/team/code-agent'
+import type { ChatFn } from '../src/lib/orchestration/team/team-types'
+import type { TeamStore } from '../src/lib/orchestration/team/team-store'
 import type { Sandbox, CommandResult, ExecOptions } from '../src/lib/sandbox/types'
 
 let passed = 0
@@ -222,6 +225,49 @@ async function main() {
     assert.deepEqual(res.changedFiles, [{ status: 'M', path: 'src/a.ts' }])
     assert.ok(sbx.calls.some(c => c.cmd.includes('push origin')), 'still pushes')
     ok('diff capture failure → name-only list kept, delivery intact (best-effort)')
+  }
+
+  // ── code-agent live partial persist (C2.1) ──────────────────────
+  console.log('code-agent live persist (C2.1)')
+  function scriptedChat(responses: string[]): ChatFn {
+    let n = 0
+    return async () => {
+      const msg = responses[Math.min(n, responses.length - 1)]; n++
+      return { message: msg, model: 'fake', usage: { total_tokens: 1 } }
+    }
+  }
+  {
+    // store + taskId → persists partial artifacts after EACH command (growing)
+    const sbx = scriptedSandbox(cmd => ({ stdout: `out:${cmd}` }))
+    const calls: { taskId: string; commands: number }[] = []
+    const fakeStore = {
+      updateTask: async (taskId: string, data: { artifacts?: { commands: unknown[] } }) => {
+        if (data.artifacts) calls.push({ taskId, commands: data.artifacts.commands.length })
+      },
+    } as unknown as TeamStore
+    const codeChat = createCodeChatFn(sbx, scriptedChat(['@RUN ls', '@RUN pwd', '@DONE ok']), { store: fakeStore })
+    const res = await codeChat('a', [{ role: 'user', content: 'faça' }], undefined, { taskId: 't1' })
+    assert.deepEqual(calls, [{ taskId: 't1', commands: 1 }, { taskId: 't1', commands: 2 }])
+    assert.equal(res.artifacts?.commands.length, 2)
+    ok('store+taskId → persists partial artifacts after each command (growing)')
+  }
+  {
+    // store present but NO taskId → no mid-loop persist
+    const sbx = scriptedSandbox(() => ({ stdout: 'x' }))
+    const calls: number[] = []
+    const fakeStore = { updateTask: async () => { calls.push(1) } } as unknown as TeamStore
+    const cc = createCodeChatFn(sbx, scriptedChat(['@RUN ls', '@DONE ok']), { store: fakeStore })
+    await cc('a', [{ role: 'user', content: 'x' }]) // no chatOptions.taskId
+    assert.equal(calls.length, 0)
+    ok('store but no taskId → no mid-loop persist (chat-run / batch path intact)')
+  }
+  {
+    // taskId present but NO store → no mid-loop persist, batch result still complete (C0)
+    const sbx = scriptedSandbox(() => ({ stdout: 'x' }))
+    const cc = createCodeChatFn(sbx, scriptedChat(['@RUN ls', '@DONE ok']))
+    const r = await cc('a', [{ role: 'user', content: 'x' }], undefined, { taskId: 't1' })
+    assert.equal(r.artifacts?.commands.length, 1)
+    ok('taskId but no store → C0 batch behavior unchanged')
   }
 
   console.log(`\n✅ all ${passed} assertions passed`)

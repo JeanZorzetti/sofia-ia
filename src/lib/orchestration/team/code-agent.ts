@@ -7,6 +7,7 @@
 // with a fake sandbox and a scripted chat function.
 
 import type { ChatFn, ChatMessageInput, ChatResult, CommandRun } from './team-types'
+import type { TeamStore } from './team-store'
 import type { Sandbox } from '../../sandbox/types'
 import { parseCodeActions } from './code-protocol'
 
@@ -41,9 +42,13 @@ export interface CodeChatFnOptions {
   /** Working directory for every command — the cloned repo dir on code-runs (C1).
    *  Undefined keeps the sandbox default cwd (C0 behavior). */
   workdir?: string
+  /** Live streaming (C2.1): when provided (with options.taskId per call), the agent
+   *  persists partial artifacts after each command so the terminal updates mid-task.
+   *  Undefined keeps the batch-only behavior (artifacts written by the coordinator). */
+  store?: TeamStore
 }
 
-const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir'> = {
+const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store'> = {
   maxSteps: 8,
   perCommandTimeoutMs: 120_000,
   maxOutputChars: 4_000,
@@ -89,7 +94,7 @@ export function createCodeChatFn(
   options: CodeChatFnOptions = {},
 ): ChatFn {
   const { maxSteps, perCommandTimeoutMs, maxOutputChars } = { ...DEFAULTS, ...options }
-  const { workdir } = options
+  const { workdir, store } = options
 
   return async (agentId, messages, leadContext, chatOptions) => {
     const working = injectProtocol(messages, Boolean(workdir))
@@ -120,6 +125,12 @@ export function createCodeChatFn(
         }
         commands.push(entry)
         observations.push(formatObservation(entry, maxOutputChars))
+        // C2.1: stream the terminal live — persist partial artifacts after each command
+        // so the SSE poll (signature over artifacts size) ships it within ~1s. Best-effort:
+        // a persist failure must never break the run (the coordinator writes the final batch).
+        if (store && chatOptions?.taskId) {
+          try { await store.updateTask(chatOptions.taskId, { artifacts: { commands: [...commands] } }) } catch { /* live-stream only */ }
+        }
       }
 
       // Finished: explicit @DONE, or a turn with no commands (the agent just answered).
