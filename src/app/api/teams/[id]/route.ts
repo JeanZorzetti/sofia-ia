@@ -47,9 +47,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const rosterError = validateRoster(members)
       if (rosterError) return NextResponse.json({ success: false, error: rosterError }, { status: 400 })
       const agentIds = [...new Set(members.map(m => m.agentId))]
-      const owned = await prisma.agent.count({ where: { id: { in: agentIds }, createdBy: auth.id } })
-      if (owned !== agentIds.length) {
-        return NextResponse.json({ success: false, error: 'Algum agente não pertence a você' }, { status: 400 })
+      const existing = await prisma.agent.count({ where: { id: { in: agentIds } } })
+      if (existing !== agentIds.length) {
+        return NextResponse.json({ success: false, error: 'Algum agente selecionado não existe' }, { status: 400 })
       }
       await prisma.$transaction([
         prisma.teamMember.deleteMany({ where: { teamId: id } }),
