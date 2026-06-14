@@ -28,29 +28,46 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const body = await request.json()
     const mission = (body?.mission as string | undefined)?.trim()
     if (!mission) return NextResponse.json({ success: false, error: 'Missão é obrigatória' }, { status: 400 })
+    const mode = body?.mode === 'code' ? 'code' : 'chat'
 
-    const run = await prisma.teamRun.create({ data: { teamId: id, mission, status: 'pending' } })
+    const run = await prisma.teamRun.create({ data: { teamId: id, mission, status: 'pending', mode } })
 
-    // Execute the coordinator AFTER the response is sent. The coordinator writes
-    // every board/message/status transition to the DB, so the SSE stream reflects
-    // progress live. No durable queue yet — orphaned runs (process restart) are
-    // reconciled by TTL on read (see team-reconcile.ts).
-    after(async () => {
+    if (mode === 'code') {
+      // Code-runs go through a DURABLE queue (BullMQ/Redis) consumed by a separate
+      // worker service — they need a real sandbox and must survive a deploy/restart.
       try {
-        const { runTeam } = await import('@/lib/orchestration/team/team-coordinator')
-        const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
-        const { chatWithAgent } = await import('@/lib/ai/groq')
-        await runTeam(run.id, {
-          store: createPrismaTeamStore(),
-          chat: (agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts),
-        })
+        const { enqueueCodeRun } = await import('@/lib/queue/code-run-queue')
+        await enqueueCodeRun(run.id)
       } catch (err) {
-        // runTeam already persisted status='failed' on throw; this is a log net.
-        console.error('[Teams] background run failed:', err)
+        await prisma.teamRun.update({
+          where: { id: run.id },
+          data: { status: 'failed', error: 'Fila indisponível (REDIS_URL não configurada?)' },
+        })
+        console.error('[Teams] enqueue code-run failed:', err)
+        return NextResponse.json({ success: false, error: 'Fila de code-runs indisponível' }, { status: 503 })
       }
-    })
+    } else {
+      // Chat-runs keep the proven in-process path: execute the coordinator AFTER the
+      // response is sent. The coordinator writes every board/message/status transition
+      // to the DB, so the SSE stream reflects progress live. Orphaned runs (process
+      // restart) are reconciled by TTL on read (see team-reconcile.ts).
+      after(async () => {
+        try {
+          const { runTeam } = await import('@/lib/orchestration/team/team-coordinator')
+          const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
+          const { chatWithAgent } = await import('@/lib/ai/groq')
+          await runTeam(run.id, {
+            store: createPrismaTeamStore(),
+            chat: (agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts),
+          })
+        } catch (err) {
+          // runTeam already persisted status='failed' on throw; this is a log net.
+          console.error('[Teams] background run failed:', err)
+        }
+      })
+    }
 
-    return NextResponse.json({ success: true, data: { runId: run.id, status: 'pending' } }, { status: 202 })
+    return NextResponse.json({ success: true, data: { runId: run.id, status: 'pending', mode } }, { status: 202 })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Failed to run team'
     console.error('Error running team:', error)

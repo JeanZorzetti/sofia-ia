@@ -57,10 +57,26 @@ export interface ReviewVerdict {
   reason?: string
 }
 
+/** One shell command executed inside a sandbox during a code-run (Sub-projeto C). */
+export interface CommandRun {
+  cmd: string
+  stdout: string
+  stderr: string
+  exitCode: number
+  ms: number
+}
+
+/** Side-channel artifacts a code-agent turn produces (logs now; diff/PR in later slices). */
+export interface CodeArtifacts {
+  commands: CommandRun[]
+}
+
 export interface ChatResult {
   message: string
   model: string
   usage?: { total_tokens?: number } | null
+  /** Present only for code-runs: what the member executed in the sandbox. */
+  artifacts?: CodeArtifacts
 }
 
 export type ChatMessageInput = { role: 'user' | 'assistant' | 'system'; content: string }

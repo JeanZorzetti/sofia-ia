@@ -119,6 +119,8 @@ export async function runTeam(runId: string, deps: RunTeamDeps): Promise<void> {
         track(out)
         await store.updateTask(t.id, {
           status: reviewer ? 'review' : 'done', result: out.message, reviewNote: null,
+          // code-runs carry sandbox command logs; chat-runs leave this undefined
+          artifacts: out.artifacts,
         })
         await store.addMessage(runId, {
           fromMemberId: worker.id, toMemberId: reviewer?.id ?? lead.id,

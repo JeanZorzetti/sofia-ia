@@ -3,9 +3,10 @@
 // The coordinator depends ONLY on the TeamStore interface, so it can be
 // driven by an in-memory store in tests (no DB mock needed).
 
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import type {
-  MemberCtx, TaskRow, MessageRow, TaskStatus, RunStatus, MessageKind, TeamRole,
+  MemberCtx, TaskRow, MessageRow, TaskStatus, RunStatus, MessageKind, TeamRole, CodeArtifacts,
 } from './team-types'
 
 export interface LoadedRun {
@@ -30,6 +31,8 @@ export interface UpdateTaskInput {
   reviewNote?: string | null
   retryCount?: number
   assigneeId?: string | null
+  /** Code-run side-channel (commands executed in the sandbox). */
+  artifacts?: CodeArtifacts
 }
 
 export interface AddMessageInput {
@@ -160,7 +163,18 @@ export function createPrismaTeamStore(): TeamStore {
     },
 
     async updateTask(taskId, data) {
-      await prisma.teamTask.update({ where: { id: taskId }, data })
+      // `artifacts` is a Prisma Json column; only touch it when explicitly provided
+      // (undefined = leave as-is, so chat-runs never write the field).
+      const { artifacts, ...rest } = data
+      await prisma.teamTask.update({
+        where: { id: taskId },
+        data: {
+          ...rest,
+          ...(artifacts !== undefined
+            ? { artifacts: artifacts as unknown as Prisma.InputJsonValue }
+            : {}),
+        },
+      })
     },
 
     async listMessages(runId) {

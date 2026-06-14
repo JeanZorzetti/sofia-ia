@@ -1355,6 +1355,8 @@ model TeamRun {
   teamId        String    @map("team_id") @db.Uuid
   mission       String    @db.Text
   status        String    @default("pending") @db.VarChar(20)
+  mode          String    @default("chat") @db.VarChar(20) // 'chat' | 'code' (Sub-projeto C)
+  sandboxId     String?   @map("sandbox_id") @db.VarChar(255) // code-runs: the run's sandbox id
   output        String?   @db.Text
   turnsUsed     Int?      @map("turns_used")
   tokensUsed    Int?      @map("tokens_used")
@@ -1384,6 +1386,7 @@ model TeamTask {
   assigneeId String?  @map("assignee_id") @db.Uuid
   result     String?  @db.Text
   reviewNote String?  @map("review_note") @db.Text
+  artifacts  Json?    // code-runs: { commands: [{cmd,stdout,stderr,exitCode,ms}] } (Sub-projeto C)
   retryCount Int      @default(0) @map("retry_count")
   position   Int      @default(0)
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()

@@ -24,6 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   let lastTaskSig = ''
   let lastMsgCount = 0
   let lastStatus = ''
+  let lastTermSig = ''
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -61,6 +62,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               })),
             })
             lastTaskSig = sig
+          }
+
+          // Terminal artifacts (code-runs only): command transcripts per task.
+          const termSig = current.tasks
+            .map(t => `${t.id}:${t.artifacts ? JSON.stringify(t.artifacts).length : 0}`)
+            .join('|')
+          if (termSig !== lastTermSig) {
+            const withArtifacts = current.tasks.filter(t => t.artifacts)
+            if (withArtifacts.length > 0) {
+              send('terminal', {
+                tasks: withArtifacts.map(t => ({ taskId: t.id, title: t.title, artifacts: t.artifacts })),
+              })
+            }
+            lastTermSig = termSig
           }
 
           // New messages

@@ -20,7 +20,8 @@
     "test:e2e:debug": "playwright test --debug",
     "tsc:electron": "tsc -p tsconfig.electron.json",
     "dev:desktop": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && npm run tsc:electron && electron .\"",
-    "build:desktop": "npm run build && npm run tsc:electron && electron-builder"
+    "build:desktop": "npm run build && npm run tsc:electron && electron-builder",
+    "worker": "tsx src/worker/index.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -50,9 +51,11 @@
     "@upstash/redis": "^1.36.2",
     "@xyflow/react": "^12.10.1",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^5.78.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "e2b": "^2.29.1",
     "framer-motion": "^12.34.0",
     "gray-matter": "^4.0.3",
     "groq-sdk": "^0.37.0",
@@ -80,6 +83,7 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-motion": "^1.1.1",
+    "tsx": "^4.21.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -104,7 +108,6 @@
     "jest-environment-jsdom": "^29.7.0",
     "tailwindcss": "^4",
     "tailwindcss-animate": "^1.0.7",
-    "tsx": "^4.21.0",
     "typescript": "^5",
     "wait-on": "^9.0.4"
   }

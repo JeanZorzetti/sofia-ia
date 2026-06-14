@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic'
 import {
   ArrowLeft, Crown, Hammer, ShieldCheck, Cpu, Send, Loader2, Rocket,
   ClipboardList, MessageSquare, CheckCircle2, XCircle, History, Sparkles,
-  Clock, Coins, Repeat, Network,
+  Clock, Coins, Repeat, Network, Terminal as TerminalIcon, MessageCircle, Code2,
 } from 'lucide-react'
 
 // ReactFlow must be client-only (no SSR) to avoid hydration/measure issues.
@@ -19,6 +19,9 @@ interface RunLite { id: string; status: string; mission: string; createdAt: stri
 interface BoardTask { id: string; title: string; status: string; assigneeId: string | null; retryCount: number; reviewNote: string | null; resultPreview: string }
 interface Msg { id: string; fromMemberId: string | null; toMemberId: string | null; kind: string; summary: string | null; content: string; taskId: string | null }
 interface Metrics { turnsUsed: number | null; tokensUsed: number | null; estimatedCost: number | null; durationMs: number | null }
+interface CommandRun { cmd: string; stdout: string; stderr: string; exitCode: number; ms: number }
+interface TerminalTask { taskId: string; title: string; artifacts: { commands: CommandRun[] } }
+type RunMode = 'chat' | 'code'
 
 const COLUMNS: { key: string; label: string; dot: string }[] = [
   { key: 'todo', label: 'A fazer', dot: 'bg-white/30' },
@@ -52,8 +55,10 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [team, setTeam] = useState<Team | null>(null)
   const [history, setHistory] = useState<RunLite[]>([])
   const [mission, setMission] = useState('')
+  const [mode, setMode] = useState<RunMode>('chat')
   const [runId, setRunId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<BoardTask[]>([])
+  const [terminal, setTerminal] = useState<TerminalTask[]>([])
   const [messages, setMessages] = useState<Msg[]>([])
   const [status, setStatus] = useState<string>('')
   const [output, setOutput] = useState<string | null>(null)
@@ -86,12 +91,13 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
 
   function openStream(rid: string, assumeRunning: boolean) {
     esRef.current?.close()
-    setTasks([]); setMessages([]); setOutput(null)
+    setTasks([]); setMessages([]); setOutput(null); setTerminal([])
     setMetrics({ turnsUsed: null, tokensUsed: null, estimatedCost: null, durationMs: null })
     setRunning(assumeRunning)
     const es = new EventSource(`/api/teams/${teamId}/runs/${rid}/stream`)
     esRef.current = es
     es.addEventListener('board', e => setTasks(JSON.parse((e as MessageEvent).data).tasks))
+    es.addEventListener('terminal', e => setTerminal(JSON.parse((e as MessageEvent).data).tasks))
     es.addEventListener('message', e => setMessages(prev => [...prev, JSON.parse((e as MessageEvent).data)]))
     es.addEventListener('status', e => {
       const d = JSON.parse((e as MessageEvent).data)
@@ -108,7 +114,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
     try {
       const res = await fetch(`/api/teams/${teamId}/run`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mission }),
+        body: JSON.stringify({ mission, mode }),
       })
       const json = await res.json()
       if (json.success && json.data?.runId) {
@@ -173,6 +179,30 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
 
       {/* Mission composer */}
       <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-3">
+        {/* Run mode: chat (LLM only) vs code (runs in a sandbox — Sub-projeto C) */}
+        <div className="inline-flex rounded-lg border border-white/10 bg-white/5 p-0.5 text-xs">
+          {([
+            { key: 'chat', label: 'Chat', Icon: MessageCircle },
+            { key: 'code', label: 'Código', Icon: Code2 },
+          ] as const).map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              type="button"
+              disabled={running}
+              onClick={() => setMode(key)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-colors disabled:opacity-50 ${
+                mode === key ? 'bg-blue-500/20 text-blue-300' : 'text-white/50 hover:text-white/80'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" /> {label}
+            </button>
+          ))}
+          {mode === 'code' && (
+            <span className="inline-flex items-center gap-1 px-2 text-[11px] text-white/40">
+              <TerminalIcon className="h-3 w-3" /> roda em sandbox isolado
+            </span>
+          )}
+        </div>
         <textarea
           className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 resize-y"
           rows={3}
@@ -246,6 +276,36 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           )
         })}
       </div>
+
+      {/* Terminal (code-runs only): per-task sandbox command transcripts */}
+      {terminal.length > 0 && (
+        <div className="rounded-xl border border-white/10 bg-[#0a0e14] p-4">
+          <h2 className="font-semibold text-white text-sm mb-3 flex items-center gap-2">
+            <TerminalIcon className="h-4 w-4 text-emerald-400" /> Terminal do sandbox
+          </h2>
+          <div className="space-y-4 max-h-[480px] overflow-y-auto custom-scrollbar pr-1 font-mono text-[12px] leading-relaxed">
+            {terminal.map(t => (
+              <div key={t.taskId}>
+                <div className="text-white/40 text-[11px] uppercase tracking-wider mb-1">{t.title}</div>
+                {t.artifacts.commands.length === 0 && <div className="text-white/30">— nenhum comando —</div>}
+                {t.artifacts.commands.map((c, i) => (
+                  <div key={i} className="mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-emerald-400">$</span>
+                      <span className="text-white/90 break-all">{c.cmd}</span>
+                      <span className={`ml-auto text-[10px] ${c.exitCode === 0 ? 'text-white/30' : 'text-red-400'}`}>
+                        exit {c.exitCode} · {c.ms}ms
+                      </span>
+                    </div>
+                    {c.stdout.trim() && <pre className="whitespace-pre-wrap break-words text-white/60 mt-0.5">{c.stdout}</pre>}
+                    {c.stderr.trim() && <pre className="whitespace-pre-wrap break-words text-red-400/70 mt-0.5">{c.stderr}</pre>}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Activity feed + history */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
