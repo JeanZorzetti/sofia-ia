@@ -84,7 +84,7 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
 
   try {
     const result = await commitAndPush(sandbox, {
-      repoUrl, token, branch, workdir: WORKDIR, message: finished.output || finished.mission,
+      repoUrl, token, branch, base: effectiveBase, workdir: WORKDIR, message: finished.output || finished.mission,
     })
     if (!result.hasChanges) {
       await prisma.teamRun

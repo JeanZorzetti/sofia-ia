@@ -33,6 +33,7 @@ export interface CommitPushInput {
   repoUrl: string
   token: string
   branch: string
+  base: string // effective base branch, to diff/count the delivery against (origin/<base>)
   workdir: string
   message: string // commit subject (will be reduced to a safe single line)
 }
@@ -193,25 +194,35 @@ export async function setupRepo(sandbox: Sandbox, input: SetupRepoInput): Promis
   return { base: effectiveBase }
 }
 
-/** Stage everything, commit (if there are changes), push the branch. */
+/**
+ * Stage + commit any uncommitted work, then push the branch IF it has commits
+ * ahead of the base. Robust to the agent having already committed inside the
+ * sandbox (working tree clean but branch ahead) — the delivery is decided by
+ * `origin/<base>..HEAD`, not by a dirty working tree.
+ */
 export async function commitAndPush(sandbox: Sandbox, input: CommitPushInput): Promise<CommitPushResult> {
-  const { token, branch, workdir } = input
+  const { token, branch, base, workdir } = input
   const auth = authHeaderArgs(token)
   const wd = shQuote(workdir)
+  const baseRef = `origin/${base}`
 
   await run(sandbox, `git -C ${wd} add -A`, 'add')
 
+  // Commit uncommitted work. (If the agent already committed, the tree is clean → skip.)
   const status = await run(sandbox, `git -C ${wd} status --porcelain`, 'status')
-  if (!status.trim()) {
+  if (status.trim()) {
+    const subject = sanitizeCommitSubject(input.message)
+    await run(sandbox, `git -C ${wd} commit -m ${shQuote(subject)}`, 'commit')
+  }
+
+  // Anything to deliver? = commits on this branch ahead of the base.
+  const ahead = (await run(sandbox, `git -C ${wd} rev-list --count ${shQuote(`${baseRef}..HEAD`)}`, 'rev-list')).trim()
+  if (ahead === '0' || ahead === '') {
     return { hasChanges: false, commitSha: null, changedFiles: [] }
   }
 
-  const subject = sanitizeCommitSubject(input.message)
-  await run(sandbox, `git -C ${wd} commit -m ${shQuote(subject)}`, 'commit')
-
-  const nameStatus = await run(sandbox, `git -C ${wd} show --pretty=format: --name-status HEAD`, 'show')
+  const nameStatus = await run(sandbox, `git -C ${wd} diff --name-status ${shQuote(baseRef)} HEAD`, 'diff')
   const changedFiles = parseChangedFiles(nameStatus)
-
   const sha = (await run(sandbox, `git -C ${wd} rev-parse HEAD`, 'rev-parse')).trim()
 
   await run(sandbox, `git -C ${wd} ${auth} push origin ${shQuote(branch)}`, 'push')

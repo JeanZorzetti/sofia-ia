@@ -157,33 +157,59 @@ async function main() {
   // ── commitAndPush ────────────────────────────────────────────────
   console.log('commitAndPush')
   {
+    // uncommitted work → worker commits, then pushes
     const sbx = scriptedSandbox(cmd => {
       if (cmd.includes('status --porcelain')) return { stdout: ' M src/a.ts\n?? src/b.ts' }
-      if (cmd.includes('show --pretty')) return { stdout: 'M\tsrc/a.ts\nA\tsrc/b.ts' }
+      if (cmd.includes('rev-list --count')) return { stdout: '1\n' }
+      if (cmd.includes('diff --name-status')) return { stdout: 'M\tsrc/a.ts\nA\tsrc/b.ts' }
       if (cmd.includes('rev-parse')) return { stdout: 'abc1234def\n' }
       return {}
     })
     const res = await commitAndPush(sbx, {
       repoUrl: 'owner/repo', token: 'ghp_TEST', branch: 'polaris/run-r1',
-      workdir: '/home/user/repo', message: 'fazer X\ncom detalhes',
+      base: 'main', workdir: '/home/user/repo', message: 'fazer X\ncom detalhes',
     })
     assert.equal(res.hasChanges, true)
     assert.equal(res.commitSha, 'abc1234def')
     assert.deepEqual(res.changedFiles, [{ status: 'M', path: 'src/a.ts' }, { status: 'A', path: 'src/b.ts' }])
+    assert.ok(sbx.calls.some(c => c.cmd.includes('commit -m')), 'commits the dirty tree')
     const pushCall = sbx.calls.find(c => c.cmd.includes('push origin'))
     assert.ok(pushCall && pushCall.cmd.includes('http.extraHeader'), 'push uses header auth')
     assert.ok(!pushCall!.cmd.includes('ghp_TEST'), 'token not raw in push')
-    ok('stages, commits, parses diff + sha, pushes via header auth')
+    ok('dirty tree → commits, diffs vs base, pushes via header auth')
   }
   {
-    const sbx = scriptedSandbox(cmd => (cmd.includes('status --porcelain') ? { stdout: '' } : {}))
+    // agent ALREADY committed → tree clean but branch ahead → still pushes
+    const sbx = scriptedSandbox(cmd => {
+      if (cmd.includes('status --porcelain')) return { stdout: '' } // clean
+      if (cmd.includes('rev-list --count')) return { stdout: '1\n' } // 1 commit ahead
+      if (cmd.includes('diff --name-status')) return { stdout: 'A\thello.txt' }
+      if (cmd.includes('rev-parse')) return { stdout: 'deadbeef\n' }
+      return {}
+    })
     const res = await commitAndPush(sbx, {
-      repoUrl: 'owner/repo', token: 't', branch: 'b', workdir: '/w', message: 'x',
+      repoUrl: 'owner/repo', token: 't', branch: 'b', base: 'main', workdir: '/w', message: 'x',
+    })
+    assert.equal(res.hasChanges, true)
+    assert.deepEqual(res.changedFiles, [{ status: 'A', path: 'hello.txt' }])
+    assert.ok(!sbx.calls.some(c => c.cmd.includes('commit -m')), 'no extra commit when clean')
+    assert.ok(sbx.calls.some(c => c.cmd.includes('push origin')), 'pushes the agent commit')
+    ok('agent already committed (clean tree, ahead) → still pushes')
+  }
+  {
+    // nothing committed, nothing dirty → no delivery
+    const sbx = scriptedSandbox(cmd => {
+      if (cmd.includes('status --porcelain')) return { stdout: '' }
+      if (cmd.includes('rev-list --count')) return { stdout: '0\n' }
+      return {}
+    })
+    const res = await commitAndPush(sbx, {
+      repoUrl: 'owner/repo', token: 't', branch: 'b', base: 'main', workdir: '/w', message: 'x',
     })
     assert.equal(res.hasChanges, false)
     assert.equal(res.commitSha, null)
-    assert.ok(!sbx.calls.some(c => c.cmd.includes('commit') || c.cmd.includes('push')), 'no commit/push when clean')
-    ok('no changes → no commit/push, hasChanges=false')
+    assert.ok(!sbx.calls.some(c => c.cmd.includes('push')), 'no push when nothing ahead')
+    ok('no changes (0 ahead) → no push, hasChanges=false')
   }
 
   // ── openPullRequest ──────────────────────────────────────────────
