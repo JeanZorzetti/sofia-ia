@@ -85,6 +85,10 @@ export type ChatMessageInput = { role: 'user' | 'assistant' | 'system'; content:
 export interface ChatOptions {
   model?: string | null
   effort?: string | null
+  /** Code-runs: force a plain-text completion (no provider-side filesystem tools /
+   *  code-block writing). The code-agent executes everything in the sandbox via
+   *  @RUN, so a provider running its own tools on the worker FS would be wrong. */
+  rawText?: boolean
 }
 
 /** Injectable execution primitive (real impl: chatWithAgent). */

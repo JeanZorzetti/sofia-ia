@@ -249,24 +249,28 @@ async function main() {
 
   // ── code-agent workdir (C1 wiring) ───────────────────────────────
   console.log('createCodeChatFn workdir')
-  function scriptedChat(responses: string[]): ChatFn & { seen: ChatMessageInput[][] } {
+  function scriptedChat(responses: string[]): ChatFn & { seen: ChatMessageInput[][]; opts: unknown[] } {
     let n = 0
-    const fn = (async (_a, messages) => {
+    const fn = (async (_a, messages, _ctx, o) => {
       fn.seen.push(messages.map(m => ({ ...m })))
+      fn.opts.push(o)
       const msg = responses[Math.min(n, responses.length - 1)]; n++
       return { message: msg, model: 'fake', usage: { total_tokens: 1 } }
-    }) as ChatFn & { seen: ChatMessageInput[][] }
+    }) as ChatFn & { seen: ChatMessageInput[][]; opts: unknown[] }
     fn.seen = []
+    fn.opts = []
     return fn
   }
   {
     const sbx = scriptedSandbox()
     const chat = scriptedChat(['@RUN ls', '@DONE ok'])
     const codeChat = createCodeChatFn(sbx, chat, { workdir: '/home/user/repo' })
-    await codeChat('a', [{ role: 'user', content: 'faça' }])
+    await codeChat('a', [{ role: 'user', content: 'faça' }], undefined, { model: 'qwen/qwen3-coder:free' })
     assert.equal(sbx.calls[0].opts?.cwd, '/home/user/repo')
     assert.ok(chat.seen[0][0].content.includes('REPOSITÓRIO'), 'repo-context note injected')
-    ok('passes workdir as cwd + injects repo-context note')
+    assert.equal((chat.opts[0] as { rawText?: boolean }).rawText, true, 'rawText forced for code-runs')
+    assert.equal((chat.opts[0] as { model?: string }).model, 'qwen/qwen3-coder:free', 'member model preserved')
+    ok('passes workdir as cwd + repo-context note + rawText (preserves model)')
   }
   {
     const sbx = scriptedSandbox()

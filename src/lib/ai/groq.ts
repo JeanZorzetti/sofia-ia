@@ -105,7 +105,7 @@ export async function chatWithAgent(
   agentId: string,
   messages: ChatMessage[],
   leadContext?: Record<string, any>,
-  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null }
+  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null; rawText?: boolean }
 ) {
   const { prisma } = await import('@/lib/prisma')
 
@@ -367,8 +367,10 @@ export async function chatWithAgent(
       const { getOpenRouterClient } = await import('@/lib/openrouter')
 
       // Feature Flag: Enable Tools for Coder models (Qwen, DeepSeek Coder, etc)
+      // rawText (code-runs) forces a plain completion — the code-team executes in the
+      // sandbox via @RUN, so provider-side FS tools / code-block writes would be wrong.
       const isCoderModel = agent.model.includes('coder') || agent.model.includes('qwen')
-      let toolsEnabled = isCoderModel
+      let toolsEnabled = isCoderModel && !options?.rawText
 
       // HYBRID APPROACH: read-only native tools + code via markdown blocks in text
       let currentSystemPrompt = systemPrompt

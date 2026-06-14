@@ -98,8 +98,13 @@ export function createCodeChatFn(
     let lastModel = chatOptions?.model ?? ''
     let finalMessage = ''
 
+    // Code-runs always want plain text (@RUN/@DONE) — never the provider's own
+    // filesystem tools / code-block writing (those would touch the worker FS, not
+    // the sandbox). Force rawText regardless of the member's model/provider.
+    const codeChatOptions = { ...chatOptions, rawText: true }
+
     for (let step = 0; step < maxSteps; step++) {
-      const out = await baseChat(agentId, working, leadContext, chatOptions)
+      const out = await baseChat(agentId, working, leadContext, codeChatOptions)
       totalTokens += out.usage?.total_tokens ?? 0
       lastModel = out.model || lastModel
 
