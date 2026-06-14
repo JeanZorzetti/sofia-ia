@@ -13,6 +13,9 @@ import {
 
 // ReactFlow must be client-only (no SSR) to avoid hydration/measure issues.
 const TeamGraph = dynamic(() => import('./TeamGraph'), { ssr: false })
+// xterm.js + diff2html are DOM-only → client-only (Sub-projeto C — C2).
+const SandboxTerminal = dynamic(() => import('./SandboxTerminal'), { ssr: false })
+const DiffViewer = dynamic(() => import('./DiffViewer'), { ssr: false })
 
 interface Member { id: string; role: string; model: string | null; effort: string | null; agent: { id: string; name: string } }
 interface Team { id: string; name: string; members: Member[] }
@@ -22,7 +25,7 @@ interface Msg { id: string; fromMemberId: string | null; toMemberId: string | nu
 interface Metrics { turnsUsed: number | null; tokensUsed: number | null; estimatedCost: number | null; durationMs: number | null }
 interface CommandRun { cmd: string; stdout: string; stderr: string; exitCode: number; ms: number }
 interface TerminalTask { taskId: string; title: string; artifacts: { commands: CommandRun[] } }
-interface ChangedFile { path: string; status: string }
+interface ChangedFile { path: string; status: string; patch?: string; truncated?: boolean; binary?: boolean }
 interface Delivery { repoUrl: string | null; branch: string | null; prUrl: string | null; commitSha: string | null; changedFiles: ChangedFile[] }
 type RunMode = 'chat' | 'code'
 
@@ -291,35 +294,8 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
         })}
       </div>
 
-      {/* Terminal (code-runs only): per-task sandbox command transcripts */}
-      {terminal.length > 0 && (
-        <div className="rounded-xl border border-white/10 bg-[#0a0e14] p-4">
-          <h2 className="font-semibold text-white text-sm mb-3 flex items-center gap-2">
-            <TerminalIcon className="h-4 w-4 text-emerald-400" /> Terminal do sandbox
-          </h2>
-          <div className="space-y-4 max-h-[480px] overflow-y-auto custom-scrollbar pr-1 font-mono text-[12px] leading-relaxed">
-            {terminal.map(t => (
-              <div key={t.taskId}>
-                <div className="text-white/40 text-[11px] uppercase tracking-wider mb-1">{t.title}</div>
-                {t.artifacts.commands.length === 0 && <div className="text-white/30">— nenhum comando —</div>}
-                {t.artifacts.commands.map((c, i) => (
-                  <div key={i} className="mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-emerald-400">$</span>
-                      <span className="text-white/90 break-all">{c.cmd}</span>
-                      <span className={`ml-auto text-[10px] ${c.exitCode === 0 ? 'text-white/30' : 'text-red-400'}`}>
-                        exit {c.exitCode} · {c.ms}ms
-                      </span>
-                    </div>
-                    {c.stdout.trim() && <pre className="whitespace-pre-wrap break-words text-white/60 mt-0.5">{c.stdout}</pre>}
-                    {c.stderr.trim() && <pre className="whitespace-pre-wrap break-words text-red-400/70 mt-0.5">{c.stderr}</pre>}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Terminal (code-runs only): per-task sandbox command transcripts — xterm.js (C2) */}
+      {terminal.length > 0 && <SandboxTerminal tasks={terminal} />}
 
       {/* Code delivery (code-runs bound to a repo — Sub-projeto C C1): branch + PR + changed files */}
       {(delivery.branch || delivery.prUrl || delivery.changedFiles.length > 0) && (
@@ -368,6 +344,9 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           )}
         </div>
       )}
+
+      {/* Diff viewer (code-runs — Sub-projeto C C2): per-file patches via diff2html */}
+      {delivery.changedFiles.some(f => f.patch) && <DiffViewer changedFiles={delivery.changedFiles} />}
 
       {/* Activity feed + history */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

@@ -17,7 +17,17 @@ import type { Sandbox } from '../sandbox/types'
 export interface ChangedFile {
   path: string
   status: string // git status letter: A | M | D | R | C | T | U
+  patch?: string // unified diff for this file (C2), capped; absent when binary/over-cap
+  truncated?: boolean // patch was clipped (per-file cap) OR dropped (total/file-count cap)
+  binary?: boolean // git reported "Binary files ... differ" (no textual patch)
 }
+
+// ── Diff caps (C2) ─────────────────────────────────────────────────────────
+// Keep payloads bounded: the patch rides inside `changedFiles` (Json) → DB + SSE.
+export const DIFF_MAX_LINES_PER_FILE = 500
+export const DIFF_MAX_BYTES_PER_FILE = 64 * 1024 // 64KB
+export const DIFF_MAX_TOTAL_BYTES = 512 * 1024 // 512KB across all files
+export const DIFF_MAX_FILES = 50 // files that get a patch attached
 
 export interface SetupRepoInput {
   repoUrl: string // full URL or `owner/repo` shorthand
@@ -114,6 +124,126 @@ export function parseChangedFiles(stdout: string): ChangedFile[] {
     out.push({ path, status })
   }
   return out
+}
+
+// ── Diff content (C2) ──────────────────────────────────────────────────────
+
+/** Strip the leading `a/` or `b/` that git puts on diff paths. */
+function stripDiffPrefix(p: string): string {
+  return p.startsWith('a/') || p.startsWith('b/') ? p.slice(2) : p
+}
+
+/** Parse the `diff --git a/<x> b/<y>` header into its two paths (heuristic; OK for no-space paths). */
+function headerPaths(line: string): { a: string; b: string } {
+  const rest = line.startsWith('diff --git ') ? line.slice('diff --git '.length) : line
+  const sep = rest.indexOf(' b/')
+  if (sep === -1) return { a: '', b: '' }
+  return {
+    a: rest.slice(0, sep).replace(/^a\//, ''),
+    b: rest.slice(sep + 1).replace(/^b\//, ''),
+  }
+}
+
+/** The key path for a single-file diff chunk — matches what `--name-status` reports. */
+function diffChunkPath(chunkLines: string[]): string | null {
+  let newPath: string | null = null
+  let oldPath: string | null = null
+  for (const l of chunkLines) {
+    if (l.startsWith('+++ ')) {
+      const p = l.slice(4).trim()
+      if (p !== '/dev/null') newPath = stripDiffPrefix(p)
+    } else if (l.startsWith('--- ')) {
+      const p = l.slice(4).trim()
+      if (p !== '/dev/null') oldPath = stripDiffPrefix(p)
+    }
+  }
+  if (newPath) return newPath // add/modify/rename → new path (matches name-status)
+  if (oldPath) return oldPath // deletion → old path
+  const hp = headerPaths(chunkLines[0] ?? '') // binary/no-hunk → parse the header
+  return hp.b || hp.a || null
+}
+
+/** Split a full `git diff` output into per-file unified-diff chunks, keyed by path. */
+export function splitUnifiedDiff(fullPatch: string): Record<string, string> {
+  const out: Record<string, string> = {}
+  if (!fullPatch) return out
+  let current: string[] | null = null
+  const flush = () => {
+    if (!current) return
+    const key = diffChunkPath(current)
+    if (key) out[key] = current.join('\n')
+    current = null
+  }
+  for (const line of fullPatch.split('\n')) {
+    if (line.startsWith('diff --git ')) {
+      flush()
+      current = [line]
+    } else if (current) {
+      current.push(line)
+    }
+  }
+  flush()
+  return out
+}
+
+/** True if a per-file chunk is a binary diff (no textual patch to show). */
+export function isBinaryDiff(patch: string): boolean {
+  return /^Binary files .* differ$/m.test(patch) || patch.includes('GIT binary patch')
+}
+
+/** Clip a single file's patch to a line and byte budget. */
+export function capPatch(patch: string, opts: { maxLines: number; maxBytes: number }): { patch: string; truncated: boolean } {
+  let truncated = false
+  let lines = patch.split('\n')
+  if (lines.length > opts.maxLines) {
+    lines = lines.slice(0, opts.maxLines)
+    truncated = true
+  }
+  let result = lines.join('\n')
+  if (Buffer.byteLength(result, 'utf8') > opts.maxBytes) {
+    result = Buffer.from(result, 'utf8').subarray(0, opts.maxBytes).toString('utf8')
+    truncated = true
+  }
+  return { patch: result, truncated }
+}
+
+export interface DiffCaps {
+  maxLinesPerFile: number
+  maxBytesPerFile: number
+  maxTotalBytes: number
+  maxFiles: number
+}
+
+const DEFAULT_DIFF_CAPS: DiffCaps = {
+  maxLinesPerFile: DIFF_MAX_LINES_PER_FILE,
+  maxBytesPerFile: DIFF_MAX_BYTES_PER_FILE,
+  maxTotalBytes: DIFF_MAX_TOTAL_BYTES,
+  maxFiles: DIFF_MAX_FILES,
+}
+
+/**
+ * Attach per-file unified-diff content to the `--name-status` entries, respecting
+ * the caps. Binary files get `binary:true` (no patch); files beyond the total/count
+ * cap get `truncated:true` (no patch). Pure — unit-tested in scripts/c2-verify.ts.
+ */
+export function attachDiffs(changedFiles: ChangedFile[], fullPatch: string, caps: DiffCaps = DEFAULT_DIFF_CAPS): ChangedFile[] {
+  const byPath = splitUnifiedDiff(fullPatch)
+  let totalBytes = 0
+  let filesWithPatch = 0
+  return changedFiles.map(f => {
+    const raw = byPath[f.path]
+    if (!raw) return f
+    if (isBinaryDiff(raw)) return { ...f, binary: true }
+    if (filesWithPatch >= caps.maxFiles) return { ...f, truncated: true }
+    const capped = capPatch(raw, { maxLines: caps.maxLinesPerFile, maxBytes: caps.maxBytesPerFile })
+    const bytes = Buffer.byteLength(capped.patch, 'utf8')
+    if (totalBytes + bytes > caps.maxTotalBytes) return { ...f, truncated: true }
+    totalBytes += bytes
+    filesWithPatch += 1
+    const entry: ChangedFile = { ...f, patch: capped.patch }
+    if (capped.truncated) entry.truncated = true
+    return entry
+  })
 }
 
 /** Markdown body for the PR: mission + completed tasks + changed files. */
@@ -222,7 +352,16 @@ export async function commitAndPush(sandbox: Sandbox, input: CommitPushInput): P
   }
 
   const nameStatus = await run(sandbox, `git -C ${wd} diff --name-status ${shQuote(baseRef)} HEAD`, 'diff')
-  const changedFiles = parseChangedFiles(nameStatus)
+  let changedFiles = parseChangedFiles(nameStatus)
+
+  // C2: capture the per-file diff CONTENT (best-effort — must never break the delivery).
+  try {
+    const full = await sandbox.exec(`git -C ${wd} diff ${shQuote(baseRef)} HEAD`)
+    if (full.exitCode === 0) changedFiles = attachDiffs(changedFiles, full.stdout)
+  } catch {
+    // keep the name-only list; the PR + delivery still go through
+  }
+
   const sha = (await run(sandbox, `git -C ${wd} rev-parse HEAD`, 'rev-parse')).trim()
 
   await run(sandbox, `git -C ${wd} ${auth} push origin ${shQuote(branch)}`, 'push')
