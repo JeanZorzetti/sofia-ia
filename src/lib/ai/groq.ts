@@ -606,6 +606,10 @@ REGRAS PARA ESCREVER CÓDIGO:
       }
     } catch (error) {
       console.error('OpenRouter generation error:', error)
+      // Code-runs (rawText) must FAIL on provider errors, not "succeed" with the
+      // error text as the deliverable — let the coordinator mark rate_limited/failed
+      // (e.g. a 429 from a free model) instead of a false "completed" with no work.
+      if (options?.rawText) throw error
       return {
         message: `Erro ao gerar resposta com OpenRouter: ${error instanceof Error ? error.message : 'Desconhecido'}. Verifique a chave API.`,
         model: agent.model,

@@ -26,6 +26,9 @@ export async function GET(request: NextRequest) {
             { id: 'deepseek/deepseek-r1', name: 'DeepSeek R1', provider: 'OpenRouter' },
             { id: 'arcee-ai/trinity-large-preview:free', name: 'Trinity Large Preview (Free)', provider: 'OpenRouter' },
             { id: 'qwen/qwen3-coder:free', name: 'Qwen 3 Coder 480B (Free)', provider: 'OpenRouter' },
+            // Cheap PAID OpenRouter models — proper rate limits (no free-pool 429), reliable for code-teams
+            { id: 'openai/gpt-4o-mini', name: 'GPT-4o mini (barato)', provider: 'OpenRouter' },
+            { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat V3 (barato)', provider: 'OpenRouter' },
             // Ollama (self-hosted, OpenAI-compatible) — no Groq rate limits
             { id: 'ollama/qwen2.5:7b-instruct', name: 'Qwen 2.5 7B Instruct (Ollama)', provider: 'Ollama' },
             // Claude Code CLI models — all available via local CLI with --model flag
