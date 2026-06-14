@@ -1,0 +1,30 @@
+# Dockerfile.worker — Polaris Teams · Code Factory worker (Sub-projeto C, C0)
+# Runs the BullMQ worker that executes code-runs in E2B sandboxes.
+# Deploy as a SEPARATE EasyPanel service from the same repo; NO HTTP port.
+#
+# Unlike the app image (Next standalone, which strips src/ + tsx), this keeps the
+# full node_modules + src + tsx so `npm run worker` (tsx src/worker/index.ts) runs.
+
+FROM node:20-alpine AS base
+RUN apk add --no-cache libc6-compat openssl
+
+# ── deps ──────────────────────────────────────────────────────────────────────
+FROM base AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# ── runner ────────────────────────────────────────────────────────────────────
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Generate the Prisma client into this image's node_modules.
+RUN npx prisma generate
+
+# Long-running background worker — no HTTP port to expose.
+CMD ["npm", "run", "worker"]
