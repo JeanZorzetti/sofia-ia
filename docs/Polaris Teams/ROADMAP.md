@@ -86,7 +86,7 @@ Binário `claude-multimodel`, spawn via `child_process`, `node-pty`, `ssh2`, cas
 
 ## Sub-projeto C — Code Factory (vertical nova) 🏭
 
-> **STATUS: ✅ Fatias C0 + C1 ENTREGUES E VALIDADAS EM PROD (2026-06-14).** C1: code-team clonou `JeanZorzetti/repo-de-teste`, criou `hello.txt` e abriu **PR draft #1** (ver bloco C1 abaixo). C0: code-team rodou `echo/cat/ls` num sandbox E2B (dashboard E2B mostrou 1 sandbox subindo e sendo destruído), terminal ao vivo, run `completed` 3.2s/$0.0028, com llama-3.3-70b (Groq). Infra provisionada: Redis durável, E2B (`E2B_API_KEY`), serviço worker EasyPanel (`Dockerfile.worker`, start `npm run worker`), migração aplicada. Spec em `Sub-projeto C - C0 spec.md`. C0 = thread vertical fina: fila durável **BullMQ** (sobre o `ioredis` do stack, só code-runs; chat-runs seguem no `after()`), porta **`SandboxProvider`** + impl **E2B** (`src/lib/sandbox/`), **code-agent ChatFn** (loop `@RUN`/`@DONE` no sandbox, `src/lib/orchestration/team/code-agent.ts` + `code-protocol.ts`, 12/12 testes tsx), **worker** separado (`src/worker/index.ts`, start `npm run worker`), schema `TeamRun.mode/sandboxId` + `TeamTask.artifacts`, evento SSE `terminal` + painel de terminal + toggle Chat/Código na run view. Coordinator (`runTeam`) **intacto**. **Pré-deploy:** provisionar Redis (`REDIS_URL`), conta E2B (`E2B_API_KEY`), serviço worker na EasyPanel, `prisma migrate deploy`. Próximas fatias: **C1** git · **C2** terminal/diff rico · **C3** code-review com diff.
+> **STATUS: ✅ Fatias C0 + C1 + C2 + C2.1 ENTREGUES E VALIDADAS EM PROD (2026-06-14).** C2.1: terminal renderiza comandos **ao vivo durante a run** e o diff/PR aparecem **ao concluir sem reload** (validado em prod). C2: terminal **xterm.js** (cores, por task) + **diff viewer** (`diff2html`, side-by-side/unificado) do patch real — validado em prod (`hello.txt` + edição de `README.md`). C1: code-team clonou `JeanZorzetti/repo-de-teste`, criou `hello.txt` e abriu **PR draft #1** (ver bloco C1 abaixo). C0: code-team rodou `echo/cat/ls` num sandbox E2B (dashboard E2B mostrou 1 sandbox subindo e sendo destruído), terminal ao vivo, run `completed` 3.2s/$0.0028, com llama-3.3-70b (Groq). Infra provisionada: Redis durável, E2B (`E2B_API_KEY`), serviço worker EasyPanel (`Dockerfile.worker`, start `npm run worker`), migração aplicada. Spec em `Sub-projeto C - C0 spec.md`. C0 = thread vertical fina: fila durável **BullMQ** (sobre o `ioredis` do stack, só code-runs; chat-runs seguem no `after()`), porta **`SandboxProvider`** + impl **E2B** (`src/lib/sandbox/`), **code-agent ChatFn** (loop `@RUN`/`@DONE` no sandbox, `src/lib/orchestration/team/code-agent.ts` + `code-protocol.ts`, 12/12 testes tsx), **worker** separado (`src/worker/index.ts`, start `npm run worker`), schema `TeamRun.mode/sandboxId` + `TeamTask.artifacts`, evento SSE `terminal` + painel de terminal + toggle Chat/Código na run view. Coordinator (`runTeam`) **intacto**. **Pré-deploy:** provisionar Redis (`REDIS_URL`), conta E2B (`E2B_API_KEY`), serviço worker na EasyPanel, `prisma migrate deploy`. **Próxima fatia: C3 — code-review com diff** (plano/gancho na seção C3 abaixo).
 
 **Objetivo:** permitir que um Team rode agentes de **CÓDIGO** (não só LLM) — versão cloud da Agent Teams AI / "software house na nuvem". Casa com a tese da **Estética Fábrica**.
 
@@ -126,25 +126,47 @@ Binário `claude-multimodel`, spawn via `child_process`, `node-pty`, `ssh2`, cas
 
 ---
 
-**C2 — Terminal/diff streaming rico 🔜 (PRÓXIMA FATIA — plano/gancho).**
+**C2 — Terminal/diff streaming rico ✅ ENTREGUE E VALIDADA EM PROD (2026-06-14).**
 
-*Objetivo:* substituir o terminal "pre" simples e a lista de nomes de arquivo do C1 por uma experiência rica: **terminal estilo xterm** (mono, cores, agrupado por task) e **diff viewer** das mudanças (lado a lado / unificado), idealmente com **streaming incremental** (ver comandos/saída e diffs surgindo durante a run, não só no fim).
+*Validado E2E:* code-team em `JeanZorzetti/repo-de-teste` criou `hello.txt` e editou `README.md`; o terminal renderizou os comandos coloridos/agrupados por task e o `git diff` apareceu no diff viewer.
 
-*O que reusa (não reescrever):* todo C0/C1 — sandbox/worker/code-agent/fila; o evento SSE `terminal` (hoje por-task, em lote) + painel "Entrega de código"; `TeamTask.artifacts` (logs de comando) e `TeamRun.changedFiles` (lista de arquivos). O `git diff` no sandbox já dá o conteúdo do diff — é "só mais um comando".
+*O que foi construído (batch melhorado):* captura do **conteúdo do diff** no teardown (`commitAndPush` roda `git diff origin/<base>..HEAD`, fatia por arquivo via `splitUnifiedDiff`, aplica teto via `capPatch` + budgets, mescla nos itens de `changedFiles`; tudo **best-effort** — falha no diff nunca quebra a entrega). UI: **xterm.js** (`SandboxTerminal.tsx`, cores ANSI, por task) + **diff2html** (`DiffViewer.tsx`, toggle side-by-side/unificado, badges truncado/binário), ambos client-only via `next/dynamic`. Em `src/app/dashboard/teams/[id]/`. Testes puros em `scripts/c2-verify.ts`.
 
-*Net-new desta fatia:* captura do **conteúdo do diff** (não só nomes) — ex.: `git diff origin/<base>..HEAD` no teardown, por arquivo; **diff viewer** no run view; terminal com render melhor (cores ANSI / agrupamento); opcional: streaming **incremental** (escrever artifacts/diff parciais durante o loop + evento SSE).
+*Decisões tomadas (confirmadas com o usuário):* (1) **batch melhorado** (captura no fim; incremental real → C2.1); (2/3) **usar libs** — `xterm.js` + `diff2html` (consome patch unificado direto); (4/5) **capturar no sandbox e persistir, por-arquivo com teto** (linhas/bytes por arquivo + teto total/nº); (6) **estender os itens de `changedFiles`** → `{path,status,patch?,truncated?,binary?}` → **sem migração** (reusa `Json`), **sem mudança no SSE** (diff pega carona no `changedFiles` do evento `status`).
 
-*Decisões a fechar no spec do C2 (confirmar escopo com o usuário ANTES de codar):*
-1. **Escopo de streaming:** incremental de verdade (saída por-comando ao vivo + diff parcial, mexe no code-agent escrevendo artifacts mid-loop, maior risco) **vs batch melhorado** (captura no fim, só com UI rica)?
-2. **Diff viewer:** componente próprio (unified, sem dep) **vs lib** (`react-diff-viewer-continued`/`diff2html`) — dep nova = risco OneDrive (lembrar `--package-lock-only`).
-3. **Terminal:** evoluir o painel atual (sem dep, "xterm-like" no CSS) **vs `xterm.js`** de verdade (dep + addons).
-4. **Fonte/armazenamento do diff:** capturar `git diff` no sandbox e **persistir** (em `TeamRun`/`artifacts`, truncado) vs **buscar do PR** no GitHub sob demanda (sem guardar). Tamanho do diff é a preocupação.
-5. **Granularidade/limites:** diff por-arquivo vs patch único; teto de tamanho/linhas (truncar diffs grandes).
-6. **Modelo de dados:** estender (consistente com C0/C1) — provavelmente um campo de diff/patch em `TeamRun` ou dentro de `artifacts`, sem tabelas novas.
+*Deps novas (pinadas, via `--package-lock-only`):* `@xterm/xterm@6.0.0`, `@xterm/addon-fit@0.11.0`, `diff2html@3.4.56`.
 
-*Esforço:* Médio · *Risco:* Baixo-Médio (UI + captura de diff; sem o auth/segredo do C1). O que sobe o risco é o streaming incremental — pode virar um **C2.1** se o batch já entregar valor.
+---
 
-**C3 — Code-review com diff ⏳.** O Reviewer do time avalia o **diff** (não só o texto do worker): gate de aprovação sobre as mudanças reais antes do PR. Ref. conceitual: módulo `review` da `agent-teams-controller`.
+**C2.1 — Streaming incremental ✅ ENTREGUE E VALIDADA EM PROD (2026-06-14).**
+
+*Validado E2E:* os comandos aparecem **ao vivo durante a run** (não só ao fim da task) e o diff/PR surgem **ao concluir sem recarregar a página**.
+
+*O que foi construído:* **(A) terminal ao vivo** — o code-agent persiste artifacts **parciais após cada comando** (best-effort); o SSE já faz poll por tamanho do `artifacts` → streama sem mudança no SSE. **(B1) diff no fim sem reload** — o SSE mantém o code-run aberto após `completed` até o teardown gravar `changedFiles`/`prUrl` (ou grace de 45s); chat-runs/C0/falhas fecham na hora.
+
+*Crux de segurança:* o `taskId` chega ao code-agent pelo **`options` (4º param do `ChatFn`)**, **não** pelo `leadContext` — o `chatWithAgent` só lê `model/effort/rawText/useVectorSearch` e ignora chaves extras → **chat-run A/B provadamente intacto**. Mudança no coordinator = **1 linha aditiva** (`runTeam` intacto); worker compartilha **um** `TeamStore` entre `runTeam` e `createCodeChatFn`.
+
+*Fora de escopo (ficou pra depois):* **B2** — diff parcial DURANTE a run (rodar `git diff` entre tasks; working-tree ruidoso, baixo valor).
+
+---
+
+**C3 — Code-review com diff 🔜 (PRÓXIMA FATIA — plano/gancho).**
+
+*Objetivo:* o **Reviewer** do time deixa de avaliar só o texto do worker e passa a avaliar o **diff real** das mudanças — um gate de aprovação sobre o que de fato mudou, antes do PR. Ref. conceitual: módulo `review` da `agent-teams-controller`.
+
+*O que reusa (não reescrever):* todo C0/C1/C2 — o loop de reviewer **já existe** no coordinator (`runTeam` faz `status:'review'` → reviewer → `@APPROVE`/`@REJECT` → retry); o **conteúdo do diff por-arquivo já é capturado** (C2: `changedFiles[].patch`); `team-prompts.ts` monta os prompts; `TeamTask.artifacts` carrega os comandos. O reviewer **hoje** recebe o `result`/texto do worker — falta dar a ele o **diff**.
+
+*Net-new desta fatia:* injetar o diff (ou um resumo/seleção dele, respeitando teto de tokens) no **prompt do reviewer**; possivelmente capturar o diff **por-task** (não só no teardown final) pra o reviewer ver as mudanças daquela task; ajustar o gate de aprovação pra considerar o diff.
+
+*Decisões a fechar no spec do C3 (confirmar escopo com o usuário ANTES de codar):*
+1. **Fonte do diff pro reviewer:** o diff final do run (teardown, já existe) **vs diff por-task** capturado no momento do review (mais preciso, mas exige rodar `git diff` por task no sandbox — mexe no fluxo do code-agent/coordinator).
+2. **O que entra no prompt:** patch bruto truncado **vs** resumo estruturado (arquivos + hunks principais) pra caber no contexto e não estourar tokens/custo.
+3. **Granularidade do gate:** reviewer aprova/rejeita o **run inteiro** (hoje é por-task) **vs** por-arquivo/por-task com o diff respectivo.
+4. **Reviewer = code-agent ou chat puro?** ele precisa rodar comandos no sandbox (ex.: `git diff`, rodar testes) **vs** só raciocinar sobre o diff que recebe pronto (mais barato/simples).
+5. **Modelo de dados:** estender (consistente com C0/C1/C2) — provavelmente reusar `TeamTask.artifacts`/`reviewNote` e o `changedFiles`, sem tabelas novas.
+6. **Custo/limites:** teto de tokens do diff no prompt do reviewer (diffs grandes = caro); reusar os budgets do C2 (`capPatch`).
+
+*Esforço:* Médio · *Risco:* Baixo-Médio (reusa o loop de review existente + o diff já capturado; o risco sobe se for diff por-task, que mexe no fluxo). **Começar a sessão confirmando o escopo + as 6 decisões** antes de escrever spec ou código.
 
 ---
 
@@ -171,10 +193,11 @@ Era: execução da Polaris síncrona/in-process (sem fila). **C0 trouxe a fila d
 2. ~~Sub-projeto B (Teams UX), núcleo + gestão/disponibilidade~~ — ✅ **FEITO** (2026-06-14). Falta só Slice 6 (drag-drop, deferido) e o que não foi portado (tool-approval/logs).
 3. ~~Sub-projeto C, fatia C0 (durable code-run + sandbox)~~ — ✅ **FEITO e VALIDADO EM PROD** (2026-06-14).
 4. ~~Sub-projeto C, fatia C1 (Git → Pull Request)~~ — ✅ **FEITO e VALIDADO EM PROD** (2026-06-14). PR draft #1 aberto pelo code-team. Ver "Fatias do Sub-projeto C → C1".
-5. **Agora: Sub-projeto C, fatia C2 (terminal/diff streaming rico)** — ver "Fatias do Sub-projeto C → C2" acima. **Começar a sessão confirmando o escopo + as 6 decisões** (escopo de streaming, diff viewer, terminal, fonte/armazenamento do diff, granularidade, modelo de dados) antes de escrever spec ou código.
-6. Depois: C3 (code-review com diff).
+5. ~~Sub-projeto C, fatia C2 (terminal/diff streaming rico)~~ — ✅ **FEITO e VALIDADO EM PROD** (2026-06-14). xterm.js + diff2html, batch. Ver "Fatias do Sub-projeto C → C2".
+6. ~~Sub-projeto C, fatia C2.1 (streaming incremental)~~ — ✅ **FEITO e VALIDADO EM PROD** (2026-06-14). Terminal ao vivo + diff no fim sem reload. Ver "Fatias do Sub-projeto C → C2.1".
+7. **Agora: Sub-projeto C, fatia C3 (code-review com diff)** — ver "Fatias do Sub-projeto C → C3" acima. **Começar a sessão confirmando o escopo + as 6 decisões** (fonte do diff, o que entra no prompt, granularidade do gate, reviewer code-agent vs chat, modelo de dados, custo/limites) antes de escrever spec ou código.
 
 > Cadência mantida: um sprint por sessão; cada fatia do C tem seu próprio spec/plano.
 
 ## Verificação deste roadmap
-Não há código a rodar — o entregável é o mapa. Validação = revisão humana de que a decomposição (A→B→C, e as fatias C0→C1→C2→C3) e o escopo batem com a intenção, antes de abrir a sessão de spec de cada fatia.
+Não há código a rodar — o entregável é o mapa. Validação = revisão humana de que a decomposição (A→B→C, e as fatias C0→C1→C2→C2.1→C3) e o escopo batem com a intenção, antes de abrir a sessão de spec de cada fatia.
