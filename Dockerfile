@@ -27,6 +27,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
+# ── Claude Code CLI (subscription-billed agent models) ──────────────────────────
+# Members whose model is `claude-*` are routed through ClaudeCliService, which
+# spawns this CLI. Auth is via the CLAUDE_CODE_OAUTH_TOKEN env var (generate it
+# locally with `claude setup-token` and set it on the EasyPanel service). Do NOT
+# set ANTHROPIC_API_KEY here — that would switch the CLI to pay-per-token billing.
+RUN apk add --no-cache git ripgrep libstdc++ libgcc && \
+    npm i -g @anthropic-ai/claude-code
+# Use the apk ripgrep (the bundled one is glibc and breaks on Alpine/musl).
+ENV USE_BUILTIN_RIPGREP=0
+# The `nextjs` user's HOME may be read-only; give the CLI a writable config dir.
+ENV CLAUDE_CONFIG_DIR=/tmp/.claude
+
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 

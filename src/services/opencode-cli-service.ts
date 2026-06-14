@@ -1,21 +1,20 @@
 
 import { spawn } from 'child_process';
-import path from 'path';
-import fs from 'fs';
-import os from 'os';
 
 export class OpencodeCliService {
     /**
      * Executes a prompt via the Opencode CLI and returns the response.
-     * 
+     *
      * Opencode CLI non-interactive mode:
-     *   opencode -p "prompt" -q -m provider/model
-     *   - -p: non-interactive prompt mode (prints result, exits)
+     *   opencode run -q -m provider/model   (prompt fed via stdin)
+     *   - run: non-interactive run mode (prints result, exits)
      *   - -q: quiet mode (suppresses spinner, good for scripts)
      *   - -m: model selection (format: provider/model)
-     * 
-     * For large prompts, we pipe via stdin:
-     *   type <file> | opencode run -q -m provider/model
+     *
+     * The prompt is piped via stdin (no command-line length limit, and
+     * cross-platform). The previous `type <file> | opencode` only worked on the
+     * Windows cmd shell — on Linux/Docker `type` does not print a file, so the
+     * pipe fed an empty stdin and the CLI returned nothing.
      */
     static async generate(
         prompt: string,
@@ -23,38 +22,24 @@ export class OpencodeCliService {
         systemPrompt?: string,
         modelId?: string
     ): Promise<{ content: string; usage?: any }> {
-        const tempDir = os.tmpdir();
-        const randomId = Math.random().toString(36).substring(2, 15);
-        const tempPromptPath = path.join(tempDir, `opencode_prompt_${randomId}.txt`);
-
-        const cleanup = () => {
-            if (fs.existsSync(tempPromptPath)) {
-                try { fs.unlinkSync(tempPromptPath); } catch (e) { /* ignore */ }
-            }
-        };
-
         return new Promise((resolve, reject) => {
             try {
-                // Build full prompt with system prompt prepended
+                // Opencode has no system-prompt flag here; prepend it to the prompt.
                 let fullPrompt = prompt;
                 if (systemPrompt) {
                     fullPrompt = `<system>\n${systemPrompt}\n</system>\n\n${prompt}`;
                 }
 
-                // Write prompt to temp file to avoid command-line length limits
-                fs.writeFileSync(tempPromptPath, fullPrompt, 'utf8');
-
-                // Build the shell command
-                // `type <file> | opencode run -q` pipes the prompt via stdin
-                let shellCmd = `type "${tempPromptPath}" | opencode run -q`;
-
-                // Add --model flag if specified (format: provider/model)
+                // Build the command. The prompt is fed via stdin (below).
+                let shellCmd = `opencode run -q`;
                 if (modelId) {
                     shellCmd += ` -m ${modelId}`;
                 }
 
                 console.log(`[Opencode CLI] Executing: ${shellCmd.substring(0, 120)}...`);
 
+                // shell:true keeps Windows binary resolution (opencode.cmd) working;
+                // the prompt is fed via stdin, not via the command line.
                 const child = spawn(shellCmd, [], {
                     cwd: cwd,
                     shell: true,
@@ -81,12 +66,10 @@ export class OpencodeCliService {
 
                 child.on('error', (error) => {
                     console.error('Opencode CLI spawn error:', error);
-                    cleanup();
                     reject(new Error(`Failed to start Opencode CLI: ${error.message}`));
                 });
 
                 child.on('close', (code) => {
-                    cleanup();
                     console.log(`Opencode CLI exited with code ${code}`);
                     if (code !== 0) {
                         console.warn(`Opencode CLI non-zero exit. Stderr: ${stderrData}`);
@@ -102,23 +85,25 @@ export class OpencodeCliService {
                     });
                 });
 
+                // Feed the prompt via stdin (cross-platform, no length limit).
+                child.stdin?.write(fullPrompt);
+                child.stdin?.end();
+
                 // Timeout safety — 20 minutes
                 setTimeout(() => {
                     child.kill();
-                    cleanup();
                     reject(new Error('Opencode CLI timed out after 20 minutes'));
                 }, 20 * 60 * 1000);
 
             } catch (err: any) {
-                cleanup();
                 reject(err);
             }
         });
     }
 
     private static cleanOutput(output: string): string {
-        // Strip ANSI escape codes
-        let cleaned = output.replace(/\u001b\[\d+m/g, '');
-        return cleaned.trim();
+        // Strip ANSI escape codes (CSI sequences)
+        const ansi = new RegExp(String.fromCharCode(27) + '\\[\\d+m', 'g');
+        return output.replace(ansi, '').trim();
     }
 }
