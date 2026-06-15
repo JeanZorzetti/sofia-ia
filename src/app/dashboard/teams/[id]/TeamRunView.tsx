@@ -11,6 +11,8 @@ import {
   GitBranch, GitPullRequest, ExternalLink,
 } from 'lucide-react'
 
+import { TeamOutputsPanel } from './TeamOutputsPanel'
+
 // ReactFlow must be client-only (no SSR) to avoid hydration/measure issues.
 const TeamGraph = dynamic(() => import('./TeamGraph'), { ssr: false })
 // xterm.js + diff2html are DOM-only → client-only (Sub-projeto C — C2).
@@ -205,6 +207,15 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           })}
         </div>
       </div>
+
+      {/* Outputs panel: configure webhook/email/slack outputs fired on run completion */}
+      {team && (
+        <TeamOutputsPanel
+          teamId={teamId}
+          initialWebhooks={(((team as any).config?.outputWebhooks) ?? []) as any}
+          latestDispatches={((history?.[0] as any)?.outputDispatches) ?? null}
+        />
+      )}
 
       {/* Mission composer */}
       <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-3">
