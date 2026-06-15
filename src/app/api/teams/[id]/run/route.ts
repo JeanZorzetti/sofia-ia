@@ -74,6 +74,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             store: createPrismaTeamStore(),
             chat: (agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts),
           })
+          const { dispatchTeamOutputs } = await import('@/lib/orchestration/team/team-outputs')
+          await dispatchTeamOutputs(run.id)
         } catch (err) {
           // runTeam already persisted status='failed' on throw; this is a log net.
           console.error('[Teams] background run failed:', err)

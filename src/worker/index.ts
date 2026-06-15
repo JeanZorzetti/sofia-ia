@@ -21,6 +21,7 @@ import { chatWithAgent } from '@/lib/ai/groq'
 import { getSandboxProvider } from '@/lib/sandbox'
 import type { Sandbox } from '@/lib/sandbox/types'
 import { setupRepo, commitAndPush, openPullRequest, buildPrBody, captureWorkingDiff } from '@/lib/git/repo-lifecycle'
+import { dispatchTeamOutputs } from '@/lib/orchestration/team/team-outputs'
 
 const concurrency = Number(process.env.CODE_RUN_CONCURRENCY ?? 2)
 
@@ -155,6 +156,7 @@ const worker = new Worker<CodeRunJob>(
         const codeChat = createCodeChatFn(sandbox, baseChat, { store, claudeToken: CLAUDE_OAUTH_TOKEN })
         await runTeam(runId, { store, chat: codeChat })
       }
+      await dispatchTeamOutputs(runId)
     } finally {
       await sandbox.close().catch(() => {}) // always tear down — avoids leaked/charged sandboxes
     }
