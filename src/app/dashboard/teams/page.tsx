@@ -3,10 +3,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Users, Plus, Loader2, ArrowRight, Pencil, Trash2, X, GitBranch, Play, Search } from 'lucide-react'
+import { Users, Plus, Loader2, ArrowRight, Pencil, Trash2, X, GitBranch, Play, Search, Wand2 } from 'lucide-react'
 import RosterEditor, {
   INHERIT, rosterToMembers, type AgentLite, type ModelOption, type RosterRow,
 } from './RosterEditor'
+import { MagicCreateModal } from '@/components/sofia/MagicCreateModal'
 
 interface TeamLite { id: string; name: string; description: string | null; _count: { runs: number } }
 
@@ -113,6 +114,7 @@ export default function TeamsPage() {
   const [models, setModels] = useState<ModelOption[]>([])
   const [loading, setLoading] = useState(true)
   const [teamQuery, setTeamQuery] = useState('')
+  const [magicOpen, setMagicOpen] = useState(false)
 
   // create modal
   const [creating, setCreating] = useState(false)
@@ -229,6 +231,12 @@ export default function TeamsPage() {
           <h1 className="text-2xl font-bold text-white">Times</h1>
           <p className="text-white/60 text-sm">Squads de agentes que coordenam, executam e revisam missões juntos.</p>
         </div>
+        <button
+          onClick={() => setMagicOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-lg text-sm font-medium transition-colors shrink-0"
+        >
+          <Wand2 className="h-4 w-4" /> Magic Create
+        </button>
         <button
           onClick={openCreate}
           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors shrink-0"
@@ -359,6 +367,9 @@ export default function TeamsPage() {
           onClose={() => setEditId(null)}
         />
       )}
+
+      {/* Magic Create modal */}
+      <MagicCreateModal open={magicOpen} onOpenChange={setMagicOpen} />
     </div>
   )
 }
