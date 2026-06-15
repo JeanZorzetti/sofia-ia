@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 
 import { TeamOutputsPanel } from './TeamOutputsPanel'
+import { TeamSchedulesPanel } from './TeamSchedulesPanel'
 
 // ReactFlow must be client-only (no SSR) to avoid hydration/measure issues.
 const TeamGraph = dynamic(() => import('./TeamGraph'), { ssr: false })
@@ -216,6 +217,9 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           latestDispatches={((history?.[0] as any)?.outputDispatches) ?? null}
         />
       )}
+
+      {/* Schedules panel: recurring runs (SP3) */}
+      {team && <TeamSchedulesPanel teamId={teamId} />}
 
       {/* Mission composer */}
       <div className="rounded-xl border border-white/10 bg-white/5 p-5 space-y-3">
