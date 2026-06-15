@@ -245,19 +245,10 @@ export async function chatWithAgent(
 
   // Check if model is Claude — route through local CLI
   if (agent.model.startsWith('claude-')) {
-    // Map model ID to the actual Claude CLI model name
-    // 'claude-code-cli' uses the CLI default model (no --model flag)
-    const claudeModelMap: Record<string, string | undefined> = {
-      'claude-code-cli': undefined,              // CLI default
-      'claude-opus-4-6': 'claude-opus-4-6',
-      'claude-sonnet-4-6': 'claude-sonnet-4-6',
-      'claude-opus-4-5': 'claude-opus-4-5-20251101',
-      'claude-sonnet-4-5-thinking': 'claude-sonnet-4-5-20250929',
-      'claude-sonnet-4': 'claude-sonnet-4-20250514',
-      'claude-haiku-4-5': 'claude-haiku-4-5-20251001',
-      'claude-haiku-3-5': 'claude-3-5-haiku-20241022',
-    }
-    const cliModelId = claudeModelMap[agent.model] ?? agent.model;
+    // Map model ID to the actual Claude CLI model name (shared with the in-sandbox
+    // path). 'claude-code-cli' → undefined → CLI default (no --model flag).
+    const { resolveClaudeCliModel } = await import('@/lib/ai/claude-models');
+    const cliModelId = resolveClaudeCliModel(agent.model);
     try {
       const { ClaudeCliService } = await import('@/services/claude-cli-service');
 

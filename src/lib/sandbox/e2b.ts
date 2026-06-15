@@ -26,7 +26,7 @@ class E2BSandbox implements ISandbox {
   async exec(cmd: string, opts?: ExecOptions): Promise<CommandResult> {
     const start = Date.now()
     try {
-      const r = await this.sbx.commands.run(cmd, { timeoutMs: opts?.timeoutMs, cwd: opts?.cwd })
+      const r = await this.sbx.commands.run(cmd, { timeoutMs: opts?.timeoutMs, cwd: opts?.cwd, envs: opts?.env })
       return { stdout: r?.stdout ?? '', stderr: r?.stderr ?? '', exitCode: r?.exitCode ?? 0, ms: Date.now() - start }
     } catch (e: any) {
       // e2b throws CommandExitError on non-zero exit; it carries stdout/stderr/exitCode.
@@ -37,6 +37,10 @@ class E2BSandbox implements ISandbox {
         ms: Date.now() - start,
       }
     }
+  }
+
+  async writeFile(path: string, content: string): Promise<void> {
+    await this.sbx.files.write(path, content)
   }
 
   async close(): Promise<void> {

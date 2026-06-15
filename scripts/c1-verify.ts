@@ -87,6 +87,7 @@ function scriptedSandbox(responder: Responder = () => ({})): Sandbox & { calls: 
       const r = responder(cmd)
       return { stdout: r.stdout ?? '', stderr: r.stderr ?? '', exitCode: r.exitCode ?? 0, ms: 1 }
     },
+    async writeFile() {},
     async close() {},
   }
 }

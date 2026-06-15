@@ -10,6 +10,8 @@ import type { ChatFn, ChatMessageInput, ChatResult, CommandRun } from './team-ty
 import type { TeamStore } from './team-store'
 import type { Sandbox } from '../../sandbox/types'
 import { parseCodeActions } from './code-protocol'
+import { providerOf } from '../../ai/model-availability'
+import { runClaudeInSandbox } from './sandbox-cli-agent'
 
 const CODE_PROTOCOL_PROMPT = `
 Você está num SANDBOX Linux isolado e efêmero, com shell. Para EXECUTAR algo, responda com diretivas (uma por linha):
@@ -32,6 +34,15 @@ IMPORTANTE — você está dentro de um REPOSITÓRIO git já clonado no diretór
 - \`git status\`/\`git diff\` locais são permitidos para conferir suas mudanças.
 `.trim()
 
+// Preamble for a CLI worker (Claude CLI) running NATIVELY inside the sandbox (Option B):
+// it uses its OWN tools to edit files (no @RUN protocol), so the rules are about the
+// repo + the automatic delivery, not the directive syntax.
+const CLI_REPO_PREAMBLE = `
+Você está dentro de um REPOSITÓRIO git já clonado no diretório atual (a branch de trabalho já existe). Use suas ferramentas para editar os arquivos e cumprir a tarefa.
+- NÃO rode \`git push\`, \`git remote\`, \`git clone\` nem configure credenciais — o commit, o push e o Pull Request são feitos AUTOMATICAMENTE pelo sistema depois que você terminar.
+- \`git status\`/\`git diff\` locais são permitidos para conferir suas mudanças.
+`.trim()
+
 export interface CodeChatFnOptions {
   /** Max LLM↔sandbox round-trips per member turn. */
   maxSteps?: number
@@ -46,9 +57,14 @@ export interface CodeChatFnOptions {
    *  persists partial artifacts after each command so the terminal updates mid-task.
    *  Undefined keeps the batch-only behavior (artifacts written by the coordinator). */
   store?: TeamStore
+  /** Option B: subscription token (CLAUDE_CODE_OAUTH_TOKEN). When set, WORKER turns
+   *  whose member model is claude-* run the Claude CLI NATIVELY inside the sandbox
+   *  (it edits the repo directly) instead of the @RUN proxy — which the autonomous
+   *  CLI ignores. Absent → claude-* workers fall back to the (broken) @RUN path. */
+  claudeToken?: string
 }
 
-const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store'> = {
+const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store' | 'claudeToken'> = {
   maxSteps: 8,
   perCommandTimeoutMs: 120_000,
   maxOutputChars: 4_000,
@@ -94,9 +110,27 @@ export function createCodeChatFn(
   options: CodeChatFnOptions = {},
 ): ChatFn {
   const { maxSteps, perCommandTimeoutMs, maxOutputChars } = { ...DEFAULTS, ...options }
-  const { workdir, store } = options
+  const { workdir, store, claudeToken } = options
 
   return async (agentId, messages, leadContext, chatOptions) => {
+    // ── Option B: native Claude CLI inside the sandbox ──
+    // A WORKER execution turn (taskId present) whose member runs the Claude CLI: run
+    // it natively in the sandbox (it edits the repo with its own tools) instead of the
+    // @RUN text proxy, which the autonomous CLI ignores (it would edit the worker FS).
+    // Lead/reviewer/consolidation turns have no taskId → unaffected (stay text-only).
+    const cliModel = chatOptions?.model
+    if (claudeToken && chatOptions?.taskId && cliModel && providerOf(cliModel) === 'claude-cli') {
+      const firstUser = messages.find(m => m.role === 'user')
+      const taskText = firstUser?.content ?? messages.map(m => m.content).join('\n\n')
+      const prompt = workdir ? `${CLI_REPO_PREAMBLE}\n\n---\n\n${taskText}` : taskText
+      const result = await runClaudeInSandbox(sandbox, { workdir, model: cliModel, prompt, token: claudeToken })
+      // C2.1 live stream: persist the reconstructed command log so the terminal shows it.
+      if (store && result.artifacts) {
+        try { await store.updateTask(chatOptions.taskId, { artifacts: { commands: result.artifacts.commands } }) } catch { /* live-stream only */ }
+      }
+      return result
+    }
+
     const working = injectProtocol(messages, Boolean(workdir))
     const commands: CommandRun[] = []
     let totalTokens = 0

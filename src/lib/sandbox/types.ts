@@ -15,6 +15,10 @@ export interface ExecOptions {
   timeoutMs?: number
   /** Working directory inside the sandbox. */
   cwd?: string
+  /** Extra environment variables for this command (e.g. CLAUDE_CODE_OAUTH_TOKEN).
+   *  Passed via the provider's env channel — NOT inlined in the command string, so
+   *  secrets never land in logs. */
+  env?: Record<string, string>
 }
 
 /** An isolated, ephemeral execution environment for a single run. */
@@ -23,6 +27,9 @@ export interface Sandbox {
   readonly id: string
   /** Run a shell command; never throws on non-zero exit — returns exitCode instead. */
   exec(cmd: string, opts?: ExecOptions): Promise<CommandResult>
+  /** Write a file inside the sandbox (used to hand large prompts to in-sandbox CLIs
+   *  without shell-escaping). Creates parent dirs as needed. */
+  writeFile(path: string, content: string): Promise<void>
   /** Tear the sandbox down (idempotent; call in a finally). */
   close(): Promise<void>
 }

@@ -29,6 +29,15 @@ const WORKDIR = '/home/user/repo'
 const AUTHOR_NAME = process.env.GIT_AUTHOR_NAME ?? 'Polaris Teams'
 const AUTHOR_EMAIL = process.env.GIT_AUTHOR_EMAIL ?? 'polaris@polarisia.com.br'
 
+// Option B: subscription token for running claude-* members natively inside the
+// sandbox. Threaded into the code-agent; if absent, claude-* workers fall back to
+// the (broken-for-CLI) @RUN proxy.
+const CLAUDE_OAUTH_TOKEN = process.env.CLAUDE_CODE_OAUTH_TOKEN
+// Sandbox lifetime — agentic CLI sessions outlast the E2B default (~5 min).
+const SANDBOX_TIMEOUT_MS = Number(process.env.SANDBOX_TIMEOUT_MS ?? 15 * 60_000)
+// Custom E2B template (with claude/git/node pre-installed); undefined → provider base.
+const SANDBOX_TEMPLATE = process.env.SANDBOX_TEMPLATE || undefined
+
 const baseChat = (agentId: string, messages: unknown, ctx: unknown, opts: unknown) =>
   chatWithAgent(agentId, messages as never, ctx as never, opts as never)
 
@@ -76,7 +85,7 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
   // Share ONE store so the code-agent can stream partial artifacts mid-loop (C2.1).
   // C3: inject getTaskDiff so the reviewer sees the real working-tree diff (vs base).
   const store = createPrismaTeamStore()
-  const codeChat = createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store })
+  const codeChat = createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store, claudeToken: CLAUDE_OAUTH_TOKEN })
   await runTeam(runId, {
     store,
     chat: codeChat,
@@ -133,7 +142,7 @@ const worker = new Worker<CodeRunJob>(
     const run = await prisma.teamRun.findUnique({
       where: { id: runId }, select: { repoUrl: true, baseBranch: true },
     })
-    const sandbox = await getSandboxProvider().create()
+    const sandbox = await getSandboxProvider().create({ timeoutMs: SANDBOX_TIMEOUT_MS, templateId: SANDBOX_TEMPLATE })
     try {
       if (run?.repoUrl) {
         await runWithRepo(sandbox, runId, run.repoUrl, run.baseBranch)
@@ -143,7 +152,7 @@ const worker = new Worker<CodeRunJob>(
           .update({ where: { id: runId }, data: { sandboxId: sandbox.id } })
           .catch(() => {}) // best-effort metadata write
         const store = createPrismaTeamStore()
-        const codeChat = createCodeChatFn(sandbox, baseChat, { store })
+        const codeChat = createCodeChatFn(sandbox, baseChat, { store, claudeToken: CLAUDE_OAUTH_TOKEN })
         await runTeam(runId, { store, chat: codeChat })
       }
     } finally {
