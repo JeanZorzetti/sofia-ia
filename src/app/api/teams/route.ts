@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
-import { validateRoster, type RosterInput } from '@/lib/orchestration/team/team-roster'
+import { type RosterInput } from '@/lib/orchestration/team/team-roster'
+import { createTeamWithRoster } from '@/lib/orchestration/team/create-team'
 
 // GET /api/teams — list the current user's teams
 export async function GET(request: NextRequest) {
@@ -36,37 +37,11 @@ export async function POST(request: NextRequest) {
     const { name, description, config, members } = body as {
       name?: string; description?: string; config?: Record<string, unknown>; members?: RosterInput[]
     }
-    if (!name?.trim()) return NextResponse.json({ success: false, error: 'Nome é obrigatório' }, { status: 400 })
 
-    const rosterError = validateRoster(members ?? [])
-    if (rosterError) return NextResponse.json({ success: false, error: rosterError }, { status: 400 })
+    const result = await createTeamWithRoster({ name, description, config, members, userId: auth.id })
+    if (!result.ok) return NextResponse.json({ success: false, error: result.error }, { status: 400 })
 
-    // Verify all referenced agents exist (agents are shared across the app — see GET /api/agents).
-    const agentIds = [...new Set((members ?? []).map(m => m.agentId))]
-    const existing = await prisma.agent.count({ where: { id: { in: agentIds } } })
-    if (existing !== agentIds.length) {
-      return NextResponse.json({ success: false, error: 'Algum agente selecionado não existe' }, { status: 400 })
-    }
-
-    const team = await prisma.team.create({
-      data: {
-        name: name.trim(),
-        description: description ?? null,
-        config: (config ?? {}) as object,
-        createdBy: auth.id,
-        members: {
-          create: (members ?? []).map((m, i) => ({
-            agentId: m.agentId,
-            role: m.role,
-            model: m.model ?? null,
-            effort: m.effort ?? null,
-            position: m.position ?? i,
-          })),
-        },
-      },
-      include: { members: { include: { agent: { select: { name: true } } }, orderBy: { position: 'asc' } } },
-    })
-    return NextResponse.json({ success: true, data: team })
+    return NextResponse.json({ success: true, data: result.team })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Failed to create team'
     console.error('Error creating team:', error)
