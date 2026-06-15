@@ -35,6 +35,7 @@ model User {
   subscription         Subscription?
   whitelabelAccount    WhitelabelAccount?
   scheduledExecutions  ScheduledExecution[]
+  scheduledTeamRuns    ScheduledTeamRun[]
   agentMemories        AgentMemory[]
   orgMemberships       OrganizationMember[]
   userAuditLogs        UserAuditLog[]
@@ -961,6 +962,35 @@ model ScheduledExecution {
 }
 
 // ─────────────────────────────────────────────────────────
+// ScheduledTeamRun — SP3: agendamento de runs de Team (sucessor de ScheduledExecution)
+// ─────────────────────────────────────────────────────────
+model ScheduledTeamRun {
+  id         String    @id @default(uuid()) @db.Uuid
+  teamId     String    @map("team_id") @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  cronExpr   String    @map("cron_expr") @db.VarChar(100)   // gerado do preset, ex. "0 8 * * 1"
+  label      String?   @db.VarChar(255)
+  mission    String    @db.Text                              // o que o Team run consome
+  mode       String    @default("chat") @db.VarChar(20)      // 'chat' | 'code'
+  nextRunAt  DateTime  @map("next_run_at") @db.Timestamptz()
+  lastRunAt  DateTime? @map("last_run_at") @db.Timestamptz()
+  lastStatus String?   @map("last_status") @db.VarChar(20)   // 'dispatched' | 'failed' (disparo, não resultado)
+  lastRunId  String?   @map("last_run_id") @db.Uuid          // ponteiro p/ o TeamRun gerado (não-FK)
+  isActive   Boolean   @default(true) @map("is_active")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@index([userId])
+  @@index([isActive])
+  @@index([nextRunAt])
+  @@map("scheduled_team_runs")
+}
+
+// ─────────────────────────────────────────────────────────
 // AgentMemory — Memória persistente por agente + usuário
 // ─────────────────────────────────────────────────────────
 model AgentMemory {
@@ -1321,6 +1351,7 @@ model Team {
   creator User         @relation(fields: [createdBy], references: [id])
   members TeamMember[]
   runs    TeamRun[]
+  scheduledTeamRuns ScheduledTeamRun[]
 
   @@index([createdBy])
   @@index([status])
