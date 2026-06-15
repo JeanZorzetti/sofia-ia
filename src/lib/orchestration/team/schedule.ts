@@ -13,7 +13,15 @@ function clamp(n: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, Math.trunc(n)))
 }
 
-/** Build a 5-field cron expression "m h dom * dow" from a friendly preset. */
+/** Number of days in the given month (monthIndex: 0=Jan..11=Dec). */
+function daysInMonth(year: number, monthIndex: number): number {
+  return new Date(year, monthIndex + 1, 0).getDate()
+}
+
+/**
+ * Build a 5-field cron expression "min hour dayOfMonth month dayOfWeek" from a friendly
+ * preset. daily → "m h * * *"; weekly → "m h * * dow"; monthly → "m h dom * *".
+ */
 export function cronFromPreset(p: SchedulePreset): string {
   const m = clamp(p.minute, 0, 59)
   const h = clamp(p.hour, 0, 23)
@@ -29,6 +37,8 @@ export function cronFromPreset(p: SchedulePreset): string {
 /**
  * Next run time for a simple 5-field cron ("min hour dayOfMonth month dayOfWeek").
  * Covers the subset our presets generate (daily / weekly-by-dow / monthly-by-dom).
+ * For monthly, a dayOfMonth past the month's length is clamped to the last day
+ * (so "day 31" means "last day of month", never an overflow into the next month).
  * Always returns a Date strictly after `from`. Malformed expressions fall back to
  * the next round hour.
  */
@@ -54,10 +64,10 @@ export function getNextRunAt(cronExpr: string, from: Date = new Date()): Date {
     next.setDate(next.getDate() + daysUntil)
   } else if (dayOfMonth !== '*') {
     const targetDom = parseInt(dayOfMonth, 10)
-    next.setDate(targetDom)
+    next.setDate(Math.min(targetDom, daysInMonth(next.getFullYear(), next.getMonth())))
     if (next <= from) {
-      next.setMonth(next.getMonth() + 1)
-      next.setDate(targetDom)
+      next.setMonth(next.getMonth() + 1, 1)
+      next.setDate(Math.min(targetDom, daysInMonth(next.getFullYear(), next.getMonth())))
     }
   } else if (next <= from) {
     next.setDate(next.getDate() + 1)
