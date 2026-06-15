@@ -79,6 +79,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [running, setRunning] = useState(false)
   const esRef = useRef<EventSource | null>(null)
   const feedRef = useRef<HTMLDivElement | null>(null)
+  const missionRef = useRef<HTMLTextAreaElement | null>(null)
 
   async function loadTeam() {
     const r = await fetch(`/api/teams/${teamId}`)
@@ -90,6 +91,17 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
     loadTeam()
     return () => { esRef.current?.close() }
   }, [teamId])
+
+  // Deep-link from the "Rodar" button on the teams grid (?focus=mission):
+  // focus the composer and scroll it into view. Read window.location instead of
+  // useSearchParams to avoid the Next 16 Suspense boundary requirement.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (new URLSearchParams(window.location.search).get('focus') === 'mission') {
+      missionRef.current?.focus()
+      missionRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }
+  }, [])
 
   // Auto-scroll the activity feed as messages arrive.
   useEffect(() => { feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight }) }, [messages])
@@ -221,6 +233,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           )}
         </div>
         <textarea
+          ref={missionRef}
           className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 resize-y"
           rows={3}
           placeholder="Descreva a missão do time…"

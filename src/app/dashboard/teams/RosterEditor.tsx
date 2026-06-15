@@ -4,7 +4,8 @@
 // status and unavailable models disabled (a run with a dead provider fails).
 'use client'
 
-import { Cpu, Crown, Hammer, ShieldCheck } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Cpu, Crown, Hammer, ShieldCheck, Search } from 'lucide-react'
 import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -60,6 +61,8 @@ export default function RosterEditor({ agents, models, value, onChange }: {
   const triggerCls = 'h-8 bg-white/5 border-white/10 text-white text-xs'
   const contentCls = 'bg-[#0a0a0b] border-white/10 text-white'
 
+  const [query, setQuery] = useState('')
+
   function toggleAgent(agentId: string) {
     onChange(
       value.some(r => r.agentId === agentId)
@@ -70,10 +73,44 @@ export default function RosterEditor({ agents, models, value, onChange }: {
   const patchRow = (agentId: string, patch: Partial<RosterRow>) =>
     onChange(value.map(r => (r.agentId === agentId ? { ...r, ...patch } : r)))
 
+  // Selected agents float to the top so the active roster stays visible no
+  // matter how many agents exist; then filter by name. Ordering keys off the
+  // current selection only (not on each keystroke) to avoid jumpy reordering.
+  const selectedIds = useMemo(() => new Set(value.map(r => r.agentId)), [value])
+  const visibleAgents = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const ordered = [...agents].sort((a, b) => {
+      const sa = selectedIds.has(a.id) ? 0 : 1
+      const sb = selectedIds.has(b.id) ? 0 : 1
+      return sa - sb
+    })
+    return q ? ordered.filter(a => a.name.toLowerCase().includes(q)) : ordered
+  }, [agents, selectedIds, query])
+
   return (
     <div className="space-y-2">
       {agents.length === 0 && <p className="text-white/40 text-sm">Nenhum agente disponível. Crie um agente primeiro.</p>}
-      {agents.map(a => {
+
+      {agents.length > 0 && (
+        <div className="flex items-center justify-between gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
+            <input
+              className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/30"
+              placeholder="Buscar agente…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+            />
+          </div>
+          <span className="text-[11px] text-white/40 whitespace-nowrap">Selecionados ({value.length})</span>
+        </div>
+      )}
+
+      <div className="space-y-2 max-h-[360px] overflow-y-auto custom-scrollbar pr-1">
+      {agents.length > 0 && visibleAgents.length === 0 && (
+        <p className="text-white/40 text-sm py-2">Nenhum agente corresponde a “{query}”.</p>
+      )}
+      {visibleAgents.map(a => {
         const row = value.find(r => r.agentId === a.id)
         const selected = !!row
         return (
@@ -139,6 +176,7 @@ export default function RosterEditor({ agents, models, value, onChange }: {
           </div>
         )
       })}
+      </div>
     </div>
   )
 }
