@@ -1366,6 +1366,7 @@ model TeamRun {
   prUrl         String?   @map("pr_url") @db.Text
   prNumber      Int?      @map("pr_number")
   changedFiles  Json?     @map("changed_files")             // [{path,status}] from git diff --name-status
+  outputDispatches Json? @map("output_dispatches")         // SP2: [{type,destination,status,error?,sentAt}]
   output        String?   @db.Text
   turnsUsed     Int?      @map("turns_used")
   tokensUsed    Int?      @map("tokens_used")
