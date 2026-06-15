@@ -30,19 +30,19 @@ export function OnboardingChecklist() {
 
   async function loadProgress() {
     try {
-      const [usageRes, orchRes] = await Promise.all([
+      const [usageRes, teamsRes] = await Promise.all([
         fetch('/api/user/usage').then(r => r.json()),
-        fetch('/api/orchestrations?limit=1').then(r => r.json()).catch(() => ({ data: [] })),
+        fetch('/api/teams').then(r => r.json()).catch(() => ({ data: [] })),
       ])
 
       const hasAgent = (usageRes.agents?.current ?? 0) > 0
       const hasKB = (usageRes.knowledgeBases?.current ?? 0) > 0
-      const hasOrch = orchRes?.data?.length > 0 || orchRes?.orchestrations?.length > 0
+      const hasTeam = teamsRes?.data?.length > 0
 
       const createdAt = usageRes.subscription?.createdAt
       const twoWeeksAgo = new Date(); twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14)
       // If subscription was created more than 14 days ago and all done → hide
-      if (createdAt && new Date(createdAt) < twoWeeksAgo && hasAgent && hasKB && hasOrch) {
+      if (createdAt && new Date(createdAt) < twoWeeksAgo && hasAgent && hasKB && hasTeam) {
         setDismissed(true)
         return
       }
@@ -63,11 +63,11 @@ export function OnboardingChecklist() {
           done: hasAgent,
         },
         {
-          id: 'orchestration',
-          label: 'Criar primeira orquestração',
-          description: 'Pipeline de agentes para tarefas complexas',
-          href: '/dashboard/orchestrations',
-          done: hasOrch,
+          id: 'team',
+          label: 'Criar primeiro time',
+          description: 'Squad de agentes que executam missões juntos',
+          href: '/dashboard/teams',
+          done: hasTeam,
         },
         {
           id: 'kb',
