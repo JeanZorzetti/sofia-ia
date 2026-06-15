@@ -3,6 +3,7 @@
 import assert from 'node:assert'
 import { createHmac } from 'node:crypto'
 import { dispatchOutputWebhooks } from '../src/lib/orchestration/output-webhooks'
+import { buildTeamDispatchArgs } from '../src/lib/orchestration/team/team-outputs'
 
 process.env.RESEND_API_KEY = 'test-resend-key' // make the email path actually fetch
 
@@ -104,6 +105,49 @@ async function testEmailLabel() {
   console.log('✓ email completedLabel (team)')
 }
 
+function runLike(over: Partial<{ id: string; status: string; output: string | null; durationMs: number | null; tokensUsed: number | null }> = {}) {
+  return { id: 'run1', status: 'completed', output: 'final', durationMs: 1500, tokensUsed: 42, ...over }
+}
+function teamLike(webhooks: any[]) {
+  return { id: 'team1', name: 'Meu Time', config: { outputWebhooks: webhooks } }
+}
+
+function testBuildArgsDispatches() {
+  const plan = buildTeamDispatchArgs(runLike(), teamLike([{ type: 'webhook', url: 'https://h/x', enabled: true }]))
+  assert.equal(plan.dispatch, true, 'completed + enabled => dispatch')
+  if (plan.dispatch) {
+    assert.equal(plan.entity.id, 'team1')
+    assert.equal(plan.entity.name, 'Meu Time')
+    assert.equal(plan.execution.id, 'run1')
+    assert.equal(plan.execution.durationMs, 1500)
+    assert.equal(plan.execution.tokensUsed, 42)
+    assert.equal(plan.finalOutput, 'final')
+    assert.equal(plan.opts.event, 'team.completed')
+    assert.equal(plan.opts.completedLabel, 'Time concluído')
+  }
+  console.log('✓ buildTeamDispatchArgs maps args on success')
+}
+
+function testBuildArgsGates() {
+  for (const status of ['failed', 'cancelled', 'rate_limited', 'running', 'pending']) {
+    assert.equal(buildTeamDispatchArgs(runLike({ status }), teamLike([{ type: 'webhook', url: 'https://h', enabled: true }])).dispatch, false, `status ${status} => no dispatch`)
+  }
+  assert.equal(buildTeamDispatchArgs(runLike(), teamLike([])).dispatch, false, 'no webhooks => no dispatch')
+  assert.equal(buildTeamDispatchArgs(runLike(), teamLike([{ type: 'webhook', url: 'https://h', enabled: false }])).dispatch, false, 'all disabled => no dispatch')
+  console.log('✓ buildTeamDispatchArgs gates (status/empty/disabled)')
+}
+
+function testBuildArgsNullMetrics() {
+  const plan = buildTeamDispatchArgs(runLike({ durationMs: null, tokensUsed: null, output: null }), teamLike([{ type: 'slack', webhookUrl: 'https://s', enabled: true }]))
+  assert.equal(plan.dispatch, true)
+  if (plan.dispatch) {
+    assert.equal(plan.execution.durationMs, 0, 'null durationMs -> 0')
+    assert.equal(plan.execution.tokensUsed, 0, 'null tokensUsed -> 0')
+    assert.equal(plan.finalOutput, null)
+  }
+  console.log('✓ buildTeamDispatchArgs null metrics default to 0')
+}
+
 async function main() {
   await testWebhookHmacAndDefaultEvent()
   await testWebhookTeamEvent()
@@ -111,6 +155,9 @@ async function main() {
   await testSlackLabel()
   await testSlackDefaultLabel()
   await testEmailLabel()
+  testBuildArgsDispatches()
+  testBuildArgsGates()
+  testBuildArgsNullMetrics()
   console.log('\nALL SP2 CHECKS PASSED')
 }
 
