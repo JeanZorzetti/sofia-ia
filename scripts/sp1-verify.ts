@@ -59,6 +59,21 @@ console.log('parseMagicRoster — caminho feliz')
   assert.ok(r.ok, 'fence markdown deve ser removido')
   ok('JSON em ```json fence``` → parseia')
 }
+{
+  // Regressão: systemPrompt contendo ``` dentro de um JSON fenced NÃO pode corromper o parse.
+  const inner = JSON.stringify({
+    name: 'Time Técnico',
+    description: 'd',
+    members: [
+      { role: 'lead', name: 'L', systemPrompt: 'Use blocos ```assim``` quando útil.', model: 'llama-3.3-70b-versatile' },
+      { role: 'worker', name: 'W', systemPrompt: 'trabalha', model: 'llama-3.3-70b-versatile' },
+    ],
+  })
+  const r = parseMagicRoster('```json\n' + inner + '\n```')
+  assert.ok(r.ok, 'systemPrompt com ``` dentro de fence deve parsear')
+  if (r.ok) assert.ok(r.roster.members[0].systemPrompt.includes('```assim```'), 'backticks internos preservados')
+  ok('systemPrompt com ``` preservado (fence não-destrutivo)')
+}
 
 console.log('parseMagicRoster — erros')
 {
@@ -76,6 +91,7 @@ console.log('parseMagicRoster — erros')
 {
   const r = parseMagicRoster(JSON.stringify({ name: '', members: [{ role: 'lead', name: 'L', systemPrompt: 'p' }] }))
   assert.ok(!r.ok)
+  if (!r.ok) assert.equal(r.error, 'Estrutura do time inválida. Tente novamente.')
   ok('name vazio → estrutura inválida')
 }
 {

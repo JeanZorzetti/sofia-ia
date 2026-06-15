@@ -31,7 +31,14 @@ const INVALID_STRUCTURE = 'Estrutura do time inválida. Tente novamente.'
 export function parseMagicRoster(rawContent: string): ParseResult {
   let data: unknown
   try {
-    const jsonStr = rawContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
+    // Strip a surrounding markdown fence if present (```json ... ``` or ``` ... ```),
+    // anchored to the string boundaries so triple-backticks INSIDE a string value
+    // (e.g. a systemPrompt that contains its own ```code``` block) are preserved.
+    const jsonStr = rawContent
+      .trim()
+      .replace(/^```(?:json)?\s*\n?/i, '')
+      .replace(/\n?```$/, '')
+      .trim()
     data = JSON.parse(jsonStr)
   } catch {
     return { ok: false, error: INVALID_JSON }
@@ -62,7 +69,9 @@ export function parseMagicRoster(rawContent: string): ParseResult {
     members.push({ role: role as MagicRole, name: memberName, systemPrompt, model })
   }
 
-  // Composition gate — exactly the validator POST /api/teams uses.
+  // Composition gate — exactly the validator POST /api/teams uses (1 lead / ≥1 worker / ≤1 reviewer).
+  // The real agentIds don't exist yet (agents are created later by the route), so we pass the index
+  // as a non-empty placeholder purely to satisfy validateRoster's "every member needs an agentId" check.
   const composition = validateRoster(members.map((m, i) => ({ agentId: String(i), role: m.role })))
   if (composition) return { ok: false, error: composition }
 
