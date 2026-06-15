@@ -36,7 +36,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const auth = await getAuthFromRequest(request)
     if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     const { id } = await params
-    if (!(await ownTeam(id, auth.id))) return NextResponse.json({ success: false, error: 'Team not found' }, { status: 404 })
+    const existing = await ownTeam(id, auth.id)
+    if (!existing) return NextResponse.json({ success: false, error: 'Team not found' }, { status: 404 })
 
     const body = await request.json()
     const { name, description, config, members } = body as {
@@ -47,8 +48,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const rosterError = validateRoster(members)
       if (rosterError) return NextResponse.json({ success: false, error: rosterError }, { status: 400 })
       const agentIds = [...new Set(members.map(m => m.agentId))]
-      const existing = await prisma.agent.count({ where: { id: { in: agentIds } } })
-      if (existing !== agentIds.length) {
+      const agentCount = await prisma.agent.count({ where: { id: { in: agentIds } } })
+      if (agentCount !== agentIds.length) {
         return NextResponse.json({ success: false, error: 'Algum agente selecionado não existe' }, { status: 400 })
       }
       await prisma.$transaction([
@@ -67,7 +68,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       data: {
         ...(name !== undefined ? { name } : {}),
         ...(description !== undefined ? { description } : {}),
-        ...(config !== undefined ? { config: config as object } : {}),
+        ...(config !== undefined
+          ? { config: { ...((existing.config && typeof existing.config === 'object' ? existing.config : {}) as Record<string, unknown>), ...config } as object }
+          : {}),
       },
       include: { members: { include: { agent: { select: { name: true } } }, orderBy: { position: 'asc' } } },
     })
