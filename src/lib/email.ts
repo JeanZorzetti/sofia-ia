@@ -230,13 +230,13 @@ export function buildDrip1Email(firstName: string): string {
 export function buildDrip3Email(firstName: string): string {
   return emailShell(`
 <h2>${firstName}, experimente o Magic Create</h2>
-<p>Sabia que você pode criar uma orquestração inteira só descrevendo o que quer fazer?</p>
+<p>Sabia que você pode montar um time inteiro de agentes só descrevendo o que quer fazer?</p>
 <div class="hl">
   <h3>Magic Create</h3>
   <p>Digite algo como: <em>"Quero um pipeline que pesquisa tendências, escreve um post para LinkedIn e revisa o texto"</em> — e a Polaris IA monta tudo automaticamente.</p>
 </div>
-<p>Uma orquestração com 3 agentes em 30 segundos, sem configurar nada manualmente.</p>
-<div class="cta"><a href="${APP_URL}/dashboard/orchestrations">Tentar o Magic Create →</a></div>
+<p>Um time com 3 agentes em 30 segundos, sem configurar nada manualmente.</p>
+<div class="cta"><a href="${APP_URL}/dashboard/teams">Tentar o Magic Create →</a></div>
 `)
 }
 
