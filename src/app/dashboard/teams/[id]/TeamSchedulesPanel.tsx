@@ -83,19 +83,29 @@ export function TeamSchedulesPanel({ teamId }: { teamId: string }) {
   }
 
   async function toggle(s: Schedule) {
-    const r = await fetch(`/api/teams/${teamId}/schedules/${s.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isActive: !s.isActive }),
-    })
-    const j = await r.json()
-    if (j.success) setSchedules(prev => prev.map(x => (x.id === s.id ? j.data : x)))
+    try {
+      const r = await fetch(`/api/teams/${teamId}/schedules/${s.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !s.isActive }),
+      })
+      const j = await r.json()
+      if (!j.success) throw new Error(j.error || 'Falha ao atualizar')
+      setSchedules(prev => prev.map(x => (x.id === s.id ? j.data : x)))
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Falha ao atualizar')
+    }
   }
 
   async function remove(s: Schedule) {
-    const r = await fetch(`/api/teams/${teamId}/schedules/${s.id}`, { method: 'DELETE' })
-    const j = await r.json()
-    if (j.success) setSchedules(prev => prev.filter(x => x.id !== s.id))
+    try {
+      const r = await fetch(`/api/teams/${teamId}/schedules/${s.id}`, { method: 'DELETE' })
+      const j = await r.json()
+      if (!j.success) throw new Error(j.error || 'Falha ao excluir')
+      setSchedules(prev => prev.filter(x => x.id !== s.id))
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Falha ao excluir')
+    }
   }
 
   const inputCls = 'bg-transparent border border-white/10 rounded px-2 py-1 text-xs'
