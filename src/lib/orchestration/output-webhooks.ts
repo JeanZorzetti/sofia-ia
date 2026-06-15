@@ -1,12 +1,12 @@
-﻿/**
- * Output Webhooks — dispatch notifications after successful orchestration execution.
+/**
+ * Output Webhooks — dispatch notifications after successful orchestration/team execution.
  *
  * Supported output types:
- *  - webhook: HTTP POST to a custom URL (with HMAC X-Polaris IA-Signature: sha256=xxx signing)
+ *  - webhook: HTTP POST to a custom URL (with HMAC X-Polaris-Signature: sha256=xxx signing)
  *  - email:   send via Resend (uses the existing email utility)
  *  - slack:   HTTP POST to a Slack Incoming Webhook URL
  *
- * Configuration is stored in AgentOrchestration.config JSON field:
+ * Configuration is stored in AgentOrchestration.config / Team.config JSON field:
  * {
  *   "outputWebhooks": [
  *     { "type": "webhook", "url": "https://...", "enabled": true, "secret": "optional-signing-secret" },
@@ -16,7 +16,7 @@
  * }
  *
  * HMAC verification example (receiver side):
- *   const sig = req.headers['x-sofia-signature']  // "sha256=abc123..."
+ *   const sig = req.headers['x-polaris-signature']  // "sha256=abc123..."
  *   const computed = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex')
  *   if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(computed))) throw new Error('Invalid signature')
  */
@@ -28,7 +28,7 @@ export type OutputWebhookConfig =
   | { type: 'email'; to: string; subject?: string; enabled: boolean }
   | { type: 'slack'; webhookUrl: string; enabled: boolean }
 
-export interface OrchestrationSummary {
+export interface EntitySummary {
   id: string
   name: string
 }
@@ -37,6 +37,14 @@ export interface ExecutionSummary {
   id: string
   durationMs: number
   tokensUsed: number
+}
+
+export interface DispatchOpts {
+  /** Full completion phrase used in email/slack (avoids gender agreement issues,
+   *  e.g. 'Time concluído' vs 'Orquestração concluída'). Default below. */
+  completedLabel?: string
+  /** Webhook payload event name. Default 'orchestration.completed'. */
+  event?: string
 }
 
 /**
@@ -56,14 +64,15 @@ function buildOutputText(finalOutput: any): string {
  */
 async function dispatchWebhook(
   cfg: Extract<OutputWebhookConfig, { type: 'webhook' }>,
-  orchestration: OrchestrationSummary,
+  entity: EntitySummary,
   execution: ExecutionSummary,
-  finalOutput: any
+  finalOutput: any,
+  opts: DispatchOpts,
 ): Promise<void> {
   const payload = {
-    event: 'orchestration.completed',
-    orchestrationId: orchestration.id,
-    orchestrationName: orchestration.name,
+    event: opts.event ?? 'orchestration.completed',
+    id: entity.id,
+    name: entity.name,
     executionId: execution.id,
     durationMs: execution.durationMs,
     tokensUsed: execution.tokensUsed,
@@ -74,25 +83,16 @@ async function dispatchWebhook(
   const body = JSON.stringify(payload)
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
 
-  // Sign the payload with HMAC-SHA256 if a secret is configured
   const signingSecret = cfg.secret || process.env.WEBHOOK_SIGNING_SECRET
   if (signingSecret) {
     const hmac = createHmac('sha256', signingSecret)
     hmac.update(body)
     const digest = hmac.digest('hex')
-    headers['X-Polaris IA-Signature'] = `sha256=${digest}`
+    headers['X-Polaris-Signature'] = `sha256=${digest}`
   }
 
-  const res = await fetch(cfg.url, {
-    method: 'POST',
-    headers,
-    body,
-    signal: AbortSignal.timeout(15_000),
-  })
-
-  if (!res.ok) {
-    throw new Error(`Webhook POST to ${cfg.url} returned HTTP ${res.status}`)
-  }
+  const res = await fetch(cfg.url, { method: 'POST', headers, body, signal: AbortSignal.timeout(15_000) })
+  if (!res.ok) throw new Error(`Webhook POST to ${cfg.url} returned HTTP ${res.status}`)
 }
 
 /**
@@ -100,43 +100,25 @@ async function dispatchWebhook(
  */
 async function dispatchSlack(
   cfg: Extract<OutputWebhookConfig, { type: 'slack' }>,
-  orchestration: OrchestrationSummary,
+  entity: EntitySummary,
   execution: ExecutionSummary,
-  finalOutput: any
+  finalOutput: any,
+  opts: DispatchOpts,
 ): Promise<void> {
+  const label = opts.completedLabel ?? 'Orquestração concluída'
   const outputText = buildOutputText(finalOutput)
   const durationSec = (execution.durationMs / 1000).toFixed(1)
 
   const body = {
-    text: `✅ *Orquestração concluída:* ${orchestration.name}`,
+    text: `✅ *${label}:* ${entity.name}`,
     blocks: [
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `✅ *Orquestração concluída:* ${orchestration.name}\n⏱ Duração: ${durationSec}s | 🔤 Tokens: ${execution.tokensUsed}`,
-        },
-      },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*Resultado:*\n${outputText}`,
-        },
-      },
+      { type: 'section', text: { type: 'mrkdwn', text: `✅ *${label}:* ${entity.name}\n⏱ Duração: ${durationSec}s | 🔤 Tokens: ${execution.tokensUsed}` } },
+      { type: 'section', text: { type: 'mrkdwn', text: `*Resultado:*\n${outputText}` } },
     ],
   }
 
-  const res = await fetch(cfg.webhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(15_000),
-  })
-
-  if (!res.ok) {
-    throw new Error(`Slack webhook returned HTTP ${res.status}`)
-  }
+  const res = await fetch(cfg.webhookUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(15_000) })
+  if (!res.ok) throw new Error(`Slack webhook returned HTTP ${res.status}`)
 }
 
 /**
@@ -145,23 +127,22 @@ async function dispatchSlack(
  */
 async function dispatchEmail(
   cfg: Extract<OutputWebhookConfig, { type: 'email' }>,
-  orchestration: OrchestrationSummary,
+  entity: EntitySummary,
   execution: ExecutionSummary,
-  finalOutput: any
+  finalOutput: any,
+  opts: DispatchOpts,
 ): Promise<void> {
   const resendKey = process.env.RESEND_API_KEY
-  if (!resendKey) {
-    console.warn('[OutputWebhooks] RESEND_API_KEY not set — skipping email dispatch')
-    return
-  }
+  if (!resendKey) { console.warn('[OutputWebhooks] RESEND_API_KEY not set — skipping email dispatch'); return }
 
+  const label = opts.completedLabel ?? 'Orquestração concluída'
   const outputText = buildOutputText(finalOutput)
   const durationSec = (execution.durationMs / 1000).toFixed(1)
-  const subject = cfg.subject || `Orquestração "${orchestration.name}" concluída`
+  const subject = cfg.subject || `${label}: ${entity.name}`
 
   const html = `
-    <h2>✅ Orquestração concluída</h2>
-    <p><strong>Nome:</strong> ${orchestration.name}</p>
+    <h2>✅ ${label}</h2>
+    <p><strong>Nome:</strong> ${entity.name}</p>
     <p><strong>Duração:</strong> ${durationSec}s</p>
     <p><strong>Tokens utilizados:</strong> ${execution.tokensUsed}</p>
     <h3>Resultado:</h3>
@@ -172,27 +153,15 @@ async function dispatchEmail(
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${resendKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: 'Polaris IA <noreply@polarisia.com.br>',
-      to: [cfg.to],
-      subject,
-      html,
-    }),
+    headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from: 'Polaris IA <noreply@polarisia.com.br>', to: [cfg.to], subject, html }),
     signal: AbortSignal.timeout(15_000),
   })
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    throw new Error(`Resend email returned HTTP ${res.status}: ${text}`)
-  }
+  if (!res.ok) { const text = await res.text().catch(() => ''); throw new Error(`Resend email returned HTTP ${res.status}: ${text}`) }
 }
 
 /**
- * Main entry point — read outputWebhooks from orchestration.config and dispatch each enabled output.
+ * Main entry point — read outputWebhooks from entity.config and dispatch each enabled output.
  * All errors are caught per-output to avoid blocking the main response.
  */
 export interface DispatchRecord {
@@ -204,23 +173,22 @@ export interface DispatchRecord {
 }
 
 /**
- * Main entry point — read outputWebhooks from orchestration.config and dispatch each enabled output.
+ * Main entry point — read outputWebhooks from entity.config and dispatch each enabled output.
  * Returns an array of dispatch records for persistence.
  */
 export async function dispatchOutputWebhooks(
-  orchestration: OrchestrationSummary & { config: any },
+  entity: EntitySummary & { config: any },
   execution: ExecutionSummary,
-  finalOutput: any
+  finalOutput: any,
+  opts: DispatchOpts = {},
 ): Promise<DispatchRecord[]> {
-  const config = orchestration.config as Record<string, any> | null
+  const config = entity.config as Record<string, any> | null
   const outputWebhooks: OutputWebhookConfig[] = config?.outputWebhooks ?? []
-
   if (!outputWebhooks.length) return []
-
   const enabled = outputWebhooks.filter((w) => w.enabled)
   if (!enabled.length) return []
 
-  console.log(`[OutputWebhooks] Dispatching ${enabled.length} output(s) for orchestration ${orchestration.id}`)
+  console.log(`[OutputWebhooks] Dispatching ${enabled.length} output(s) for ${entity.id}`)
 
   const results = await Promise.allSettled(
     enabled.map(async (cfg): Promise<DispatchRecord> => {
@@ -230,16 +198,9 @@ export async function dispatchOutputWebhooks(
         cfg.type === 'slack' ? 'slack-webhook' :
         (cfg.url ?? '')
       try {
-        if (cfg.type === 'webhook') {
-          await dispatchWebhook(cfg, orchestration, execution, finalOutput)
-          console.log(`[OutputWebhooks] webhook → ${cfg.url} ✓`)
-        } else if (cfg.type === 'slack') {
-          await dispatchSlack(cfg, orchestration, execution, finalOutput)
-          console.log(`[OutputWebhooks] slack webhook ✓`)
-        } else if (cfg.type === 'email') {
-          await dispatchEmail(cfg, orchestration, execution, finalOutput)
-          console.log(`[OutputWebhooks] email → ${cfg.to} ✓`)
-        }
+        if (cfg.type === 'webhook') { await dispatchWebhook(cfg, entity, execution, finalOutput, opts) }
+        else if (cfg.type === 'slack') { await dispatchSlack(cfg, entity, execution, finalOutput, opts) }
+        else if (cfg.type === 'email') { await dispatchEmail(cfg, entity, execution, finalOutput, opts) }
         return { type: cfg.type, destination, status: 'sent', sentAt }
       } catch (err: any) {
         console.error(`[OutputWebhooks] Failed to dispatch ${cfg.type}:`, err)
