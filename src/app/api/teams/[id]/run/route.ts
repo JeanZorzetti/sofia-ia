@@ -20,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const auth = await getAuthFromRequest(request)
     if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     const { id } = await params
-    const body = await request.json().catch(() => ({}))
+    const body = await request.json()
 
     const result = await startTeamRun(id, {
       mission: body?.mission,

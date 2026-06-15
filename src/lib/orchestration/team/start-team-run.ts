@@ -29,10 +29,10 @@ export class TeamRunError extends Error {
 }
 
 export async function startTeamRun(teamId: string, input: StartTeamRunInput): Promise<StartTeamRunResult> {
-  const mission = input.mission?.trim()
-  if (!mission) throw new TeamRunError('missing_mission', 'Missão é obrigatória')
   const mode: TeamRunMode = input.mode === 'code' ? 'code' : 'chat'
 
+  // Ownership + roster are resolved FIRST (faithful to the original route order:
+  // a request to a non-owned team returns not_found even if the mission is missing).
   const team = await prisma.team.findFirst({
     where: { id: teamId, createdBy: input.userId },
     include: { members: true },
@@ -41,6 +41,9 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
   if (!team.members.some(m => m.role === 'lead') || !team.members.some(m => m.role === 'worker')) {
     throw new TeamRunError('invalid_roster', 'Roster inválido (precisa de Lead e Worker)')
   }
+
+  const mission = input.mission?.trim()
+  if (!mission) throw new TeamRunError('missing_mission', 'Missão é obrigatória')
 
   // Repo binding (code-runs only): hybrid resolution — request override, then Team.config.
   // The git token is NEVER stored here; it lives only in the worker env.
