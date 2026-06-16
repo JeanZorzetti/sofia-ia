@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, BrainCircuit, Code2, Lock, Zap } from 'lucide-re
 
 export const metadata: Metadata = {
   title: 'API Reference — Polaris IA',
-  description: 'Referência completa da API REST do Polaris IA. Autenticação, endpoints de agentes, orquestrações, Knowledge Base e webhooks.',
+  description: 'Referência completa da API REST do Polaris IA. Autenticação, endpoints de agentes, times, Knowledge Base e webhooks.',
   alternates: { canonical: 'https://polarisia.com.br/api-reference' },
 }
 
@@ -30,13 +30,13 @@ const endpoints = [
     ],
   },
   {
-    group: 'Orquestrações',
+    group: 'Times (API key)',
     color: 'border-purple-500/30',
     routes: [
-      { method: 'GET', path: '/api/orchestrations', desc: 'Listar orquestrações' },
-      { method: 'POST', path: '/api/orchestrations', desc: 'Criar orquestração' },
-      { method: 'POST', path: '/api/orchestrations/:id/execute', desc: 'Executar orquestração (SSE)' },
-      { method: 'GET', path: '/api/orchestrations/executions', desc: 'Histórico de execuções' },
+      { method: 'GET', path: '/api/public/teams', desc: 'Listar times (X-API-Key)' },
+      { method: 'POST', path: '/api/public/teams/:id/run', desc: 'Disparar um time (X-API-Key)' },
+      { method: 'GET', path: '/api/v1/teams', desc: 'Listar times (Bearer)' },
+      { method: 'POST', path: '/api/v1/teams/:id/run', desc: 'Disparar um time (Bearer)' },
     ],
   },
   {
@@ -127,15 +127,15 @@ Content-Type: application/json
           <div className="flex items-start gap-3">
             <Zap className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
             <div>
-              <h3 className="font-medium text-white mb-2">Streaming SSE — Execução de Orquestrações</h3>
-              <p className="text-xs text-foreground-tertiary mb-3">Execuções retornam Server-Sent Events (SSE) com updates em tempo real por agente.</p>
+              <h3 className="font-medium text-white mb-2">Disparar um Time via API</h3>
+              <p className="text-xs text-foreground-tertiary mb-3">Dispare um time com sua API key. A execução roda em background; o resultado chega via output webhook configurado na sala do time.</p>
               <pre className="text-xs text-green-300 font-mono bg-black/30 p-3 rounded-lg overflow-x-auto">
-{`const es = new EventSource('/api/orchestrations/ID/execute?input=...')
-es.onmessage = (e) => {
-  const data = JSON.parse(e.data)
-  // data.type: 'agent_start' | 'agent_chunk' | 'agent_complete' | 'done'
-  // data.agentName, data.content, data.metrics
-}`}
+{`curl -X POST https://polarisia.com.br/api/public/teams/TEAM_ID/run \\
+  -H "X-API-Key: sk_live_..." \\
+  -H "Content-Type: application/json" \\
+  -d '{"mission": "Escreva um resumo do relatório anexo"}'
+
+// → 202 { "success": true, "data": { "runId": "...", "status": "pending", "mode": "chat" } }`}
               </pre>
             </div>
           </div>
