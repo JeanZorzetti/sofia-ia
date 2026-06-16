@@ -2,10 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
 import { getGroqClient } from '@/lib/ai/groq'
-import { prisma } from '@/lib/prisma'
 import { parseMagicRoster } from '@/lib/orchestration/team/magic-roster'
-import { createTeamWithRoster } from '@/lib/orchestration/team/create-team'
-import type { RosterInput } from '@/lib/orchestration/team/team-roster'
+import { instantiateRoster } from '@/lib/orchestration/team/instantiate-roster'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,30 +74,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: parsed.error }, { status: 422 })
     }
 
-    // Cria um Agent por membro (espelha o Magic Create legado de orquestração).
-    const roster: RosterInput[] = []
-    for (const [i, m] of parsed.roster.members.entries()) {
-      const agent = await prisma.agent.create({
-        data: {
-          name: m.name,
-          description: `Criado automaticamente via Magic Create para "${parsed.roster.name}"`,
-          systemPrompt: m.systemPrompt,
-          model: m.model,
-          temperature: 0.7,
-          status: 'active',
-          createdBy: auth.id,
-          config: { role: m.role, createdByMagic: true },
-        },
-      })
-      roster.push({ agentId: agent.id, role: m.role, model: m.model, position: i })
-    }
-
-    const result = await createTeamWithRoster({
+    const result = await instantiateRoster({
       name: parsed.roster.name,
       description: parsed.roster.description || description.trim().slice(0, 200),
-      config: { createdByMagic: true, originalDescription: description.trim() },
-      members: roster,
+      teamConfig: { createdByMagic: true, originalDescription: description.trim() },
+      members: parsed.roster.members,
       userId: auth.id,
+      agentDescription: `Criado automaticamente via Magic Create para "${parsed.roster.name}"`,
+      agentConfigExtra: { createdByMagic: true },
     })
     if (!result.ok) {
       return NextResponse.json({ success: false, error: result.error }, { status: 422 })
