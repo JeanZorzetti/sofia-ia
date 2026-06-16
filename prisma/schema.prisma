@@ -34,7 +34,6 @@ model User {
   teams                Team[]
   subscription         Subscription?
   whitelabelAccount    WhitelabelAccount?
-  scheduledExecutions  ScheduledExecution[]
   scheduledTeamRuns    ScheduledTeamRun[]
   agentMemories        AgentMemory[]
   orgMemberships       OrganizationMember[]
@@ -529,55 +528,6 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-model AgentOrchestration {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @db.VarChar(255)
-  description String?  @db.Text
-  agents      Json     @default("[]")
-  strategy    String   @default("sequential") @db.VarChar(50)
-  config      Json     @default("{}")
-  status            String   @default("active") @db.VarChar(20)
-  isLandingTemplate Boolean  @default(false) @map("is_landing_template")
-  createdBy         String   @map("created_by") @db.Uuid
-  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-
-  executions          OrchestrationExecution[]
-  scheduledExecutions ScheduledExecution[]
-
-  @@index([status])
-  @@index([createdBy])
-  @@index([isLandingTemplate])
-  @@map("agent_orchestrations")
-}
-
-model OrchestrationExecution {
-  id               String    @id @default(uuid()) @db.Uuid
-  orchestrationId  String    @map("orchestration_id") @db.Uuid
-  conversationId   String?   @map("conversation_id") @db.Uuid
-  status           String    @default("pending") @db.VarChar(20)
-  currentAgentId   String?   @map("current_agent_id") @db.Uuid
-  agentResults     Json      @default("[]") @map("agent_results")
-  input            Json      @default("{}")
-  output           Json?
-  error            String?   @db.Text
-  durationMs       Int?      @map("duration_ms")
-  tokensUsed       Int?      @map("tokens_used")
-  estimatedCost    Float?    @map("estimated_cost")
-  startedAt        DateTime  @default(now()) @map("started_at") @db.Timestamptz()
-  completedAt      DateTime? @map("completed_at") @db.Timestamptz()
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  shareToken       String?   @unique @map("share_token") @db.VarChar(64)
-
-  orchestration AgentOrchestration @relation(fields: [orchestrationId], references: [id], onDelete: Cascade)
-
-  @@index([orchestrationId])
-  @@index([conversationId])
-  @@index([status])
-  @@index([startedAt(sort: Desc)])
-  @@map("orchestration_executions")
-}
-
 model ABTest {
   id               String    @id @default(uuid()) @db.Uuid
   name             String    @db.VarChar(255)
@@ -934,32 +884,6 @@ model SalesLead {
   @@map("sales_leads")
 }
 
-// ─────────────────────────────────────────────────────────
-// ScheduledExecution — Execuções agendadas via cron
-// ─────────────────────────────────────────────────────────
-model ScheduledExecution {
-  id              String    @id @default(cuid())
-  orchestrationId String    @map("orchestration_id") @db.Uuid
-  userId          String    @map("user_id") @db.Uuid
-  cronExpr        String    @map("cron_expr") @db.VarChar(100)  // "0 8 * * 1" = toda segunda 8h
-  label           String?   @db.VarChar(255)                    // "Relatório semanal"
-  inputTemplate   String?   @map("input_template") @db.Text     // JSON com variáveis
-  nextRunAt       DateTime  @map("next_run_at") @db.Timestamptz()
-  lastRunAt       DateTime? @map("last_run_at") @db.Timestamptz()
-  lastStatus      String?   @map("last_status") @db.VarChar(20) // 'success' | 'failed'
-  isActive        Boolean   @default(true) @map("is_active")
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-
-  orchestration AgentOrchestration @relation(fields: [orchestrationId], references: [id], onDelete: Cascade)
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([orchestrationId])
-  @@index([userId])
-  @@index([isActive])
-  @@index([nextRunAt])
-  @@map("scheduled_executions")
-}
 
 // ─────────────────────────────────────────────────────────
 // ScheduledTeamRun — SP3: agendamento de runs de Team (sucessor de ScheduledExecution)
