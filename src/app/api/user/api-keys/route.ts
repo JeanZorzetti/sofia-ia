@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
+import { sha256 } from '@/lib/api-key-auth'
 import { randomBytes } from 'crypto'
 
 export const dynamic = 'force-dynamic'
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
   const rawKey = `sk_live_${randomBytes(24).toString('hex')}`
 
   const apiKey = await prisma.apiKey.create({
-    data: { name, key: rawKey, userId: auth.id, status: 'active' },
+    data: { name, key: rawKey, keyHash: sha256(rawKey), userId: auth.id, status: 'active' },
   })
 
   // Retorna a chave completa APENAS na criação — após isso fica mascarada

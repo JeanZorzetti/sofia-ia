@@ -1,18 +1,17 @@
 // src/app/api/teams/[id]/route.ts
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getAuthFromRequest } from '@/lib/auth'
-import { validateRoster, type RosterInput } from '@/lib/orchestration/team/team-roster'
+import { validateRoster } from '@/lib/orchestration/team/team-roster'
+import { withAuth } from '@/lib/with-auth'
+import { parseJson, updateTeamSchema } from '@/lib/validation'
 
 async function ownTeam(id: string, userId: string) {
   return prisma.team.findFirst({ where: { id, createdBy: userId } })
 }
 
 // GET /api/teams/[id]
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withAuth(async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
   try {
-    const auth = await getAuthFromRequest(request)
-    if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     const { id } = await params
 
     const team = await prisma.team.findFirst({
@@ -28,21 +27,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const msg = error instanceof Error ? error.message : 'Failed to fetch team'
     return NextResponse.json({ success: false, error: msg }, { status: 500 })
   }
-}
+})
 
 // PATCH /api/teams/[id] — update name/description/config and optionally replace roster
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const PATCH = withAuth(async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
   try {
-    const auth = await getAuthFromRequest(request)
-    if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     const { id } = await params
     const existing = await ownTeam(id, auth.id)
     if (!existing) return NextResponse.json({ success: false, error: 'Team not found' }, { status: 404 })
 
-    const body = await request.json()
-    const { name, description, config, members } = body as {
-      name?: string; description?: string; config?: Record<string, unknown>; members?: RosterInput[]
-    }
+    const parsed = await parseJson(request, updateTeamSchema)
+    if (!parsed.ok) return NextResponse.json({ success: false, error: parsed.error }, { status: 400 })
+    const { name, description, config, members } = parsed.data
 
     if (members !== undefined) {
       const rosterError = validateRoster(members)
@@ -79,13 +75,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const msg = error instanceof Error ? error.message : 'Failed to update team'
     return NextResponse.json({ success: false, error: msg }, { status: 500 })
   }
-}
+})
 
 // DELETE /api/teams/[id] — archive
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const DELETE = withAuth(async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
   try {
-    const auth = await getAuthFromRequest(request)
-    if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     const { id } = await params
     if (!(await ownTeam(id, auth.id))) return NextResponse.json({ success: false, error: 'Team not found' }, { status: 404 })
 
@@ -95,4 +89,4 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const msg = error instanceof Error ? error.message : 'Failed to archive team'
     return NextResponse.json({ success: false, error: msg }, { status: 500 })
   }
-}
+})

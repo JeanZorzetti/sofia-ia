@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authenticateApiKey, getApiKeyFromRequest } from '@/lib/api-key'
+import { getUserFromApiKey } from '@/lib/api-key-auth'
 import { startTeamRun, TeamRunError } from '@/lib/orchestration/team/start-team-run'
 import { parseTeamRunBody, TEAM_RUN_STATUS_BY_CODE } from '@/lib/orchestration/team/team-run-api'
 
@@ -13,7 +13,7 @@ export const maxDuration = 300
  * Retorna: 202 { success, data: { runId, status, mode } }. Resultado via output webhook do time.
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const user = await authenticateApiKey(getApiKeyFromRequest(request))
+  const user = await getUserFromApiKey(request)
   if (!user) {
     return NextResponse.json(
       { success: false, error: 'Invalid or missing API key. Pass your key in the X-API-Key header.' },

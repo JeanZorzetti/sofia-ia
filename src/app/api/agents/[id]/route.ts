@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAuthFromRequest } from '@/lib/auth';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { logAudit, getIpFromRequest, getUserAgentFromRequest } from '@/lib/audit';
 import { ownerId } from '@/lib/authz';
+import { withAuth } from '@/lib/with-auth';
+import { parseJson, updateAgentSchema } from '@/lib/validation';
 
 interface RouteParams {
   params: Promise<{
@@ -10,20 +11,8 @@ interface RouteParams {
   }>;
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+export const GET = withAuth(async (request, user, { params }: RouteParams) => {
   try {
-    // Auth check
-    const user = await getAuthFromRequest(request);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const { id } = await params;
 
     // Fetch agent with channels (scoped to owner; admin sees all)
@@ -60,22 +49,10 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
 
-export async function PUT(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+export const PUT = withAuth(async (request, user, { params }: RouteParams) => {
   try {
-    // Auth check
-    const user = await getAuthFromRequest(request);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const { id } = await params;
 
     // Check ownership (owner or admin) before updating
@@ -90,8 +67,11 @@ export async function PUT(
       );
     }
 
-    // Parse request body
-    const body = await request.json();
+    // Validate + parse body (zod)
+    const parsed = await parseJson(request, updateAgentSchema);
+    if (!parsed.ok) {
+      return NextResponse.json({ success: false, error: parsed.error }, { status: 400 });
+    }
     const {
       name,
       description,
@@ -103,7 +83,7 @@ export async function PUT(
       knowledgeBaseId,
       folderId,
       channels
-    } = body;
+    } = parsed.data;
 
     // Update agent
     const agent = await prisma.agent.update({
@@ -186,22 +166,10 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
+});
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: RouteParams
-) {
+export const DELETE = withAuth(async (request, user, { params }: RouteParams) => {
   try {
-    // Auth check
-    const user = await getAuthFromRequest(request);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const { id } = await params;
 
     // Check ownership (owner or admin) before deleting
@@ -235,4 +203,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});

@@ -2,20 +2,18 @@
 // /api/flows/[id] — Single flow CRUD
 // ─────────────────────────────────────────────────────────
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getAuthFromRequest } from '@/lib/auth'
+import { withAuth } from '@/lib/with-auth'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
-// GET /api/flows/:id
-export async function GET(request: NextRequest, { params }: RouteParams) {
-    try {
-        const user = await getAuthFromRequest(request)
-        if (!user) {
-            return NextResponse.json({ data: null, error: 'Não autenticado' }, { status: 401 })
-        }
+// Preserva o envelope { data, error } usado pelo grupo flows.
+const flowsUnauthorized = () => NextResponse.json({ data: null, error: 'Não autenticado' }, { status: 401 })
 
+// GET /api/flows/:id
+export const GET = withAuth(async (request, user, { params }: RouteParams) => {
+    try {
         const { id } = await params
 
         const flow = await prisma.flow.findUnique({
@@ -38,16 +36,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         console.error('[Flows API] GET error:', error)
         return NextResponse.json({ data: null, error: error.message }, { status: 500 })
     }
-}
+}, { onUnauthorized: flowsUnauthorized })
 
 // PUT /api/flows/:id — Update flow
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export const PUT = withAuth(async (request, user, { params }: RouteParams) => {
     try {
-        const user = await getAuthFromRequest(request)
-        if (!user) {
-            return NextResponse.json({ data: null, error: 'Não autenticado' }, { status: 401 })
-        }
-
         const { id } = await params
         const body = await request.json()
 
@@ -117,16 +110,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         console.error('[Flows API] PUT error:', error)
         return NextResponse.json({ data: null, error: error.message }, { status: 500 })
     }
-}
+}, { onUnauthorized: flowsUnauthorized })
 
 // DELETE /api/flows/:id
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export const DELETE = withAuth(async (request, user, { params }: RouteParams) => {
     try {
-        const user = await getAuthFromRequest(request)
-        if (!user) {
-            return NextResponse.json({ data: null, error: 'Não autenticado' }, { status: 401 })
-        }
-
         const { id } = await params
 
         const existing = await prisma.flow.findUnique({ where: { id } })
@@ -141,4 +129,4 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         console.error('[Flows API] DELETE error:', error)
         return NextResponse.json({ data: null, error: error.message }, { status: 500 })
     }
-}
+}, { onUnauthorized: flowsUnauthorized })

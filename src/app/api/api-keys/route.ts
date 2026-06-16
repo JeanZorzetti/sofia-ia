@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { sha256 } from '@/lib/api-key-auth';
 import { randomUUID } from 'crypto';
 
 export async function GET(request: NextRequest) {
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         key: apiKey,
+        keyHash: sha256(apiKey),
         userId,
         status: 'active',
       },

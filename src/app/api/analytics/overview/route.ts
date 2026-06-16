@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAll } from '@/lib/api-middleware';
-import { rateLimiters } from '@/lib/rate-limit-redis';
+import { rateLimiters } from '@/lib/rate-limit';
 import { TTL } from '@/lib/cache';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';

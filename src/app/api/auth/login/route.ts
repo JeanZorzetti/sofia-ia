@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUser, setAuthCookie } from '@/lib/auth';
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { parseJson, loginSchema } from '@/lib/validation';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,17 +22,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parse request body
-    const body = await req.json();
-    const { username, password } = body;
-
-    // Validate input
-    if (!username || !password) {
+    // Parse + validate request body (zod)
+    const parsed = await parseJson(req, loginSchema);
+    if (!parsed.ok) {
       return NextResponse.json(
-        { success: false, error: 'Username and password are required' },
+        { success: false, error: parsed.error },
         { status: 400 }
       );
     }
+    const { username, password } = parsed.data;
 
     // Authenticate user
     const result = await authenticateUser(username, password);

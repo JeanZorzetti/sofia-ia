@@ -1,16 +1,13 @@
 // src/app/api/teams/route.ts
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getAuthFromRequest } from '@/lib/auth'
-import { type RosterInput } from '@/lib/orchestration/team/team-roster'
 import { createTeamWithRoster } from '@/lib/orchestration/team/create-team'
+import { withAuth } from '@/lib/with-auth'
+import { parseJson, createTeamSchema } from '@/lib/validation'
 
 // GET /api/teams — list the current user's teams
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request, auth) => {
   try {
-    const auth = await getAuthFromRequest(request)
-    if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
-
     const teams = await prisma.team.findMany({
       where: { createdBy: auth.id, status: 'active' },
       orderBy: { createdAt: 'desc' },
@@ -25,18 +22,14 @@ export async function GET(request: NextRequest) {
     console.error('Error listing teams:', error)
     return NextResponse.json({ success: false, error: msg }, { status: 500 })
   }
-}
+})
 
 // POST /api/teams — create a team with a roster
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, auth) => {
   try {
-    const auth = await getAuthFromRequest(request)
-    if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
-
-    const body = await request.json()
-    const { name, description, config, members } = body as {
-      name?: string; description?: string; config?: Record<string, unknown>; members?: RosterInput[]
-    }
+    const parsed = await parseJson(request, createTeamSchema)
+    if (!parsed.ok) return NextResponse.json({ success: false, error: parsed.error }, { status: 400 })
+    const { name, description, config, members } = parsed.data
 
     const result = await createTeamWithRoster({ name, description, config, members, userId: auth.id })
     if (!result.ok) return NextResponse.json({ success: false, error: result.error }, { status: 400 })
@@ -47,4 +40,4 @@ export async function POST(request: NextRequest) {
     console.error('Error creating team:', error)
     return NextResponse.json({ success: false, error: msg }, { status: 500 })
   }
-}
+})

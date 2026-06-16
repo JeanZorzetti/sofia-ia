@@ -5,13 +5,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { cache, TTL } from './cache';
-import { RedisRateLimiter, RateLimitResult, rateLimiters, getRateLimitHeaders } from './rate-limit-redis';
+import { RateLimiter, rateLimiters, getRateLimitHeaders } from './rate-limit';
 import { getAuthFromRequest } from './auth';
 
 interface MiddlewareConfig {
   rateLimit?: {
     enabled: boolean;
-    limiter?: RedisRateLimiter;
+    limiter?: RateLimiter;
     keyGenerator?: (req: NextRequest) => string;
   };
   cache?: {
@@ -164,7 +164,7 @@ export function withCache(
  */
 export function withRateLimit(
   handler: (req: NextRequest, context?: any) => Promise<NextResponse>,
-  limiter?: RedisRateLimiter
+  limiter?: RateLimiter
 ) {
   return withMiddleware(handler, {
     rateLimit: { 
@@ -195,7 +195,7 @@ export function withAll(
   handler: (req: NextRequest, context?: any) => Promise<NextResponse>,
   config: {
     ttl?: number;
-    limiter?: RedisRateLimiter;
+    limiter?: RateLimiter;
     roles?: string[];
   } = {}
 ) {

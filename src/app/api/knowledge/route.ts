@@ -1,15 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getAuthFromRequest } from '@/lib/auth';
+import { withAuth } from '@/lib/with-auth';
+
+// Preserva o envelope { error } usado pelo grupo knowledge.
+const knowledgeUnauthorized = () => NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
 // GET /api/knowledge - Lista todas as bases de conhecimento
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request, auth) => {
   try {
-    const auth = await getAuthFromRequest(request);
-    if (!auth) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-
     const knowledgeBases = await prisma.knowledgeBase.findMany({
       where: { createdBy: auth.id },
       include: {
@@ -45,16 +43,11 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { onUnauthorized: knowledgeUnauthorized });
 
 // POST /api/knowledge - Cria uma nova base de conhecimento
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, auth) => {
   try {
-    const auth = await getAuthFromRequest(request);
-    if (!auth) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-
     const body = await request.json();
     const { name, agentId, type, config } = body;
 
@@ -83,4 +76,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+}, { onUnauthorized: knowledgeUnauthorized });

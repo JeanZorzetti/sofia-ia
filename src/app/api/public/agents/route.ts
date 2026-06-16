@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { authenticateApiKey, getApiKeyFromRequest } from '@/lib/api-key'
+import { getUserFromApiKey } from '@/lib/api-key-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic'
  * Headers: X-API-Key: sk_...
  */
 export async function GET(request: NextRequest) {
-  const user = await authenticateApiKey(getApiKeyFromRequest(request))
+  const user = await getUserFromApiKey(request)
   if (!user) {
     return NextResponse.json(
       { success: false, error: 'Invalid or missing API key. Pass your key in the X-API-Key header.' },

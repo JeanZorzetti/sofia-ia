@@ -1,22 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAuthFromRequest } from '@/lib/auth';
+import { NextResponse } from 'next/server';
 import { ownerId } from '@/lib/authz';
 import { prisma } from '@/lib/prisma';
 import { checkPlanLimit } from '@/lib/plan-limits';
 import { trackEvent, isFirstEvent } from '@/lib/analytics';
 import { logAudit, getIpFromRequest, getUserAgentFromRequest } from '@/lib/audit';
+import { withAuth } from '@/lib/with-auth';
+import { parseJson, createAgentSchema } from '@/lib/validation';
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request, user) => {
   try {
-    // Auth check
-    const user = await getAuthFromRequest(request);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     // Get query params for filtering
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -58,39 +50,16 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, user) => {
   try {
-    // Auth check
-    const user = await getAuthFromRequest(request);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+    // Validate + parse body (zod)
+    const parsed = await parseJson(request, createAgentSchema);
+    if (!parsed.ok) {
+      return NextResponse.json({ success: false, error: parsed.error }, { status: 400 });
     }
-
-    // Parse request body
-    const body = await request.json();
-    const {
-      name,
-      description,
-      systemPrompt,
-      model,
-      temperature,
-      channels,
-      status,
-      config
-    } = body;
-
-    // Validate required fields
-    if (!name || typeof name !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'name is required and must be a string' },
-        { status: 400 }
-      );
-    }
+    const { name, description, systemPrompt, model, temperature, channels, status, config } = parsed.data;
 
     // Check plan limits
     const limitCheck = await checkPlanLimit(user.id, 'agents');
@@ -98,13 +67,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: limitCheck.message || 'Limite de agentes atingido para seu plano.' },
         { status: 403 }
-      );
-    }
-
-    if (!systemPrompt || typeof systemPrompt !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'systemPrompt is required and must be a string' },
-        { status: 400 }
       );
     }
 
@@ -174,4 +136,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

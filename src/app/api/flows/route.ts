@@ -2,18 +2,16 @@
 // /api/flows — CRUD for flows
 // ─────────────────────────────────────────────────────────
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getAuthFromRequest } from '@/lib/auth'
+import { withAuth } from '@/lib/with-auth'
+
+// Preserva o envelope { data, error } usado pelo grupo flows.
+const flowsUnauthorized = () => NextResponse.json({ data: null, error: 'Não autenticado' }, { status: 401 })
 
 // GET /api/flows — List all flows for the current user
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request, user) => {
     try {
-        const user = await getAuthFromRequest(request)
-        if (!user) {
-            return NextResponse.json({ data: null, error: 'Não autenticado' }, { status: 401 })
-        }
-
         const { searchParams } = new URL(request.url)
         const status = searchParams.get('status')
         const search = searchParams.get('search')
@@ -43,16 +41,11 @@ export async function GET(request: NextRequest) {
         console.error('[Flows API] GET error:', error)
         return NextResponse.json({ data: null, error: error.message }, { status: 500 })
     }
-}
+}, { onUnauthorized: flowsUnauthorized })
 
 // POST /api/flows — Create a new flow
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, user) => {
     try {
-        const user = await getAuthFromRequest(request)
-        if (!user) {
-            return NextResponse.json({ data: null, error: 'Não autenticado' }, { status: 401 })
-        }
-
         const body = await request.json()
         const { name, description, nodes, edges, settings, variables, triggerType, tags, icon, color } = body
 
@@ -92,4 +85,4 @@ export async function POST(request: NextRequest) {
         console.error('[Flows API] POST error:', error)
         return NextResponse.json({ data: null, error: error.message }, { status: 500 })
     }
-}
+}, { onUnauthorized: flowsUnauthorized })

@@ -1,19 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getAuthFromRequest } from '@/lib/auth';
 import { ownerId } from '@/lib/authz';
+import { withAuth } from '@/lib/with-auth';
+
+// Preserva o envelope { error } usado pelo grupo knowledge.
+const knowledgeUnauthorized = () => NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
 // GET /api/knowledge/[id] - Busca uma base de conhecimento por ID
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withAuth(async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
   try {
-    const auth = await getAuthFromRequest(request);
-    if (!auth) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-
     const { id } = await params;
 
     const knowledgeBase = await prisma.knowledgeBase.findFirst({
@@ -39,19 +34,11 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+}, { onUnauthorized: knowledgeUnauthorized });
 
 // PUT /api/knowledge/[id] - Atualiza uma base de conhecimento
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const PUT = withAuth(async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
   try {
-    const auth = await getAuthFromRequest(request);
-    if (!auth) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-
     const { id } = await params;
 
     const owned = await prisma.knowledgeBase.findFirst({
@@ -86,19 +73,11 @@ export async function PUT(
       { status: 500 }
     );
   }
-}
+}, { onUnauthorized: knowledgeUnauthorized });
 
 // DELETE /api/knowledge/[id] - Deleta uma base de conhecimento
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withAuth(async (request, auth, { params }: { params: Promise<{ id: string }> }) => {
   try {
-    const auth = await getAuthFromRequest(request);
-    if (!auth) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-    }
-
     const { id } = await params;
 
     const { count } = await prisma.knowledgeBase.deleteMany({
@@ -116,4 +95,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+}, { onUnauthorized: knowledgeUnauthorized });

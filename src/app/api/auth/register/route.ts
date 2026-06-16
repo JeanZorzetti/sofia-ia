@@ -4,33 +4,18 @@ import { prisma } from '@/lib/prisma'
 import { signToken, setAuthCookie } from '@/lib/auth'
 import { sendWelcomeEmail } from '@/lib/email'
 import { trackEvent, Events } from '@/lib/analytics'
+import { parseJson, registerSchema } from '@/lib/validation'
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { name, email, password, referredBy } = body
-
-    if (!name || !email || !password) {
+    const parsed = await parseJson(req, registerSchema)
+    if (!parsed.ok) {
       return NextResponse.json(
-        { success: false, error: 'Nome, email e senha são obrigatórios' },
+        { success: false, error: parsed.error },
         { status: 400 }
       )
     }
-
-    if (password.length < 8) {
-      return NextResponse.json(
-        { success: false, error: 'A senha deve ter pelo menos 8 caracteres' },
-        { status: 400 }
-      )
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { success: false, error: 'Email inválido' },
-        { status: 400 }
-      )
-    }
+    const { name, email, password, referredBy } = parsed.data
 
     const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } })
     if (existing) {
