@@ -438,7 +438,7 @@ export default function ThreadsCampaignsPage() {
           </div>
           <div className="flex items-center gap-3">
             <a
-              href="/dashboard/orchestrations"
+              href="/dashboard/teams"
               className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-all"
             >
               <Zap className="h-3.5 w-3.5" />
