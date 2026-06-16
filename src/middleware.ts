@@ -143,6 +143,7 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/api/cron') ||            // cron jobs (protected by CRON_SECRET)
       pathname.startsWith('/api/flows/cron') ||      // flow cron triggers (protected by CRON_SECRET)
       pathname.startsWith('/api/public/') ||         // public API (auth via api_key header)
+      pathname.startsWith('/api/v1/teams') ||        // v1 Teams API (auth via Bearer API key in the route handler)
       pathname === '/api/chat/widget' ||             // widget público (sem auth, por agentId)
       pathname.startsWith('/api/chat/widget')
 
