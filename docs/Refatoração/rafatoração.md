@@ -51,14 +51,16 @@ Envelope de resposta único: padronizar em { success, data, error } (já é maio
 Validação de input (zod): introduzir schemas nas rotas mutadoras (começar por auth, agents, teams). Hoje a maioria confia em request.json() cru.
 Consolidar rate-limit: src/lib/rate-limit.ts (in-memory, 134 usos) vs src/lib/rate-limit-redis.ts (Redis, 1 uso). Unificar numa interface com adapter; remover a duplicata.
 Consolidar auth de API-key: duas funções (api-key-auth.ts e api-key.ts) + fallback de comparação de chave em plaintext (legado). Unificar e remover o fallback plaintext.
-Sprint 2 — Performance: banco de dados 🟡
+Sprint 2 — Performance: banco de dados 🟡 ✅ DONE (2026-06-16) — código commitado; migração de índices aplicada manual no host de prod ANTES do push (ver disciplina).
 Maior ganho confirmado por agente; exige migração (ver disciplina acima).
 
-N+1 em analytics src/app/api/analytics/agents/route.ts (6 queries/agente) e src/app/api/analytics/workflows/route.ts (5 queries/flow): reescrever com groupBy/queries em lote (where: { id: { in: [...] } }).
-Streaming de team run src/app/api/teams/[id]/runs/[runId]/stream/route.ts: polling busca run inteiro + todas as mensagens a cada ~1s (600+ queries/run). Trocar por queries delta.
-Índices faltantes em prisma/schema.prisma: verificar cada um contra o schema atual antes (o agente errou em outros pontos). Candidatos: Lead.assignedTo, Agent.knowledgeBaseId, TeamTask.assigneeId, + compostos (Conversation[agentId,status], Message[conversationId,sentAt]). Migração formal + migrate deploy manual.
-Batch lookups em src/app/api/ab-tests/route.ts.
-ISR onde for seguro: trocar force-dynamic por revalidate em rotas de analytics/catálogo público.
+[STATUS] Entregue:
+- N+1 em analytics: agents/workflows reescritos com queries em lote (groupBy/findMany distinct/_avg). Helper puro novo src/lib/analytics/aggregate.ts (countByKey/nestedCount/responseTimeByAgent/rate/round2) + testes (src/__tests__/lib/analytics/aggregate.test.ts). Forma de resposta e números preservados byte-a-byte. ~6N/~5N queries → fixo (≈7/≈4) independente de N.
+- Streaming team run: poll passou a buscar run+tasks com select estreito e SÓ mensagens novas (findMany teamMessage skip:lastMsgCount, ordem estável createdAt+id) em vez de incluir TODAS as mensagens por tick. Coordinator/SSE intocados.
+- Batch lookups ab-tests GET: 3 queries/teste → 1 findMany agents in[...] + Map de nomes.
+- ISR: src/app/(public)/marketplace/page.tsx ganhou revalidate=3600 (catálogo público, sem dado por-usuário; antes era estática implícita congelada no fallback de build). Rotas de analytics NÃO viraram ISR (autenticadas/por-usuário).
+- Índices (migração 20260616140000_add_performance_indexes): leads(assigned_to), agents(knowledge_base_id), team_tasks(assignee_id), conversations(agent_id,status), messages(conversation_id,sent_at). Verificado contra o schema (nenhum já existia) e nomes batem com o que o Prisma gera (migrate diff from-empty). Índices NÃO alteram o client → push sem aplicar não quebra (só fica sem o ganho).
+tsc limpo (só os 7 erros pré-existentes de deps opcionais). jest não roda local (OneDrive). E2E autenticado em prod pendente.
 Sprint 3 — Performance: bundle e rendering 🟡
 next.config: adicionar optimizePackageImports (recharts, framer-motion, react-syntax-highlighter) + alias de polyfill-module para vazio (problema conhecido da org: Next embute core-js ignorando browserslist).
 Code-split libs pesadas client-only via dynamic(import()): @monaco-editor/react, @xterm/xterm, diff2html, recharts.

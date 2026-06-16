@@ -44,10 +44,36 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       intervalId = setInterval(async () => {
         if (isClosed) { if (intervalId) { clearInterval(intervalId); intervalId = null } return }
         try {
-          const current = await prisma.teamRun.findUnique({
-            where: { id: runId },
-            include: { tasks: { orderBy: { position: 'asc' } }, messages: { orderBy: { createdAt: 'asc' } } },
-          })
+          // Delta polling (Sprint 2): the run record + tasks are bounded, but the
+          // message log grows for the whole run. Fetch the run/tasks with a narrow
+          // select and only the *new* messages past the cursor (`skip: lastMsgCount`
+          // over a stable order) instead of re-reading every message each tick.
+          const [current, newMessages] = await Promise.all([
+            prisma.teamRun.findUnique({
+              where: { id: runId },
+              select: {
+                status: true, output: true, error: true, turnsUsed: true, tokensUsed: true,
+                estimatedCost: true, durationMs: true, repoUrl: true, branch: true, prUrl: true,
+                commitSha: true, changedFiles: true, mode: true,
+                tasks: {
+                  orderBy: { position: 'asc' },
+                  select: {
+                    id: true, title: true, status: true, assigneeId: true,
+                    retryCount: true, reviewNote: true, result: true, artifacts: true,
+                  },
+                },
+              },
+            }),
+            prisma.teamMessage.findMany({
+              where: { runId },
+              orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+              skip: lastMsgCount,
+              select: {
+                id: true, fromMemberId: true, toMemberId: true,
+                kind: true, summary: true, content: true, taskId: true,
+              },
+            }),
+          ])
           if (!current) return
           pollErrors = 0
 
@@ -78,16 +104,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             lastTermSig = termSig
           }
 
-          // New messages
-          if (current.messages.length > lastMsgCount) {
-            for (let i = lastMsgCount; i < current.messages.length; i++) {
-              const m = current.messages[i]
+          // New messages (delta only — see the fetch above)
+          if (newMessages.length > 0) {
+            for (const m of newMessages) {
               send('message', {
                 id: m.id, fromMemberId: m.fromMemberId, toMemberId: m.toMemberId,
                 kind: m.kind, summary: m.summary, content: m.content.slice(0, 500), taskId: m.taskId,
               })
             }
-            lastMsgCount = current.messages.length
+            lastMsgCount += newMessages.length
           }
 
           // Status / metrics (+ git delivery fields for code-runs — Sub-projeto C C1)

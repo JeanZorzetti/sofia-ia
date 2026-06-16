@@ -23,24 +23,29 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Buscar nomes dos agentes
-    const testsWithAgentNames = await Promise.all(
-      tests.map(async (test) => {
-        const [agentA, agentB, winner] = await Promise.all([
-          prisma.agent.findUnique({ where: { id: test.agentAId }, select: { name: true } }),
-          prisma.agent.findUnique({ where: { id: test.agentBId }, select: { name: true } }),
-          test.winnerAgentId ? prisma.agent.findUnique({ where: { id: test.winnerAgentId }, select: { name: true } }) : null
-        ]);
+    // Buscar nomes dos agentes em lote (Sprint 2: era 3 queries por teste — N+1).
+    const agentIds = new Set<string>();
+    for (const test of tests) {
+      agentIds.add(test.agentAId);
+      agentIds.add(test.agentBId);
+      if (test.winnerAgentId) agentIds.add(test.winnerAgentId);
+    }
 
-        return {
-          ...test,
-          agentAName: agentA?.name || 'Unknown',
-          agentBName: agentB?.name || 'Unknown',
-          winnerAgentName: winner?.name || null,
-          interactionsCount: test._count.interactions,
-        };
-      })
-    );
+    const agents = agentIds.size
+      ? await prisma.agent.findMany({
+          where: { id: { in: [...agentIds] } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const nameById = new Map(agents.map((a) => [a.id, a.name]));
+
+    const testsWithAgentNames = tests.map((test) => ({
+      ...test,
+      agentAName: nameById.get(test.agentAId) || 'Unknown',
+      agentBName: nameById.get(test.agentBId) || 'Unknown',
+      winnerAgentName: test.winnerAgentId ? nameById.get(test.winnerAgentId) || null : null,
+      interactionsCount: test._count.interactions,
+    }));
 
     return NextResponse.json({ tests: testsWithAgentNames });
   } catch (error) {

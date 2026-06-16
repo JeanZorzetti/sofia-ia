@@ -81,6 +81,7 @@ model Lead {
   @@index([score(sort: Desc)])
   @@index([createdAt(sort: Desc)])
   @@index([ultimaInteracao(sort: Desc)])
+  @@index([assignedTo]) // Sprint 2: filtros/joins por corretor responsável
   @@map("leads")
 }
 
@@ -112,6 +113,7 @@ model Conversation {
   @@index([handledBy])
   @@index([channel])
   @@index([lastMessageAt(sort: Desc)])
+  @@index([agentId, status]) // Sprint 2: analytics por agente filtrando status (closed/active)
   @@map("conversations")
 }
 
@@ -140,6 +142,7 @@ model Message {
   @@index([leadId])
   @@index([sentAt(sort: Desc)])
   @@index([sender])
+  @@index([conversationId, sentAt]) // Sprint 2: timeline de mensagens por conversa (tempo de resposta)
   @@map("messages")
 }
 
@@ -268,6 +271,7 @@ model Agent {
   @@index([status])
   @@index([createdBy])
   @@index([folderId])
+  @@index([knowledgeBaseId]) // Sprint 2: lookup de agentes por base de conhecimento
   @@map("agents")
 }
 
@@ -1363,6 +1367,7 @@ model TeamTask {
 
   @@index([runId])
   @@index([status])
+  @@index([assigneeId]) // Sprint 2: tarefas por membro responsável
   @@map("team_tasks")
 }
 

@@ -17,6 +17,13 @@ import { prisma } from '@/lib/prisma'
 import { AnimatedSection } from '@/components/landing/AnimatedSection'
 import { GradientText } from '@/components/landing/GradientText'
 
+// ISR (Sprint 2): catálogo público, sem dados por-usuário. Antes a página era
+// estática implícita — a query Prisma rodava só no build (sem DATABASE_URL no
+// Docker → caía no fallback estático e congelava). Com `revalidate` ela atualiza
+// a partir do banco a cada hora em runtime, mantendo o cache. Ver lição
+// `ssg_db_query_build_time_gotcha`.
+export const revalidate = 3600
+
 export const metadata: Metadata = {
   title: 'Marketplace de Templates — Polaris IA | Orquestrações Prontas',
   description:
