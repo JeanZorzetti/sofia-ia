@@ -7,7 +7,7 @@ const spec = {
   info: {
     title: 'Polaris IA — Public API',
     description:
-      'REST API for programmatic access to Polaris IA orchestrations, agents and executions. Authenticate with an API key from /dashboard/api-keys.',
+      'REST API for programmatic access to Polaris IA teams, agents and runs. Authenticate with an API key from /dashboard/api-keys.',
     version: '1.0.0',
     contact: {
       name: 'Polaris IA Support',
@@ -47,14 +47,14 @@ const spec = {
           error: { type: 'string', example: 'Unauthorized' },
         },
       },
-      Orchestration: {
+      Team: {
         type: 'object',
         properties: {
           id: { type: 'string' },
           name: { type: 'string', example: 'Content Pipeline' },
           description: { type: 'string', nullable: true },
-          status: { type: 'string', enum: ['active', 'inactive', 'draft'] },
-          agentCount: { type: 'integer', example: 3 },
+          status: { type: 'string', enum: ['active', 'inactive'] },
+          memberCount: { type: 'integer', example: 3 },
           createdAt: { type: 'string', format: 'date-time' },
         },
       },
@@ -69,41 +69,39 @@ const spec = {
           createdAt: { type: 'string', format: 'date-time' },
         },
       },
-      Execution: {
+      TeamRun: {
         type: 'object',
         properties: {
           id: { type: 'string' },
-          orchestrationId: { type: 'string' },
+          teamId: { type: 'string' },
+          mission: { type: 'string', nullable: true },
+          mode: { type: 'string', enum: ['chat', 'code'] },
           status: {
             type: 'string',
             enum: ['pending', 'running', 'completed', 'failed'],
           },
-          input: { type: 'object', nullable: true },
-          output: { type: 'object', nullable: true },
-          startedAt: { type: 'string', format: 'date-time', nullable: true },
-          completedAt: { type: 'string', format: 'date-time', nullable: true },
-          error: { type: 'string', nullable: true },
+          createdAt: { type: 'string', format: 'date-time' },
         },
       },
     },
   },
   paths: {
-    '/api/public/orchestrations': {
+    '/api/public/teams': {
       get: {
-        summary: 'List orchestrations',
-        description: 'Returns all active orchestrations belonging to the authenticated user.',
-        operationId: 'listOrchestrations',
-        tags: ['Orchestrations'],
+        summary: 'List teams',
+        description: 'Returns all teams belonging to the authenticated user.',
+        operationId: 'listTeams',
+        tags: ['Teams'],
         responses: {
           '200': {
-            description: 'List of orchestrations',
+            description: 'List of teams',
             content: {
               'application/json': {
                 schema: {
                   type: 'object',
                   properties: {
                     success: { type: 'boolean' },
-                    data: { type: 'array', items: { $ref: '#/components/schemas/Orchestration' } },
+                    data: { type: 'array', items: { $ref: '#/components/schemas/Team' } },
                   },
                 },
               },
@@ -116,20 +114,20 @@ const spec = {
         },
       },
     },
-    '/api/public/orchestrations/{id}/run': {
+    '/api/public/teams/{id}/run': {
       post: {
-        summary: 'Run an orchestration',
+        summary: 'Run a team',
         description:
-          'Triggers a new execution. Returns immediately with an executionId — poll /api/public/executions/{id} for the result.',
-        operationId: 'runOrchestration',
-        tags: ['Orchestrations'],
+          'Triggers a new team run (Lead coordinates Workers). Returns immediately with a runId — the result is delivered via the team output webhook (configure it in the team room).',
+        operationId: 'runTeam',
+        tags: ['Teams'],
         parameters: [
           {
             name: 'id',
             in: 'path',
             required: true,
             schema: { type: 'string' },
-            description: 'Orchestration ID',
+            description: 'Team ID',
           },
         ],
         requestBody: {
@@ -139,10 +137,16 @@ const spec = {
               schema: {
                 type: 'object',
                 properties: {
-                  input: {
+                  mission: {
                     type: 'string',
-                    description: 'Initial input text for the first agent',
-                    example: 'Write a blog post about AI orchestration',
+                    description: 'The mission/task for the team (aliases: input, message)',
+                    example: 'Write a blog post about AI teams',
+                  },
+                  mode: {
+                    type: 'string',
+                    enum: ['chat', 'code'],
+                    default: 'chat',
+                    description: 'Run mode',
                   },
                 },
               },
@@ -151,7 +155,7 @@ const spec = {
         },
         responses: {
           '202': {
-            description: 'Execution accepted',
+            description: 'Run accepted',
             content: {
               'application/json': {
                 schema: {
@@ -161,9 +165,9 @@ const spec = {
                     data: {
                       type: 'object',
                       properties: {
-                        executionId: { type: 'string' },
+                        runId: { type: 'string' },
                         status: { type: 'string', example: 'pending' },
-                        pollUrl: { type: 'string' },
+                        mode: { type: 'string', example: 'chat' },
                       },
                     },
                   },
@@ -176,7 +180,7 @@ const spec = {
             content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
           },
           '404': {
-            description: 'Orchestration not found',
+            description: 'Team not found',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
           },
         },
@@ -205,48 +209,6 @@ const spec = {
           },
           '401': {
             description: 'Unauthorized',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
-          },
-        },
-      },
-    },
-    '/api/public/executions/{id}': {
-      get: {
-        summary: 'Get execution status',
-        description:
-          'Poll after calling /run to get status and, when completed, the full output.',
-        operationId: 'getExecution',
-        tags: ['Executions'],
-        parameters: [
-          {
-            name: 'id',
-            in: 'path',
-            required: true,
-            schema: { type: 'string' },
-            description: 'Execution ID returned by /run',
-          },
-        ],
-        responses: {
-          '200': {
-            description: 'Execution details',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    success: { type: 'boolean' },
-                    data: { $ref: '#/components/schemas/Execution' },
-                  },
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Unauthorized',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
-          },
-          '404': {
-            description: 'Execution not found',
             content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } },
           },
         },
