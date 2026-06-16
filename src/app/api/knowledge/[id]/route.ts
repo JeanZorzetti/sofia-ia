@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
+import { ownerId } from '@/lib/authz';
 
 // GET /api/knowledge/[id] - Busca uma base de conhecimento por ID
 export async function GET(
@@ -15,8 +16,8 @@ export async function GET(
 
     const { id } = await params;
 
-    const knowledgeBase = await prisma.knowledgeBase.findUnique({
-      where: { id },
+    const knowledgeBase = await prisma.knowledgeBase.findFirst({
+      where: { id, createdBy: ownerId(auth) },
       include: {
         documents: {
           orderBy: {
@@ -52,6 +53,15 @@ export async function PUT(
     }
 
     const { id } = await params;
+
+    const owned = await prisma.knowledgeBase.findFirst({
+      where: { id, createdBy: ownerId(auth) },
+      select: { id: true },
+    });
+    if (!owned) {
+      return NextResponse.json({ error: 'Base de conhecimento não encontrada' }, { status: 404 });
+    }
+
     const body = await request.json();
     const { name, agentId, type, config } = body;
 
@@ -91,9 +101,12 @@ export async function DELETE(
 
     const { id } = await params;
 
-    await prisma.knowledgeBase.delete({
-      where: { id },
+    const { count } = await prisma.knowledgeBase.deleteMany({
+      where: { id, createdBy: ownerId(auth) },
     });
+    if (count === 0) {
+      return NextResponse.json({ error: 'Base de conhecimento não encontrada' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

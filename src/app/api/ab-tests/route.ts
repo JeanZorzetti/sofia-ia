@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { ownerId } from '@/lib/authz';
 
 /**
  * GET /api/ab-tests - Lista todos os testes A/B
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     const tests = await prisma.aBTest.findMany({
+      where: { createdBy: ownerId(auth) },
       orderBy: { createdAt: 'desc' },
       include: {
         _count: {
@@ -86,8 +88,8 @@ export async function POST(request: NextRequest) {
 
     // Verifica se os agentes existem
     const [agentA, agentB] = await Promise.all([
-      prisma.agent.findUnique({ where: { id: agentAId } }),
-      prisma.agent.findUnique({ where: { id: agentBId } }),
+      prisma.agent.findFirst({ where: { id: agentAId, createdBy: ownerId(auth) } }),
+      prisma.agent.findFirst({ where: { id: agentBId, createdBy: ownerId(auth) } }),
     ]);
 
     if (!agentA || !agentB) {

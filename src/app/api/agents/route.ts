@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
+import { ownerId } from '@/lib/authz';
 import { prisma } from '@/lib/prisma';
 import { checkPlanLimit } from '@/lib/plan-limits';
 import { trackEvent, isFirstEvent } from '@/lib/analytics';
@@ -20,8 +21,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
 
-    // Build where clause
-    const where: any = {};
+    // Build where clause (scoped to owner; admin sees all)
+    const where: any = { createdBy: ownerId(user) };
     if (status) where.status = status;
 
     // Fetch agents with their channels

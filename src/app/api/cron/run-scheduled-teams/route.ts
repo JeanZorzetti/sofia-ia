@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { startTeamRun } from '@/lib/orchestration/team/start-team-run'
 import { getNextRunAt } from '@/lib/orchestration/team/schedule'
+import { verifyCronAuth } from '@/lib/authz'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
-
-const CRON_SECRET = process.env.CRON_SECRET || 'sofia-cron-secret-2026'
 
 /**
  * GET /api/cron/run-scheduled-teams
@@ -16,8 +15,7 @@ const CRON_SECRET = process.env.CRON_SECRET || 'sofia-cron-secret-2026'
  * follow lastRunId to the TeamRun for the real status.
  */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('Authorization')
-  if (authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!verifyCronAuth(request)) {
     console.warn('[cron/run-scheduled-teams] Unauthorized attempt')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

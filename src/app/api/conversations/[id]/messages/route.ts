@@ -18,6 +18,14 @@ export async function GET(
     const limit = parseInt(searchParams.get('limit') || '50');
     const skip = (page - 1) * limit;
 
+    const owned = await prisma.conversation.findFirst({
+      where: { id, agent: { createdBy: auth.id } },
+      select: { id: true },
+    });
+    if (!owned) {
+      return NextResponse.json({ error: 'Conversa não encontrada' }, { status: 404 });
+    }
+
     const [messages, total] = await Promise.all([
       prisma.message.findMany({
         where: { conversationId: id },
@@ -67,8 +75,8 @@ export async function POST(
       );
     }
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id },
+    const conversation = await prisma.conversation.findFirst({
+      where: { id, agent: { createdBy: auth.id } },
     });
 
     if (!conversation) {

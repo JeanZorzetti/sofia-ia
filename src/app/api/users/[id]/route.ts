@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAuthFromRequest } from '@/lib/auth';
+import { isAdmin } from '@/lib/authz';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthFromRequest(request);
+    if (!auth) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
+
+    if (!isAdmin(auth) && auth.id !== id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const user = await prisma.user.findUnique({
       where: { id },
@@ -44,6 +55,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthFromRequest(request);
+    if (!auth || !isAdmin(auth)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const { name, role, status } = body;
@@ -97,6 +113,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthFromRequest(request);
+    if (!auth || !isAdmin(auth)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { id } = await params;
 
     const user = await prisma.user.findUnique({

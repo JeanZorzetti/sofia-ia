@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { ownerId } from '@/lib/authz';
 
 /**
  * GET /api/ab-tests/[id] - Busca um teste específico
@@ -17,8 +18,8 @@ export async function GET(
 
     const { id } = await params;
 
-    const test = await prisma.aBTest.findUnique({
-      where: { id },
+    const test = await prisma.aBTest.findFirst({
+      where: { id, createdBy: ownerId(auth) },
       include: {
         interactions: {
           orderBy: { createdAt: 'desc' },
@@ -97,7 +98,7 @@ export async function PUT(
     const body = await request.json();
     const { name, description, trafficSplit, status } = body;
 
-    const test = await prisma.aBTest.findUnique({ where: { id } });
+    const test = await prisma.aBTest.findFirst({ where: { id, createdBy: ownerId(auth) } });
 
     if (!test) {
       return NextResponse.json({ error: 'Teste não encontrado' }, { status: 404 });
@@ -138,7 +139,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const test = await prisma.aBTest.findUnique({ where: { id } });
+    const test = await prisma.aBTest.findFirst({ where: { id, createdBy: ownerId(auth) } });
 
     if (!test) {
       return NextResponse.json({ error: 'Teste não encontrado' }, { status: 404 });

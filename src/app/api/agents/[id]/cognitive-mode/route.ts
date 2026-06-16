@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
+import { ownerId } from '@/lib/authz'
 
 export async function POST(
   request: NextRequest,
@@ -27,7 +28,7 @@ export async function POST(
   const body = await request.json().catch(() => ({}))
   const enabled: boolean = body.enabled !== false
 
-  const agent = await prisma.agent.findUnique({ where: { id }, select: { id: true, config: true } })
+  const agent = await prisma.agent.findFirst({ where: { id, createdBy: ownerId(auth) }, select: { id: true, config: true } })
   if (!agent) return NextResponse.json({ error: 'Agente não encontrado' }, { status: 404 })
 
   const currentConfig = (agent.config || {}) as Record<string, unknown>
@@ -48,7 +49,7 @@ export async function GET(
   if (!auth) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
 
   const { id } = await params
-  const agent = await prisma.agent.findUnique({ where: { id }, select: { config: true } })
+  const agent = await prisma.agent.findFirst({ where: { id, createdBy: ownerId(auth) }, select: { config: true } })
   if (!agent) return NextResponse.json({ error: 'Agente não encontrado' }, { status: 404 })
 
   const config = (agent.config || {}) as Record<string, unknown>

@@ -14,18 +14,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendMessage } from '@/lib/evolution-service'
 import { getGroqClient } from '@/lib/ai/groq'
+import { verifyCronAuth } from '@/lib/authz'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-const CRON_SECRET = process.env.CRON_SECRET || 'sofia-cron-secret-2026'
 const INACTIVITY_HOURS = 4
 
 type FollowupResult = { conversationId: string; action: string }
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('Authorization')
-  if (authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!verifyCronAuth(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

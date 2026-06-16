@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
+import { ownerId } from '@/lib/authz';
 import { embedDocument } from '@/app/api/knowledge/[id]/documents/route';
 
 // GET /api/knowledge/[id]/documents/[documentId] - Busca documento por ID
@@ -15,6 +16,14 @@ export async function GET(
     }
 
     const { id, documentId } = await params;
+
+    const kb = await prisma.knowledgeBase.findFirst({
+      where: { id, createdBy: ownerId(auth) },
+      select: { id: true },
+    });
+    if (!kb) {
+      return NextResponse.json({ error: 'Documento não encontrado' }, { status: 404 });
+    }
 
     const document = await prisma.knowledgeDocument.findFirst({
       where: {
@@ -49,6 +58,23 @@ export async function PUT(
     }
 
     const { id, documentId } = await params;
+
+    const kb = await prisma.knowledgeBase.findFirst({
+      where: { id, createdBy: ownerId(auth) },
+      select: { id: true },
+    });
+    if (!kb) {
+      return NextResponse.json({ error: 'Documento não encontrado' }, { status: 404 });
+    }
+
+    const existing = await prisma.knowledgeDocument.findFirst({
+      where: { id: documentId, knowledgeBaseId: id },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: 'Documento não encontrado' }, { status: 404 });
+    }
+
     const body = await request.json();
     const { title, content, sourceUrl, status } = body;
 
@@ -83,10 +109,18 @@ export async function PATCH(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
-    const { documentId } = await params;
+    const { id, documentId } = await params;
 
-    const document = await prisma.knowledgeDocument.findUnique({
-      where: { id: documentId },
+    const kb = await prisma.knowledgeBase.findFirst({
+      where: { id, createdBy: ownerId(auth) },
+      select: { id: true },
+    });
+    if (!kb) {
+      return NextResponse.json({ error: 'Documento não encontrado' }, { status: 404 });
+    }
+
+    const document = await prisma.knowledgeDocument.findFirst({
+      where: { id: documentId, knowledgeBaseId: id },
     });
 
     if (!document) {
@@ -123,9 +157,20 @@ export async function DELETE(
 
     const { id, documentId } = await params;
 
-    await prisma.knowledgeDocument.delete({
-      where: { id: documentId },
+    const kb = await prisma.knowledgeBase.findFirst({
+      where: { id, createdBy: ownerId(auth) },
+      select: { id: true },
     });
+    if (!kb) {
+      return NextResponse.json({ error: 'Documento não encontrado' }, { status: 404 });
+    }
+
+    const { count } = await prisma.knowledgeDocument.deleteMany({
+      where: { id: documentId, knowledgeBaseId: id },
+    });
+    if (count === 0) {
+      return NextResponse.json({ error: 'Documento não encontrado' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

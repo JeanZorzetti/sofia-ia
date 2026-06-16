@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
+import { ownerId } from '@/lib/authz'
 import { defaultProvider, searchSimilarDocuments, hybridSearchDocuments } from '@/lib/embeddings-v2'
 
 // GET /api/knowledge/[id]/chunks - List chunks with optional similarity search
@@ -24,8 +25,8 @@ export async function GET(
     const skip = (page - 1) * limit
 
     // Verify knowledge base exists
-    const knowledgeBase = await prisma.knowledgeBase.findUnique({
-      where: { id },
+    const knowledgeBase = await prisma.knowledgeBase.findFirst({
+      where: { id, createdBy: ownerId(auth) },
       select: { id: true, name: true }
     })
 

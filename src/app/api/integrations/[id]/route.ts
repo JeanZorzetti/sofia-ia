@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
+import { ownerId } from '@/lib/authz';
 
 // GET /api/integrations/[id] - Get single integration
 export async function GET(
@@ -15,8 +16,8 @@ export async function GET(
 
     const { id } = await params;
 
-    const integration = await prisma.integration.findUnique({
-      where: { id },
+    const integration = await prisma.integration.findFirst({
+      where: { id, userId: ownerId(auth) },
     });
 
     if (!integration) {
@@ -55,6 +56,15 @@ export async function PUT(
     }
 
     const { id } = await params;
+
+    const owned = await prisma.integration.findFirst({
+      where: { id, userId: ownerId(auth) },
+      select: { id: true },
+    });
+    if (!owned) {
+      return NextResponse.json({ error: 'Integração não encontrada' }, { status: 404 });
+    }
+
     const body = await request.json();
     const { name, type, config, credentials, status } = body;
 
@@ -100,9 +110,12 @@ export async function DELETE(
 
     const { id } = await params;
 
-    await prisma.integration.delete({
-      where: { id },
+    const { count } = await prisma.integration.deleteMany({
+      where: { id, userId: ownerId(auth) },
     });
+    if (count === 0) {
+      return NextResponse.json({ error: 'Integração não encontrada' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

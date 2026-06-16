@@ -4,14 +4,31 @@ import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
-  console.error('[auth] CRITICAL: JWT_SECRET env var not set in production!')
-}
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'sofia-next-jwt-secret-dev-only-change-in-production'
-)
 const JWT_EXPIRES_IN = '24h'
+
+/**
+ * Resolve o segredo JWT de forma lazy e fail-closed.
+ * - Em producao, se JWT_SECRET nao estiver definido, lanca erro (recusa assinar/verificar)
+ *   em vez de cair num segredo publico hardcoded — o que permitiria forjar tokens.
+ * - Fora de producao, usa um fallback de dev para nao travar o ambiente local.
+ * Lazy (nao no top-level do modulo) para nao quebrar o build, quando a env var
+ * pode nao estar disponivel — mesmo padrao do lazy-init do Groq SDK.
+ */
+let cachedJwtSecret: Uint8Array | null = null
+function getJwtSecret(): Uint8Array {
+  if (cachedJwtSecret) return cachedJwtSecret
+  const secret = process.env.JWT_SECRET
+  if (secret) {
+    cachedJwtSecret = new TextEncoder().encode(secret)
+    return cachedJwtSecret
+  }
+  if (process.env.NODE_ENV === 'production') {
+    console.error('[auth] CRITICAL: JWT_SECRET env var not set in production — refusing (fail-closed)')
+    throw new Error('JWT_SECRET is required in production')
+  }
+  cachedJwtSecret = new TextEncoder().encode('sofia-next-jwt-secret-dev-only-change-in-production')
+  return cachedJwtSecret
+}
 const COOKIE_NAME = 'sofia_token'
 
 export interface JWTPayload {
@@ -26,12 +43,12 @@ export async function signToken(payload: JWTPayload): Promise<string> {
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(JWT_EXPIRES_IN)
-    .sign(JWT_SECRET)
+    .sign(getJwtSecret())
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET)
+    const { payload } = await jwtVerify(token, getJwtSecret())
     return payload as unknown as JWTPayload
   } catch {
     return null

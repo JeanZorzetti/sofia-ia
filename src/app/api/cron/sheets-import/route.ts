@@ -18,17 +18,15 @@ import { prisma } from '@/lib/prisma'
 import { sheetsRead, sheetsWrite } from '@/lib/integrations/google-sheets'
 import { sendMessage } from '@/lib/evolution-service'
 import { getGroqClient } from '@/lib/ai/groq'
+import { verifyCronAuth } from '@/lib/authz'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-const CRON_SECRET = process.env.CRON_SECRET || 'sofia-cron-secret-2026'
-
 type ImportResult = { phone: string; name: string; action: string }
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('Authorization')
-  if (authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!verifyCronAuth(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

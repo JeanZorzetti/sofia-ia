@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAuthFromRequest } from '@/lib/auth'
+import { isAdmin } from '@/lib/authz'
 
 export async function GET(
   request: NextRequest,
@@ -44,6 +46,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthFromRequest(request)
+    if (!auth || !isAdmin(auth)) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+    }
+
     const { id } = await params
     const body = await request.json()
     const { name, description, category, type, icon, config } = body
@@ -82,6 +89,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthFromRequest(request)
+    if (!auth || !isAdmin(auth)) {
+      return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+    }
+
     const { id } = await params
 
     await prisma.template.delete({

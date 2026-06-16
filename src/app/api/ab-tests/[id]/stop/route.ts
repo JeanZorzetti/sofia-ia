@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { ownerId } from '@/lib/authz';
 
 /**
  * POST /api/ab-tests/[id]/stop - Para um teste A/B e calcula o vencedor
@@ -17,8 +18,8 @@ export async function POST(
 
     const { id } = await params;
 
-    const test = await prisma.aBTest.findUnique({
-      where: { id },
+    const test = await prisma.aBTest.findFirst({
+      where: { id, createdBy: ownerId(auth) },
       include: {
         interactions: true,
       },

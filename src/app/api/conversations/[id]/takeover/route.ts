@@ -23,8 +23,8 @@ export async function POST(
       );
     }
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id },
+    const conversation = await prisma.conversation.findFirst({
+      where: { id, agent: { createdBy: auth.id } },
     });
 
     if (!conversation) {

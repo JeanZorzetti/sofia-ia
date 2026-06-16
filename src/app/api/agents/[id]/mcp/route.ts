@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { ownerId } from '@/lib/authz'
 
 export async function GET(
   request: NextRequest,
@@ -9,6 +10,9 @@ export async function GET(
   const auth = await getAuthFromRequest(request)
   if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
+
+  const agent = await prisma.agent.findFirst({ where: { id, createdBy: ownerId(auth) }, select: { id: true } })
+  if (!agent) return NextResponse.json({ success: false, error: 'Agent not found' }, { status: 404 })
 
   const connections = await prisma.agentMcpServer.findMany({
     where: { agentId: id },
@@ -26,6 +30,9 @@ export async function POST(
   const auth = await getAuthFromRequest(request)
   if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
+
+  const agent = await prisma.agent.findFirst({ where: { id, createdBy: ownerId(auth) }, select: { id: true } })
+  if (!agent) return NextResponse.json({ success: false, error: 'Agent not found' }, { status: 404 })
 
   const body = await request.json()
   const { mcpServerId } = body

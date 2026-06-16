@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
+import { ownerId } from '@/lib/authz'
 import { getOAuthConnection } from '@/lib/integrations/oauth'
 
 export async function POST(
@@ -26,7 +27,7 @@ export async function POST(
     )
   }
 
-  const agent = await prisma.agent.findUnique({ where: { id }, select: { id: true, config: true } })
+  const agent = await prisma.agent.findFirst({ where: { id, createdBy: ownerId(auth) }, select: { id: true, config: true } })
   if (!agent) return NextResponse.json({ error: 'Agente não encontrado' }, { status: 404 })
 
   const currentConfig = (agent.config || {}) as Record<string, unknown>

@@ -8,6 +8,7 @@
 // Security: Uses a CRON_SECRET header to prevent unauthorized access.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { verifyCronAuth } from '@/lib/authz'
 import { prisma } from '@/lib/prisma'
 import { executeFlow } from '@/lib/flow-engine'
 
@@ -63,13 +64,9 @@ function matchField(field: string, value: number): boolean {
 // POST /api/flows/cron — Trigger cron-based flows
 export async function POST(request: NextRequest) {
     try {
-        // Verify cron secret
-        const cronSecret = process.env.CRON_SECRET
-        if (cronSecret) {
-            const authHeader = request.headers.get('authorization')
-            if (authHeader !== `Bearer ${cronSecret}`) {
-                return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
-            }
+        // Verify cron secret (fail-closed)
+        if (!verifyCronAuth(request)) {
+            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
         }
 
         // Find all active flows with cron trigger

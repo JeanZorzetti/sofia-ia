@@ -1,24 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAuthFromRequest } from '@/lib/auth'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
-    const body = await request.json()
-    const { userId } = body
-
-    if (!userId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Missing required field: userId'
-        },
-        { status: 400 }
-      )
+    const auth = await getAuthFromRequest(request)
+    if (!auth) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
+
+    const { id } = await params
+    const userId = auth.id
 
     const template = await prisma.template.findUnique({
       where: { id }

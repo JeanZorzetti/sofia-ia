@@ -1,10 +1,18 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getAuthFromRequest } from '@/lib/auth'
+import { ownerId } from '@/lib/authz'
 
 export async function GET(request: NextRequest) {
     try {
+        const auth = await getAuthFromRequest(request)
+        if (!auth) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+        }
+
         const sessions = await prisma.devSession.findMany({
+            where: { userId: ownerId(auth) },
             orderBy: { updatedAt: 'desc' },
             include: {
                 agent: {
@@ -25,6 +33,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await getAuthFromRequest(request)
+        if (!auth) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+        }
+
         const body = await request.json()
         const { name, agentId } = body
 
@@ -39,6 +52,7 @@ export async function POST(request: NextRequest) {
             data: {
                 name,
                 agentId,
+                userId: auth.id,
                 messages: []
             },
             include: {

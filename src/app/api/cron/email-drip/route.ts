@@ -16,6 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyCronAuth } from '@/lib/authz'
 import {
   sendDrip1Email,
   sendDrip3Email,
@@ -45,8 +46,7 @@ async function alreadySent(userId: string, event: string): Promise<boolean> {
 }
 
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get('x-cron-secret') || req.nextUrl.searchParams.get('secret')
-  if (secret !== process.env.CRON_SECRET) {
+  if (!verifyCronAuth(req)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

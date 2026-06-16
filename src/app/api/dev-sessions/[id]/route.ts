@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { chatWithAgent } from '@/lib/groq'
+import { getAuthFromRequest } from '@/lib/auth'
+import { ownerId } from '@/lib/authz'
 
 interface RouteParams {
     params: Promise<{ id: string }>
@@ -15,8 +17,13 @@ export async function GET(
     const { id } = resolvedParams
 
     try {
-        const session = await prisma.devSession.findUnique({
-            where: { id },
+        const auth = await getAuthFromRequest(request)
+        if (!auth) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const session = await prisma.devSession.findFirst({
+            where: { id, userId: ownerId(auth) },
             include: {
                 agent: {
                     select: { id: true, name: true, model: true, systemPrompt: true }
@@ -49,6 +56,11 @@ export async function POST(
     const { id } = resolvedParams
 
     try {
+        const auth = await getAuthFromRequest(request)
+        if (!auth) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+        }
+
         const body = await request.json()
         const { content } = body
 
@@ -59,9 +71,9 @@ export async function POST(
             )
         }
 
-        // 1. Fetch current session state
-        const session = await prisma.devSession.findUnique({
-            where: { id },
+        // 1. Fetch current session state (scoped to owner)
+        const session = await prisma.devSession.findFirst({
+            where: { id, userId: ownerId(auth) },
             include: { agent: true }
         })
 
@@ -144,9 +156,17 @@ export async function DELETE(
     const { id } = resolvedParams
 
     try {
-        await prisma.devSession.delete({
-            where: { id }
+        const auth = await getAuthFromRequest(request)
+        if (!auth) {
+            return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const { count } = await prisma.devSession.deleteMany({
+            where: { id, userId: ownerId(auth) }
         })
+        if (count === 0) {
+            return NextResponse.json({ success: false, error: 'Session not found' }, { status: 404 })
+        }
 
         return NextResponse.json({ success: true })
     } catch (error) {

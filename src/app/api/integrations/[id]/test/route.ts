@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
+import { ownerId } from '@/lib/authz';
 
 // POST /api/integrations/[id]/test - Test integration connection
 export async function POST(
@@ -15,8 +16,8 @@ export async function POST(
 
     const { id } = await params;
 
-    const integration = await prisma.integration.findUnique({
-      where: { id },
+    const integration = await prisma.integration.findFirst({
+      where: { id, userId: ownerId(auth) },
     });
 
     if (!integration) {

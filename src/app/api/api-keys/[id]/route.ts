@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getAuthFromRequest } from '@/lib/auth';
+import { ownerId } from '@/lib/authz';
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthFromRequest(request);
+    if (!auth) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
 
-    const apiKey = await prisma.apiKey.findUnique({
-      where: { id },
+    const apiKey = await prisma.apiKey.findFirst({
+      where: { id, userId: ownerId(auth) },
       select: { name: true, userId: true },
     });
 
@@ -50,9 +57,22 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await getAuthFromRequest(request);
+    if (!auth) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
     const { status } = body;
+
+    const owned = await prisma.apiKey.findFirst({
+      where: { id, userId: ownerId(auth) },
+      select: { id: true },
+    });
+    if (!owned) {
+      return NextResponse.json({ error: 'API key not found' }, { status: 404 });
+    }
 
     const apiKey = await prisma.apiKey.update({
       where: { id },

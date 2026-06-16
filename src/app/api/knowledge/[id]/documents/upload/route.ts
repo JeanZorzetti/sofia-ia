@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
+import { ownerId } from '@/lib/authz';
 import { processDocumentVectorization } from '@/lib/knowledge-context-v2';
 
 // POST /api/knowledge/[id]/documents/upload - Upload de arquivo com suporte a PDF, DOCX, CSV, TXT, MD, JSON
@@ -16,8 +17,8 @@ export async function POST(
 
     const { id } = await params;
 
-    const knowledgeBase = await prisma.knowledgeBase.findUnique({
-      where: { id },
+    const knowledgeBase = await prisma.knowledgeBase.findFirst({
+      where: { id, createdBy: ownerId(auth) },
     });
 
     if (!knowledgeBase) {

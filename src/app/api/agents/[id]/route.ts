@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { logAudit, getIpFromRequest, getUserAgentFromRequest } from '@/lib/audit';
+import { ownerId } from '@/lib/authz';
 
 interface RouteParams {
   params: Promise<{
@@ -25,9 +26,9 @@ export async function GET(
 
     const { id } = await params;
 
-    // Fetch agent with channels
-    const agent = await prisma.agent.findUnique({
-      where: { id },
+    // Fetch agent with channels (scoped to owner; admin sees all)
+    const agent = await prisma.agent.findFirst({
+      where: { id, createdBy: ownerId(user) },
       include: {
         channels: true,
         creator: {
@@ -77,9 +78,9 @@ export async function PUT(
 
     const { id } = await params;
 
-    // Check if agent exists
-    const existingAgent = await prisma.agent.findUnique({
-      where: { id }
+    // Check ownership (owner or admin) before updating
+    const existingAgent = await prisma.agent.findFirst({
+      where: { id, createdBy: ownerId(user) }
     });
 
     if (!existingAgent) {
@@ -203,9 +204,9 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Check if agent exists
-    const existingAgent = await prisma.agent.findUnique({
-      where: { id }
+    // Check ownership (owner or admin) before deleting
+    const existingAgent = await prisma.agent.findFirst({
+      where: { id, createdBy: ownerId(user) }
     });
 
     if (!existingAgent) {

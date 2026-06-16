@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
+import { ownerId } from '@/lib/authz'
 
 export async function POST(
   request: NextRequest,
@@ -22,8 +23,8 @@ export async function POST(
 
     const { id } = await params
 
-    const knowledgeBase = await prisma.knowledgeBase.findUnique({
-      where: { id },
+    const knowledgeBase = await prisma.knowledgeBase.findFirst({
+      where: { id, createdBy: ownerId(auth) },
       select: { id: true, name: true },
     })
 

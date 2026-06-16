@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
+import { ownerId } from '@/lib/authz'
 import { listDriveFiles, downloadDriveFile, mimeTypeToExtension } from '@/lib/google-drive'
 import { processDocumentVectorization } from '@/lib/ai/knowledge-context'
 
@@ -32,7 +33,7 @@ export async function POST(
 
     const { id } = await params
 
-    const knowledgeBase = await prisma.knowledgeBase.findUnique({ where: { id } })
+    const knowledgeBase = await prisma.knowledgeBase.findFirst({ where: { id, createdBy: ownerId(auth) } })
     if (!knowledgeBase) {
       return NextResponse.json({ error: 'Base de conhecimento não encontrada' }, { status: 404 })
     }

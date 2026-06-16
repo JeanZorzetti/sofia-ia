@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
 import { chunkText } from '@/lib/chunking';
 import { defaultProvider, saveEmbeddings } from '@/lib/ai/embeddings';
+import { ownerId } from '@/lib/authz';
 
 /**
  * Chunka o conteúdo, gera embeddings reais (OpenRouter 1536d) e salva em
@@ -41,6 +42,14 @@ export async function GET(
 
     const { id } = await params;
 
+    const kb = await prisma.knowledgeBase.findFirst({
+      where: { id, createdBy: ownerId(auth) },
+      select: { id: true },
+    });
+    if (!kb) {
+      return NextResponse.json({ error: 'Base de conhecimento não encontrada' }, { status: 404 });
+    }
+
     const documents = await prisma.knowledgeDocument.findMany({
       where: { knowledgeBaseId: id },
       orderBy: { createdAt: 'desc' },
@@ -69,9 +78,9 @@ export async function POST(
 
     const { id } = await params;
 
-    // Verifica se a base existe
-    const knowledgeBase = await prisma.knowledgeBase.findUnique({
-      where: { id },
+    // Verifica se a base existe e pertence ao usuário (ou admin)
+    const knowledgeBase = await prisma.knowledgeBase.findFirst({
+      where: { id, createdBy: ownerId(auth) },
     });
 
     if (!knowledgeBase) {
