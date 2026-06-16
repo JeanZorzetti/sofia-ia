@@ -60,7 +60,7 @@ Sempre cite fontes quando relevante. Responda em português brasileiro.`}</pre>
           <div className="ml-11 space-y-3">
             <p className="text-foreground-tertiary text-sm">Orquestrações encadeiam múltiplos agentes em sequência. O output de um agente vira o input do próximo.</p>
             <ol className="space-y-2 text-sm text-foreground-tertiary">
-              <li className="flex gap-2"><span className="text-purple-400 font-mono">→</span> Acesse <Link href="/dashboard/orchestrations" className="text-blue-400 hover:underline">Dashboard &rarr; Orquestrações</Link></li>
+              <li className="flex gap-2"><span className="text-purple-400 font-mono">→</span> Acesse <Link href="/dashboard/teams" className="text-blue-400 hover:underline">Dashboard &rarr; Teams</Link></li>
               <li className="flex gap-2"><span className="text-purple-400 font-mono">→</span> Clique em &ldquo;Nova Orquestração&rdquo;</li>
               <li className="flex gap-2"><span className="text-purple-400 font-mono">→</span> Adicione o Agente 1 (ex: &ldquo;Pesquisador&rdquo;) e o Agente 2 (ex: &ldquo;Escritor&rdquo;)</li>
               <li className="flex gap-2"><span className="text-purple-400 font-mono">→</span> Defina a estratégia: &ldquo;Sequential&rdquo; (um após o outro)</li>

@@ -168,7 +168,7 @@ const STEPS = [
     step: '4',
     title: 'Monitore as execuções',
     description: 'Acompanhe todas as execuções no dashboard em tempo real.',
-    href: '/dashboard/orchestrations',
+    href: '/dashboard/teams',
     icon: CheckCircle,
   },
 ]
