@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     'Conecte Polaris IA ao Make (Integromat) e automatize fluxos com centenas de apps. Guia passo-a-passo com HTTP module.',
   openGraph: {
     title: 'Polaris IA + Make',
-    description: 'Automatize orquestracoes de IA com Make (Integromat).',
+    description: 'Automatize times de IA com Make (Integromat).',
     images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
@@ -37,7 +37,7 @@ const STEPS = [
     description:
       'Adicione o modulo "HTTP" > "Make a request". Configure metodo POST, URL do endpoint Polaris IA, e os headers necessarios.',
     code: `Metodo: POST
-URL: https://polarisia.com.br/api/v1/integrations/zapier/execute
+URL: https://polarisia.com.br/api/public/teams/SEU_TEAM_ID/run
 
 Headers:
   x-api-key: sk_live_SEU_TOKEN
@@ -47,8 +47,7 @@ Body type: Raw
 Content-Type: application/json
 Content:
 {
-  "orchestrationId": "ID_DA_ORQUESTRACAO",
-  "input": "{{trigger.data}}"
+  "mission": "{{trigger.data}}"
 }`,
     cta: null,
   },
@@ -66,7 +65,7 @@ Content:
     description:
       'Ative o cenario no Make e monitore as execucoes tanto no Make quanto no dashboard da Polaris IA.',
     code: null,
-    cta: { label: 'Dashboard Polaris IA', href: '/dashboard/orchestrations' },
+    cta: { label: 'Dashboard Polaris IA', href: '/dashboard/teams' },
   },
 ]
 
@@ -206,9 +205,9 @@ export default function MakeIntegrationPage() {
         <div className="bg-purple-500/5 border border-purple-500/20 rounded-xl p-6 mb-12">
           <h3 className="font-semibold text-purple-300 mb-2">Dica: Use Webhooks como Trigger</h3>
           <p className="text-sm text-white/50">
-            Para receber o resultado da execucao em tempo real, configure a Polaris IA para enviar
-            um webhook de saida em /dashboard/settings/webhooks. Adicione o URL de um webhook
-            do Make como destino para capturar o output da orquestracao.
+            Para receber o resultado da execucao em tempo real, configure um output webhook na sala
+            do time (Dashboard {'->'} Times {'->'} seu time). Adicione o URL de um webhook
+            do Make como destino para capturar o output do time.
           </p>
         </div>
 

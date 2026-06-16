@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     'Conecte Polaris IA ao Zapier e automatize workflows com mais de 7.000 apps sem escrever codigo. Guia passo-a-passo completo.',
   openGraph: {
     title: 'Polaris IA + Zapier',
-    description: 'Automatize orquestracoes de IA com Zapier. Sem codigo necessario.',
+    description: 'Automatize times de IA com Zapier. Sem codigo necessario.',
     images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
@@ -44,7 +44,7 @@ const STEPS = [
     title: 'Adicione a Action HTTP Request',
     description:
       'Na etapa de Action, escolha "Webhooks by Zapier" > "POST". Configure a URL, adicione o header x-api-key com sua chave e o body JSON.',
-    code: `URL: https://polarisia.com.br/api/v1/integrations/zapier/execute
+    code: `URL: https://polarisia.com.br/api/public/teams/SEU_TEAM_ID/run
 
 Headers:
   x-api-key: sk_live_SEU_TOKEN
@@ -52,8 +52,7 @@ Headers:
 
 Body (JSON):
 {
-  "orchestrationId": "ID_DA_ORQUESTRACAO",
-  "input": "{{triggerData}}"
+  "mission": "{{triggerData}}"
 }`,
     cta: null,
   },
@@ -63,7 +62,7 @@ Body (JSON):
     description:
       'Acompanhe todas as execucoes disparadas pelo Zapier no seu dashboard da Polaris IA em tempo real.',
     code: null,
-    cta: { label: 'Ver Dashboard', href: '/dashboard/orchestrations' },
+    cta: { label: 'Ver Dashboard', href: '/dashboard/teams' },
   },
 ]
 
@@ -71,7 +70,7 @@ const USE_CASES = [
   {
     title: 'CRM → Proposta com IA',
     description:
-      'Novo lead no HubSpot → Zapier dispara orquestracao → Polaris IA gera proposta personalizada → envia por email.',
+      'Novo lead no HubSpot → Zapier dispara um time → Polaris IA gera proposta personalizada → envia por email.',
     icon: '🎯',
   },
   {
@@ -134,13 +133,13 @@ export default function ZapierIntegrationPage() {
             </div>
             <h1 className="text-3xl font-bold">Polaris IA + Zapier</h1>
             <p className="text-white/50 mt-1">
-              Conecte orquestracoes de IA a 7.000+ apps sem escrever codigo
+              Conecte times de IA a 7.000+ apps sem escrever codigo
             </p>
           </div>
         </div>
 
         <p className="text-white/60 text-lg leading-relaxed mb-12">
-          Com a integracao Zapier, voce pode disparar orquestracoes de IA da Polaris IA como action
+          Com a integracao Zapier, voce pode disparar times de IA da Polaris IA como action
           de qualquer Zap. Quando um formulario e preenchido, um email chega, um lead e criado
           no CRM ou qualquer outro evento — Polaris IA entra em acao automaticamente.
         </p>
@@ -183,30 +182,29 @@ export default function ZapierIntegrationPage() {
           </div>
         </section>
 
-        {/* Polling endpoint */}
+        {/* Resultado via Webhook */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-4">Endpoint de Polling (Trigger)</h2>
+          <h2 className="text-2xl font-bold mb-4">Receber o Resultado (Webhook)</h2>
           <p className="text-white/50 mb-6">
-            Voce tambem pode usar a Polaris IA como trigger no Zapier via polling. O endpoint abaixo
-            retorna as ultimas 10 execucoes concluidas, compativel com o formato de polling do Zapier.
+            O disparo e assincrono: a resposta traz um <code className="text-orange-300">runId</code> e o time roda em
+            background. Para receber o output final, configure um <strong>output webhook</strong> na sala do time
+            (Dashboard {'->'} Times {'->'} seu time). A Polaris IA fara um POST quando o run concluir.
           </p>
           <div className="bg-black/40 rounded-xl p-5 font-mono text-sm overflow-x-auto">
-            <pre className="text-white/70 whitespace-pre">{`# Polling trigger: ultimas execucoes concluidas
-GET https://polarisia.com.br/api/v1/integrations/zapier/poll
-Headers:
-  x-api-key: sk_live_SEU_TOKEN
+            <pre className="text-white/70 whitespace-pre">{`# Resposta imediata do disparo:
+{
+  "success": true,
+  "data": { "runId": "run_123", "status": "pending", "mode": "chat" }
+}
 
-# Resposta (array Zapier-compatible):
-[
-  {
-    "id": "exec_123",
-    "timestamp": "2026-02-24T10:30:00Z",
-    "orchestrationId": "orch_456",
-    "orchestrationName": "Agente de Vendas",
-    "status": "completed",
-    "output": { ... }
-  }
-]`}</pre>
+# Quando o run conclui, a Polaris IA envia ao webhook do time:
+POST https://seu-endpoint
+{
+  "teamId": "team_456",
+  "runId": "run_123",
+  "status": "completed",
+  "output": { ... }
+}`}</pre>
           </div>
         </section>
 

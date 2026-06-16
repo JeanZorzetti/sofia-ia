@@ -8,14 +8,14 @@ export const metadata: Metadata = {
     'Conecte Polaris IA ao n8n com o HTTP Request node. Guia completo com exemplo de workflow JSON para automacao open source.',
   openGraph: {
     title: 'Polaris IA + n8n',
-    description: 'Automatize orquestracoes de IA com n8n. Open source e self-hosted.',
+    description: 'Automatize times de IA com n8n. Open source e self-hosted.',
     images: [{ url: '/logos/kit/og-image.png', width: 1200, height: 630, alt: 'Polaris IA — Orquestração de Agentes IA' }],
 
   },
 }
 
 const N8N_WORKFLOW_JSON = `{
-  "name": "Polaris IA - Executar Orquestracao",
+  "name": "Polaris IA - Disparar Time",
   "nodes": [
     {
       "parameters": {},
@@ -26,7 +26,7 @@ const N8N_WORKFLOW_JSON = `{
     {
       "parameters": {
         "method": "POST",
-        "url": "https://polarisia.com.br/api/v1/integrations/zapier/execute",
+        "url": "https://polarisia.com.br/api/public/teams/SEU_TEAM_ID/run",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -45,24 +45,20 @@ const N8N_WORKFLOW_JSON = `{
         "bodyParameters": {
           "parameters": [
             {
-              "name": "orchestrationId",
-              "value": "ID_DA_ORQUESTRACAO"
-            },
-            {
-              "name": "input",
+              "name": "mission",
               "value": "={{ $json.input }}"
             }
           ]
         }
       },
-      "name": "Polaris IA - Execute",
+      "name": "Polaris IA - Run Team",
       "type": "n8n-nodes-base.httpRequest",
       "position": [460, 300]
     }
   ],
   "connections": {
     "Manual Trigger": {
-      "main": [[ { "node": "Polaris IA - Execute", "type": "main", "index": 0 } ]]
+      "main": [[ { "node": "Polaris IA - Run Team", "type": "main", "index": 0 } ]]
     }
   }
 }`
@@ -93,7 +89,7 @@ const STEPS = [
     num: '4',
     title: 'Configure o body JSON',
     description:
-      'No campo Body, selecione JSON e passe o orchestrationId e o input (pode ser uma expressao do n8n como {{ $json.text }}).',
+      'No campo Body, selecione JSON e passe o campo mission (pode ser uma expressao do n8n como {{ $json.text }}). O teamId vai na URL.',
     cta: null,
   },
   {
@@ -257,7 +253,7 @@ export default function N8nIntegrationPage() {
           <p className="text-sm text-white/50">
             Se voce usa n8n self-hosted, certifique-se que sua instancia consegue acessar
             polarisia.com.br. Para ambientes na mesma rede privada, use
-            /api/v1/integrations/zapier/execute com o IP interno, se configurado.
+            /api/public/teams/SEU_TEAM_ID/run com o IP interno, se configurado.
           </p>
         </div>
 
