@@ -34,7 +34,7 @@ export interface PortDefinition {
 export interface ConfigField {
     key: string
     label: string
-    type: 'string' | 'number' | 'boolean' | 'select' | 'code' | 'json' | 'text' | 'expression' | 'orchestration_select' | 'flow_select'
+    type: 'string' | 'number' | 'boolean' | 'select' | 'code' | 'json' | 'text' | 'expression' | 'team_select' | 'flow_select'
     placeholder?: string
     required?: boolean
     default?: any

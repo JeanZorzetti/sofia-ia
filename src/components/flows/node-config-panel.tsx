@@ -13,7 +13,7 @@ import { X, Settings2, Trash2, Loader2 } from 'lucide-react'
 interface ConfigField {
     key: string
     label: string
-    type: 'string' | 'number' | 'boolean' | 'select' | 'code' | 'json' | 'text' | 'expression' | 'orchestration_select' | 'flow_select'
+    type: 'string' | 'number' | 'boolean' | 'select' | 'code' | 'json' | 'text' | 'expression' | 'team_select' | 'flow_select'
     placeholder?: string
     required?: boolean
     default?: any
@@ -62,8 +62,8 @@ function ResourceSelect({
     )
 }
 
-function OrchestrationSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-    return <ResourceSelect url="/api/orchestrations" placeholder="Selecione uma orquestração..." value={value} onChange={onChange} />
+function TeamSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    return <ResourceSelect url="/api/teams" placeholder="Selecione um time..." value={value} onChange={onChange} />
 }
 
 function FlowSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -182,9 +182,9 @@ export function NodeConfigPanel({
                     </select>
                 )
 
-            case 'orchestration_select':
+            case 'team_select':
                 return (
-                    <OrchestrationSelect
+                    <TeamSelect
                         value={value}
                         onChange={(v) => handleFieldChange(field.key, v)}
                     />

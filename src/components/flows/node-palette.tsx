@@ -46,7 +46,7 @@ const NODE_CATALOG: NodeTypeInfo[] = [
     { type: 'action_database', label: 'Consulta SQL', description: 'Query no banco de dados', icon: 'Database', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
     { type: 'action_notification', label: 'Notificação', description: 'Enviar notificação', icon: 'Bell', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
     { type: 'action_subflow', label: 'Sub-Flow', description: 'Executar outro flow como sub-rotina', icon: 'GitBranch', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
-    { type: 'action_orchestration', label: 'Orquestração', description: 'Executar orquestração multi-agente', icon: 'Network', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
+    { type: 'action_team', label: 'Time', description: 'Executar um time multi-agente', icon: 'Network', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
 
     // Logic
     { type: 'logic_if', label: 'IF / Condição', description: 'Branch verdadeiro/falso', icon: 'GitBranch', category: 'logic', inputs: [{ name: 'main' }], outputs: [{ name: 'true', label: 'Verdadeiro' }, { name: 'false', label: 'Falso' }] },
