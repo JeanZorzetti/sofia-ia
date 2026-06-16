@@ -218,15 +218,13 @@ export default function TemplatesPage() {
 
       if (result.success) {
         toast.success('Template implantado com sucesso!', {
-          description: result.type === 'agent' ? 'Agente criado' : result.type === 'orchestration' ? 'Orquestração criada' : 'Workflow criado'
+          description: result.type === 'agent' ? 'Agente criado' : 'Workflow criado'
         })
         setTimeout(() => {
           if (result.type === 'agent') {
             router.push(`/dashboard/agents/${result.data.id}`)
           } else if (result.type === 'workflow') {
             router.push(`/dashboard/workflows/${result.data.id}`)
-          } else if (result.type === 'orchestration') {
-            router.push(`/dashboard/orchestrations/${result.data.id}`)
           }
         }, 500)
       } else {

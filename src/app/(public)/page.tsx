@@ -15,28 +15,6 @@ import { AnimatedCounter } from '@/components/landing/AnimatedCounter'
 import { TemplateTestDriveCard } from '@/components/landing/TemplateTestDriveCard'
 import { homeComparisons, homeOrchestrationTemplates, homeFAQ } from '@/data/home'
 import { plans } from '@/data/pricing'
-import { prisma } from '@/lib/prisma'
-
-interface AgentStep { agentId: string; role: string }
-
-function dbToTemplateCard(o: {
-  id: string
-  name: string
-  agents: unknown
-  strategy: string
-  config: unknown
-}) {
-  const steps = (o.agents as AgentStep[]) ?? []
-  const cfg = (o.config as Record<string, string>) ?? {}
-  return {
-    orchestrationId: o.id,
-    name: o.name,
-    icon: cfg.landingIcon ?? '🤖',
-    roles: steps.map((s) => s.role).filter(Boolean),
-    time: cfg.landingTime ?? '~45s',
-    category: o.strategy,
-  }
-}
 
 export const metadata: Metadata = {
   title: 'Polaris IA — Plataforma de Orquestração de Agentes IA | ROI Labs',
@@ -48,23 +26,10 @@ export const metadata: Metadata = {
 }
 
 export default async function LandingPage() {
-  // Try to pull real orchestrations marked as landing templates
-  let liveTemplates: ReturnType<typeof dbToTemplateCard>[] = []
-  try {
-    const rows = await prisma.agentOrchestration.findMany({
-      where: { isLandingTemplate: true, status: 'active' },
-      orderBy: { updatedAt: 'desc' },
-      take: 3,
-      select: { id: true, name: true, agents: true, strategy: true, config: true },
-    })
-    liveTemplates = rows.map(dbToTemplateCard)
-  } catch {
-    // Silently fall back to static templates if DB is unavailable
-  }
-
-  // Fall back to hardcoded static templates when none configured in DB
-  const templateCards = liveTemplates.length > 0 ? liveTemplates : homeOrchestrationTemplates.map((t) => ({
-    orchestrationId: null,
+  // Landing demo uses the static showcase templates; the live test-drive
+  // falls back to a self-contained Groq call (no orchestration engine).
+  const templateCards = homeOrchestrationTemplates.map((t) => ({
+    orchestrationId: null as string | null,
     name: t.name,
     icon: t.icon,
     roles: t.roles,
