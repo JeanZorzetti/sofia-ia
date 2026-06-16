@@ -51,11 +51,11 @@ export default function N8nIntegrationPage() {
   const httpRequestNode = JSON.stringify({
     nodes: [
       {
-        name: "Execute Polaris IA Orchestration",
+        name: "Run Polaris IA Team",
         type: "n8n-nodes-base.httpRequest",
         parameters: {
           method: "POST",
-          url: `${baseUrl}/api/v1/integrations/zapier/execute`,
+          url: `${baseUrl}/api/v1/teams/SEU_TEAM_ID/run`,
           authentication: "genericCredentialType",
           genericAuthType: "httpHeaderAuth",
           sendHeaders: true,
@@ -68,8 +68,7 @@ export default function N8nIntegrationPage() {
           sendBody: true,
           bodyParameters: {
             parameters: [
-              { name: "orchestrationId", value: "={{ $json.orchestrationId }}" },
-              { name: "input", value: "={{ $json.input }}" }
+              { name: "mission", value: "={{ $json.input }}" }
             ]
           }
         }
@@ -77,23 +76,10 @@ export default function N8nIntegrationPage() {
     ]
   }, null, 2)
 
-  const pollNode = JSON.stringify({
-    name: "Get Recent Executions",
-    type: "n8n-nodes-base.httpRequest",
-    parameters: {
-      method: "GET",
-      url: `${baseUrl}/api/v1/integrations/zapier/poll`,
-      sendHeaders: true,
-      headerParameters: {
-        parameters: [{ name: "Authorization", value: authHeader }]
-      }
-    }
-  }, null, 2)
-
-  const curlTest = `curl -X POST "${baseUrl}/api/v1/integrations/zapier/execute" \\
+  const curlTest = `curl -X POST "${baseUrl}/api/v1/teams/SEU_TEAM_ID/run" \\
   -H "Authorization: ${authHeader}" \\
   -H "Content-Type: application/json" \\
-  -d '{"orchestrationId": "SEU_ORCHESTRATION_ID", "input": "teste"}'`
+  -d '{"mission": "teste"}'`
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 p-6">
@@ -179,7 +165,7 @@ export default function N8nIntegrationPage() {
           <span className="w-7 h-7 rounded-full bg-green-500/20 text-green-400 text-sm font-bold flex items-center justify-center">3</span>
           <h2 className="text-lg font-semibold text-white">Importar node HTTP Request</h2>
         </div>
-        <p className="text-white/60 text-sm ml-10">Adicione um node <strong>HTTP Request</strong> no seu workflow. Você pode copiar esta configuração JSON e importar diretamente:</p>
+        <p className="text-white/60 text-sm ml-10">Adicione um node <strong>HTTP Request</strong> no seu workflow (troque SEU_TEAM_ID pelo ID do time). Você pode copiar esta configuração JSON e importar diretamente:</p>
         <div className="ml-10">
           <CodeBlock code={httpRequestNode} />
         </div>
@@ -189,12 +175,9 @@ export default function N8nIntegrationPage() {
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <span className="w-7 h-7 rounded-full bg-green-500/20 text-green-400 text-sm font-bold flex items-center justify-center">4</span>
-          <h2 className="text-lg font-semibold text-white">Buscar execuções recentes (Polling Trigger)</h2>
+          <h2 className="text-lg font-semibold text-white">Receber o resultado (Webhook)</h2>
         </div>
-        <p className="text-white/60 text-sm ml-10">Para usar como trigger de novos resultados, configure um node de polling:</p>
-        <div className="ml-10">
-          <CodeBlock code={pollNode} />
-        </div>
+        <p className="text-white/60 text-sm ml-10">O disparo é assíncrono (retorna runId). Crie um node Webhook no n8n e configure-o como output webhook na sala do time (Dashboard → Times → seu time) para receber o output quando o run concluir.</p>
       </div>
 
       {/* Passo 5 */}
@@ -212,7 +195,7 @@ export default function N8nIntegrationPage() {
       <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
         <h3 className="text-white font-medium mb-3">Workflows populares com n8n</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-white/70">
-          <div className="flex items-start gap-2"><span className="text-green-400">→</span> Webhook → Orquestração IA → PostgreSQL</div>
+          <div className="flex items-start gap-2"><span className="text-green-400">→</span> Webhook → Time de IA → PostgreSQL</div>
           <div className="flex items-start gap-2"><span className="text-green-400">→</span> RSS feed → Análise → Telegram bot</div>
           <div className="flex items-start gap-2"><span className="text-green-400">→</span> GitHub issues → Triage IA → Slack</div>
           <div className="flex items-start gap-2"><span className="text-green-400">→</span> Cron job → Relatório IA → Email</div>

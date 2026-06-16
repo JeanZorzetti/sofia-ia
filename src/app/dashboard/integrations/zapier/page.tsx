@@ -48,19 +48,12 @@ export default function ZapierIntegrationPage() {
   const baseUrl = 'https://polarisia.com.br'
   const authHeader = firstKey ? `Bearer ${firstKey.keyPreview}` : 'Bearer sk-xxxxxxxxxxxxxxxx'
 
-  const pollExample = JSON.stringify([
-    { id: "exec_123", timestamp: "2026-02-24T08:00:00Z", orchestrationId: "orch_abc", orchestrationName: "Relatório Semanal", status: "done", output: "Relatório gerado com sucesso..." }
-  ], null, 2)
+  const executeExample = JSON.stringify({ mission: "Sua missão para o time" }, null, 2)
 
-  const executeExample = JSON.stringify({ orchestrationId: "SEU_ORCHESTRATION_ID", input: "Parâmetro de entrada opcional" }, null, 2)
-
-  const curlPoll = `curl -X GET "${baseUrl}/api/v1/integrations/zapier/poll" \\
-  -H "Authorization: ${authHeader}"`
-
-  const curlExecute = `curl -X POST "${baseUrl}/api/v1/integrations/zapier/execute" \\
+  const curlExecute = `curl -X POST "${baseUrl}/api/v1/teams/SEU_TEAM_ID/run" \\
   -H "Authorization: ${authHeader}" \\
   -H "Content-Type: application/json" \\
-  -d '{"orchestrationId": "SEU_ORCHESTRATION_ID"}'`
+  -d '{"mission": "Sua missão para o time"}'`
 
   return (
     <div className="max-w-3xl mx-auto space-y-8 p-6">
@@ -110,8 +103,8 @@ export default function ZapierIntegrationPage() {
       <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
         <h3 className="text-white font-medium mb-2">Como funciona</h3>
         <ul className="text-white/70 text-sm space-y-1">
-          <li><span className="text-orange-400 font-mono">Trigger</span> — Zapier detecta novas execuções via polling (<code>/api/v1/integrations/zapier/poll</code>)</li>
-          <li><span className="text-blue-400 font-mono">Action</span> — Zapier dispara uma orquestração via POST (<code>/api/v1/integrations/zapier/execute</code>)</li>
+          <li><span className="text-blue-400 font-mono">Action</span> — Zapier dispara um time via POST (<code>/api/v1/teams/:id/run</code>)</li>
+          <li><span className="text-orange-400 font-mono">Resultado</span> — o time devolve o output via webhook configurado na sala do time</li>
         </ul>
       </div>
 
@@ -128,16 +121,12 @@ export default function ZapierIntegrationPage() {
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <span className="w-7 h-7 rounded-full bg-orange-500/20 text-orange-400 text-sm font-bold flex items-center justify-center">2</span>
-          <h2 className="text-lg font-semibold text-white">Configurar Trigger no Zapier (Polling)</h2>
+          <h2 className="text-lg font-semibold text-white">Escolher o gatilho no Zapier</h2>
         </div>
-        <p className="text-white/60 text-sm ml-10">Crie um novo Zap. Escolha "Webhook by Zapier" → Polling. Use a URL e header abaixo:</p>
+        <p className="text-white/60 text-sm ml-10">Crie um novo Zap e escolha o trigger da sua preferência (novo lead, e-mail, linha em planilha, etc.). O passo seguinte chama a Polaris IA com esse dado. Para receber o resultado, configure um output webhook na sala do time.</p>
         <div className="ml-10 space-y-2">
-          <p className="text-white/50 text-xs font-mono">URL:</p>
-          <CodeBlock code={`${baseUrl}/api/v1/integrations/zapier/poll`} />
-          <p className="text-white/50 text-xs font-mono mt-3">Header de autenticação:</p>
+          <p className="text-white/50 text-xs font-mono">Header de autenticação:</p>
           <CodeBlock code={`Authorization: ${authHeader}`} />
-          <p className="text-white/50 text-xs font-mono mt-3">Exemplo de resposta do trigger:</p>
-          <CodeBlock code={pollExample} />
         </div>
       </div>
 
@@ -145,12 +134,12 @@ export default function ZapierIntegrationPage() {
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <span className="w-7 h-7 rounded-full bg-orange-500/20 text-orange-400 text-sm font-bold flex items-center justify-center">3</span>
-          <h2 className="text-lg font-semibold text-white">Configurar Action no Zapier (Executar Orquestração)</h2>
+          <h2 className="text-lg font-semibold text-white">Configurar Action no Zapier (Disparar Time)</h2>
         </div>
-        <p className="text-white/60 text-sm ml-10">Na etapa de Action, escolha "Webhooks by Zapier" → POST. Configure assim:</p>
+        <p className="text-white/60 text-sm ml-10">Na etapa de Action, escolha "Webhooks by Zapier" → POST. Configure assim (troque SEU_TEAM_ID pelo ID do time):</p>
         <div className="ml-10 space-y-2">
           <p className="text-white/50 text-xs font-mono">URL da action:</p>
-          <CodeBlock code={`${baseUrl}/api/v1/integrations/zapier/execute`} />
+          <CodeBlock code={`${baseUrl}/api/v1/teams/SEU_TEAM_ID/run`} />
           <p className="text-white/50 text-xs font-mono mt-3">Body (JSON):</p>
           <CodeBlock code={executeExample} />
           <p className="text-white/50 text-xs font-mono mt-3">Teste via cURL:</p>
@@ -164,9 +153,9 @@ export default function ZapierIntegrationPage() {
           <span className="w-7 h-7 rounded-full bg-orange-500/20 text-orange-400 text-sm font-bold flex items-center justify-center">4</span>
           <h2 className="text-lg font-semibold text-white">Testar e ativar o Zap</h2>
         </div>
-        <p className="text-white/60 text-sm ml-10">Use o botão "Test" do Zapier para validar a conexão. Se retornar dados, o Zap está pronto.</p>
+        <p className="text-white/60 text-sm ml-10">Use o botão "Test" do Zapier para validar a conexão. Um 202 com runId significa que o time foi disparado.</p>
         <div className="ml-10">
-          <CodeBlock code={curlPoll} language="bash" />
+          <CodeBlock code={curlExecute} language="bash" />
         </div>
       </div>
 
@@ -177,7 +166,7 @@ export default function ZapierIntegrationPage() {
           <div className="flex items-start gap-2"><span className="text-orange-400">→</span> Novo lead no CRM → Executar agente de qualificação</div>
           <div className="flex items-start gap-2"><span className="text-orange-400">→</span> Email recebido → Gerar resposta com IA</div>
           <div className="flex items-start gap-2"><span className="text-orange-400">→</span> Form submetido → Criar relatório automático</div>
-          <div className="flex items-start gap-2"><span className="text-orange-400">→</span> Planilha atualizada → Disparar orquestração de análise</div>
+          <div className="flex items-start gap-2"><span className="text-orange-400">→</span> Planilha atualizada → Disparar time de análise</div>
         </div>
       </div>
 

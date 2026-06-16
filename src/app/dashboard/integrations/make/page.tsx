@@ -49,16 +49,10 @@ export default function MakeIntegrationPage() {
   const authHeader = firstKey ? `Bearer ${firstKey.keyPreview}` : 'Bearer sk-xxxxxxxxxxxxxxxx'
 
   const httpModuleConfig = JSON.stringify({
-    url: `${baseUrl}/api/v1/integrations/zapier/execute`,
+    url: `${baseUrl}/api/v1/teams/SEU_TEAM_ID/run`,
     method: "POST",
     headers: [{ name: "Authorization", value: authHeader }, { name: "Content-Type", value: "application/json" }],
-    body: { orchestrationId: "SEU_ORCHESTRATION_ID", input: "{{1.data}}" }
-  }, null, 2)
-
-  const pollConfig = JSON.stringify({
-    url: `${baseUrl}/api/v1/integrations/zapier/poll`,
-    method: "GET",
-    headers: [{ name: "Authorization", value: authHeader }]
+    body: { mission: "{{1.data}}" }
   }, null, 2)
 
   return (
@@ -108,7 +102,7 @@ export default function MakeIntegrationPage() {
       {/* Conceito */}
       <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
         <h3 className="text-white font-medium mb-2">Arquitetura no Make</h3>
-        <p className="text-white/60 text-sm">No Make, você usa o módulo <strong className="text-purple-400">HTTP → Make a request</strong> para chamar a API do Polaris IA. É possível criar cenários que disparam orquestrações, consultam resultados e encadeiam com outros apps.</p>
+        <p className="text-white/60 text-sm">No Make, você usa o módulo <strong className="text-purple-400">HTTP → Make a request</strong> para chamar a API do Polaris IA. É possível criar cenários que disparam times, recebem resultados via webhook e encadeiam com outros apps.</p>
       </div>
 
       {/* Passo 1 */}
@@ -131,7 +125,7 @@ export default function MakeIntegrationPage() {
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div className="p-3 bg-white/5 rounded-lg">
               <p className="text-white/40 text-xs mb-1">URL</p>
-              <p className="text-green-400 font-mono text-xs break-all">{baseUrl}/api/v1/integrations/zapier/execute</p>
+              <p className="text-green-400 font-mono text-xs break-all">{baseUrl}/api/v1/teams/SEU_TEAM_ID/run</p>
             </div>
             <div className="p-3 bg-white/5 rounded-lg">
               <p className="text-white/40 text-xs mb-1">Método</p>
@@ -151,12 +145,9 @@ export default function MakeIntegrationPage() {
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <span className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 text-sm font-bold flex items-center justify-center">3</span>
-          <h2 className="text-lg font-semibold text-white">Monitorar execuções (opcional)</h2>
+          <h2 className="text-lg font-semibold text-white">Receber o resultado (webhook)</h2>
         </div>
-        <p className="text-white/60 text-sm ml-10">Para buscar as últimas execuções e usá-las como trigger, use este endpoint no módulo HTTP:</p>
-        <div className="ml-10">
-          <CodeBlock code={pollConfig} />
-        </div>
+        <p className="text-white/60 text-sm ml-10">O disparo é assíncrono. Configure um output webhook na sala do time (Dashboard → Times → seu time) apontando para um webhook do Make para capturar o output quando o run concluir.</p>
       </div>
 
       {/* Passo 4 */}
@@ -165,7 +156,7 @@ export default function MakeIntegrationPage() {
           <span className="w-7 h-7 rounded-full bg-purple-500/20 text-purple-400 text-sm font-bold flex items-center justify-center">4</span>
           <h2 className="text-lg font-semibold text-white">Processar a resposta</h2>
         </div>
-        <p className="text-white/60 text-sm ml-10">A API retorna <code className="text-green-400">{"{ executionId, status }"}</code>. Use o campo <code className="text-green-400">output</code> nos módulos seguintes para processar o resultado da orquestração.</p>
+        <p className="text-white/60 text-sm ml-10">A API retorna <code className="text-green-400">{"{ runId, status, mode }"}</code>. O output final chega no webhook do time; use o campo <code className="text-green-400">output</code> nos módulos seguintes para processá-lo.</p>
       </div>
 
       {/* Casos de uso */}
@@ -173,7 +164,7 @@ export default function MakeIntegrationPage() {
         <h3 className="text-white font-medium mb-3">Cenários populares no Make</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-white/70">
           <div className="flex items-start gap-2"><span className="text-purple-400">→</span> Google Sheets → Agente de análise → Slack</div>
-          <div className="flex items-start gap-2"><span className="text-purple-400">→</span> Webhook → Orquestração → Email via Gmail</div>
+          <div className="flex items-start gap-2"><span className="text-purple-400">→</span> Webhook → Time de IA → Email via Gmail</div>
           <div className="flex items-start gap-2"><span className="text-purple-400">→</span> HubSpot CRM → Qualificação IA → Atualiza deal</div>
           <div className="flex items-start gap-2"><span className="text-purple-400">→</span> Typeform → Análise IA → Notion database</div>
         </div>
