@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { useInView } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { useInView } from '@/hooks/use-in-view'
 
 interface AnimatedCounterProps {
   value: number
@@ -19,11 +19,10 @@ export function AnimatedCounter({
   className,
 }: AnimatedCounterProps) {
   const [current, setCurrent] = useState(0)
-  const ref = useRef<HTMLSpanElement>(null)
-  const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const { ref, inView } = useInView<HTMLSpanElement>({ once: true, margin: '-50px' })
 
   useEffect(() => {
-    if (!isInView) return
+    if (!inView) return
     let startTime: number | null = null
 
     const animate = (timestamp: number) => {
@@ -41,7 +40,7 @@ export function AnimatedCounter({
     }
 
     requestAnimationFrame(animate)
-  }, [isInView, value, duration])
+  }, [inView, value, duration])
 
   return (
     <span ref={ref} className={className}>

@@ -8,7 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Loader2, Trophy, Play, Square } from 'lucide-react';
 import { toast } from 'sonner';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import dynamic from 'next/dynamic';
+
+// recharts is heavy + DOM-only → code-split, load client-side on demand.
+const ABTestComparisonChart = dynamic(() => import('./ABTestComparisonChart'), {
+  ssr: false,
+  loading: () => <div className="h-[300px] w-full animate-pulse rounded-lg bg-white/5" />,
+});
 
 interface ABTestDetail {
   test: {
@@ -281,24 +287,7 @@ export default function ABTestDetailPage({ params }: { params: Promise<{ id: str
           <CardTitle className="text-white">Comparação de Performance</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-              <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
-              <YAxis stroke="rgba(255,255,255,0.5)" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'rgba(0,0,0,0.9)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '8px',
-                }}
-              />
-              <Legend />
-              <Bar dataKey="Interações" fill="#3b82f6" />
-              <Bar dataKey="Sucessos" fill="#10b981" />
-              <Bar dataKey="Taxa Conversão" fill="#f59e0b" />
-            </BarChart>
-          </ResponsiveContainer>
+          <ABTestComparisonChart data={chartData} />
         </CardContent>
       </Card>
     </div>

@@ -1,4 +1,12 @@
 import type { NextConfig } from "next";
+import path from "path";
+
+// Next embeds `polyfill-module` (core-js) into the client bundle unconditionally,
+// ignoring browserslist → PageSpeed flags "legacy JavaScript". Alias it to an empty
+// module. Cover BOTH bundlers (turbopack for `next build`, webpack for `--webpack`).
+// See lesson: nextjs_unconditional_polyfills.
+const POLYFILL_MODULE = "next/dist/build/polyfills/polyfill-module";
+const EMPTY_POLYFILLS = path.resolve(__dirname, "src/lib/empty-polyfills.js");
 
 const nextConfig: NextConfig = {
   output: 'standalone',
@@ -11,6 +19,28 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ["bcryptjs", "pg"],
+  // Tree-shake heavy barrel-export libs so only the icons/charts actually used
+  // ship to the client.
+  experimental: {
+    optimizePackageImports: [
+      "recharts",
+      "framer-motion",
+      "react-syntax-highlighter",
+      "lucide-react",
+    ],
+  },
+  turbopack: {
+    resolveAlias: {
+      [POLYFILL_MODULE]: EMPTY_POLYFILLS,
+    },
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      [POLYFILL_MODULE]: EMPTY_POLYFILLS,
+    };
+    return config;
+  },
 };
 
 // Wrap with Sentry only when DSN is configured and package is available

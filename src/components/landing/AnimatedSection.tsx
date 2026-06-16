@@ -1,7 +1,7 @@
 'use client'
 
-import { motion, type TargetAndTransition } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { useInView } from '@/hooks/use-in-view'
 
 type Direction = 'up' | 'down' | 'left' | 'right' | 'fade'
 
@@ -13,16 +13,17 @@ interface AnimatedSectionProps {
   once?: boolean
 }
 
-const hidden: Record<Direction, TargetAndTransition> = {
-  up:    { opacity: 0, y: 40 },
-  down:  { opacity: 0, y: -40 },
-  left:  { opacity: 0, x: 40 },
-  right: { opacity: 0, x: -40 },
-  fade:  { opacity: 0 },
+// Offset applied while hidden; cleared (to `none`) once in view.
+const hiddenTransform: Record<Direction, string> = {
+  up:    'translateY(40px)',
+  down:  'translateY(-40px)',
+  left:  'translateX(40px)',
+  right: 'translateX(-40px)',
+  fade:  'none',
 }
 
-const visible: TargetAndTransition = { opacity: 1, y: 0, x: 0 }
-
+// Pure CSS + IntersectionObserver reveal (no framer-motion). Mirrors the previous
+// motion.div: fade + directional slide, 0.6s, cubic-bezier(0.4,0,0.2,1), optional delay.
 export function AnimatedSection({
   children,
   className,
@@ -30,15 +31,20 @@ export function AnimatedSection({
   direction = 'up',
   once = true,
 }: AnimatedSectionProps) {
+  const { ref, inView } = useInView<HTMLDivElement>({ once, margin: '-80px' })
+
   return (
-    <motion.div
+    <div
+      ref={ref}
       className={cn(className)}
-      initial={hidden[direction]}
-      whileInView={visible}
-      viewport={{ once, margin: '-80px' }}
-      transition={{ duration: 0.6, delay, ease: [0.4, 0, 0.2, 1] }}
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? 'none' : hiddenTransform[direction],
+        transition: `opacity 0.6s cubic-bezier(0.4,0,0.2,1) ${delay}s, transform 0.6s cubic-bezier(0.4,0,0.2,1) ${delay}s`,
+        willChange: 'opacity, transform',
+      }}
     >
       {children}
-    </motion.div>
+    </div>
   )
 }

@@ -5,23 +5,19 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend
-} from 'recharts'
+import dynamic from 'next/dynamic'
 import { Loader2, Download, TrendingUp, Users, Workflow as WorkflowIcon, Target } from 'lucide-react'
 import { NaturalLanguageQuery } from '@/components/analytics/nl-query'
+
+// recharts is heavy + DOM-only → code-split, load client-side on demand.
+// All charts resolve to the same module so recharts loads once, in a lazy chunk.
+const CHART_LOADING = () => <div className="h-[300px] w-full animate-pulse rounded-lg bg-white/5" />
+const AgentPerformanceChart = dynamic(() => import('./AnalyticsCharts').then(m => m.AgentPerformanceChart), { ssr: false, loading: CHART_LOADING })
+const AgentResolutionChart = dynamic(() => import('./AnalyticsCharts').then(m => m.AgentResolutionChart), { ssr: false, loading: CHART_LOADING })
+const WorkflowExecutionsChart = dynamic(() => import('./AnalyticsCharts').then(m => m.WorkflowExecutionsChart), { ssr: false, loading: CHART_LOADING })
+const LeadsFunnelChart = dynamic(() => import('./AnalyticsCharts').then(m => m.LeadsFunnelChart), { ssr: false, loading: CHART_LOADING })
+const LeadsSourcePie = dynamic(() => import('./AnalyticsCharts').then(m => m.LeadsSourcePie), { ssr: false, loading: CHART_LOADING })
+const LeadsTimelineChart = dynamic(() => import('./AnalyticsCharts').then(m => m.LeadsTimelineChart), { ssr: false, loading: CHART_LOADING })
 
 interface AnalyticsData {
   overview: any
@@ -207,22 +203,7 @@ export default function AnalyticsPage() {
               <CardTitle className="text-white">Performance por Agente</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={agentChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-                  <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(0,0,0,0.9)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="conversas" fill="#3b82f6" name="Conversas" />
-                </BarChart>
-              </ResponsiveContainer>
+              <AgentPerformanceChart data={agentChartData} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -276,21 +257,7 @@ export default function AnalyticsPage() {
               <CardTitle className="text-white">Taxa de Resolução por Agente</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={agentChartData} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis type="number" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-                  <YAxis type="category" dataKey="name" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(0,0,0,0.9)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Bar dataKey="resolucao" fill="#10b981" name="Taxa de Resolução (%)" />
-                </BarChart>
-              </ResponsiveContainer>
+              <AgentResolutionChart data={agentChartData} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -301,22 +268,7 @@ export default function AnalyticsPage() {
               <CardTitle className="text-white">Execuções de Workflows</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={workflowChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-                  <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(0,0,0,0.9)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="execucoes" fill="#f59e0b" name="Execuções" />
-                </BarChart>
-              </ResponsiveContainer>
+              <WorkflowExecutionsChart data={workflowChartData} />
             </CardContent>
           </Card>
 
@@ -371,21 +323,7 @@ export default function AnalyticsPage() {
                 <CardTitle className="text-white">Funil de Leads</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={leadsFunnelData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                    <XAxis type="number" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-                    <YAxis type="category" dataKey="status" stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'rgba(0,0,0,0.9)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Bar dataKey="count" fill="#8b5cf6" name="Leads" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <LeadsFunnelChart data={leadsFunnelData} />
               </CardContent>
             </Card>
 
@@ -394,31 +332,7 @@ export default function AnalyticsPage() {
                 <CardTitle className="text-white">Distribuição por Fonte</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={leadsSourceData}
-                      dataKey="count"
-                      nameKey="fonte"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      label
-                    >
-                      {leadsSourceData.map((entry: any, index: number) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'rgba(0,0,0,0.9)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                <LeadsSourcePie data={leadsSourceData} />
               </CardContent>
             </Card>
           </div>
@@ -428,32 +342,7 @@ export default function AnalyticsPage() {
               <CardTitle className="text-white">Criação de Leads ao Longo do Tempo</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={leadsTimelineData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis
-                    dataKey="date"
-                    stroke="rgba(255,255,255,0.5)"
-                    style={{ fontSize: '12px' }}
-                  />
-                  <YAxis stroke="rgba(255,255,255,0.5)" style={{ fontSize: '12px' }} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(0,0,0,0.9)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="count"
-                    stroke="#ec4899"
-                    strokeWidth={2}
-                    dot={{ fill: '#ec4899', r: 4 }}
-                    name="Leads Criados"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              <LeadsTimelineChart data={leadsTimelineData} />
             </CardContent>
           </Card>
 

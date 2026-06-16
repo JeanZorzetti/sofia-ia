@@ -5,6 +5,7 @@
 // ─────────────────────────────────────────────────────────
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { useDesktop } from '@/contexts/DesktopContext'
 import { DesktopService, type FileTreeEntry } from '@/services/desktop-service'
 import { Button } from '@/components/ui/button'
@@ -16,11 +17,17 @@ import {
 
 import { FileTree } from '@/components/ide/file-tree'
 import { EditorTabs, type OpenFile } from '@/components/ide/editor-tabs'
-import { CodeEditor, EditorEmptyState } from '@/components/ide/code-editor'
+import { EditorEmptyState } from '@/components/ide/editor-empty-state'
 import { StatusBar } from '@/components/ide/status-bar'
 import { AIPanel } from '@/components/ide/ai-panel'
 import { QuickOpen } from '@/components/ide/quick-open'
 import { IDETerminal } from '@/components/ide/terminal'
+
+// Monaco editor is heavy and DOM-only → code-split, load client-side on demand.
+const CodeEditor = dynamic(
+    () => import('@/components/ide/code-editor').then(m => m.CodeEditor),
+    { ssr: false, loading: () => <EditorEmptyState /> },
+)
 
 // ── File content cache ──────────────────────────────────────
 interface FileState {
