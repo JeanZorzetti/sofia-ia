@@ -17,8 +17,8 @@ export interface BusinessCaseInput {
 
 export interface BusinessCaseResult {
   currentSituation: { leadsMonth: number; closingsMonth: number; revenueMonth: number; leadsLostTiming: number }
-  projectedWithSofia: { closingsMonth: number; revenueMonth: number; improvementPct: number }
-  roi: { additionalRevenue: number; sofiaFee: number; netGain: number; paybackDays: number; roiPct: number }
+  projectedWithPolaris: { closingsMonth: number; revenueMonth: number; improvementPct: number }
+  roi: { additionalRevenue: number; polarisFee: number; netGain: number; paybackDays: number; roiPct: number }
 }
 
 export function businessCaseGenerator(input: BusinessCaseInput): BusinessCaseResult {
@@ -41,8 +41,8 @@ export function businessCaseGenerator(input: BusinessCaseInput): BusinessCaseRes
 
   return {
     currentSituation: { leadsMonth, closingsMonth: curClosings, revenueMonth: curRevenue, leadsLostTiming: lostTiming },
-    projectedWithSofia: { closingsMonth: projClosings, revenueMonth: projRevenue, improvementPct: Math.round((B.boost - 1) * 100) },
-    roi: { additionalRevenue, sofiaFee: B.fee, netGain, paybackDays, roiPct: Math.round((netGain / B.fee) * 100) },
+    projectedWithPolaris: { closingsMonth: projClosings, revenueMonth: projRevenue, improvementPct: Math.round((B.boost - 1) * 100) },
+    roi: { additionalRevenue, polarisFee: B.fee, netGain, paybackDays, roiPct: Math.round((netGain / B.fee) * 100) },
   }
 }
 
@@ -110,7 +110,7 @@ export interface RoiResult {
   leadRevenuGain: number
   timeSavingsGain: number
   totalGain: number
-  sofiaFee: number
+  polarisFee: number
   netRoi: number
   roiPct: number
   breakEvenLeads: number
@@ -122,15 +122,15 @@ export function roiCalculator(input: RoiInput): RoiResult {
   const conv = input.currentConversion ?? 0.042
   const hoursSaved = input.hoursSavedMonth ?? 40
   const hourlyRate = input.hourlyRate ?? 80
-  const sofiaFee = 497
+  const polarisFee = 497
 
   const additionalClosings = leadsMonth * conv * 1.8
   const leadRevenueGain = additionalClosings * ticket
   const timeSavingsGain = hoursSaved * hourlyRate
   const totalGain = leadRevenueGain + timeSavingsGain
-  const netRoi = totalGain - sofiaFee
-  const roiPct = Math.round((netRoi / sofiaFee) * 100)
-  const breakEvenLeads = Math.ceil(sofiaFee / (ticket * conv))
+  const netRoi = totalGain - polarisFee
+  const roiPct = Math.round((netRoi / polarisFee) * 100)
+  const breakEvenLeads = Math.ceil(polarisFee / (ticket * conv))
 
-  return { leadRevenuGain: Math.round(leadRevenueGain), timeSavingsGain, totalGain: Math.round(totalGain), sofiaFee, netRoi: Math.round(netRoi), roiPct, breakEvenLeads }
+  return { leadRevenuGain: Math.round(leadRevenueGain), timeSavingsGain, totalGain: Math.round(totalGain), polarisFee, netRoi: Math.round(netRoi), roiPct, breakEvenLeads }
 }

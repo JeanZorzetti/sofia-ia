@@ -114,14 +114,14 @@ const features = [
 ]
 
 const comparisons = [
-  { feature: 'Visual no-code interface', sofia: true, crewai: false, autogen: false, langflow: true },
-  { feature: 'Built-in Knowledge Base with RAG', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Per-agent SSE streaming', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'WhatsApp / multi-channel integration', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Per-execution cost analytics', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Execution replay', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Self-hosted (Docker)', sofia: true, crewai: true, autogen: true, langflow: true },
-  { feature: 'Multiple models (Groq, OpenAI...)', sofia: true, crewai: true, autogen: true, langflow: true },
+  { feature: 'Visual no-code interface', polaris: true, crewai: false, autogen: false, langflow: true },
+  { feature: 'Built-in Knowledge Base with RAG', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Per-agent SSE streaming', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'WhatsApp / multi-channel integration', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Per-execution cost analytics', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Execution replay', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Self-hosted (Docker)', polaris: true, crewai: true, autogen: true, langflow: true },
+  { feature: 'Multiple models (Groq, OpenAI...)', polaris: true, crewai: true, autogen: true, langflow: true },
 ]
 
 const plans = [
@@ -381,7 +381,7 @@ export default function EnLandingPage() {
                     <tr key={row.feature} className={i % 2 === 0 ? 'bg-white/2' : ''}>
                       <td className="p-4 text-white/70">{row.feature}</td>
                       <td className="p-4 text-center">
-                        {row.sofia ? (
+                        {row.polaris ? (
                           <CheckCircle className="w-5 h-5 text-green-400 mx-auto" />
                         ) : (
                           <span className="text-white/20">—</span>

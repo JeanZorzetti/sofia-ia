@@ -6,7 +6,7 @@ export interface McpServerTool {
   inputSchema: Record<string, unknown>
 }
 
-export const SOFIA_MCP_TOOLS: McpServerTool[] = [
+export const POLARIS_MCP_TOOLS: McpServerTool[] = [
   {
     name: 'list_agents',
     description: 'Lista todos os agentes de IA disponíveis na Polaris IA',
@@ -54,7 +54,7 @@ export const SOFIA_MCP_TOOLS: McpServerTool[] = [
   },
 ]
 
-export async function executeSofiaMcpTool(
+export async function executePolarisMcpTool(
   toolName: string,
   args: Record<string, unknown>,
   userId: string

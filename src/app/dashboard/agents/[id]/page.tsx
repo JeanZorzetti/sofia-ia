@@ -13,7 +13,7 @@ import { Slider } from '@/components/ui/slider'
 import { ArrowLeft, Loader2, Save, MessageSquare, Mail, Globe, Brain, Puzzle, GitBranch, Sparkles, Network } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { AgentChatTester } from '@/components/sofia/AgentChatTester'
+import { AgentChatTester } from '@/components/polaris/AgentChatTester'
 
 interface Agent {
   id: string

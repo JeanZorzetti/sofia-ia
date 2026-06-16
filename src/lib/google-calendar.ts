@@ -85,7 +85,7 @@ export async function createCalendarEvent(
   }
 ): Promise<CalendarEvent> {
   const calendarId = params.calendarId || 'primary'
-  const requestId = `sofia-${Date.now()}`
+  const requestId = `polaris-${Date.now()}`
 
   const body = {
     summary: params.nome,

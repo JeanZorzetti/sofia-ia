@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug in Sofia AI
+description: Report a bug in Polaris IA
 title: "[BUG] "
 labels: ["bug"]
 body:
@@ -84,7 +84,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Sofia AI version / commit
+      label: Polaris IA version / commit
       placeholder: "e.g. main branch, commit abc123, v1.2.0"
     validations:
       required: false

@@ -14,9 +14,9 @@ export const metadata: Metadata = {
   title: 'Polaris IA vs CrewAI vs AutoGen vs LangFlow — Comparativo Completo',
   description: 'Compare Polaris IA com CrewAI, AutoGen e LangFlow em usabilidade, preço, features e suporte. Veja por que times brasileiros escolhem Polaris IA para orquestração de agentes IA.',
   keywords: [
-    'sofia vs crewai',
-    'sofia vs autogen',
-    'sofia vs langflow',
+    'polaris vs crewai',
+    'polaris vs autogen',
+    'polaris vs langflow',
     'alternativa crewai',
     'alternativa autogen',
     'orquestração agentes ia comparativo',
@@ -34,18 +34,18 @@ export const metadata: Metadata = {
 }
 
 const comparisons = [
-  { feature: 'Interface visual no-code', sofia: true, crewai: false, autogen: false, langflow: true },
-  { feature: 'Knowledge Base com RAG embutido', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Streaming SSE por agente', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'WhatsApp / multi-canal integrado', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Analytics de custo por execução', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Replay de execuções', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Templates prontos de orquestração', sofia: true, crewai: false, autogen: false, langflow: true },
-  { feature: 'Self-hosted (Docker)', sofia: true, crewai: true, autogen: true, langflow: true },
-  { feature: 'Multi-modelo (Groq, OpenAI…)', sofia: true, crewai: true, autogen: true, langflow: true },
-  { feature: 'Suporte em português', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Plano gratuito', sofia: true, crewai: true, autogen: true, langflow: true },
-  { feature: 'SaaS gerenciado (sem infra)', sofia: true, crewai: false, autogen: false, langflow: true },
+  { feature: 'Interface visual no-code', polaris: true, crewai: false, autogen: false, langflow: true },
+  { feature: 'Knowledge Base com RAG embutido', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Streaming SSE por agente', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'WhatsApp / multi-canal integrado', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Analytics de custo por execução', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Replay de execuções', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Templates prontos de orquestração', polaris: true, crewai: false, autogen: false, langflow: true },
+  { feature: 'Self-hosted (Docker)', polaris: true, crewai: true, autogen: true, langflow: true },
+  { feature: 'Multi-modelo (Groq, OpenAI…)', polaris: true, crewai: true, autogen: true, langflow: true },
+  { feature: 'Suporte em português', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Plano gratuito', polaris: true, crewai: true, autogen: true, langflow: true },
+  { feature: 'SaaS gerenciado (sem infra)', polaris: true, crewai: false, autogen: false, langflow: true },
 ]
 
 const tools = [
@@ -213,7 +213,7 @@ export default function ComparativoPage() {
                     <tr key={row.feature} className={i % 2 === 0 ? 'bg-white/2' : ''}>
                       <td className="p-4 text-white/70">{row.feature}</td>
                       <td className="p-4 text-center">
-                        {row.sofia
+                        {row.polaris
                           ? <CheckCircle className="w-5 h-5 text-green-400 mx-auto" />
                           : <XCircle className="w-5 h-5 text-white/20 mx-auto" />}
                       </td>

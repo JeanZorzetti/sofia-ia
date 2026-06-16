@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { InstallPWA } from '@/components/sofia/InstallPWA'
+import { InstallPWA } from '@/components/polaris/InstallPWA'
 
 interface NavbarProps {
   user: {
@@ -25,7 +25,7 @@ export function Navbar({ user, onLogout }: NavbarProps) {
   return (
     <nav className="navbar-glass sticky top-0 z-50 flex h-16 items-center justify-between border-b border-border px-6">
       <div className="flex items-center gap-4">
-        <h1 className="logo-sofia text-2xl font-bold">SOFIA</h1>
+        <h1 className="logo-polaris text-2xl font-bold">POLARIS</h1>
       </div>
 
       <div className="flex items-center gap-4">

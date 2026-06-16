@@ -2,7 +2,7 @@
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { DesktopProvider } from '@/contexts/DesktopContext'
-import { ServiceWorkerRegistrar } from '@/components/sofia/ServiceWorkerRegistrar'
+import { ServiceWorkerRegistrar } from '@/components/polaris/ServiceWorkerRegistrar'
 import { ProgressBarProvider } from '@/components/ProgressBarProvider'
 import Script from 'next/script'
 

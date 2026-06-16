@@ -52,7 +52,7 @@ export class McpClient {
     await this.rpc(url, 'initialize', {
       protocolVersion: '2024-11-05',
       capabilities: { tools: {} },
-      clientInfo: { name: 'sofia-ai', version: '1.0.0' },
+      clientInfo: { name: 'polaris-ai', version: '1.0.0' },
     }, headers)
   }
 

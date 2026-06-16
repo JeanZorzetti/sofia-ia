@@ -28,7 +28,7 @@ info:
     url: https://roilabs.com.br/terms
 
 servers:
-  - url: https://sofiaia.roilabs.com.br/api
+  - url: https://polarisia.com.br/api
     description: Production
   - url: http://localhost:3000/api
     description: Development

@@ -16,9 +16,9 @@ jobs:
         uses: treosh/lighthouse-ci-action@v12
         with:
           urls: |
-            https://sofiaia.roilabs.com.br
-            https://sofiaia.roilabs.com.br/preco
-            https://sofiaia.roilabs.com.br/features
+            https://polarisia.com.br
+            https://polarisia.com.br/preco
+            https://polarisia.com.br/features
           budgetPath: .github/lighthouse-budget.json
           uploadArtifacts: true
           temporaryPublicStorage: true

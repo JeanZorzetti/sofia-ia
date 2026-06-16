@@ -517,11 +517,11 @@ export default function McpPage() {
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({})
   const [form, setForm] = useState(defaultForm)
   const [copied, setCopied] = useState(false)
-  const [sofiaUrl, setSofiaUrl] = useState('')
+  const [polarisUrl, setPolarisUrl] = useState('')
   const [catalogCategory, setCatalogCategory] = useState('all')
 
   useEffect(() => {
-    if (typeof window !== 'undefined') setSofiaUrl(`${window.location.origin}/api/mcp`)
+    if (typeof window !== 'undefined') setPolarisUrl(`${window.location.origin}/api/mcp`)
     fetchServers()
   }, [])
 
@@ -588,7 +588,7 @@ export default function McpPage() {
   }
 
   const handleCopyUrl = async () => {
-    try { await navigator.clipboard.writeText(sofiaUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) }
+    try { await navigator.clipboard.writeText(polarisUrl); setCopied(true); setTimeout(() => setCopied(false), 2000) }
     catch { /* ignore */ }
   }
 
@@ -763,7 +763,7 @@ export default function McpPage() {
             <p className="text-xs text-white/40 mb-1">Endpoint MCP</p>
             <div className="flex items-center gap-2">
               <code className="flex-1 bg-black/40 rounded-lg px-3 py-2 text-green-400 text-sm font-mono">
-                {sofiaUrl || 'Carregando...'}
+                {polarisUrl || 'Carregando...'}
               </code>
               <button
                 onClick={handleCopyUrl}

@@ -17,7 +17,7 @@ const requirements = [
 ]
 
 const envVars = [
-  { key: 'DATABASE_URL', desc: 'URL do PostgreSQL (com pgvector)', example: 'postgresql://user:pass@host:5432/sofia' },
+  { key: 'DATABASE_URL', desc: 'URL do PostgreSQL (com pgvector)', example: 'postgresql://user:pass@host:5432/polaris' },
   { key: 'NEXTAUTH_SECRET', desc: 'Secret para NextAuth (JWT)', example: 'openssl rand -base64 32' },
   { key: 'NEXTAUTH_URL', desc: 'URL pública da aplicação', example: 'https://seu-dominio.com' },
   { key: 'GROQ_API_KEY', desc: 'Chave da API Groq (modelos rápidos)', example: 'gsk_...' },

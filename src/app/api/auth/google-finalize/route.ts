@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Emite nosso JWT customizado (sofia_token) — mesmo formato das rotas existentes
-    const sofiaToken = await signToken({
+    const polarisToken = await signToken({
       id: user.id,
       email: user.email,
       name: user.name,
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     })
 
     const response = NextResponse.redirect(new URL('/dashboard', request.url))
-    response.cookies.set('sofia_token', sofiaToken, {
+    response.cookies.set('sofia_token', polarisToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -31,7 +31,7 @@ async function main() {
   console.log('✅ Admin user criado:', adminUser.email)
 
   // Criar usuário Polaris IA (agente)
-  const sofiaUser = await prisma.user.upsert({
+  const polarisUser = await prisma.user.upsert({
     where: { email: 'sofia@roilabs.com.br' },
     update: {},
     create: {
@@ -49,7 +49,7 @@ async function main() {
       },
     },
   })
-  console.log('✅ Polaris IA user criado:', sofiaUser.email)
+  console.log('✅ Polaris IA user criado:', polarisUser.email)
 
   // Criar configurações padrão para IA
   const aiSettings = await prisma.setting.upsert({
@@ -162,7 +162,7 @@ Lembre-se: você está aqui para ajudar e facilitar a busca do imóvel ideal!`,
   console.log('✅ Notification Settings criado:', notificationSettings.key)
 
   // Criar Polaris SDR como agente default
-  const sofiaAgent = await prisma.agent.upsert({
+  const polarisAgent = await prisma.agent.upsert({
     where: {
       id: '00000000-0000-0000-0000-000000000001' // ID fixo para Polaris IA
     },
@@ -229,7 +229,7 @@ Lembre-se: você está aqui para ajudar e facilitar a busca do imóvel ideal!`,
       }
     }
   })
-  console.log('✅ Polaris SDR Agent criado:', sofiaAgent.name)
+  console.log('✅ Polaris SDR Agent criado:', polarisAgent.name)
 
   // Criar integração WhatsApp default
   const whatsappIntegration = await prisma.integration.upsert({

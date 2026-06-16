@@ -637,7 +637,7 @@ export async function POST(request: NextRequest) {
       return reply({
         protocolVersion: '2024-11-05',
         capabilities: { tools: {} },
-        serverInfo: { name: 'sofia-threads-mcp', version: '1.0.0' },
+        serverInfo: { name: 'polaris-threads-mcp', version: '1.0.0' },
       })
 
     case 'tools/list':

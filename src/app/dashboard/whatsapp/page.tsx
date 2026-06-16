@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useWhatsAppInstances, useWhatsAppStats } from '@/hooks/use-sofia-api'
+import { useWhatsAppInstances, useWhatsAppStats } from '@/hooks/use-polaris-api'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

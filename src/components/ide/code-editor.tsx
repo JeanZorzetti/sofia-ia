@@ -50,7 +50,7 @@ export function CodeEditor({
         editorRef.current = editorInstance
 
         // Custom dark theme matching Polaris IA
-        monaco.editor.defineTheme('sofia-dark', {
+        monaco.editor.defineTheme('polaris-dark', {
             base: 'vs-dark',
             inherit: true,
             rules: [
@@ -81,7 +81,7 @@ export function CodeEditor({
                 'scrollbarSlider.hoverBackground': '#ffffff12',
             },
         })
-        monaco.editor.setTheme('sofia-dark')
+        monaco.editor.setTheme('polaris-dark')
 
         // Cursor position tracking
         editorInstance.onDidChangeCursorPosition(e => {

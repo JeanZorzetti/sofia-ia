@@ -90,7 +90,7 @@ function RegisterContent() {
         <Card className="glass-card">
           <CardHeader className="text-center space-y-6">
             <div className="text-5xl font-bold text-white tracking-wider">
-              SOFIA
+              POLARIS
             </div>
             <CardTitle className="text-2xl text-white/90">
               Criar Conta

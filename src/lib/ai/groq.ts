@@ -70,7 +70,7 @@ function parseCodeBlocksFromResponse(content: string): { path: string; content: 
 
   return blocks
 }
-export async function chatWithSofia(
+export async function chatWithPolaris(
   messages: ChatMessage[],
   leadContext?: LeadContext,
   customPrompt?: string

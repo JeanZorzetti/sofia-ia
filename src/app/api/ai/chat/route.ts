@@ -1,6 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
-import { chatWithSofia, chatWithAgent } from '@/lib/groq';
+import { chatWithPolaris, chatWithAgent } from '@/lib/groq';
 import { prisma } from '@/lib/prisma';
 import { rateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call Polaris IA (compatibilidade com código legado)
-    const result = await chatWithSofia(messages, leadContext, customPrompt);
+    const result = await chatWithPolaris(messages, leadContext, customPrompt);
 
     return NextResponse.json({
       success: true,

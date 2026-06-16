@@ -1,5 +1,5 @@
 {
-  "name": "sofia-next",
+  "name": "polaris-next",
   "version": "0.1.0",
   "private": true,
   "main": "dist/electron/main.js",

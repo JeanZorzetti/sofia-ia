@@ -144,7 +144,7 @@ Expected: PASS — `✅ SP4 team-run-api.ts checks passed`.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/Imob/sofia-next"
+cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/polaris/polaris-next"
 git add src/lib/orchestration/team/team-run-api.ts scripts/sp4-verify.ts
 git commit -F - <<'EOF'
 feat(sp4): pure team-run-api helper (parseTeamRunBody + status map)
@@ -265,7 +265,7 @@ Expected: sem erros novos nestes arquivos. (Ruído aceitável: módulos não ins
 - [ ] **Step 4: Commit**
 
 ```bash
-cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/Imob/sofia-next"
+cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/polaris/polaris-next"
 git add "src/app/api/v1/teams/route.ts" "src/app/api/v1/teams/[id]/run/route.ts"
 git commit -F - <<'EOF'
 feat(sp4): v1 (Bearer) Team API routes — run + list
@@ -381,7 +381,7 @@ Expected: sem erros novos.
 - [ ] **Step 4: Commit**
 
 ```bash
-cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/Imob/sofia-next"
+cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/polaris/polaris-next"
 git add "src/app/api/public/teams/route.ts" "src/app/api/public/teams/[id]/run/route.ts"
 git commit -F - <<'EOF'
 feat(sp4): public (X-API-Key) Team API routes — run + list
@@ -447,7 +447,7 @@ Expected: sem erros novos. Confirmar que `STATUS_BY_CODE` não é mais referenci
 - [ ] **Step 3: Commit**
 
 ```bash
-cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/Imob/sofia-next"
+cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/polaris/polaris-next"
 git add "src/app/api/teams/[id]/run/route.ts"
 git commit -F - <<'EOF'
 refactor(sp4): session run route uses shared TEAM_RUN_STATUS_BY_CODE
@@ -818,7 +818,7 @@ Expected: sem erros novos. (Conferir que não restou nenhuma referência a `#/co
 - [ ] **Step 7: Commit**
 
 ```bash
-cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/Imob/sofia-next"
+cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/polaris/polaris-next"
 git add "src/app/api/docs/openapi.json/route.ts"
 git commit -F - <<'EOF'
 docs(sp4): openapi advertises Teams API instead of orchestrations
@@ -918,7 +918,7 @@ Expected: sem erros novos.
 - [ ] **Step 5: Commit**
 
 ```bash
-cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/Imob/sofia-next"
+cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/polaris/polaris-next"
 git add "src/app/(public)/api-reference/page.tsx"
 git commit -F - <<'EOF'
 docs(sp4): api-reference points to Teams API + run example
@@ -1330,7 +1330,7 @@ Run: `npx tsc --noEmit`
 Expected: sem erros novos.
 
 ```bash
-cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/Imob/sofia-next"
+cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/polaris/polaris-next"
 git add "src/app/(public)/integrations/zapier/page.tsx" "src/app/(public)/integrations/make/page.tsx" "src/app/(public)/integrations/n8n/page.tsx"
 git commit -F - <<'EOF'
 docs(sp4): public integration copy points to Teams run API
@@ -1756,7 +1756,7 @@ Run: `npx tsc --noEmit`
 Expected: sem erros novos. Conferir que `pollExample`/`curlPoll`/`pollConfig`/`pollNode` não são mais referenciados (`grep -rn "poll" src/app/dashboard/integrations/{zapier,make,n8n}/page.tsx` só deve sobrar texto, sem constantes mortas).
 
 ```bash
-cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/Imob/sofia-next"
+cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/polaris/polaris-next"
 git add "src/app/dashboard/integrations/zapier/page.tsx" "src/app/dashboard/integrations/make/page.tsx" "src/app/dashboard/integrations/n8n/page.tsx"
 git commit -F - <<'EOF'
 docs(sp4): dashboard integration guides point to Teams run API
@@ -1792,7 +1792,7 @@ Expected: 8 commits do SP4 (Task 1–8) + este; working tree sem mudanças não 
 
 Run:
 ```bash
-cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/Imob/sofia-next"
+cd "c:/Users/jeanz/OneDrive/Desktop/ROI Labs/polaris/polaris-next"
 git push origin main
 ```
 Expected: push aceito; EasyPanel redeploya app + worker.

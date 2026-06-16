@@ -62,14 +62,14 @@ export const homeFeatures: FeatureCardData[] = [
 ]
 
 export const homeComparisons = [
-  { feature: 'Interface visual no-code', sofia: true, crewai: false, autogen: false, langflow: true },
-  { feature: 'Knowledge Base com RAG embutido', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Streaming SSE por agente', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'WhatsApp/multi-canal integrado', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Analytics de custo por execução', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Replay de execuções', sofia: true, crewai: false, autogen: false, langflow: false },
-  { feature: 'Self-hosted (Docker)', sofia: true, crewai: true, autogen: true, langflow: true },
-  { feature: 'Modelos múltiplos (Groq, OpenAI...)', sofia: true, crewai: true, autogen: true, langflow: true },
+  { feature: 'Interface visual no-code', polaris: true, crewai: false, autogen: false, langflow: true },
+  { feature: 'Knowledge Base com RAG embutido', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Streaming SSE por agente', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'WhatsApp/multi-canal integrado', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Analytics de custo por execução', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Replay de execuções', polaris: true, crewai: false, autogen: false, langflow: false },
+  { feature: 'Self-hosted (Docker)', polaris: true, crewai: true, autogen: true, langflow: true },
+  { feature: 'Modelos múltiplos (Groq, OpenAI...)', polaris: true, crewai: true, autogen: true, langflow: true },
 ]
 
 export const homeOrchestrationTemplates = [

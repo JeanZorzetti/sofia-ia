@@ -305,7 +305,7 @@ while True:
               </div>
               <div>
                 <p className="text-xs text-white/40 mb-2">JavaScript / Node.js</p>
-                <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`const API_KEY = process.env.SOFIA_API_KEY;
+                <pre className="bg-black/60 border border-white/10 rounded-xl p-4 text-xs text-green-300 overflow-x-auto">{`const API_KEY = process.env.POLARIS_API_KEY;
 const BASE = "https://polarisia.com.br/api/public";
 const h = { "X-API-Key": API_KEY, "Content-Type": "application/json" };
 

@@ -9,7 +9,7 @@ export function getOpenRouterClient(): OpenAI {
             baseURL: 'https://openrouter.ai/api/v1',
             apiKey: process.env.OPENROUTER_API_KEY,
             defaultHeaders: {
-                'HTTP-Referer': 'https://sofia.app', // Required by OpenRouter
+                'HTTP-Referer': 'https://polarisia.com.br', // Required by OpenRouter
                 'X-Title': 'Polaris IA', // Optional
             },
         })

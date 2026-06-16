@@ -44,7 +44,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md px-4 animate-fade-in-up">
         <Card className="glass-card">
           <CardHeader className="text-center space-y-6">
-            <div className="text-5xl font-bold text-white tracking-wider">SOFIA</div>
+            <div className="text-5xl font-bold text-white tracking-wider">POLARIS</div>
             <CardTitle className="text-2xl text-white/90">Acesso ao Sistema</CardTitle>
           </CardHeader>
           <CardContent>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sofia-ai-v1'
+const CACHE_NAME = 'polaris-ai-v1'
 const STATIC_ASSETS = [
   '/',
   '/dashboard',
@@ -42,7 +42,7 @@ self.addEventListener('fetch', (event) => {
 
   // Ignora requisições non-GET e de outros domínios
   if (request.method !== 'GET') return
-  if (!url.origin.includes(self.location.origin) && !url.origin.includes('sofiaia.roilabs.com.br')) return
+  if (!url.origin.includes(self.location.origin) && !url.origin.includes('polarisia.com.br')) return
 
   // Ignora chamadas de API (sempre network)
   if (url.pathname.startsWith('/api/')) return
@@ -94,7 +94,7 @@ self.addEventListener('push', (event) => {
   try {
     data = event.data.json()
   } catch {
-    data = { title: 'Sofia AI', body: event.data.text() }
+    data = { title: 'Polaris IA', body: event.data.text() }
   }
 
   const options = {
@@ -106,7 +106,7 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Sofia AI', options)
+    self.registration.showNotification(data.title || 'Polaris IA', options)
   )
 })
 

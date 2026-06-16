@@ -147,9 +147,9 @@ export default async function LandingPage() {
                   {homeComparisons.map((row, i) => (
                     <tr key={row.feature} className={i % 2 === 0 ? 'bg-white/2' : ''}>
                       <td className="p-4 text-white/70">{row.feature}</td>
-                      {(['sofia', 'crewai', 'autogen', 'langflow'] as const).map((k) => (
+                      {(['polaris', 'crewai', 'autogen', 'langflow'] as const).map((k) => (
                         <td key={k} className="p-4 text-center">
-                          {row[k] ? <CheckCircle className={`w-5 h-5 mx-auto ${k === 'sofia' ? 'text-green-400' : 'text-white/30'}`} /> : <span className="text-white/20">—</span>}
+                          {row[k] ? <CheckCircle className={`w-5 h-5 mx-auto ${k === 'polaris' ? 'text-green-400' : 'text-white/30'}`} /> : <span className="text-white/20">—</span>}
                         </td>
                       ))}
                     </tr>

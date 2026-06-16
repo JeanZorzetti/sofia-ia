@@ -1,8 +1,8 @@
 'use client'
 
 import { useAuth } from '@/hooks/use-auth'
-import { Navbar } from '@/components/sofia/Navbar'
-import { Sidebar } from '@/components/sofia/Sidebar'
+import { Navbar } from '@/components/polaris/Navbar'
+import { Sidebar } from '@/components/polaris/Sidebar'
 import { CommandPalette } from '@/components/ide/command-palette'
 import { Breadcrumb } from '@/components/dashboard/breadcrumb'
 import { TrialBanner } from '@/components/dashboard/trial-banner'

@@ -27,7 +27,7 @@ jest.mock('@/lib/prisma', () => ({
   prisma: { agent: { findUnique: jest.fn() } },
 }))
 
-import { getGroqClient, chatWithSofia } from '@/lib/ai/groq'
+import { getGroqClient, chatWithPolaris } from '@/lib/ai/groq'
 
 function makeCompletion(content: string, model = 'llama-3.3-70b-versatile') {
   return {
@@ -64,13 +64,13 @@ describe('getGroqClient()', () => {
 })
 
 // ---------------------------------------------------------------------------
-// chatWithSofia
+// chatWithPolaris
 // ---------------------------------------------------------------------------
-describe('chatWithSofia()', () => {
+describe('chatWithPolaris()', () => {
   it('should call completions.create and return the content', async () => {
     mockCreate.mockResolvedValueOnce(makeCompletion('Ola! Como posso ajudar?'))
 
-    const result = await chatWithSofia([{ role: 'user', content: 'Oi, Polaris IA!' }])
+    const result = await chatWithPolaris([{ role: 'user', content: 'Oi, Polaris IA!' }])
 
     expect(mockCreate).toHaveBeenCalledTimes(1)
     expect(result.content).toBe('Ola! Como posso ajudar?')
@@ -79,7 +79,7 @@ describe('chatWithSofia()', () => {
   it('should prepend a system message to the API payload', async () => {
     mockCreate.mockResolvedValueOnce(makeCompletion('Ok'))
 
-    await chatWithSofia([{ role: 'user', content: 'Teste' }])
+    await chatWithPolaris([{ role: 'user', content: 'Teste' }])
 
     const payload = mockCreate.mock.calls[0][0]
     expect(payload.messages[0].role).toBe('system')
@@ -89,7 +89,7 @@ describe('chatWithSofia()', () => {
   it('should inject lead context into the system prompt when provided', async () => {
     mockCreate.mockResolvedValueOnce(makeCompletion('Entendido'))
 
-    await chatWithSofia(
+    await chatWithPolaris(
       [{ role: 'user', content: 'Quero comprar' }],
       { nome: 'Maria', score: 90 }
     )
@@ -103,7 +103,7 @@ describe('chatWithSofia()', () => {
     mockCreate.mockResolvedValueOnce(makeCompletion('Customizado'))
 
     const custom = 'Voce e um expert em vendas imobiliarias.'
-    await chatWithSofia([{ role: 'user', content: 'Oi' }], undefined, custom)
+    await chatWithPolaris([{ role: 'user', content: 'Oi' }], undefined, custom)
 
     const systemContent: string = mockCreate.mock.calls[0][0].messages[0].content
     expect(systemContent).toBe(custom)
@@ -112,7 +112,7 @@ describe('chatWithSofia()', () => {
   it('should return an empty string when choices array is empty', async () => {
     mockCreate.mockResolvedValueOnce({ choices: [], model: 'x', usage: {} })
 
-    const result = await chatWithSofia([{ role: 'user', content: 'Test' }])
+    const result = await chatWithPolaris([{ role: 'user', content: 'Test' }])
     expect(result.content).toBe('')
   })
 
@@ -124,7 +124,7 @@ describe('chatWithSofia()', () => {
       usage,
     })
 
-    const result = await chatWithSofia([{ role: 'user', content: 'Ping' }])
+    const result = await chatWithPolaris([{ role: 'user', content: 'Ping' }])
     expect(result.model).toBe('llama-3.3-70b-versatile')
     expect(result.usage).toEqual(usage)
   })

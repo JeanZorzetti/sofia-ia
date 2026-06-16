@@ -7,7 +7,7 @@ import { Users, Plus, Loader2, ArrowRight, Pencil, Trash2, X, GitBranch, Play, S
 import RosterEditor, {
   INHERIT, rosterToMembers, type AgentLite, type ModelOption, type RosterRow,
 } from './RosterEditor'
-import { MagicCreateModal } from '@/components/sofia/MagicCreateModal'
+import { MagicCreateModal } from '@/components/polaris/MagicCreateModal'
 import { TeamTemplatesDialog } from './TeamTemplatesDialog'
 
 interface TeamLite { id: string; name: string; description: string | null; _count: { runs: number } }

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @plugin "tailwindcss-motion";
 
-/* SOFIA IA - Premium SaaS Design System */
+/* POLARIS IA - Premium SaaS Design System */
 
 @theme inline {
   --color-background: hsl(var(--background));
@@ -55,7 +55,7 @@
   --radius-card: var(--radius-card-val);
   --radius-button: var(--radius-button-val);
 
-  --font-family-sofia: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  --font-family-polaris: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -271,7 +271,7 @@ h3 { font-size: 1.25rem; font-weight: 500; letter-spacing: -0.025em; line-height
   border-bottom: 1px solid hsl(var(--glass-border));
 }
 
-.logo-sofia {
+.logo-polaris {
   font-weight: 600;
   letter-spacing: 0.1em;
   font-size: 1.5rem;

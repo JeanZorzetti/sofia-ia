@@ -1,6 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromApiKey } from '@/lib/api-key-auth'
-import { SOFIA_MCP_TOOLS, executeSofiaMcpTool } from '@/lib/mcp/server'
+import { POLARIS_MCP_TOOLS, executePolarisMcpTool } from '@/lib/mcp/server'
 
 export async function POST(request: NextRequest) {
   const auth = await getAuthFromApiKey(request)
@@ -31,16 +31,16 @@ export async function POST(request: NextRequest) {
       return reply({
         protocolVersion: '2024-11-05',
         capabilities: { tools: {} },
-        serverInfo: { name: 'sofia-ai', version: '1.0.0' },
+        serverInfo: { name: 'polaris-ai', version: '1.0.0' },
       })
 
     case 'tools/list':
-      return reply({ tools: SOFIA_MCP_TOOLS })
+      return reply({ tools: POLARIS_MCP_TOOLS })
 
     case 'tools/call': {
       const { name, arguments: args } = params as { name: string; arguments: Record<string, unknown> }
       if (!name) return error(-32602, 'Missing tool name')
-      const result = await executeSofiaMcpTool(name, args || {}, auth.userId)
+      const result = await executePolarisMcpTool(name, args || {}, auth.userId)
       return reply(result)
     }
 
@@ -54,6 +54,6 @@ export async function GET() {
     name: 'Polaris IA — MCP Server',
     version: '1.0.0',
     protocol: '2024-11-05',
-    tools: SOFIA_MCP_TOOLS.map(t => t.name),
+    tools: POLARIS_MCP_TOOLS.map(t => t.name),
   })
 }
