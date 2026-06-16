@@ -23,7 +23,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
 function buildDigestEmail(firstName: string, stats: {
   executionsThisWeek: number
   totalAgents: number
-  totalOrchestrations: number
+  totalTeams: number
 }): string {
   const hasActivity = stats.executionsThisWeek > 0
 
@@ -57,8 +57,8 @@ function buildDigestEmail(firstName: string, stats: {
 <div class="b">
   <h2>Oi, ${firstName}! Aqui está seu resumo da semana</h2>
   ${hasActivity
-    ? `<p>Você executou <strong>${stats.executionsThisWeek} orquestração${stats.executionsThisWeek !== 1 ? 'ões' : ''}</strong> nos últimos 7 dias. Continue assim!</p>`
-    : `<p>Você não executou nenhuma orquestração esta semana. Que tal experimentar um dos templates prontos?</p>`
+    ? `<p>Você teve <strong>${stats.executionsThisWeek} execução${stats.executionsThisWeek !== 1 ? 'ões' : ''} de time</strong> nos últimos 7 dias. Continue assim!</p>`
+    : `<p>Você não rodou nenhum time esta semana. Que tal experimentar um dos templates prontos?</p>`
   }
 
   <div class="stats">
@@ -71,8 +71,8 @@ function buildDigestEmail(firstName: string, stats: {
       <span class="stat-label">Agentes criados</span>
     </div>
     <div class="stat">
-      <span class="stat-num">${stats.totalOrchestrations}</span>
-      <span class="stat-label">Orquestrações</span>
+      <span class="stat-num">${stats.totalTeams}</span>
+      <span class="stat-label">Times</span>
     </div>
   </div>
 
@@ -126,16 +126,16 @@ export async function GET(req: NextRequest) {
     if (recentDigest > 0) { skipped++; continue }
 
     // Gather user stats
-    const [executionsThisWeek, totalAgents, totalOrchestrations] = await Promise.all([
-      // Executions this week for this user's orchestrations
-      prisma.orchestrationExecution.count({
+    const [executionsThisWeek, totalAgents, totalTeams] = await Promise.all([
+      // Team runs this week for this user's teams
+      prisma.teamRun.count({
         where: {
           createdAt: { gte: d7 },
-          orchestration: { createdBy: user.id },
+          team: { createdBy: user.id },
         },
       }),
       prisma.agent.count({ where: { createdBy: user.id } }),
-      prisma.agentOrchestration.count({ where: { createdBy: user.id } }),
+      prisma.team.count({ where: { createdBy: user.id } }),
     ])
 
     const firstName = user.name.split(' ')[0]
@@ -143,7 +143,7 @@ export async function GET(req: NextRequest) {
     await sendEmail({
       to: user.email,
       subject: `${firstName}, seu resumo da semana na Polaris IA`,
-      html: buildDigestEmail(firstName, { executionsThisWeek, totalAgents, totalOrchestrations }),
+      html: buildDigestEmail(firstName, { executionsThisWeek, totalAgents, totalTeams }),
     })
 
     await trackEvent('weekly_digest_sent', user.id)

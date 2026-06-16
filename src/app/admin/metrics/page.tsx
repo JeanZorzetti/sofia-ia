@@ -218,7 +218,7 @@ export default function AdminMetricsPage() {
         {/* Engagement (últimos 30 dias) */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Orquestrações executadas', value: data.engagement.orchestrationsExecuted, icon: Zap, color: 'text-amber-400', sub: 'últimos 30d' },
+            { label: 'Execuções de times', value: data.engagement.orchestrationsExecuted, icon: Zap, color: 'text-amber-400', sub: 'últimos 30d' },
             { label: 'Agentes criados', value: data.engagement.agentsCreated, icon: Bot, color: 'text-violet-400', sub: 'últimos 30d' },
             { label: 'Knowledge Bases', value: data.engagement.kbsCreated, icon: Database, color: 'text-cyan-400', sub: 'últimos 30d' },
             { label: 'Documentos adicionados', value: data.engagement.documentsAdded, icon: Mail, color: 'text-pink-400', sub: 'últimos 30d' },

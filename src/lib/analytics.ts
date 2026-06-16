@@ -192,7 +192,7 @@ export async function getEngagementCounts(sinceDate?: Date): Promise<{
   const dateFilter = sinceDate ? { createdAt: { gte: sinceDate } } : {}
 
   const [orchestrationsExecuted, agentsCreated, kbsCreated, documentsAdded] = await Promise.all([
-    prisma.orchestrationExecution.count({
+    prisma.teamRun.count({
       where: { ...dateFilter, status: 'completed' },
     }),
     prisma.agent.count({ where: dateFilter }),
