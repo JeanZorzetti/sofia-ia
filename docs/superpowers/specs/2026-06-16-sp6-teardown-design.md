@@ -58,36 +58,31 @@ Libs: `src/lib/orchestration/orchestration-templates.ts` + `src/lib/orchestratio
 
 ## Decomposição em sub-passos (cada um shippável e verificável isolado)
 
-### 6a — Repoint do Threads (mais leve e seguro → primeiro)
-- Repontar link "Planejar com IA" (`threads/campaigns/page.tsx`) pra Teams.
-- Portar os 6 pipelines de Threads → 1 Team template "Planejamento de Campanha Threads" em `team-templates.ts` (prompts verbatim, roster válido por `validateRoster`).
-- Deletar os 6 `scripts/create-threads-*-orchestration.ts`.
-- **Não toca os modelos ainda** (a engine segue viva). Zero risco de quebrar prod.
-- Verificação: `tsc` limpo; `instantiateRoster` aceita o novo template; link aponta pra `/dashboard/teams`.
+> **⚠️ Revisão pós-descoberta do 6b (2026-06-16):** a descoberta do 6b mostrou que a ordem original (deletar API no 6b → repontar consumidores no 6c) estava **invertida** — há consumidores VIVOS da API (`app/onboarding/page.tsx` e `onboarding-wizard.tsx` criam orchestration via `POST /api/orchestrations`; `components/flows/node-config-panel.tsx` do Workflows lista `/api/orchestrations`). Deletar a API antes de repontá-los quebraria onboarding + Workflows em prod (runtime, não build). **Decisão do usuário: REPOINT-FIRST** — repontar todos os consumidores vivos pra Teams ANTES de deletar. Também descoberto: `components/orchestrations/*` é **misto** (flow-canvas preservado + UI de execução **órfã** após `9fd88fa`: `analytics-dashboard`/`execution-history`/`execution-detail-drawer`/`execution-live-view`/`execution-compare` + hooks `use-execution-*` = código morto). Decomposição corrigida abaixo.
 
-### 6b — Deletar API legada + scheduling + redirects
-- Deletar todo o balde **A** (16 rotas + 3 scheduling + stubs de redirect + `orchestration-templates.ts` + `task-parser.ts`).
-- **Não** deletar `output-webhooks.ts`.
-- Os modelos seguem no schema (ainda referenciados por C/B até 6c) → client Prisma intacto.
-- Verificação: `tsc` limpo (as rotas deletadas eram as únicas que importavam as 2 libs); nenhuma rota viva importando `task-parser`/`orchestration-templates`.
+### 6a — Repoint do Threads ✅ ENTREGUE (commit `95f6346`)
+- Link "Planejar com IA" → `/dashboard/teams`; pipeline Campanha virou **Team reusando os agentes EXISTENTES** (não template — preservou plugins/skills/MCP) via `scripts/create-threads-campaign-team.ts` + módulo puro `threads-campaign-roster.ts`; 6 scripts `create-threads-*-orchestration.ts` deletados. Seed rodado em prod (Team `80a38c6e`).
 
-### 6c — Repontar/remover consumidores não-óbvios (balde C + B)
-- flow-engine node → Team (loop inline).
-- Landing test-drive → Team template (+ flag `isLandingTemplate` no `Team`, se for o caminho escolhido — decidir no plano).
-- Métricas (analytics/admin/digest/home/NPS) → `Team`/`TeamRun`.
-- Deletar compartilhamento de execução (balde B).
-- **Objetivo:** ao fim do 6c, **nenhum arquivo vivo referencia os 3 modelos** exceto o próprio schema. `tsc` vira o detector: zero `Property 'agentOrchestration' does not exist` fora de arquivos já deletados.
-- Verificação: `grep` dos 3 accessors retorna só o schema; `tsc` limpo.
+### 6b — Repoint do onboarding → Teams + deletar UI de execução órfã (REPOINT-FIRST, fatia atual)
+- `app/onboarding/page.tsx`: trocar a criação de orchestration por criação de **Team** (lead sintético + o agente criado como worker), navegar pra `/dashboard/teams/[id]`.
+- `onboarding-wizard.tsx`: `handleUseTemplate` deploya um **Team template** do SP5 (mapear os ids `DEMO_TEMPLATES` → ids de `TEAM_TEMPLATES`), navegar pra `/dashboard/teams/[id]`.
+- Deletar a **UI de execução órfã** (`components/orchestrations/{analytics-dashboard,execution-history,execution-detail-drawer,execution-live-view,execution-compare}.tsx` + `hooks/use-execution-{stream,notifications}.ts`) — confirmar zero importadores antes. **PRESERVAR** flow-canvas (`flow-canvas`/`flow-nodes`/`flow-edges`/`predictive`/`editable-flow-canvas`).
+- **Não toca modelos nem deleta a API ainda** (engine viva). Após 6b: nenhum onboarding chama `/api/orchestrations`.
 
-### 6d — Migração que dropa as tabelas + limpeza do schema
-- Migração formal `drop` (children → parent), aplicada **MANUAL** no host real **antes** do push.
-- Remover os 3 `model` + `User.scheduledExecutions` + relations internas do `schema.prisma`.
-- Verificação: `tsc` limpo com o client regenerado; migração aplicada no banco real confirmada por `$queryRawUnsafe` (tabelas não existem mais).
+### 6c — Repoint do node do Workflows + flow-engine `actionOrchestration` → Team
+- `node-config-panel.tsx` (lista `/api/orchestrations` → listar Teams) + `lib/flow-engine/nodes/actions.ts` (`actionOrchestration` lê Team+TeamMembers, loop sequencial inline; `teamId` no config). Após 6c: nenhum consumidor da **API** de orchestration vivo.
 
-### 6e — Limpeza de superfície (balde F) + realocação opcional de `output-webhooks.ts`
-- sitemap, openapi remanescente, marketing `(public)/features/orchestrations`, integrations Zapier/Make, docs/getting-started, i18n.
-- (Opcional) mover `output-webhooks.ts` → `lib/orchestration/team/`.
-- Verificação: `tsc` limpo; sitemap/openapi sem rotas mortas; grep "orchestration" só em código preservado (flow-canvas) e histórico.
+### 6d — Repoint dos consumidores de MODELO (landing test-drive + métricas) + deletar sharing
+- Landing test-drive (`api/landing/template-run`, `api/orchestrations/[id]/landing`, `api/templates/[id]/deploy`) → Team template. Métricas (`analytics first_orchestration_*`/`orchestrationExecution.count`, weekly-digest, admin, home, NPS) → `Team`/`TeamRun`. Deletar sharing de execução (balde B). Após 6d: **nenhum arquivo vivo referencia os 3 modelos nem a API** — `tsc`/`grep` confirmam.
+
+### 6e — Deletar a engine morta (API + libs + redirects) — pura deleção
+- Deletar balde **A**: `api/orchestrations/**` (incl. `generate`), `api/public/orchestrations/**`, `api/{public/v1,v1}/orchestrations/**`, `api/v1/integrations/zapier/**`, scheduling legado (`cron/run-scheduled`, `dashboard/scheduled-executions/**`), redirects `dashboard/orchestrations/**`, libs `orchestration-templates.ts`+`task-parser.ts`. **NÃO** `output-webhooks.ts`. Modelos ainda vivos (caem no 6f). `tsc` limpo (zero caller restante).
+
+### 6f — Migração que dropa as 3 tabelas + limpeza do schema
+- Migração `drop` (children `orchestration_executions`/`scheduled_executions` → parent `agent_orchestrations`), **MANUAL** no host real antes do push. Remover os 3 `model` + `User.scheduledExecutions` + relations. `tsc` limpo com client regenerado; confirmar tabelas inexistentes via `$queryRawUnsafe`.
+
+### 6g — Limpeza de superfície + realocação opcional de `output-webhooks.ts`
+- sitemap, openapi remanescente, marketing `(public)/features/orchestrations` + integrations + docs/getting-started, i18n. (Opcional) mover `output-webhooks.ts` → `lib/orchestration/team/`.
 
 ## Verificação e ambiente (vale pra todos os sub-passos)
 

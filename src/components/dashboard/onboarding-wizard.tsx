@@ -31,13 +31,13 @@ interface OnboardingWizardProps {
 
 const DEMO_TEMPLATES = [
   {
-    id: 'content-marketing-pipeline',
+    id: 'marketing-content',
     icon: '🎯',
     name: 'Conteúdo de Marketing',
     description: 'Pesquisador → Copywriter → Revisor SEO — cria artigos prontos em minutos',
   },
   {
-    id: 'research-analysis-pipeline',
+    id: 'pesquisa-analise',
     icon: '🔍',
     name: 'Pesquisa & Análise',
     description: 'Coletor → Analista → Sintetizador — pesquisa qualquer tópico com profundidade',
@@ -123,17 +123,16 @@ export function OnboardingWizard({ open, onClose, userId }: OnboardingWizardProp
   const handleUseTemplate = async (templateId: string) => {
     setTemplateLoading(templateId)
     try {
-      const response = await fetch('/api/orchestrations', {
+      const response = await fetch(`/api/teams/templates/${templateId}/deploy`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fromTemplate: templateId })
       })
       const result = await response.json()
       if (result.success) {
         onClose()
-        router.push(`/dashboard/orchestrations/${result.data.id}`)
+        router.push(`/dashboard/teams/${result.data.teamId}`)
       } else {
-        alert(result.error || 'Erro ao criar orquestração')
+        alert(result.error || 'Erro ao criar o time')
       }
     } catch {
       alert('Erro ao criar orquestração')

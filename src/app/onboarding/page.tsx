@@ -162,7 +162,7 @@ export default function OnboardingPage() {
       return
     }
     if (step === 3 && !orchName.trim()) {
-      toast.error('Defina um nome para a orquestracao')
+      toast.error('Defina um nome para o time')
       return
     }
     setStep((s) => s + 1)
@@ -190,28 +190,37 @@ export default function OnboardingPage() {
 
       const createdAgent = agentJson.data
 
-      // 2. Create orchestration
-      const orchAgents = selectedOption.orchestrationTemplate.agents.map((name, idx) => ({
-        id: idx === 0 ? createdAgent.id : `placeholder-${idx}`,
-        name: idx === 0 ? createdAgent.name : name,
-        order: idx,
-        systemPrompt: idx === 0 ? agentPrompt : `Voce e o agente ${name}. Execute sua funcao no pipeline.`,
-        model: 'llama-3.3-70b-versatile',
-      }))
+      // 2. Create a synthetic lead coordinator agent (lead só orquestra, não precisa de tools)
+      const leadRes = await fetch('/api/agents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `Coordenador — ${orchName}`,
+          systemPrompt: 'Você é o coordenador deste time. Seu papel é orquestrar e delegar ao(s) worker(s), garantindo que a tarefa do usuário seja cumprida com qualidade. Não execute as tarefas você mesmo — delegue, acompanhe e consolide o resultado final. Escreva sempre em português brasileiro.',
+          model: 'llama-3.3-70b-versatile',
+          temperature: 0.7,
+          status: 'active',
+        }),
+      })
+      const leadJson = await leadRes.json()
+      if (!leadJson.success) throw new Error(leadJson.error || 'Erro ao criar coordenador')
 
-      const orchRes = await fetch('/api/orchestrations', {
+      // 3. Create the Team (lead coordenador + o agente criado como worker)
+      const teamRes = await fetch('/api/teams', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: orchName,
           description: selectedOption.orchestrationTemplate.description,
-          agents: orchAgents,
-          strategy: selectedOption.orchestrationTemplate.strategy,
           config: { useCase: selectedUseCase },
+          members: [
+            { agentId: leadJson.data.id, role: 'lead', position: 0 },
+            { agentId: createdAgent.id, role: 'worker', position: 1 },
+          ],
         }),
       })
-      const orchJson = await orchRes.json()
-      if (!orchJson.success) throw new Error(orchJson.error || 'Erro ao criar orquestracao')
+      const teamJson = await teamRes.json()
+      if (!teamJson.success) throw new Error(teamJson.error || 'Erro ao criar o time')
 
       // 3. Mark onboarding as completed and send welcome email
       await fetch('/api/onboarding/complete', {
@@ -221,7 +230,7 @@ export default function OnboardingPage() {
       })
 
       toast.success('Tudo pronto! Bem-vindo a Polaris IA.')
-      router.push('/dashboard')
+      router.push(`/dashboard/teams/${teamJson.data.id}`)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro desconhecido'
       toast.error(msg)
