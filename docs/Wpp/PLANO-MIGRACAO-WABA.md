@@ -1,6 +1,9 @@
 # Plano: Migração WhatsApp Evolution API → WABA (Cloud API oficial, multi-tenant)
 
-> Status: **aprovado**, não iniciado. Execução **1 fase por sessão**, commit+push ao fechar cada uma.
+> Status: **Fase 1 ENTREGUE e deployada** (commit `713fdb5` na main; migração
+> `20260617170000_add_whatsapp_accounts` aplicada via `migrate deploy` no host real
+> `sofia_db@2.24.207.200:5435`). Fase 0 (Meta) é pré-requisito de ops, em paralelo.
+> Próximo: **Fase 2** (Embedded Signup). Execução **1 fase por sessão**, commit+push ao fechar cada uma.
 
 ## Context
 
