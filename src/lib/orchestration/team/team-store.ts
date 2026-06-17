@@ -62,6 +62,28 @@ export interface FinishRunInput {
   error?: string | null
 }
 
+/**
+ * True when `err` is a Postgres foreign-key violation (Prisma P2003) on a
+ * team-member reference (`from_member_id` / `to_member_id` / `assignee_id`).
+ *
+ * Why this exists: a run caches its member ids at `loadRun` and then writes
+ * messages/tasks across a long async lifetime. If the roster is edited mid-run
+ * (`PATCH /api/teams` replaces members via deleteMany+createMany → new ids) or a
+ * member's agent is deleted (cascade), those cached ids vanish and the next
+ * insert FK-violates. The schema already declares these refs `onDelete: SetNull`
+ * — a missing member is meant to degrade to null, not crash the orchestration —
+ * so on this specific error the store retries the write with the member refs
+ * nulled. Duck-typed (code+meta) so it's unit-testable without a live client.
+ * Narrow on purpose: any OTHER FK (e.g. run_id) or error is rethrown, never masked.
+ */
+export function isMemberFkViolation(err: unknown): boolean {
+  const e = err as { code?: string; meta?: { field_name?: unknown; constraint?: unknown; target?: unknown } }
+  if (e?.code !== 'P2003') return false
+  const m = e.meta ?? {}
+  const target = `${m.field_name ?? ''} ${m.constraint ?? ''} ${Array.isArray(m.target) ? m.target.join(' ') : (m.target ?? '')}`.toLowerCase()
+  return target.includes('member') || target.includes('assignee')
+}
+
 export interface TeamStore {
   loadRun(runId: string): Promise<LoadedRun | null>
   getRunStatus(runId: string): Promise<RunStatus | null>
@@ -156,17 +178,25 @@ export function createPrismaTeamStore(): TeamStore {
 
     async createTask(runId, data) {
       const count = await prisma.teamTask.count({ where: { runId } })
-      const t = await prisma.teamTask.create({
-        data: {
-          runId,
-          title: data.title.slice(0, 500),
-          body: data.body ?? null,
-          assigneeId: data.assigneeId ?? null,
-          status: data.status ?? 'todo',
-          position: data.position ?? count,
-          dependsOn: data.dependsOn ?? [],
-        },
-      })
+      const base = {
+        runId,
+        title: data.title.slice(0, 500),
+        body: data.body ?? null,
+        assigneeId: data.assigneeId ?? null,
+        status: data.status ?? 'todo',
+        position: data.position ?? count,
+        dependsOn: data.dependsOn ?? [],
+      }
+      let t
+      try {
+        t = await prisma.teamTask.create({ data: base })
+      } catch (err) {
+        // Assignee deleted mid-run (roster edited / agent cascade) → create it
+        // unassigned (matching `onDelete: SetNull`) instead of crashing the run.
+        if (!isMemberFkViolation(err)) throw err
+        console.warn('[TeamStore] createTask: assignee no longer exists, creating task unassigned')
+        t = await prisma.teamTask.create({ data: { ...base, assigneeId: null } })
+      }
       return {
         id: t.id, title: t.title, body: t.body, status: t.status as TaskStatus,
         assigneeId: t.assigneeId, result: t.result, reviewNote: t.reviewNote,
@@ -213,17 +243,25 @@ export function createPrismaTeamStore(): TeamStore {
     },
 
     async addMessage(runId, data) {
-      await prisma.teamMessage.create({
-        data: {
-          runId,
-          fromMemberId: data.fromMemberId ?? null,
-          toMemberId: data.toMemberId ?? null,
-          summary: data.summary ?? null,
-          content: data.content,
-          kind: data.kind,
-          taskId: data.taskId ?? null,
-        },
-      })
+      const base = {
+        runId,
+        fromMemberId: data.fromMemberId ?? null,
+        toMemberId: data.toMemberId ?? null,
+        summary: data.summary ?? null,
+        content: data.content,
+        kind: data.kind,
+        taskId: data.taskId ?? null,
+      }
+      try {
+        await prisma.teamMessage.create({ data: base })
+      } catch (err) {
+        // from/to member deleted mid-run (roster edited / agent cascade). The
+        // message is a best-effort activity log whose member refs are SetNull —
+        // retry with them nulled so a roster change can't crash the whole run.
+        if (!isMemberFkViolation(err)) throw err
+        console.warn('[TeamStore] addMessage: member ref no longer exists, logging without member attribution')
+        await prisma.teamMessage.create({ data: { ...base, fromMemberId: null, toMemberId: null } })
+      }
     },
   }
 }
