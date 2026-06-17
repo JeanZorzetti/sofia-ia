@@ -3,24 +3,15 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Users, Plus, Loader2, ArrowRight, Pencil, Trash2, X, GitBranch, Play, Search, Wand2, LayoutTemplate } from 'lucide-react'
+import { Users, Plus, Loader2, ArrowRight, Pencil, Trash2, X, GitBranch, Play, Search, Wand2, LayoutTemplate, Network } from 'lucide-react'
 import RosterEditor, {
   INHERIT, rosterToMembers, type AgentLite, type ModelOption, type RosterRow,
 } from './RosterEditor'
+import { buildTeamConfig, topologyOf, maxParallelOf, type Topology } from '@/lib/orchestration/team/team-config-ui'
 import { MagicCreateModal } from '@/components/polaris/MagicCreateModal'
 import { TeamTemplatesDialog } from './TeamTemplatesDialog'
 
 interface TeamLite { id: string; name: string; description: string | null; _count: { runs: number } }
-
-// Merge optional repo binding (Sub-projeto C — C1) into a team's config Json,
-// preserving any other keys (e.g. maxTurns/retryCap) and dropping empty values.
-function mergeRepoConfig(base: Record<string, unknown>, repoUrl: string, defaultBranch: string): Record<string, unknown> {
-  const cfg = { ...base }
-  const r = repoUrl.trim(); const b = defaultBranch.trim()
-  if (r) cfg.repoUrl = r; else delete cfg.repoUrl
-  if (b) cfg.defaultBranch = b; else delete cfg.defaultBranch
-  return cfg
-}
 
 // Optional repo binding fields, shared by the create form and the edit modal.
 function RepoBindingFields({ repoUrl, defaultBranch, onRepoUrl, onDefaultBranch }: {
@@ -41,10 +32,61 @@ function RepoBindingFields({ repoUrl, defaultBranch, onRepoUrl, onDefaultBranch 
   )
 }
 
-// Shared create/edit modal: name + roster + optional repo binding. Both flows
-// render the same shell, so the form lives in one place.
+// Execution topology (G0/G4.1): linear (fixed phases) vs graph (DAG with
+// dependencies + parallelism). Linear is the default; graph is opt-in. Shared by
+// the create form and the edit modal.
+function GraphTopologyField({ topology, maxParallel, onTopology, onMaxParallel }: {
+  topology: Topology; maxParallel: string; onTopology: (t: Topology) => void; onMaxParallel: (v: string) => void
+}) {
+  return (
+    <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.02] p-3">
+      <p className="text-xs text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+        <Network className="h-3.5 w-3.5" /> Topologia de execução
+      </p>
+      <div className="inline-flex rounded-lg border border-white/10 bg-white/5 p-0.5 text-xs">
+        {([
+          { key: 'linear', label: 'Linear' },
+          { key: 'graph', label: 'Grafo' },
+        ] as const).map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onTopology(key)}
+            className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+              topology === key ? 'bg-blue-500/20 text-blue-300' : 'text-white/50 hover:text-white/80'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <p className="text-[11px] text-white/30">
+        <span className="text-white/50">Linear</span>: fases fixas (lead → workers → review).{' '}
+        <span className="text-white/50">Grafo</span>: tarefas com dependências (<code>@TASK [after:#1]</code>) rodam como DAG, com paralelismo.
+      </p>
+      {topology === 'graph' && (
+        <div className="flex items-center gap-2">
+          <label className="text-[11px] text-white/40 whitespace-nowrap">Máx. paralelo</label>
+          <input
+            type="number"
+            min={1}
+            className="w-20 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/30"
+            placeholder="auto"
+            value={maxParallel}
+            onChange={e => onMaxParallel(e.target.value)}
+          />
+          <span className="text-[11px] text-white/30">vazio = largura do time. Use <code>1</code> com modelos <code>:free</code> (evita 429).</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Shared create/edit modal: name + roster + topology + optional repo binding.
+// Both flows render the same shell, so the form lives in one place.
 function TeamFormModal({
   title, icon: Icon, name, onName, agents, models, roster, onRoster,
+  topology, maxParallel, onTopology, onMaxParallel,
   repoUrl, defaultBranch, onRepoUrl, onDefaultBranch,
   error, submitting, submitLabel, onSubmit, onClose,
 }: {
@@ -56,6 +98,10 @@ function TeamFormModal({
   models: ModelOption[]
   roster: RosterRow[]
   onRoster: (rows: RosterRow[]) => void
+  topology: Topology
+  maxParallel: string
+  onTopology: (t: Topology) => void
+  onMaxParallel: (v: string) => void
   repoUrl: string
   defaultBranch: string
   onRepoUrl: (v: string) => void
@@ -91,6 +137,7 @@ function TeamFormModal({
             Effort só afeta modelos de raciocínio (Claude/OpenRouter). Disponibilidade dos modelos em <Link href="/dashboard/models" className="text-blue-400 hover:underline">Modelos</Link>.
           </p>
         </div>
+        <GraphTopologyField topology={topology} maxParallel={maxParallel} onTopology={onTopology} onMaxParallel={onMaxParallel} />
         <RepoBindingFields repoUrl={repoUrl} defaultBranch={defaultBranch} onRepoUrl={onRepoUrl} onDefaultBranch={onDefaultBranch} />
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <div className="flex items-center gap-2 justify-end">
@@ -122,6 +169,8 @@ export default function TeamsPage() {
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
   const [roster, setRoster] = useState<RosterRow[]>([])
+  const [topology, setTopology] = useState<Topology>('linear')
+  const [maxParallel, setMaxParallel] = useState('')
   const [repoUrl, setRepoUrl] = useState('')
   const [defaultBranch, setDefaultBranch] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -132,6 +181,8 @@ export default function TeamsPage() {
   const [editName, setEditName] = useState('')
   const [editRoster, setEditRoster] = useState<RosterRow[]>([])
   const [editConfig, setEditConfig] = useState<Record<string, unknown>>({})
+  const [editTopology, setEditTopology] = useState<Topology>('linear')
+  const [editMaxParallel, setEditMaxParallel] = useState('')
   const [editRepoUrl, setEditRepoUrl] = useState('')
   const [editDefaultBranch, setEditDefaultBranch] = useState('')
   const [editError, setEditError] = useState<string | null>(null)
@@ -153,7 +204,8 @@ export default function TeamsPage() {
   useEffect(() => { load() }, [])
 
   function openCreate() {
-    setError(null); setName(''); setRoster([]); setRepoUrl(''); setDefaultBranch('')
+    setError(null); setName(''); setRoster([]); setTopology('linear'); setMaxParallel('')
+    setRepoUrl(''); setDefaultBranch('')
     setCreating(true)
   }
 
@@ -162,11 +214,15 @@ export default function TeamsPage() {
     try {
       const res = await fetch('/api/teams', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, members: rosterToMembers(roster), config: mergeRepoConfig({}, repoUrl, defaultBranch) }),
+        body: JSON.stringify({
+          name, members: rosterToMembers(roster),
+          config: buildTeamConfig({}, { repoUrl, defaultBranch, topology, maxParallel }),
+        }),
       })
       const json = await res.json()
       if (!json.success) { setError(json.error); return }
-      setName(''); setRoster([]); setRepoUrl(''); setDefaultBranch(''); setCreating(false)
+      setName(''); setRoster([]); setTopology('linear'); setMaxParallel('')
+      setRepoUrl(''); setDefaultBranch(''); setCreating(false)
       await load()
     } catch {
       setError('Erro de conexão')
@@ -175,7 +231,7 @@ export default function TeamsPage() {
 
   async function openEdit(teamId: string) {
     setEditId(teamId); setEditError(null); setEditName(''); setEditRoster([])
-    setEditConfig({}); setEditRepoUrl(''); setEditDefaultBranch('')
+    setEditConfig({}); setEditTopology('linear'); setEditMaxParallel(''); setEditRepoUrl(''); setEditDefaultBranch('')
     const res = await fetch(`/api/teams/${teamId}`)
     const json = await res.json()
     if (json.success) {
@@ -185,6 +241,8 @@ export default function TeamsPage() {
       })))
       const cfg = (json.data.config && typeof json.data.config === 'object' ? json.data.config : {}) as Record<string, unknown>
       setEditConfig(cfg)
+      setEditTopology(topologyOf(cfg))
+      setEditMaxParallel(maxParallelOf(cfg))
       setEditRepoUrl(typeof cfg.repoUrl === 'string' ? cfg.repoUrl : '')
       setEditDefaultBranch(typeof cfg.defaultBranch === 'string' ? cfg.defaultBranch : '')
     }
@@ -198,7 +256,10 @@ export default function TeamsPage() {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: editName, members: rosterToMembers(editRoster),
-          config: mergeRepoConfig(editConfig, editRepoUrl, editDefaultBranch),
+          config: buildTeamConfig(editConfig, {
+            repoUrl: editRepoUrl, defaultBranch: editDefaultBranch,
+            topology: editTopology, maxParallel: editMaxParallel,
+          }),
         }),
       })
       const json = await res.json()
@@ -341,6 +402,10 @@ export default function TeamsPage() {
           models={models}
           roster={roster}
           onRoster={setRoster}
+          topology={topology}
+          maxParallel={maxParallel}
+          onTopology={setTopology}
+          onMaxParallel={setMaxParallel}
           repoUrl={repoUrl}
           defaultBranch={defaultBranch}
           onRepoUrl={setRepoUrl}
@@ -364,6 +429,10 @@ export default function TeamsPage() {
           models={models}
           roster={editRoster}
           onRoster={setEditRoster}
+          topology={editTopology}
+          maxParallel={editMaxParallel}
+          onTopology={setEditTopology}
+          onMaxParallel={setEditMaxParallel}
           repoUrl={editRepoUrl}
           defaultBranch={editDefaultBranch}
           onRepoUrl={setEditRepoUrl}
