@@ -83,10 +83,10 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
     // Chat-runs: run the coordinator AFTER the response is flushed.
     after(async () => {
       try {
-        const { runTeam } = await import('@/lib/orchestration/team/team-coordinator')
+        const { runTeamByTopology } = await import('@/lib/orchestration/team/team-executor')
         const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
         const { chatWithAgent } = await import('@/lib/ai/groq')
-        await runTeam(run.id, {
+        await runTeamByTopology(run.id, {
           store: createPrismaTeamStore(),
           chat: (agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts),
         })
@@ -152,10 +152,11 @@ export async function runTeamAndWait(teamId: string, input: RunTeamAndWaitInput)
   })
 
   // Run the coordinator INLINE (same deps as startTeamRun's chat branch, no after()).
-  const { runTeam } = await import('@/lib/orchestration/team/team-coordinator')
+  // Routes through the topology dispatcher so graph-topology teams use runTeamGraph.
+  const { runTeamByTopology } = await import('@/lib/orchestration/team/team-executor')
   const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
   const { chatWithAgent } = await import('@/lib/ai/groq')
-  await runTeam(run.id, {
+  await runTeamByTopology(run.id, {
     store: createPrismaTeamStore(),
     chat: (agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts),
   })

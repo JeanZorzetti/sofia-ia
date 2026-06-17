@@ -1,0 +1,124 @@
+# Grafo de Execução Agêntica — modo "graph" opt-in para Polaris Teams
+
+> Roadmap de design. Inspirado no motor + visualização do **Agent Teams AI**. Implementação **1 fatia por sessão** (G0–G6), `runTeam` linear **INTOCADO**.
+
+## Context
+
+Hoje a orquestração de Teams na Polaris é **linear e fixa**: o coordinator `runTeam` ([team-coordinator.ts:25](../../../src/lib/orchestration/team/team-coordinator.ts#L25)) roda fases rígidas por turno — *planning (Lead) → execution (Workers, em `for` sequencial) → review (Reviewer) → settle*. Os papéis são `lead | worker | reviewer` ([team-types.ts:4](../../../src/lib/orchestration/team/team-types.ts#L4)) e a "Topologia" visual ([TeamGraph.tsx](../../../src/app/dashboard/teams/[id]/TeamGraph.tsx)) é um React Flow **read-only** de posições hardcoded que só pisca o membro ativo. **Não há dependências entre tarefas, paralelismo real, nem roteamento dinâmico.**
+
+O **Agent Teams AI** (`C:\dev\agent-teams-ai`) é mais robusto porque combina **duas camadas**:
+
+1. **Motor "agenda engine"** (`agent-teams-controller/src/internal/agenda.js`): as tarefas formam um **DAG** (`blockedBy` / `blocks` / `related`); uma *state machine* por-tarefa deriva `nextAction` + `actionOwner`; os membros trabalham em **agendas paralelas**; e review / clarificação / handoff são estados de primeira classe.
+2. **Visualização ao vivo** (`packages/agent-graph`): grafo força-direcionado com nós de **lead / membro / tarefa / processo**, arestas tipadas (ownership / blocking / message) e **partículas animadas** nos handoffs, com estado por-nó em tempo real (idle / thinking / tool_calling / waiting).
+
+**Decisão:** trazer **as duas camadas** para a Polaris como um **modo "graph" opt-in**. O `runTeam` linear permanece **INTACTO** (invariante de todo o programa SP6/Harness) e um novo executor irmão `runTeamGraph` roda quando o time usa topologia de grafo. **Zero regressão**; os dois modos convivem.
+
+---
+
+## Princípios de design (herdados do programa)
+
+- **Reuso > código novo.** O modo grafo reaproveita o mesmo `TeamStore`, `ChatFn` (`chatWithAgent`), parsers ([team-protocol.ts](../../../src/lib/orchestration/team/team-protocol.ts)), prompts ([team-prompts.ts](../../../src/lib/orchestration/team/team-prompts.ts)) e o router `startTeamRun` ([start-team-run.ts:31](../../../src/lib/orchestration/team/start-team-run.ts#L31)). A diferença vive só no **executor** e no **renderer**.
+- **`runTeam` intocado.** O grafo é um executor irmão (`runTeamGraph`), selecionado por flag. Nada de mexer no coordinator linear.
+- **Migração formal + manual no host de prod.** O standalone do Next **não** aplica `db push` no deploy (lição registrada). A única fatia com schema (G1) exige `prisma migrate` + `migrate deploy` **manual no host de produção ANTES do push** — host das migrações recentes de Teams = `sofia_db@2.24.207.200:5435` (⚠️ confirmar qual é o de prod atual antes de aplicar).
+- **1 fatia/sessão**, `tsc`/`build` limpos, commit+push ao concluir. Gate real = E2E autenticado em prod (jest não roda local — OneDrive errno -4094).
+- **Viz fica no React Flow (`@xyflow/react`)** já existente. Não introduzir d3-force/canvas no v1 (é o que o Agent Teams AI usa para as partículas, mas é um lift bem maior; fica como upgrade de fidelidade futuro).
+
+---
+
+## Mapa de conceitos: Agent Teams AI → Polaris
+
+| Agent Teams AI | Polaris (alvo do modo grafo) |
+|---|---|
+| `task.blockedBy[]` / `blocks[]` (DAG runtime) | `TeamTask.dependsOn String[]` (G1) |
+| `agenda.js` deriva `nextAction` / `actionOwner` | `deriveTaskAction(task, board)` em `team-graph-agenda.ts` (G2) |
+| Membros executam agendas em paralelo | `Promise.all` com teto de concorrência (G3) |
+| `reviewState: none→review→needsFix→approved` | reusa `TaskStatus` + `reviewNote` / `retryCount` já existentes; `needsFix` ≈ retry |
+| `needsClarification: lead / user` (escalação) | `@CLARIFY` → estado de espera (G6, opcional) |
+| GraphNode kinds: lead / member / **task** / process | nós de membro (já existem) + **nós de tarefa** (G4) |
+| GraphEdge: ownership / blocking / message | arestas owner→task, task→task (dep), handoff (G4/G5) |
+| GraphParticle (handoff animado) | edges animadas / dot móvel no React Flow (G5) |
+| Persistência em JSON files + atomic write | Prisma/Postgres (store já existe); flag em `Team.config` JSON |
+
+---
+
+## Arquitetura do modo grafo
+
+### Seleção do executor (sem tocar no coordinator)
+
+`Team.config.topology: 'linear' | 'graph'` (campo **JSON**, sem migração). Em `startTeamRun`, despachar:
+
+```ts
+topology === 'graph' ? runTeamGraph(runId, deps) : runTeam(runId, deps)   // default = linear
+```
+
+`RunTeamDeps` é reaproveitado as-is (`store`, `chat`, `getTaskDiff`, `now`).
+
+### `runTeamGraph` — loop agenda-driven (substitui as fases rígidas)
+
+A cada turno (até `config.maxTurns`):
+
+1. **Agenda:** `buildAgenda(board)` deriva, por tarefa, `{ nextAction, actionOwner }`:
+   - deps não-concluídas → `wait_dependency` (tarefa fica `blocked`)
+   - sem `assigneeId` → `assign_owner` (owner = lead)
+   - `status === 'review'` → `review` (owner = reviewer)
+   - rejeitada com retry disponível → `apply_changes` (owner = dono)
+   - `todo` / `doing` com deps prontas → `execute` (owner = dono)
+   - `done` / `rejected` / sem retry → terminal
+2. **Lead** age só quando há bucket dele (assign_owner, board vazio, ou consolidar) — protocolo estendido permite declarar dependências (`@TASK [worker:X] [after:#2] Título`).
+3. **Workers** executam **em paralelo** (fan-out, teto de concorrência) todas as tarefas `execute` / `apply_changes` com deps prontas (fan-in).
+4. **Review** roda em paralelo nas tarefas em `review` (diff capturado uma vez, como hoje).
+5. **Settle:** `isBoardSettled` → consolidação pelo Lead → `finish('completed')`.
+
+A robustez vem de **3 coisas que o linear não tem**: gating por dependência (DAG), paralelismo real, e roteamento dinâmico pela state machine (em vez de ordem fixa de fases).
+
+### Visualização (modo grafo do `TeamGraph.tsx`)
+
+Alimentada pelo **stream SSE já existente** (`GET /api/teams/[id]/runs/[runId]/stream`, eventos `board` / `message` / `status` / `terminal`):
+
+- **Nós de tarefa** orbitando o dono, cor por status (todo / doing / review / done / rejected / blocked), chip de reviewer e badge de "blocked".
+- **Arestas:** owner→task (ownership) e task→task (dependência), além das member↔member.
+- **Handoff:** edges animadas / dot móvel disparadas nos eventos `message` / `assignment` / `review`.
+- **Estado por-nó:** membro ativo / thinking a partir do evento `status` (já carrega membro ativo + métricas).
+
+---
+
+## Roadmap (G0–G6, 1 fatia por sessão)
+
+- **G0 — Topologia opt-in + dispatch.** `Team.config.topology` (JSON, sem migração) + router em `startTeamRun`. `runTeamGraph` nasce como cópia paritária do linear (comportamento idêntico). Backward-compat total. *Verif.:* time linear roda igual; time `graph` roda idêntico ao linear.
+- **G1 — DAG de dependências.** Migração aditiva: `TeamTask.dependsOn String[]` (`migrate deploy` manual no host de prod antes do push). Protocolo `@TASK [after:#n]` ([team-protocol.ts](../../../src/lib/orchestration/team/team-protocol.ts)) + ids de exibição no `buildLeadContext` ([team-prompts.ts](../../../src/lib/orchestration/team/team-prompts.ts)). `runTeamGraph` segura tarefa com deps pendentes em `blocked`. *Verif.:* B depende de A ⇒ A roda antes, B nunca primeiro.
+- **G2 — Agenda state machine.** `team-graph-agenda.ts` com `deriveTaskAction` + refactor do loop para agenda-driven (assign_owner pelo Lead, apply_changes roteado ao dono, review ao reviewer). *Verif.:* tarefa sem dono é atribuída pelo Lead; rejeitada volta ao dono; bloqueada espera.
+- **G3 — Agendas paralelas.** Troca os `for` sequenciais por `Promise.all` com teto (`config.maxParallel`), respeitando fan-in de dependências. *Verif.:* duas tarefas independentes rodam concorrentes (timing/log); dependentes serializam.
+- **G4 — Viz: nós de tarefa + arestas de dependência.** Modo grafo do `TeamGraph.tsx`: nós de tarefa coloridos por status, badges, arestas owner→task e task→task. Lê `board` + `dependsOn` do SSE. *Verif.:* grafo mostra tarefas migrando todo→doing→review→done e setas de dependência.
+- **G5 — Partículas de handoff + estado ao vivo.** Edges animadas nos eventos `message` / `assignment` / `review`; estado do membro (ativo / thinking) a partir do `status`. *Verif.:* atribuir tarefa anima Lead→Worker; review anima Worker→Reviewer.
+- **G6 — (opcional/depois) Clarificação & escalação.** `@CLARIFY` → estado de espera (`needsClarification` lead/user); possível handoff cross-team. Deferido.
+
+---
+
+## Arquivos críticos
+
+**Reuso (não alterar a lógica central):**
+
+- [start-team-run.ts](../../../src/lib/orchestration/team/start-team-run.ts) — adicionar o dispatch linear vs grafo (G0).
+- [team-coordinator.ts](../../../src/lib/orchestration/team/team-coordinator.ts) — **INTOCADO** (referência de comportamento).
+- [team-store.ts](../../../src/lib/orchestration/team/team-store.ts), [team-protocol.ts](../../../src/lib/orchestration/team/team-protocol.ts), [team-prompts.ts](../../../src/lib/orchestration/team/team-prompts.ts), [team-board.ts](../../../src/lib/orchestration/team/team-board.ts) — estendidos (deps, `@after`, ids de exibição), nunca quebrando o caminho linear.
+
+**Novos:**
+
+- `src/lib/orchestration/team/team-graph-coordinator.ts` — `runTeamGraph` (G0+).
+- `src/lib/orchestration/team/team-graph-agenda.ts` — `deriveTaskAction` / `buildAgenda` (G2).
+
+**Schema/UI:**
+
+- [prisma/schema.prisma](../../../prisma/schema.prisma) — `TeamTask.dependsOn String[]` (G1, migração manual no host de prod).
+- [TeamGraph.tsx](../../../src/app/dashboard/teams/[id]/TeamGraph.tsx) — modo grafo (G4/G5).
+- Rota SSE `GET /api/teams/[id]/runs/[runId]/stream` — confirmar que `board` carrega `dependsOn` (G4).
+
+---
+
+## Verificação
+
+- **Por fatia:** `npm run typecheck` / `npm run build` limpos (checar bugs recorrentes: params `Promise`+`await`; `auth.id` ≠ `auth.userId`).
+- **G1 (schema):** migração formal + `migrate deploy` manual no host de prod **antes do push**; confirmar a coluna no DB real.
+- **E2E em prod (EasyPanel):** criar um time com `topology: 'graph'`, rodar uma missão com dependências entre tarefas, e confirmar no grafo ao vivo: gating de dependência, paralelismo, roteamento de review e as partículas de handoff.
+- **Regressão:** um time `linear` continua rodando idêntico (mesmo `runTeam`, mesmo output).
+- **Commit + push** ao concluir cada fatia (não encadear sessões automaticamente — regra #4).

@@ -14,7 +14,7 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { getQueueConnection, CODE_RUN_QUEUE } from '@/lib/queue/connection'
 import type { CodeRunJob } from '@/lib/queue/code-run-queue'
-import { runTeam } from '@/lib/orchestration/team/team-coordinator'
+import { runTeamByTopology } from '@/lib/orchestration/team/team-executor'
 import { createPrismaTeamStore } from '@/lib/orchestration/team/team-store'
 import { createCodeChatFn } from '@/lib/orchestration/team/code-agent'
 import { chatWithAgent } from '@/lib/ai/groq'
@@ -87,7 +87,7 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
   // C3: inject getTaskDiff so the reviewer sees the real working-tree diff (vs base).
   const store = createPrismaTeamStore()
   const codeChat = createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store, claudeToken: CLAUDE_OAUTH_TOKEN })
-  await runTeam(runId, {
+  await runTeamByTopology(runId, {
     store,
     chat: codeChat,
     getTaskDiff: () => captureWorkingDiff(sandbox, { workdir: WORKDIR, base: effectiveBase }),
@@ -154,7 +154,7 @@ const worker = new Worker<CodeRunJob>(
           .catch(() => {}) // best-effort metadata write
         const store = createPrismaTeamStore()
         const codeChat = createCodeChatFn(sandbox, baseChat, { store, claudeToken: CLAUDE_OAUTH_TOKEN })
-        await runTeam(runId, { store, chat: codeChat })
+        await runTeamByTopology(runId, { store, chat: codeChat })
       }
       await dispatchTeamOutputs(runId)
     } finally {
