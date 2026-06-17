@@ -15,7 +15,6 @@ model User {
   role                 String    @default("agent") @db.VarChar(50)
   status               String    @default("active") @db.VarChar(20)
   permissions          Json      @default("{}")
-  workspaceId          String?   @map("workspace_id") @db.Uuid
   lastLogin            DateTime? @map("last_login") @db.Timestamptz()
   onboardingCompleted  Boolean   @default(false) @map("onboarding_completed")
   onboardingData       Json      @default("{}") @map("onboarding_data")
@@ -25,9 +24,7 @@ model User {
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  workspace            Workspace?              @relation(fields: [workspaceId], references: [id])
   leads                Lead[]
-  campaigns            Campaign[]
   agents               Agent[]
   agentFolders         AgentFolder[]
   flows                Flow[]
@@ -49,7 +46,6 @@ model User {
   approvedScheduledPosts       ThreadsScheduledPost[] @relation("ScheduledPostApprover")
   threadsCampaigns             ThreadsCampaign[]
 
-  @@index([workspaceId])
   @@map("users")
 }
 
@@ -146,30 +142,6 @@ model Message {
   @@map("messages")
 }
 
-model Campaign {
-  id              String    @id @default(uuid()) @db.Uuid
-  name            String    @db.VarChar(255)
-  description     String?   @db.Text
-  type            String    @default("drip") @db.VarChar(50)
-  status          String    @default("draft") @db.VarChar(20)
-  targetCriteria  Json      @default("{}") @map("target_criteria")
-  messageTemplate String?   @map("message_template") @db.Text
-  scheduleConfig  Json      @default("{}") @map("schedule_config")
-  leadsCount      Int       @default(0) @map("leads_count")
-  messagesSent    Int       @default(0) @map("messages_sent")
-  conversionCount Int       @default(0) @map("conversion_count")
-  conversionRate  Float     @default(0) @map("conversion_rate")
-  createdBy       String?   @map("created_by") @db.Uuid
-  startedAt       DateTime? @map("started_at") @db.Timestamptz()
-  endedAt         DateTime? @map("ended_at") @db.Timestamptz()
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-
-  creator User? @relation(fields: [createdBy], references: [id])
-
-  @@map("campaigns")
-}
-
 model AnalyticsDaily {
   id                     String   @id @default(uuid()) @db.Uuid
   date                   DateTime @unique @db.Date
@@ -202,25 +174,6 @@ model Setting {
 
   @@unique([category, key])
   @@map("settings")
-}
-
-model WhatsappInstance {
-  id                  String    @id @default(uuid()) @db.Uuid
-  name                String    @unique @db.VarChar(100)
-  phoneNumber         String?   @map("phone_number") @db.VarChar(20)
-  status              String    @default("disconnected") @db.VarChar(20)
-  qrCode              String?   @map("qr_code") @db.Text
-  webhookUrl          String?   @map("webhook_url") @db.Text
-  evolutionInstanceId String?   @map("evolution_instance_id") @db.VarChar(100)
-  batteryLevel        Int?      @map("battery_level")
-  lastSeen            DateTime? @map("last_seen") @db.Timestamptz()
-  messagesSentToday   Int       @default(0) @map("messages_sent_today")
-  messagesReceivedToday Int     @default(0) @map("messages_received_today")
-  isActive            Boolean   @default(true) @map("is_active")
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-
-  @@map("whatsapp_instances")
 }
 
 model AgentFolder {
@@ -575,27 +528,6 @@ model ABTestInteraction {
   @@map("ab_test_interactions")
 }
 
-model Workspace {
-  id          String   @id @default(uuid()) @db.Uuid
-  name        String   @db.VarChar(255)
-  slug        String   @unique @db.VarChar(100)
-  domain      String?  @db.VarChar(255)
-  plan        String   @default("free") @db.VarChar(50)
-  status      String   @default("active") @db.VarChar(20)
-  settings    Json     @default("{}")
-  branding    Json     @default("{}")
-  ownerId     String   @map("owner_id") @db.Uuid
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
-
-  users User[]
-
-  @@index([slug])
-  @@index([ownerId])
-  @@index([status])
-  @@map("workspaces")
-}
-
 model SsoConfig {
   id              String   @id @default(uuid()) @db.Uuid
   workspaceId     String   @map("workspace_id") @db.Uuid
@@ -610,27 +542,6 @@ model SsoConfig {
   @@unique([workspaceId, provider])
   @@index([workspaceId])
   @@map("sso_configs")
-}
-
-model ComplianceLog {
-  id              String   @id @default(uuid()) @db.Uuid
-  workspaceId     String?  @map("workspace_id") @db.Uuid
-  leadId          String?  @map("lead_id") @db.Uuid
-  userId          String?  @map("user_id") @db.Uuid
-  action          String   @db.VarChar(100)
-  category        String   @db.VarChar(50)
-  details         Json     @default("{}")
-  ipAddress       String?  @map("ip_address") @db.VarChar(50)
-  userAgent       String?  @map("user_agent") @db.Text
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
-
-  @@index([workspaceId])
-  @@index([leadId])
-  @@index([userId])
-  @@index([action])
-  @@index([category])
-  @@index([createdAt(sort: Desc)])
-  @@map("compliance_logs")
 }
 
 model DevSession {

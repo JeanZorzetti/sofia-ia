@@ -1,0 +1,24 @@
+{
+  "takenAt": "2026-06-17T09:30:05.726Z",
+  "host": "2.24.207.200:5435/sofia_db",
+  "purpose": "Pre-drop backup for Sprint 4 item 1 (orphan models) — sofia-next refactor Sessao 6",
+  "note": "Also dropping column users.workspace_id (FK to workspaces); all 21 users had it NULL.",
+  "tables": {
+    "campaigns": {
+      "count": 0,
+      "rows": []
+    },
+    "whatsapp_instances": {
+      "count": 0,
+      "rows": []
+    },
+    "workspaces": {
+      "count": 0,
+      "rows": []
+    },
+    "compliance_logs": {
+      "count": 0,
+      "rows": []
+    }
+  }
+}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Settings, Users, Building2, Key, Shield, Lock, Scale, Palette, Webhook, Gift, Copy, CheckCircle } from 'lucide-react';
+import { Settings, Users, Building2, Key, Shield, Lock, Palette, Webhook, Gift, Copy, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function SettingsPage() {
@@ -57,13 +57,6 @@ export default function SettingsPage() {
       icon: Lock,
       href: '/dashboard/settings/sso',
       color: 'text-cyan-500',
-    },
-    {
-      title: 'Compliance LGPD',
-      description: 'Gerencie privacidade, exportação e exclusão de dados',
-      icon: Scale,
-      href: '/dashboard/settings/compliance',
-      color: 'text-red-500',
     },
     {
       title: 'Whitelabel',
