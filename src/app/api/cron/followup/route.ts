@@ -12,7 +12,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { sendMessage } from '@/lib/evolution-service'
+import { resolveAccountByAgent, sendWhatsAppMessage } from '@/lib/whatsapp-cloud-service'
+import { sendWhatsAppTemplate } from '@/lib/whatsapp-templates'
 import { getGroqClient } from '@/lib/ai/groq'
 import { verifyCronAuth } from '@/lib/authz'
 
@@ -20,6 +21,9 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 const INACTIVITY_HOURS = 4
+const SESSION_WINDOW_MS = 24 * 60 * 60 * 1000 // janela de 24h da WABA
+const FOLLOWUP_TEMPLATE = process.env.WHATSAPP_FOLLOWUP_TEMPLATE || 'followup_pt'
+const TEMPLATE_LANG = process.env.WHATSAPP_TEMPLATE_LANG || 'pt_BR'
 
 type FollowupResult = { conversationId: string; action: string }
 
@@ -62,22 +66,15 @@ export async function GET(request: NextRequest) {
         continue
       }
 
-      // Buscar agente + instância WhatsApp
+      // Buscar agente + conta WABA vinculada
       const agent = await prisma.agent.findUnique({
         where: { id: conv.agentId! },
-        select: {
-          model: true,
-          systemPrompt: true,
-          channels: {
-            where: { channel: 'whatsapp', isActive: true },
-            select: { config: true },
-          },
-        },
+        select: { model: true, systemPrompt: true },
       })
       if (!agent) continue
 
-      const instanceName = (agent.channels[0]?.config as Record<string, unknown>)?.instanceName as string | undefined
-      if (!instanceName) continue
+      const account = await resolveAccountByAgent(conv.agentId!)
+      if (!account) continue
 
       // Montar histórico para classificação
       const history = conv.messages
@@ -157,10 +154,22 @@ export async function GET(request: NextRequest) {
           : 'Olá! Passando para ver se ainda posso te ajudar 😊'
       }
 
-      // Enviar WhatsApp
+      // Enviar WhatsApp — dentro da janela de 24h: texto livre; fora: template HSM
+      const to = conv.whatsappChatId!.replace('@s.whatsapp.net', '').replace('@c.us', '')
+      const withinWindow =
+        !!conv.lastInboundAt && now.getTime() - conv.lastInboundAt.getTime() < SESSION_WINDOW_MS
       try {
-        await sendMessage(instanceName, conv.whatsappChatId!, followUpText)
-        results.push({ conversationId: conv.id, action: 'followup_sent' })
+        if (withinWindow) {
+          const r = await sendWhatsAppMessage(account, to, followUpText)
+          results.push({ conversationId: conv.id, action: r.success ? 'followup_sent' : 'send_error' })
+        } else {
+          const firstName = conv.lead.nome?.split(' ')[0] || 'tudo bem'
+          const r = await sendWhatsAppTemplate(account, to, FOLLOWUP_TEMPLATE, TEMPLATE_LANG, [firstName])
+          results.push({
+            conversationId: conv.id,
+            action: r.success ? 'followup_template_sent' : 'template_error',
+          })
+        }
       } catch (err) {
         console.error('[followup] Erro ao enviar:', err)
         results.push({ conversationId: conv.id, action: 'send_error' })

@@ -78,6 +78,46 @@ export async function resolveAccount(phoneNumberId: string): Promise<WabaAccount
   }
 }
 
+function toWabaAccount(row: {
+  id: string
+  userId: string
+  agentId: string | null
+  wabaId: string
+  phoneNumberId: string
+  accessToken: string
+}): WabaAccount | null {
+  try {
+    return { ...row, accessToken: decrypt(row.accessToken) }
+  } catch (err) {
+    console.error(`[WA Cloud] Falha ao descriptografar token da conta ${row.id}:`, err)
+    return null
+  }
+}
+
+/** Conta WABA vinculada a um agente (usada por crons/envios proativos). */
+export async function resolveAccountByAgent(agentId: string): Promise<WabaAccount | null> {
+  const row = await prisma.whatsAppAccount.findFirst({
+    where: { agentId, status: 'connected' },
+    orderBy: { createdAt: 'asc' },
+  })
+  return row ? toWabaAccount(row) : null
+}
+
+/**
+ * Conta WABA de um usuário. Se `phoneNumberId` for passado, busca aquele número
+ * específico (validando posse); senão devolve a primeira conta do usuário.
+ */
+export async function resolveAccountByUser(
+  userId: string,
+  phoneNumberId?: string
+): Promise<WabaAccount | null> {
+  const row = await prisma.whatsAppAccount.findFirst({
+    where: { userId, ...(phoneNumberId ? { phoneNumberId } : {}) },
+    orderBy: { createdAt: 'asc' },
+  })
+  return row ? toWabaAccount(row) : null
+}
+
 // ── Send Message ─────────────────────────────────────────────────────────────
 
 /**

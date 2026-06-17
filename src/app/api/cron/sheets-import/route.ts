@@ -16,12 +16,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sheetsRead, sheetsWrite } from '@/lib/integrations/google-sheets'
-import { sendMessage } from '@/lib/evolution-service'
-import { getGroqClient } from '@/lib/ai/groq'
+import { resolveAccountByAgent } from '@/lib/whatsapp-cloud-service'
+import { sendWhatsAppTemplate } from '@/lib/whatsapp-templates'
 import { verifyCronAuth } from '@/lib/authz'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
+
+// Outreach a leads importados é business-initiated (fora da janela de 24h) → template HSM.
+const GREETING_TEMPLATE = process.env.WHATSAPP_GREETING_TEMPLATE || 'greeting_pt'
+const TEMPLATE_LANG = process.env.WHATSAPP_TEMPLATE_LANG || 'pt_BR'
 
 type ImportResult = { phone: string; name: string; action: string }
 
@@ -35,16 +39,7 @@ export async function GET(request: NextRequest) {
   try {
     const agents = await prisma.agent.findMany({
       where: { status: 'active' },
-      select: {
-        id: true,
-        model: true,
-        systemPrompt: true,
-        config: true,
-        channels: {
-          where: { channel: 'whatsapp', isActive: true },
-          select: { config: true },
-        },
-      },
+      select: { id: true, config: true },
     })
 
     for (const agent of agents) {
@@ -56,8 +51,8 @@ export async function GET(request: NextRequest) {
       const userId = config.sheetsImportUserId as string | undefined
       if (!spreadsheetId || !userId) continue
 
-      const instanceName = (agent.channels[0]?.config as Record<string, unknown>)?.instanceName as string | undefined
-      if (!instanceName) continue
+      const account = await resolveAccountByAgent(agent.id)
+      if (!account) continue
 
       // Ler planilha — A=telefone, B=nome, C=empresa, D=notas, E=status
       let rows: unknown[][]
@@ -97,39 +92,14 @@ export async function GET(request: NextRequest) {
           isNew = true
         }
 
-        // Gerar saudação personalizada
-        let greeting = ''
+        // Enviar saudação via template HSM (cold outreach — fora da janela de 24h)
+        const firstName = nome.split(' ')[0] || 'tudo bem'
         try {
-          const nomeFirst = nome.split(' ')[0]
-          const contextExtra = empresa ? ` da ${empresa}` : ''
-          const notasExtra = notas ? `. Contexto: ${notas}` : ''
-
-          const genRes = await getGroqClient().chat.completions.create({
-            model: agent.model || 'llama-3.3-70b-versatile',
-            messages: [
-              {
-                role: 'system',
-                content: agent.systemPrompt +
-                  '\n\nGere uma saudação inicial calorosa e profissional para um novo contato, em no máximo 3 frases.',
-              },
-              {
-                role: 'user',
-                content: `Contato: ${nomeFirst}${contextExtra}${notasExtra}`,
-              },
-            ],
-            max_tokens: 200,
-            temperature: 0.7,
-          })
-          greeting = genRes.choices[0]?.message?.content?.trim() || ''
-        } catch { /* fallback abaixo */ }
-
-        if (!greeting) {
-          greeting = `Olá, ${nome.split(' ')[0]}! 👋 Aqui é a Polaris IA. Como posso te ajudar hoje?`
-        }
-
-        // Enviar WhatsApp
-        try {
-          await sendMessage(instanceName, phone, greeting)
+          const r = await sendWhatsAppTemplate(account, phone, GREETING_TEMPLATE, TEMPLATE_LANG, [firstName])
+          if (!r.success) {
+            imported.push({ phone, name: nome, action: 'send_error' })
+            continue
+          }
           imported.push({ phone, name: nome, action: isNew ? 'created_and_sent' : 'existing_sent' })
         } catch (err) {
           console.error('[sheets-import] Erro ao enviar WhatsApp:', err)

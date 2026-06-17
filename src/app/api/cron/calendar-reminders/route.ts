@@ -13,11 +13,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { listUpcomingEvents } from '@/lib/google-calendar'
-import { sendMessage } from '@/lib/evolution-service'
+import { resolveAccountByAgent } from '@/lib/whatsapp-cloud-service'
+import { sendWhatsAppTemplate } from '@/lib/whatsapp-templates'
 import { verifyCronAuth } from '@/lib/authz'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
+
+// Lembretes são proativos (fora da janela de 24h) → sempre via template HSM.
+// Variáveis posicionais: {{1}}=evento, {{2}}=quando, {{3}}=link
+const REMINDER_TEMPLATE = process.env.WHATSAPP_REMINDER_TEMPLATE || 'appointment_reminder_pt'
+const TEMPLATE_LANG = process.env.WHATSAPP_TEMPLATE_LANG || 'pt_BR'
 
 export async function GET(request: NextRequest) {
   if (!verifyCronAuth(request)) {
@@ -39,8 +45,8 @@ export async function GET(request: NextRequest) {
       if (!config.calendarEnabled || !config.calendarUserId) continue
 
       const calendarUserId = config.calendarUserId as string
-      const instanceName = (agent.channels[0]?.config as Record<string, unknown>)?.instanceName as string | undefined
-      if (!instanceName) continue
+      const account = await resolveAccountByAgent(agent.id)
+      if (!account) continue
 
       // ── 2 horas antes (115–120 min) ───────────────────────────────────────
       const twoHrMin = new Date(now.getTime() + 115 * 60 * 1000).toISOString()
@@ -50,15 +56,15 @@ export async function GET(request: NextRequest) {
         const events2h = await listUpcomingEvents(calendarUserId, twoHrMin, twoHrMax)
         for (const event of events2h) {
           const remoteJid = event.description?.trim()
-          if (!remoteJid || !remoteJid.includes('@')) continue
+          if (!remoteJid) continue
+          const to = remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '')
 
-          const hangoutLink = event.hangoutLink ? `\n\nLink Google Meet: ${event.hangoutLink}` : ''
-          await sendMessage(
-            instanceName,
-            remoteJid,
-            `⏰ Lembrete: sua reunião "${event.summary}" começa em 2 horas!${hangoutLink}`
-          )
-          reminders.push({ type: '2h', contact: remoteJid, eventSummary: event.summary })
+          await sendWhatsAppTemplate(account, to, REMINDER_TEMPLATE, TEMPLATE_LANG, [
+            event.summary,
+            '2 horas',
+            event.hangoutLink || 'sem link',
+          ])
+          reminders.push({ type: '2h', contact: to, eventSummary: event.summary })
         }
       } catch (err) {
         console.error('[calendar-reminders] Erro 2h:', err)
@@ -71,15 +77,15 @@ export async function GET(request: NextRequest) {
         const events5m = await listUpcomingEvents(calendarUserId, now.toISOString(), fiveMinMax)
         for (const event of events5m) {
           const remoteJid = event.description?.trim()
-          if (!remoteJid || !remoteJid.includes('@')) continue
+          if (!remoteJid) continue
+          const to = remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '')
 
-          const hangoutLink = event.hangoutLink ? `\n\nLink: ${event.hangoutLink}` : ''
-          await sendMessage(
-            instanceName,
-            remoteJid,
-            `🔔 Sua reunião "${event.summary}" começa em 5 minutos!${hangoutLink}`
-          )
-          reminders.push({ type: '5min', contact: remoteJid, eventSummary: event.summary })
+          await sendWhatsAppTemplate(account, to, REMINDER_TEMPLATE, TEMPLATE_LANG, [
+            event.summary,
+            '5 minutos',
+            event.hangoutLink || 'sem link',
+          ])
+          reminders.push({ type: '5min', contact: to, eventSummary: event.summary })
         }
       } catch (err) {
         console.error('[calendar-reminders] Erro 5min:', err)

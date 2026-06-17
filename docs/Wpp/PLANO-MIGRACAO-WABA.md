@@ -1,9 +1,10 @@
 # Plano: Migração WhatsApp Evolution API → WABA (Cloud API oficial, multi-tenant)
 
-> Status: **Fase 1 ENTREGUE e deployada** (commit `713fdb5` na main; migração
-> `20260617170000_add_whatsapp_accounts` aplicada via `migrate deploy` no host real
-> `sofia_db@2.24.207.200:5435`). Fase 0 (Meta) é pré-requisito de ops, em paralelo.
-> Próximo: **Fase 2** (Embedded Signup). Execução **1 fase por sessão**, commit+push ao fechar cada uma.
+> Status: **Fases 1-4 ENTREGUES (código) e deployadas.** Migração
+> `20260617170000_add_whatsapp_accounts` aplicada no host real `sofia_db@2.24.207.200:5435`.
+> Evolution **removido**. Schema todo na Fase 1 → Fases 2-4 foram código puro (sem migração).
+> **Pendente:** Fase 0 na Meta (verificação/Embedded Signup/templates aprovados) + env vars no
+> EasyPanel (`ENV-VARS.md`) → só então a validação E2E ao vivo (número conectado) roda.
 
 ## Context
 

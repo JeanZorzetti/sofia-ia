@@ -166,17 +166,23 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
 
   const fetchWhatsappInstances = async () => {
     try {
-      const response = await fetch('/api/instances')
+      // WABA: lista os números conectados (Cloud API oficial) em vez de instâncias Evolution
+      const response = await fetch('/api/whatsapp/accounts')
       const result = await response.json()
-      const instances: any[] = result.data || []
+      const accounts: Array<{
+        phoneNumberId: string
+        displayPhoneNumber: string | null
+        verifiedName: string | null
+        status: string
+      }> = result.data || []
       setWhatsappInstances(
-        instances.map((inst: any) => ({
-          name: inst.name || inst.instance?.instanceName,
-          connectionStatus: inst.connectionStatus || inst.instance?.status,
+        accounts.map((acc) => ({
+          name: acc.displayPhoneNumber || acc.verifiedName || acc.phoneNumberId,
+          connectionStatus: acc.status,
         }))
       )
     } catch (error) {
-      console.error('Error fetching WhatsApp instances:', error)
+      console.error('Error fetching WhatsApp accounts:', error)
     }
   }
 

@@ -17,7 +17,7 @@ SaaS de IA para atendimento WhatsApp. Next.js 16 App Router + Prisma + Groq SDK.
 - **DB**: Prisma ORM + PostgreSQL (use sempre `import { prisma } from '@/lib/prisma'` — nunca `new PrismaClient()`)
 - **Auth**: `getAuthFromRequest()` retorna `JWTPayload` com campo `id` (NAO `userId`)
 - **IA**: Groq SDK (lazy init obrigatoria — nao instanciar no top-level para evitar erro de env var no build)
-- **WhatsApp**: Evolution API
+- **WhatsApp**: WhatsApp Business Cloud API (WABA, oficial Meta) — multi-tenant via Embedded Signup
 - **UI**: Tailwind CSS + shadcn/ui
 
 ## Padroes Criticos
@@ -53,10 +53,12 @@ function getGroq() {
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 ```
 
-### Evolution API — Shape dos dados
-- API retorna `{ success, data: [...] }` e NAO `{ instances: [...] }`
-- Mapeamento de status: `open` -> `connected`, `close` -> `disconnected`
-- Criacao de instancia: enviar `{ instanceName }` e NAO `{ name }`
+### WhatsApp WABA (Cloud API oficial) — gotchas
+- **Multi-tenant**: credenciais por numero em `WhatsAppAccount` (token criptografado, `src/lib/crypto.ts`). O webhook roteia por `metadata.phone_number_id` (`resolveAccount`). Nada de numero unico no env.
+- **Janela de 24h**: texto livre so entrega dentro de 24h da ultima msg do cliente (`Conversation.lastInboundAt`). Fora disso → so **template HSM** aprovado (`src/lib/whatsapp-templates.ts`). Crons followup/lembrete/sheets-import ja respeitam isso.
+- **Webhook**: responder 200 em < 20s e processar async; validar assinatura `X-Hub-Signature-256` (HMAC do corpo cru com `META_APP_SECRET`); deduplicar por `message.id`.
+- **Envio**: `messaging_product: 'whatsapp'` obrigatorio em todo payload.
+- **Onboarding**: Embedded Signup (`/api/whatsapp/connect`) troca `code`→token, registra numero, assina webhook. Env vars em `docs/Wpp/ENV-VARS.md`.
 
 ### TypeScript
 - Roles de mensagem: cast explicito `as 'user' | 'assistant'` para evitar erros TS com ChatMessage[]

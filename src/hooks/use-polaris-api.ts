@@ -24,28 +24,6 @@ interface Conversation {
   unreadCount: number
 }
 
-interface WhatsAppInstance {
-  id: number
-  name: string
-  phone: string
-  status: 'connected' | 'disconnected' | 'connecting'
-  qrCode?: string
-  lastSeen?: string
-}
-
-interface WhatsAppStats {
-  total_instances: number
-  connected_instances: number
-  messages_today: number
-  [key: string]: any
-}
-
-interface InstanceStats {
-  total: number
-  connected: number
-  disconnected: number
-}
-
 interface HealthData {
   status: string
   timestamp: string
@@ -123,192 +101,78 @@ export function useRecentConversations() {
   return { data, loading, error, refresh }
 }
 
-export function useWhatsAppInstances() {
-  const [instances, setInstances] = useState<WhatsAppInstance[]>([])
-  const [stats, setStats] = useState<InstanceStats>({ total: 0, connected: 0, disconnected: 0 })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const refresh = useCallback(async () => {
-    try {
-      const response = await fetch('/api/instances')
-      const result = await response.json()
-
-      if (!response.ok || !result.success) {
-        setError(result.error || `HTTP ${response.status}`)
-        setInstances([])
-        setStats({ total: 0, connected: 0, disconnected: 0 })
-        return
-      }
-
-      const raw = Array.isArray(result.data) ? result.data : []
-      // Normalize: Evolution API v2 returns { name, connectionStatus, ownerJid, ... }
-      // Evolution API v1 returns { instance: { instanceName, status }, ... }
-      const list = raw.map((item: any) => {
-        const inst = item.instance || item
-        // v2 uses 'connectionStatus', v1 uses 'status'
-        const rawStatus = inst.connectionStatus || inst.status || item.connectionStatus || item.status || 'unknown'
-        const status = rawStatus === 'open' ? 'connected' : rawStatus === 'close' ? 'disconnected' : rawStatus
-        const name = inst.instanceName || inst.name || item.instanceName || item.name || ''
-        const owner = inst.ownerJid || inst.owner || item.ownerJid || item.owner || ''
-        return {
-          id: name,
-          name,
-          phone: owner.replace('@s.whatsapp.net', ''),
-          status,
-          phone_number: owner.replace('@s.whatsapp.net', ''),
-          profileName: inst.profileName || item.profileName || '',
-        }
-      })
-      setInstances(list)
-
-      const total = list.length
-      const connected = list.filter((i: any) => i.status === 'connected').length
-      setStats({ total, connected, disconnected: total - connected })
-      setError(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch instances')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  const createInstance = useCallback(async (name: string, phone: string) => {
-    try {
-      const response = await fetch('/api/instances', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ instanceName: name }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        await refresh()
-        return { success: true }
-      } else {
-        return { success: false, error: data.error || data.message || `HTTP ${response.status}` }
-      }
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to create instance' }
-    }
-  }, [refresh])
-
-  const deleteInstance = useCallback(async (instanceId: string | number) => {
-    try {
-      const response = await fetch(`/api/instances/${instanceId}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        await refresh()
-        return { success: true }
-      } else {
-        const data = await response.json()
-        return { success: false, error: data.message || 'Failed to delete instance' }
-      }
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to delete instance' }
-    }
-  }, [refresh])
-
-  const logoutInstance = useCallback(async (instanceId: string | number) => {
-    try {
-      const response = await fetch(`/api/instances/${instanceId}/logout`, {
-        method: 'POST',
-      })
-
-      if (response.ok) {
-        await refresh()
-        return { success: true }
-      } else {
-        const data = await response.json()
-        return { success: false, error: data.message || 'Failed to logout instance' }
-      }
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to logout instance' }
-    }
-  }, [refresh])
-
-  const restartInstance = useCallback(async (instanceId: string | number) => {
-    try {
-      const response = await fetch(`/api/instances/${instanceId}/restart`, {
-        method: 'POST',
-      })
-
-      if (response.ok) {
-        await refresh()
-        return { success: true }
-      } else {
-        const data = await response.json()
-        return { success: false, error: data.message || 'Failed to restart instance' }
-      }
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to restart instance' }
-    }
-  }, [refresh])
-
-  const getQRCode = useCallback(async (instanceId: string | number) => {
-    try {
-      const response = await fetch(`/api/instances/${instanceId}/qrcode`)
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        // evolution-service retorna: { success, data: { qr_code, ... } } ou { success, source, data: { qr_code } }
-        const qrCode = data.data?.qr_code || data.data?.qrcode || data.qrCode || null
-        return { success: true, qrCode }
-      } else {
-        return { success: false, error: data.error || data.message || 'Failed to get QR code' }
-      }
-    } catch (err) {
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to get QR code' }
-    }
-  }, [])
-
-  useEffect(() => {
-    refresh()
-    const interval = setInterval(refresh, 30000)
-    return () => clearInterval(interval)
-  }, [refresh])
-
-  return {
-    instances,
-    stats,
-    loading,
-    error,
-    refresh,
-    createInstance,
-    deleteInstance,
-    logoutInstance,
-    restartInstance,
-    getQRCode,
-  }
+export interface WabaAccountView {
+  id: string
+  phoneNumberId: string
+  wabaId: string
+  displayPhoneNumber: string | null
+  verifiedName: string | null
+  status: string
+  agentId: string | null
+  createdAt: string
 }
 
-export function useWhatsAppStats() {
-  const [stats, setStats] = useState<WhatsAppStats | null>(null)
+/** Contas WABA (Cloud API oficial) conectadas via Embedded Signup. */
+export function useWhatsAppAccounts() {
+  const [accounts, setAccounts] = useState<WabaAccountView[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     try {
-      const response = await fetch('/api/whatsapp/stats')
-
-      if (response.ok) {
-        const result = await response.json()
-        setStats(result.data || result)
+      const response = await fetch('/api/whatsapp/accounts')
+      const result = await response.json()
+      if (response.ok && result.success) {
+        setAccounts(Array.isArray(result.data) ? result.data : [])
         setError(null)
-      } else if (response.status === 401) {
-        setError('Unauthorized')
       } else {
-        setError('Failed to fetch WhatsApp stats')
+        setError(result.error || `HTTP ${response.status}`)
+        setAccounts([])
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch WhatsApp stats')
+      setError(err instanceof Error ? err.message : 'Failed to fetch accounts')
     } finally {
       setLoading(false)
     }
   }, [])
+
+  const connect = useCallback(
+    async (payload: { code: string; wabaId: string; phoneNumberId: string; agentId?: string }) => {
+      try {
+        const response = await fetch('/api/whatsapp/connect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const data = await response.json()
+        if (response.ok && data.success) {
+          await refresh()
+          return { success: true }
+        }
+        return { success: false, error: data.error || `HTTP ${response.status}` }
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to connect' }
+      }
+    },
+    [refresh]
+  )
+
+  const disconnect = useCallback(
+    async (id: string) => {
+      try {
+        const response = await fetch(`/api/whatsapp/accounts/${id}`, { method: 'DELETE' })
+        if (response.ok) {
+          await refresh()
+          return { success: true }
+        }
+        const data = await response.json().catch(() => ({}))
+        return { success: false, error: data.error || 'Failed to disconnect' }
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : 'Failed to disconnect' }
+      }
+    },
+    [refresh]
+  )
 
   useEffect(() => {
     refresh()
@@ -316,7 +180,7 @@ export function useWhatsAppStats() {
     return () => clearInterval(interval)
   }, [refresh])
 
-  return { stats, loading, error, refresh }
+  return { accounts, loading, error, refresh, connect, disconnect }
 }
 
 export function useApiHealth() {

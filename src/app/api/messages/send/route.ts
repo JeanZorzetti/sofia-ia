@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthFromRequest } from '@/lib/auth';
-import { sendMessage } from '@/lib/evolution-service';
+import { resolveAccountByUser, sendWhatsAppMessage } from '@/lib/whatsapp-cloud-service';
 import { prisma } from '@/lib/prisma';
 
 // Rate limiting map
@@ -23,37 +23,28 @@ function checkRateLimit(key: string, maxRequests: number = 10, windowMs: number 
   return true;
 }
 
+/**
+ * POST /api/messages/send
+ * Envio manual de mensagem de texto via WABA. Body: { number, text, phoneNumberId? }.
+ * Resolve o número WABA do usuário (phoneNumberId opcional escolhe qual).
+ * Obs: texto livre só entrega dentro da janela de 24h do cliente (regra da Meta).
+ */
 export async function POST(request: NextRequest) {
   try {
-    // Auth check
     const user = await getAuthFromRequest(request);
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Rate limiting
-    const rateLimitKey = `msg_${user.id}`;
-    if (!checkRateLimit(rateLimitKey)) {
+    if (!checkRateLimit(`msg_${user.id}`)) {
       return NextResponse.json(
         { success: false, error: 'Too many requests. Please try again later.' },
         { status: 429 }
       );
     }
 
-    // Parse and validate body
     const body = await request.json();
-    const { instanceName, number, text } = body;
-
-    // Validation
-    if (!instanceName || typeof instanceName !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'instanceName is required and must be a string' },
-        { status: 400 }
-      );
-    }
+    const { number, text, phoneNumberId } = body;
 
     if (!number || typeof number !== 'string') {
       return NextResponse.json(
@@ -62,7 +53,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate number (10-15 digits)
     const cleanNumber = number.replace(/\D/g, '');
     if (cleanNumber.length < 10 || cleanNumber.length > 15) {
       return NextResponse.json(
@@ -71,122 +61,85 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!text || typeof text !== 'string') {
+    if (!text || typeof text !== 'string' || text.length < 1 || text.length > 4000) {
       return NextResponse.json(
-        { success: false, error: 'text is required and must be a string' },
+        { success: false, error: 'text is required (1-4000 chars)' },
         { status: 400 }
       );
     }
 
-    // Validate text length (1-4000 chars)
-    if (text.length < 1 || text.length > 4000) {
+    const account = await resolveAccountByUser(user.id, phoneNumberId);
+    if (!account) {
       return NextResponse.json(
-        { success: false, error: 'text must be between 1 and 4000 characters' },
+        { success: false, error: 'Nenhum número WhatsApp conectado' },
         { status: 400 }
       );
     }
 
-    // Send message
-    const result = await sendMessage(instanceName, number, text);
+    const result = await sendWhatsAppMessage(account, cleanNumber, text);
+    if (!result.success) {
+      return NextResponse.json({ success: false, error: result.error }, { status: 502 });
+    }
 
-    // Salvar mensagem enviada no banco de dados
-    if (result.success) {
-      try {
-        const phoneNumber = cleanNumber
-        const contact = `${cleanNumber}@s.whatsapp.net`
-
-        // Buscar ou criar Lead
-        let lead = await prisma.lead.findUnique({
-          where: { telefone: phoneNumber }
-        })
-
-        if (!lead) {
-          lead = await prisma.lead.create({
-            data: {
-              nome: phoneNumber,
-              telefone: phoneNumber,
-              status: 'novo',
-              fonte: 'whatsapp',
-              score: 0,
-              metadata: {
-                whatsappChatId: contact,
-                instanceName: instanceName
-              }
-            }
-          })
-        }
-
-        // Buscar ou criar Conversation
-        let conversation = await prisma.conversation.findFirst({
-          where: {
-            leadId: lead.id,
-            whatsappChatId: contact,
-            status: 'active'
-          }
-        })
-
-        if (!conversation) {
-          conversation = await prisma.conversation.create({
-            data: {
-              leadId: lead.id,
-              whatsappChatId: contact,
-              status: 'active',
-              startedAt: new Date(),
-              lastMessageAt: new Date(),
-              messageCount: 0
-            }
-          })
-        }
-
-        // Salvar mensagem enviada
-        const resultData = result.data as Record<string, unknown> | undefined
-        const messageKey = (resultData?.key as Record<string, unknown>) || {}
-        const messageId = (messageKey.id as string) || `sent_${Date.now()}`
-
-        await prisma.message.create({
+    // Persistir a mensagem enviada (lead + conversa + message)
+    try {
+      let lead = await prisma.lead.findUnique({ where: { telefone: cleanNumber } });
+      if (!lead) {
+        lead = await prisma.lead.create({
           data: {
-            conversationId: conversation.id,
-            leadId: lead.id,
-            whatsappMessageId: messageId,
-            sender: 'assistant',
-            messageType: 'text',
-            content: text,
-            isAiGenerated: false, // Mensagem manual do usuário
-            sentAt: new Date(),
-          }
-        })
-
-        // Atualizar conversa
-        await prisma.conversation.update({
-          where: { id: conversation.id },
-          data: {
-            messageCount: { increment: 1 },
-            lastMessageAt: new Date()
-          }
-        })
-
-        // Atualizar última interação do lead
-        await prisma.lead.update({
-          where: { id: lead.id },
-          data: { ultimaInteracao: new Date() }
-        })
-
-        console.log('✅ Mensagem enviada salva no banco:', messageId)
-      } catch (dbError) {
-        console.error('❌ Erro ao salvar mensagem enviada no banco:', dbError)
-        // Não falha o request mesmo se o banco falhar
+            nome: cleanNumber,
+            telefone: cleanNumber,
+            status: 'novo',
+            fonte: 'whatsapp',
+            score: 0,
+            metadata: { whatsappContactId: cleanNumber, provider: 'meta-cloud-api' },
+          },
+        });
       }
+
+      let conversation = await prisma.conversation.findFirst({
+        where: { leadId: lead.id, channel: 'whatsapp', status: 'active' },
+      });
+      if (!conversation) {
+        conversation = await prisma.conversation.create({
+          data: {
+            leadId: lead.id,
+            whatsappChatId: cleanNumber,
+            channel: 'whatsapp',
+            status: 'active',
+            startedAt: new Date(),
+            lastMessageAt: new Date(),
+            messageCount: 0,
+          },
+        });
+      }
+
+      await prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          leadId: lead.id,
+          whatsappMessageId: result.messageId,
+          sender: 'assistant',
+          messageType: 'text',
+          content: text,
+          isAiGenerated: false, // envio manual
+          sentAt: new Date(),
+        },
+      });
+
+      await prisma.conversation.update({
+        where: { id: conversation.id },
+        data: { messageCount: { increment: 1 }, lastMessageAt: new Date() },
+      });
+
+      await prisma.lead.update({ where: { id: lead.id }, data: { ultimaInteracao: new Date() } });
+    } catch (dbError) {
+      console.error('❌ Erro ao salvar mensagem enviada no banco:', dbError);
     }
 
-    return NextResponse.json({
-      success: true,
-      data: result
-    });
+    return NextResponse.json({ success: true, data: result });
   } catch (error) {
     console.error('Error sending message:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to send message' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: 'Failed to send message' }, { status: 500 });
   }
 }

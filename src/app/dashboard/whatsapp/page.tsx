@@ -1,170 +1,143 @@
 'use client'
 
-import { useState } from 'react'
-import { useWhatsAppInstances, useWhatsAppStats } from '@/hooks/use-polaris-api'
+import { useEffect, useRef, useState } from 'react'
+import Script from 'next/script'
+import { useWhatsAppAccounts, type WabaAccountView } from '@/hooks/use-polaris-api'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger
-} from '@/components/ui/dialog'
-import { MessageSquare, Plus, QrCode, RefreshCw, Trash2, Smartphone, CheckCircle, Loader2 } from 'lucide-react'
+import { MessageSquare, Plus, Trash2, CheckCircle, Loader2, ShieldCheck } from 'lucide-react'
+
+// ── Tipos mínimos do Facebook JS SDK (Embedded Signup) ────────────────────────
+interface FbAuthResponse {
+  code?: string
+}
+interface FbLoginResponse {
+  authResponse?: FbAuthResponse
+}
+interface FbSdk {
+  init(params: Record<string, unknown>): void
+  login(cb: (response: FbLoginResponse) => void, params: Record<string, unknown>): void
+}
+declare global {
+  interface Window {
+    FB?: FbSdk
+    fbAsyncInit?: () => void
+  }
+}
+
+const APP_ID = process.env.NEXT_PUBLIC_META_APP_ID || ''
+const CONFIG_ID = process.env.NEXT_PUBLIC_META_CONFIG_ID || ''
+const GRAPH_VERSION = 'v21.0'
 
 export default function WhatsAppPage() {
-  const { instances, loading, createInstance, deleteInstance, restartInstance, getQRCode } = useWhatsAppInstances()
-  const { stats, loading: statsLoading } = useWhatsAppStats()
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [newInstanceName, setNewInstanceName] = useState('')
-  const [qrCodeDialog, setQrCodeDialog] = useState<{ open: boolean; qrCode: string | null; instanceName: string }>({
-    open: false,
-    qrCode: null,
-    instanceName: ''
-  })
+  const { accounts, loading, connect, disconnect } = useWhatsAppAccounts()
+  const [sdkReady, setSdkReady] = useState(false)
+  const [connecting, setConnecting] = useState(false)
+  const sessionInfo = useRef<{ wabaId?: string; phoneNumberId?: string }>({})
 
-  const [creating, setCreating] = useState(false)
+  // Captura o session info (waba_id, phone_number_id) emitido pelo popup do Embedded Signup
+  useEffect(() => {
+    function onMessage(event: MessageEvent) {
+      if (!/facebook\.com$/.test(new URL(event.origin).hostname)) return
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data
+        if (data?.type === 'WA_EMBEDDED_SIGNUP' && data?.data) {
+          sessionInfo.current = {
+            wabaId: data.data.waba_id,
+            phoneNumberId: data.data.phone_number_id,
+          }
+        }
+      } catch {
+        /* ignora mensagens não-JSON */
+      }
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [])
 
-  const handleCreateInstance = async () => {
-    if (!newInstanceName.trim()) {
-      alert('Digite um nome para a instância')
+  function initSdk() {
+    window.fbAsyncInit = () => {
+      window.FB?.init({ appId: APP_ID, autoLogAppEvents: true, xfbml: true, version: GRAPH_VERSION })
+      setSdkReady(true)
+    }
+    if (window.FB) {
+      window.FB.init({ appId: APP_ID, autoLogAppEvents: true, xfbml: true, version: GRAPH_VERSION })
+      setSdkReady(true)
+    }
+  }
+
+  function launchSignup() {
+    if (!window.FB) {
+      alert('SDK do Facebook ainda não carregou. Tente novamente em instantes.')
       return
     }
-
-    setCreating(true)
-    try {
-      const result = await createInstance(newInstanceName, '')
-      if (result.success) {
-        setNewInstanceName('')
-        setIsCreateDialogOpen(false)
-      } else {
-        alert(`Erro ao criar instância: ${result.error || 'Erro desconhecido'}`)
+    setConnecting(true)
+    window.FB.login(
+      async (response) => {
+        const code = response.authResponse?.code
+        const { wabaId, phoneNumberId } = sessionInfo.current
+        if (!code || !wabaId || !phoneNumberId) {
+          setConnecting(false)
+          alert('Conexão cancelada ou incompleta.')
+          return
+        }
+        const result = await connect({ code, wabaId, phoneNumberId })
+        setConnecting(false)
+        if (!result.success) alert(`Erro ao conectar: ${result.error}`)
+      },
+      {
+        config_id: CONFIG_ID,
+        response_type: 'code',
+        override_default_response_type: true,
+        extras: { setup: {}, featureType: '', sessionInfoVersion: '3' },
       }
-    } catch (err) {
-      alert(`Erro de conexão: ${err instanceof Error ? err.message : 'Erro desconhecido'}`)
-    } finally {
-      setCreating(false)
-    }
+    )
   }
 
-  const handleShowQRCode = async (instanceId: string, instanceName: string) => {
-    const result = await getQRCode(instanceId)
-    if (result.success && result.qrCode) {
-      setQrCodeDialog({ open: true, qrCode: result.qrCode, instanceName })
-    }
-  }
-
-  const handleDeleteInstance = async (instanceId: string) => {
-    if (confirm('Tem certeza que deseja excluir esta instância?')) {
-      await deleteInstance(instanceId)
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'connected':
-        return 'bg-green-500'
-      case 'disconnected':
-        return 'bg-red-500'
-      case 'connecting':
-        return 'bg-yellow-500'
-      default:
-        return 'bg-gray-500'
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'connected':
-        return 'Conectado'
-      case 'disconnected':
-        return 'Desconectado'
-      case 'connecting':
-        return 'Conectando'
-      default:
-        return 'Desconhecido'
-    }
-  }
+  const connected = accounts.filter((a) => a.status === 'connected').length
 
   const statsData = [
-    {
-      title: 'Total de Instâncias',
-      value: stats?.total_instances || 0,
-      icon: Smartphone,
-      color: 'text-blue-400'
-    },
-    {
-      title: 'Conectadas',
-      value: stats?.connected_instances || 0,
-      icon: CheckCircle,
-      color: 'text-green-400'
-    },
-    {
-      title: 'Mensagens Hoje',
-      value: stats?.messages_today || 0,
-      icon: MessageSquare,
-      color: 'text-purple-400'
-    }
+    { title: 'Números Conectados', value: connected, icon: CheckCircle, color: 'text-green-400' },
+    { title: 'Total de Números', value: accounts.length, icon: MessageSquare, color: 'text-blue-400' },
   ]
 
   return (
     <div className="space-y-6 animate-fade-in-up">
+      <Script
+        src="https://connect.facebook.net/en_US/sdk.js"
+        strategy="afterInteractive"
+        onLoad={initSdk}
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">WhatsApp</h1>
-          <p className="text-white/60 mt-1">Gerenciamento de instâncias</p>
+          <p className="text-white/60 mt-1">Números conectados via API oficial da Meta (WABA)</p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="button-luxury">
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Instância
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-black/95 border-white/10">
-            <DialogHeader>
-              <DialogTitle className="text-white">Criar Nova Instância</DialogTitle>
-              <DialogDescription className="text-white/60">
-                Digite um nome para identificar esta instância do WhatsApp
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="instance-name" className="text-white/80">
-                  Nome da Instância
-                </Label>
-                <Input
-                  id="instance-name"
-                  placeholder="Ex: Atendimento Principal"
-                  value={newInstanceName}
-                  onChange={(e) => setNewInstanceName(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                className="button-luxury"
-                onClick={handleCreateInstance}
-                disabled={creating || !newInstanceName.trim()}
-              >
-                {creating ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Criando...</> : 'Criar'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button
+          className="button-luxury"
+          onClick={launchSignup}
+          disabled={connecting || !sdkReady || !APP_ID || !CONFIG_ID}
+        >
+          {connecting ? (
+            <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Conectando...</>
+          ) : (
+            <><Plus className="h-4 w-4 mr-2" />Conectar WhatsApp</>
+          )}
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {(!APP_ID || !CONFIG_ID) && (
+        <Card className="glass-card border-yellow-500/30">
+          <CardContent className="pt-6 text-sm text-yellow-300/90">
+            Configure <code>NEXT_PUBLIC_META_APP_ID</code> e <code>NEXT_PUBLIC_META_CONFIG_ID</code> no
+            ambiente para habilitar o Embedded Signup (ver docs/Wpp/ENV-VARS.md).
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {statsData.map((stat) => {
           const Icon = stat.icon
           return (
@@ -173,9 +146,7 @@ export default function WhatsAppPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white/60">{stat.title}</p>
-                    <p className="text-3xl font-bold text-white mt-2">
-                      {stat.value}
-                    </p>
+                    <p className="text-3xl font-bold text-white mt-2">{stat.value}</p>
                   </div>
                   <Icon className={`h-12 w-12 ${stat.color}`} />
                 </div>
@@ -189,91 +160,50 @@ export default function WhatsAppPage() {
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-white/60" />
         </div>
+      ) : accounts.length === 0 ? (
+        <Card className="glass-card">
+          <CardContent className="pt-6 text-center text-white/60">
+            Nenhum número conectado. Clique em “Conectar WhatsApp” para vincular um número via Meta.
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {instances?.map((instance: any) => (
-            <Card key={instance.id} className="glass-card hover-scale">
+          {accounts.map((account: WabaAccountView) => (
+            <Card key={account.id} className="glass-card hover-scale">
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="text-white text-lg">
-                      {instance.name}
+                    <CardTitle className="text-white text-lg flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-green-400" />
+                      {account.verifiedName || account.displayPhoneNumber || account.phoneNumberId}
                     </CardTitle>
-                    {instance.phone_number && (
-                      <p className="text-sm text-white/60 mt-1">
-                        {instance.phone_number}
-                      </p>
+                    {account.displayPhoneNumber && (
+                      <p className="text-sm text-white/60 mt-1">{account.displayPhoneNumber}</p>
                     )}
                   </div>
                   <Badge
-                    variant={instance.status === 'connected' ? 'default' : 'secondary'}
-                    className={`${getStatusColor(instance.status)} text-white border-0`}
+                    className={`${account.status === 'connected' ? 'bg-green-500' : 'bg-gray-500'} text-white border-0`}
                   >
-                    {getStatusLabel(instance.status)}
+                    {account.status === 'connected' ? 'Conectado' : account.status}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleShowQRCode(instance.id, instance.name)}
-                    disabled={instance.status === 'connected'}
-                  >
-                    <QrCode className="h-4 w-4 mr-1" />
-                    QR Code
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => restartInstance(instance.id)}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteInstance(instance.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={async () => {
+                    if (confirm('Desconectar este número?')) await disconnect(account.id)
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Desconectar
+                </Button>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
-
-      <Dialog open={qrCodeDialog.open} onOpenChange={(open) => setQrCodeDialog({ ...qrCodeDialog, open })}>
-        <DialogContent className="bg-black/95 border-white/10">
-          <DialogHeader>
-            <DialogTitle className="text-white">QR Code - {qrCodeDialog.instanceName}</DialogTitle>
-            <DialogDescription className="text-white/60">
-              Escaneie este QR Code com o WhatsApp do seu celular
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-center py-6">
-            {qrCodeDialog.qrCode ? (
-              <img
-                src={qrCodeDialog.qrCode}
-                alt="QR Code"
-                className="max-w-full h-auto rounded-lg"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-64 w-64 bg-white/5 rounded-lg">
-                <Loader2 className="h-8 w-8 animate-spin text-white/60" />
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setQrCodeDialog({ open: false, qrCode: null, instanceName: '' })}>
-              Fechar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
