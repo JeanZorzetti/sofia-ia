@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────
 
 import { NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/with-auth'
 
@@ -34,7 +35,7 @@ export const GET = withAuth(async (request, user, { params }: RouteParams) => {
         return NextResponse.json({ data: flow, error: null })
     } catch (error: any) {
         console.error('[Flows API] GET error:', error)
-        return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+        return NextResponse.json({ data: null, error: safeErrorMessage(error) }, { status: 500 })
     }
 }, { onUnauthorized: flowsUnauthorized })
 
@@ -108,7 +109,7 @@ export const PUT = withAuth(async (request, user, { params }: RouteParams) => {
         return NextResponse.json({ data: flow, error: null })
     } catch (error: any) {
         console.error('[Flows API] PUT error:', error)
-        return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+        return NextResponse.json({ data: null, error: safeErrorMessage(error) }, { status: 500 })
     }
 }, { onUnauthorized: flowsUnauthorized })
 
@@ -127,6 +128,6 @@ export const DELETE = withAuth(async (request, user, { params }: RouteParams) =>
         return NextResponse.json({ data: { deleted: true }, error: null })
     } catch (error: any) {
         console.error('[Flows API] DELETE error:', error)
-        return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+        return NextResponse.json({ data: null, error: safeErrorMessage(error) }, { status: 500 })
     }
 }, { onUnauthorized: flowsUnauthorized })

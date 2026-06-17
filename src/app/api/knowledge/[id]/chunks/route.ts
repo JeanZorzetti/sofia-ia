@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
 import { ownerId } from '@/lib/authz'
@@ -140,7 +141,7 @@ export async function GET(
   } catch (error: any) {
     console.error('Error fetching chunks:', error)
     return NextResponse.json(
-      { error: error.message || 'Erro ao buscar chunks' },
+      { error: safeErrorMessage(error, 'Erro ao buscar chunks') },
       { status: 500 }
     )
   }

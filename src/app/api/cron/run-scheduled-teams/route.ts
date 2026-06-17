@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
 import { startTeamRun } from '@/lib/orchestration/team/start-team-run'
 import { getNextRunAt } from '@/lib/orchestration/team/schedule'
@@ -57,6 +58,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ processed: due.length, results, timestamp: now.toISOString() })
   } catch (error: any) {
     console.error('[cron/run-scheduled-teams] Fatal error:', error)
-    return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Internal server error', details: safeErrorMessage(error) }, { status: 500 })
   }
 }

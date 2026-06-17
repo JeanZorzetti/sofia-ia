@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: 'Failed to fetch templates',
-        message: error.message
+        message: safeErrorMessage(error)
       },
       { status: 500 }
     )
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
       {
         success: false,
         error: 'Failed to create template',
-        message: error.message
+        message: safeErrorMessage(error)
       },
       { status: 500 }
     )

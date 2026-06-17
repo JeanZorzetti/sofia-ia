@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { safeErrorMessage } from '@/lib/api-response'
 import { populateDailyAnalytics, populateAnalyticsForLastDays } from '@/lib/analytics-collector';
 
 /**
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       {
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        message: safeErrorMessage(error, 'Unknown error'),
       },
       { status: 500 }
     );

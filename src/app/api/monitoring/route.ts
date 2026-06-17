@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
 import { monitoring } from '@/lib/monitoring'
 
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
       checks.services.database = {
         status: 'unhealthy',
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: safeErrorMessage(error)
       }
       checks.status = 'degraded'
     }
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         status: 'unhealthy',
-        error: error.message || 'Health check failed'
+        error: safeErrorMessage(error, 'Health check failed')
       },
       { status: 500 }
     )
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: safeErrorMessage(error) },
       { status: 500 }
     )
   }

@@ -1,5 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
 import { chatWithAgent } from '@/lib/groq'
 import { getAuthFromRequest } from '@/lib/auth'
@@ -142,7 +143,7 @@ export async function POST(
     } catch (error) {
         console.error('Error in dev chat:', error)
         return NextResponse.json(
-            { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
+            { success: false, error: safeErrorMessage(error) },
             { status: 500 }
         )
     }

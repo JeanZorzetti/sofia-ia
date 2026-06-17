@@ -36,6 +36,12 @@ export interface JWTPayload {
   email: string
   name: string
   role: string
+  /**
+   * Optional org/tenant id. Not currently set when signing (each user is their
+   * own tenant → falls back to `id`), but typed so middleware can read it
+   * without `as any` and so it's ready if org-scoped tokens are introduced.
+   */
+  orgId?: string
 }
 
 export async function signToken(payload: JWTPayload): Promise<string> {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { safeErrorMessage } from '@/lib/api-response'
 import { ownerId } from '@/lib/authz';
 import { prisma } from '@/lib/prisma';
 import { checkPlanLimit } from '@/lib/plan-limits';
@@ -132,7 +133,7 @@ export const POST = withAuth(async (request, user) => {
   } catch (error: any) {
     console.error('Error creating agent:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create agent', details: error.message },
+      { success: false, error: 'Failed to create agent', details: safeErrorMessage(error) },
       { status: 500 }
     );
   }

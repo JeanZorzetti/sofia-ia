@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+# Local feedback gate (lesson: agent_teams_operating_playbook — close the loop
+# BEFORE the deploy, not after 20 blind EasyPanel builds).
+
+# BLOCKING: typecheck protects the EasyPanel/Docker build. A TS error here is
+# exactly what breaks the deploy. Tolerates only the optional-dep "cannot find
+# module" errors (bullmq/e2b/@xterm/diff2html) that aren't installed locally but
+# exist in CI/Docker. See scripts/typecheck.mjs.
+node scripts/typecheck.mjs || exit 1
+
+# ADVISORY (non-blocking): lint the staged TS files. The repo still carries ~481
+# legacy no-explicit-any errors (Sprint 4 item 4 reduces, doesn't zero them), so
+# blocking on lint would make the repo un-committable. It only reports for now —
+# drop the `|| true` to make it a hard gate once the any-debt is cleared.
+staged=$(git diff --cached --name-only --diff-filter=ACM -- '*.ts' '*.tsx')
+if [ -n "$staged" ]; then
+  echo "$staged" | xargs node node_modules/eslint/bin/eslint.js || true
+fi

@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────
 
 import { NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { getAllNodeDefinitions, getNodesByCategory } from '@/lib/flow-engine'
 
 // GET /api/flows/nodes — Returns the node catalog for the builder UI
@@ -63,6 +64,6 @@ export async function GET() {
         })
     } catch (error: any) {
         console.error('[Flows API] Nodes error:', error)
-        return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+        return NextResponse.json({ data: null, error: safeErrorMessage(error) }, { status: 500 })
     }
 }

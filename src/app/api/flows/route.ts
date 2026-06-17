@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────
 
 import { NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
 import { withAuth } from '@/lib/with-auth'
 
@@ -39,7 +40,7 @@ export const GET = withAuth(async (request, user) => {
         return NextResponse.json({ data: flows, error: null })
     } catch (error: any) {
         console.error('[Flows API] GET error:', error)
-        return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+        return NextResponse.json({ data: null, error: safeErrorMessage(error) }, { status: 500 })
     }
 }, { onUnauthorized: flowsUnauthorized })
 
@@ -83,6 +84,6 @@ export const POST = withAuth(async (request, user) => {
         return NextResponse.json({ data: flow, error: null }, { status: 201 })
     } catch (error: any) {
         console.error('[Flows API] POST error:', error)
-        return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+        return NextResponse.json({ data: null, error: safeErrorMessage(error) }, { status: 500 })
     }
 }, { onUnauthorized: flowsUnauthorized })

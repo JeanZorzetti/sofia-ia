@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
 import { isAdmin } from '@/lib/authz'
@@ -34,7 +35,7 @@ export async function GET(
       {
         success: false,
         error: 'Failed to fetch template',
-        message: error.message
+        message: safeErrorMessage(error)
       },
       { status: 500 }
     )
@@ -77,7 +78,7 @@ export async function PUT(
       {
         success: false,
         error: 'Failed to update template',
-        message: error.message
+        message: safeErrorMessage(error)
       },
       { status: 500 }
     )
@@ -110,7 +111,7 @@ export async function DELETE(
       {
         success: false,
         error: 'Failed to delete template',
-        message: error.message
+        message: safeErrorMessage(error)
       },
       { status: 500 }
     )

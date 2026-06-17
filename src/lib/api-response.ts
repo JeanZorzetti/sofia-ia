@@ -45,6 +45,25 @@ export function apiError(
   return NextResponse.json({ success: false, error, ...extra }, { status })
 }
 
+/**
+ * Mensagem segura de erro de servidor — Sprint 4 (hardening).
+ *
+ * Em PRODUCAO nunca devolve a mensagem crua da excecao ao cliente (stack, SQL,
+ * caminhos de arquivo, detalhes do Prisma vazam informacao). Retorna um texto
+ * generico. Em dev/test devolve a mensagem real para facilitar o debug.
+ *
+ * NAO loga — o call-site deve manter o seu `console.error(...)` (a maioria ja
+ * tem). Uso, preservando o shape do envelope existente:
+ *   catch (error) {
+ *     console.error('[X] erro:', error)
+ *     return NextResponse.json({ data: null, error: safeErrorMessage(error) }, { status: 500 })
+ *   }
+ */
+export function safeErrorMessage(error: unknown, fallback = 'Internal server error'): string {
+  if (process.env.NODE_ENV === 'production') return fallback
+  return error instanceof Error ? error.message : String(error)
+}
+
 /** 401 com o envelope padrao. */
 export const apiUnauthorized = (error = 'Unauthorized') => apiError(error, 401)
 /** 403 com o envelope padrao. */

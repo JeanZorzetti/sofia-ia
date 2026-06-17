@@ -82,7 +82,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const next = nextWithBaseHeaders()
-    const orgId = (user as any).orgId || user.id
+    const orgId = user.orgId || user.id
     return withTenantHeaders(next, user.id, orgId)
   }
 
@@ -101,7 +101,7 @@ export async function middleware(request: NextRequest) {
       return response
     }
     const next = nextWithBaseHeaders()
-    const orgId = (user as any).orgId || user.id
+    const orgId = user.orgId || user.id
     return withTenantHeaders(next, user.id, orgId)
   }
 
@@ -121,7 +121,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const next = nextWithBaseHeaders()
-    const orgId = (user as any).orgId || user.id
+    const orgId = user.orgId || user.id
     return withTenantHeaders(next, user.id, orgId)
   }
 
@@ -160,7 +160,7 @@ export async function middleware(request: NextRequest) {
 
       // Inject tenant headers for API route handlers
       const next = nextWithBaseHeaders()
-      const orgId = (user as any).orgId || user.id
+      const orgId = user.orgId || user.id
       return withTenantHeaders(next, user.id, orgId)
     }
   }

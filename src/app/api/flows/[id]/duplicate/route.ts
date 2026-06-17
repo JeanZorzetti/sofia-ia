@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────
 
 import { NextRequest, NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
 
@@ -46,6 +47,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         return NextResponse.json({ data: clone, error: null }, { status: 201 })
     } catch (error: any) {
         console.error('[Flows API] Duplicate error:', error)
-        return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+        return NextResponse.json({ data: null, error: safeErrorMessage(error) }, { status: 500 })
     }
 }

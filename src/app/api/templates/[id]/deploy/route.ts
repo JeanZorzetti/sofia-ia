@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
 
@@ -96,7 +97,7 @@ export async function POST(
       {
         success: false,
         error: 'Failed to deploy template',
-        message: error.message
+        message: safeErrorMessage(error)
       },
       { status: 500 }
     )

@@ -1,5 +1,6 @@
 // src/app/api/teams/[id]/run/route.ts
 import { NextRequest, NextResponse } from 'next/server'
+import { safeErrorMessage } from '@/lib/api-response'
 import { getAuthFromRequest } from '@/lib/auth'
 import { startTeamRun, TeamRunError } from '@/lib/orchestration/team/start-team-run'
 import { TEAM_RUN_STATUS_BY_CODE } from '@/lib/orchestration/team/team-run-api'
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (error instanceof TeamRunError) {
       return NextResponse.json({ success: false, error: error.message }, { status: TEAM_RUN_STATUS_BY_CODE[error.code] ?? 400 })
     }
-    const msg = error instanceof Error ? error.message : 'Failed to run team'
+    const msg = safeErrorMessage(error, 'Failed to run team')
     console.error('Error running team:', error)
     return NextResponse.json({ success: false, error: msg }, { status: 500 })
   }

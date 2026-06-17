@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { safeErrorMessage } from '@/lib/api-response'
 import { getAuthFromRequest } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { nestedCount, rate, round2 } from '@/lib/analytics/aggregate';
@@ -169,7 +170,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     console.error('Error fetching workflow analytics:', error);
     return NextResponse.json(
-      { error: 'Internal server error', message: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Internal server error', message: safeErrorMessage(error, 'Unknown error') },
       { status: 500 }
     );
   }
