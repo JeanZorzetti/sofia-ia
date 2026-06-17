@@ -45,6 +45,7 @@ model User {
   threadsScheduledPosts        ThreadsScheduledPost[]
   approvedScheduledPosts       ThreadsScheduledPost[] @relation("ScheduledPostApprover")
   threadsCampaigns             ThreadsCampaign[]
+  whatsappAccounts             WhatsAppAccount[]
 
   @@map("users")
 }
@@ -95,6 +96,7 @@ model Conversation {
   unreadCount     Int      @default(0) @map("unread_count")
   startedAt       DateTime @default(now()) @map("started_at") @db.Timestamptz()
   lastMessageAt   DateTime @default(now()) @map("last_message_at") @db.Timestamptz()
+  lastInboundAt   DateTime? @map("last_inbound_at") @db.Timestamptz()
   messageCount    Int      @default(0) @map("message_count")
   closedAt        DateTime? @map("closed_at") @db.Timestamptz()
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
@@ -223,6 +225,7 @@ model Agent {
   agentSkills     AgentSkill[]
   agentMcpServers AgentMcpServer[]
   teamMemberships TeamMember[]
+  whatsappAccounts WhatsAppAccount[]
 
   @@index([status])
   @@index([createdBy])
@@ -246,6 +249,31 @@ model AgentChannel {
   @@index([agentId])
   @@index([channel])
   @@map("agent_channels")
+}
+
+// WABA (WhatsApp Business Cloud API) — credenciais multi-tenant por número.
+// O webhook da Meta roteia mensagens recebidas pelo phone_number_id (único),
+// resolvendo a conta + o agente que responde. accessToken é criptografado em
+// repouso (AES-256-GCM, ver src/lib/crypto.ts).
+model WhatsAppAccount {
+  id                 String   @id @default(uuid()) @db.Uuid
+  userId             String   @map("user_id") @db.Uuid
+  agentId            String?  @map("agent_id") @db.Uuid // agente que responde neste número
+  wabaId             String   @map("waba_id") @db.VarChar(64)
+  phoneNumberId      String   @unique @map("phone_number_id") @db.VarChar(64)
+  displayPhoneNumber String?  @map("display_phone_number") @db.VarChar(32)
+  verifiedName       String?  @map("verified_name") @db.VarChar(255)
+  accessToken        String   @map("access_token") @db.Text // criptografado
+  status             String   @default("connected") @db.VarChar(20)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent Agent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([agentId])
+  @@map("whatsapp_accounts")
 }
 
 model KnowledgeBase {

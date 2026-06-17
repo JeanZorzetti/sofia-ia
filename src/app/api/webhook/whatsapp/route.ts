@@ -1,7 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { processCloudWebhook } from '@/lib/whatsapp-cloud-service'
 
 const VERIFY_TOKEN = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || 'prolife-webhook-2026'
+const APP_SECRET = process.env.META_APP_SECRET || ''
+
+/**
+ * Valida a assinatura X-Hub-Signature-256 do corpo cru contra o META_APP_SECRET.
+ * Se o segredo não estiver configurado, não bloqueia (loga aviso) — para não
+ * derrubar o webhook durante a migração. Quando configurado, assinatura inválida
+ * é rejeitada.
+ */
+function verifySignature(rawBody: string, signatureHeader: string | null): boolean {
+  if (!APP_SECRET) {
+    console.warn('[WA Webhook] META_APP_SECRET ausente — pulando verificação de assinatura')
+    return true
+  }
+  if (!signatureHeader?.startsWith('sha256=')) return false
+
+  const expected = 'sha256=' + createHmac('sha256', APP_SECRET).update(rawBody).digest('hex')
+  const a = Buffer.from(signatureHeader)
+  const b = Buffer.from(expected)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
 
 /**
  * GET — Verificação de webhook pela Meta (obrigatório antes de receber mensagens)
@@ -38,10 +59,17 @@ export async function GET(request: NextRequest) {
  * A Meta considera o endpoint inativo se não receber 200 em menos de 20s.
  */
 export async function POST(request: NextRequest) {
-    let body: unknown
+    // Ler o corpo CRU primeiro: a assinatura HMAC é calculada sobre os bytes exatos.
+    const rawBody = await request.text()
 
+    if (!verifySignature(rawBody, request.headers.get('x-hub-signature-256'))) {
+        console.warn('[WA Webhook] ❌ Assinatura X-Hub-Signature-256 inválida')
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
+
+    let body: unknown
     try {
-        body = await request.json()
+        body = JSON.parse(rawBody)
     } catch {
         // Corpo inválido — ainda retorna 200 para evitar retries da Meta
         return NextResponse.json({ success: true })
