@@ -41,6 +41,20 @@ jobs:
         EVOLUTION_API_KEY: dummy-key
         NEXT_PUBLIC_APP_URL: http://localhost:3000
 
+    - name: Test (jest)
+      # Sem --coverage de proposito: o threshold global (50%) ainda nao foi
+      # atingido enquanto a cobertura de rota sobe. O gate falha por TESTE
+      # quebrado (regressao), nao por cobertura — evita travar PRs cedo demais.
+      # Quando a cobertura passar dos 50%, trocar por `npm run test:coverage -- --ci`.
+      run: npm test -- --ci
+      env:
+        DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy
+        JWT_SECRET: ci-test-secret
+        GROQ_API_KEY: dummy-key
+        EVOLUTION_API_URL: https://dummy.example.com
+        EVOLUTION_API_KEY: dummy-key
+        NEXT_PUBLIC_APP_URL: http://localhost:3000
+
     - name: Lint
       run: npm run lint
       continue-on-error: true
