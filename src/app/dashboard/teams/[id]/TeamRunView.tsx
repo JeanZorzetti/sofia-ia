@@ -177,6 +177,16 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const lastMsg = messages[messages.length - 1]
   const activeId = running ? (doingTask?.assigneeId ?? lastMsg?.fromMemberId ?? null) : null
 
+  // G5: the live handoff is derived from the latest assignment/review message
+  // (Lead→Worker on assignment, Worker→Reviewer on review). It re-derives as each
+  // message arrives and vanishes once the run is no longer running.
+  const lastHandoffMsg = running
+    ? [...messages].reverse().find(m => (m.kind === 'assignment' || m.kind === 'review') && m.fromMemberId && m.toMemberId)
+    : undefined
+  const handoff = lastHandoffMsg
+    ? { fromMemberId: lastHandoffMsg.fromMemberId!, toMemberId: lastHandoffMsg.toMemberId! }
+    : null
+
   return (
     <div className="space-y-6 p-6 max-w-6xl mx-auto">
       {/* Header */}
@@ -410,6 +420,8 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
                 members={team.members.map(m => ({ id: m.id, role: m.role, name: m.agent.name }))}
                 tasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, assigneeId: t.assigneeId, dependsOn: t.dependsOn ?? [] }))}
                 activeId={activeId}
+                handoff={handoff}
+                running={running}
               />
             </div>
           )}
