@@ -364,62 +364,32 @@ export const actionTeam: NodeDefinition = {
             throw new Error('Time não configurado. Selecione um time no nó.')
         }
 
-        const { prisma } = await import('@/lib/prisma')
-        const { chatWithAgent } = await import('@/lib/ai/groq')
+        // Phase 2 (Teams subordination): the node runs the team through the REAL
+        // engine (a persisted TeamRun via the coordinator) instead of a bespoke
+        // chatWithAgent loop. runTeamAndWait runs it inline and waits.
+        const { runTeamAndWait } = await import('@/lib/orchestration/team/start-team-run')
 
         const resolvedInput = resolveExpressions(config.input || '', input)
-
-        const team = await prisma.team.findUnique({
-            where: { id: config.teamId },
-            include: {
-                members: {
-                    orderBy: { position: 'asc' },
-                    select: { agentId: true, role: true, model: true },
-                },
-            },
-        })
-
-        if (!team) {
-            throw new Error(`Time não encontrado: ${config.teamId}`)
+        if (!resolvedInput.trim()) {
+            throw new Error('Input/prompt vazio para o time.')
         }
 
-        const members = team.members
-        if (members.length === 0) {
-            throw new Error('O time não possui membros configurados')
-        }
+        const result = await runTeamAndWait(config.teamId, { mission: resolvedInput })
 
-        // Sequential execution — each member receives original input + accumulated previous outputs
-        const agentResults: { role: string; output: string }[] = []
-        let finalOutput = resolvedInput
-
-        for (const member of members) {
-            const previousOutputs = agentResults
-                .map(r => `[${r.role}]:\n${r.output}`)
-                .join('\n\n---\n\n')
-
-            const prompt = previousOutputs
-                ? `${resolvedInput}\n\nRespostas anteriores:\n${previousOutputs}`
-                : resolvedInput
-
-            const messages = [{ role: 'user' as const, content: prompt }]
-            const response = await chatWithAgent(
-                member.agentId,
-                messages,
-                {},
-                member.model ? { model: member.model } : undefined,
+        if (result.status !== 'completed') {
+            throw new Error(
+                `Time "${result.teamName}" não concluiu (status: ${result.status})` +
+                    (result.error ? `: ${result.error}` : ''),
             )
-
-            agentResults.push({ role: member.role, output: response.message })
-            finalOutput = response.message
         }
 
         return {
             output: {
-                response: finalOutput,
+                response: result.output ?? '',
+                runId: result.runId,
                 teamId: config.teamId,
-                teamName: team.name,
-                steps: agentResults.length,
-                agentResults,
+                teamName: result.teamName,
+                status: result.status,
             },
         }
     },

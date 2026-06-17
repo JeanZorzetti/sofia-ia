@@ -181,7 +181,7 @@ export default function WorkflowsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Workflows</h1>
-          <p className="text-white/60 mt-1">Automatize processos com o engine visual</p>
+          <p className="text-white/60 mt-1">Automação visual que aciona seus Times — gatilhos, lógica e integrações a serviço de team runs</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setShowTemplates(true)} variant="outline" className="gap-2 border-white/10 text-white/70 hover:text-white hover:bg-white/10">

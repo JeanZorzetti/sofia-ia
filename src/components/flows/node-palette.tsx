@@ -25,6 +25,9 @@ interface NodeTypeInfo {
     description: string
     icon: string
     category: 'trigger' | 'action' | 'logic' | 'transform'
+    /** Pinned to the top of its category and visually highlighted — the team node
+     *  is the centerpiece: workflows are automation that drives Teams. */
+    featured?: boolean
     outputs?: { name: string; label?: string }[]
     inputs?: { name: string; label?: string }[]
 }
@@ -46,7 +49,7 @@ const NODE_CATALOG: NodeTypeInfo[] = [
     { type: 'action_database', label: 'Consulta SQL', description: 'Query no banco de dados', icon: 'Database', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
     { type: 'action_notification', label: 'Notificação', description: 'Enviar notificação', icon: 'Bell', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
     { type: 'action_subflow', label: 'Sub-Flow', description: 'Executar outro flow como sub-rotina', icon: 'GitBranch', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
-    { type: 'action_team', label: 'Time', description: 'Executar um time multi-agente', icon: 'Network', category: 'action', inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
+    { type: 'action_team', label: 'Time Multi-Agente', description: 'Executa um Team da Polaris — o motor da automação', icon: 'Network', category: 'action', featured: true, inputs: [{ name: 'main' }], outputs: [{ name: 'main' }] },
 
     // Logic
     { type: 'logic_if', label: 'IF / Condição', description: 'Branch verdadeiro/falso', icon: 'GitBranch', category: 'logic', inputs: [{ name: 'main' }], outputs: [{ name: 'true', label: 'Verdadeiro' }, { name: 'false', label: 'Falso' }] },
@@ -108,7 +111,9 @@ export function NodePalette() {
             {/* Node list */}
             <div className="flex-1 overflow-y-auto py-1">
                 {categories.map(cat => {
-                    const catNodes = filteredNodes.filter(n => n.category === cat)
+                    const catNodes = filteredNodes
+                        .filter(n => n.category === cat)
+                        .sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
                     if (catNodes.length === 0) return null
 
                     const config = CATEGORY_CONFIG[cat]
@@ -145,17 +150,25 @@ export function NodePalette() {
                                                 className={`
                           flex items-center gap-2.5 px-2 py-1.5 mx-1 my-0.5 rounded-lg
                           cursor-grab active:cursor-grabbing
-                          hover:bg-white/10 transition-all duration-150
-                          border border-transparent hover:border-white/10
-                          group
+                          transition-all duration-150 group
+                          ${node.featured
+                                                        ? 'bg-purple-500/10 border border-purple-400/40 hover:bg-purple-500/20'
+                                                        : 'hover:bg-white/10 border border-transparent hover:border-white/10'}
                         `}
                                             >
                                                 <GripVertical className="h-3 w-3 text-white/20 group-hover:text-white/40 flex-shrink-0" />
-                                                <div className={`p-1 rounded-md ${config.bg} flex-shrink-0`}>
-                                                    <Icon className={`h-3.5 w-3.5 ${config.color}`} />
+                                                <div className={`p-1 rounded-md ${node.featured ? 'bg-purple-500/20' : config.bg} flex-shrink-0`}>
+                                                    <Icon className={`h-3.5 w-3.5 ${node.featured ? 'text-purple-300' : config.color}`} />
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <div className="text-xs font-medium text-white truncate">{node.label}</div>
+                                                    <div className="text-xs font-medium text-white truncate flex items-center gap-1.5">
+                                                        {node.label}
+                                                        {node.featured && (
+                                                            <span className="text-[8px] font-semibold uppercase tracking-wider text-purple-300 bg-purple-500/20 px-1 py-px rounded">
+                                                                Principal
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <div className="text-[10px] text-white/40 truncate">{node.description}</div>
                                                 </div>
                                             </div>

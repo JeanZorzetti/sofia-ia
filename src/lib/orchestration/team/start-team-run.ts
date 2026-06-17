@@ -104,3 +104,80 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
 
   return { runId: run.id, mode }
 }
+
+export type RunTeamAndWaitInput = { mission: string }
+
+export type RunTeamAndWaitResult = {
+  runId: string
+  /** Terminal run status: 'completed' | 'failed' | 'rate_limited' | 'cancelled' */
+  status: string
+  /** Lead consolidation on success; null otherwise */
+  output: string | null
+  error: string | null
+  teamName: string
+}
+
+/**
+ * Phase 2 (Teams subordination): run a Team through the REAL engine and wait for
+ * the terminal result — INLINE (no `after()`, no polling). Used by the Workflows
+ * `action_team` node, whose `execute()` is fully awaited inside `executeFlow`, so
+ * the coordinator can run synchronously here and persist a real `TeamRun`
+ * (tasks/messages) instead of the node's old bespoke `chatWithAgent` loop.
+ *
+ * This is a CALLER, like `startTeamRun` — the coordinator (`runTeam`) stays INTACT.
+ * It mirrors `startTeamRun`'s chat branch minus the `after()` wrapper (polling +
+ * `after()` would deadlock: the background callback only fires once the trigger
+ * request has flushed, which never happens while the flow node is still running).
+ * Chat-mode only — workflows compose content/automation, not code-runs.
+ *
+ * Throws `TeamRunError` for pre-run problems (team not found / invalid roster /
+ * missing mission). A run that *finishes* in a non-completed status is RETURNED
+ * (not thrown) so the caller decides — the node throws to fail the flow step.
+ */
+export async function runTeamAndWait(teamId: string, input: RunTeamAndWaitInput): Promise<RunTeamAndWaitResult> {
+  const team = await prisma.team.findUnique({
+    where: { id: teamId },
+    include: { members: true },
+  })
+  if (!team) throw new TeamRunError('not_found', `Time não encontrado: ${teamId}`)
+  if (!team.members.some(m => m.role === 'lead') || !team.members.some(m => m.role === 'worker')) {
+    throw new TeamRunError('invalid_roster', 'Roster inválido (precisa de Lead e Worker)')
+  }
+
+  const mission = input.mission?.trim()
+  if (!mission) throw new TeamRunError('missing_mission', 'Missão é obrigatória')
+
+  const run = await prisma.teamRun.create({
+    data: { teamId, mission, status: 'pending', mode: 'chat' },
+  })
+
+  // Run the coordinator INLINE (same deps as startTeamRun's chat branch, no after()).
+  const { runTeam } = await import('@/lib/orchestration/team/team-coordinator')
+  const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
+  const { chatWithAgent } = await import('@/lib/ai/groq')
+  await runTeam(run.id, {
+    store: createPrismaTeamStore(),
+    chat: (agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts),
+  })
+
+  // Output webhooks (SP2) fire for engine runs too — best-effort, never fails the node.
+  try {
+    const { dispatchTeamOutputs } = await import('@/lib/orchestration/team/team-outputs')
+    await dispatchTeamOutputs(run.id)
+  } catch (err) {
+    console.error('[Teams] dispatchTeamOutputs (runTeamAndWait) failed:', err)
+  }
+
+  const finished = await prisma.teamRun.findUnique({
+    where: { id: run.id },
+    select: { status: true, output: true, error: true },
+  })
+
+  return {
+    runId: run.id,
+    status: finished?.status ?? 'failed',
+    output: finished?.output ?? null,
+    error: finished?.error ?? null,
+    teamName: team.name,
+  }
+}
