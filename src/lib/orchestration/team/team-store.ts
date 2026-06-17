@@ -13,7 +13,11 @@ export interface LoadedRun {
   runId: string
   teamId: string
   mission: string
-  config: { maxTurns: number; retryCap: number }
+  /** `maxParallel` (G3, graph mode) is OPTIONAL on purpose: the test memory-stores
+   *  build `config` as a `{ maxTurns, retryCap }` literal, so widening it with a
+   *  REQUIRED field would break their typecheck. The graph coordinator reads
+   *  `config.maxParallel ?? <default>`; linear (`runTeam`) ignores it. */
+  config: { maxTurns: number; retryCap: number; maxParallel?: number }
   members: MemberCtx[]
 }
 
@@ -70,11 +74,14 @@ export interface TeamStore {
   addMessage(runId: string, data: AddMessageInput): Promise<void>
 }
 
-function parseConfig(raw: unknown): { maxTurns: number; retryCap: number } {
+function parseConfig(raw: unknown): { maxTurns: number; retryCap: number; maxParallel?: number } {
   const c = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
   const maxTurns = typeof c.maxTurns === 'number' && c.maxTurns > 0 ? c.maxTurns : 6
   const retryCap = typeof c.retryCap === 'number' && c.retryCap >= 0 ? c.retryCap : 2
-  return { maxTurns, retryCap }
+  // G3 (graph mode): fan-out cap. Absent → the coordinator falls back to the
+  // roster width (`workers.length`). Only a positive number opts into a fixed cap.
+  const maxParallel = typeof c.maxParallel === 'number' && c.maxParallel > 0 ? Math.floor(c.maxParallel) : undefined
+  return { maxTurns, retryCap, ...(maxParallel !== undefined ? { maxParallel } : {}) }
 }
 
 export function createPrismaTeamStore(): TeamStore {

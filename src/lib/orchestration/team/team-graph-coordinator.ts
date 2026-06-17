@@ -14,10 +14,16 @@
 //        wait_dependency tasks park in `blocked`. This is behaviour-preserving:
 //        the same gating/execution/review decisions, derived instead of inlined,
 //        so a graph run settles to the SAME terminal state (hard regression).
-//   G3 — parallel agendas (fan-out/fan-in with a concurrency cap)
+//   G3 — parallel agendas (THIS fatia): the per-turn EXECUTE and REVIEW buckets
+//        no longer run one task at a time. They fan out through
+//        runWithConcurrency (≤ config.maxParallel in flight). The runnable tasks
+//        of one turn are independent BY CONSTRUCTION — a task with unmet deps is
+//        parked in `blocked` and can't share a turn with them — so concurrency is
+//        safe and the fan-in is already guaranteed by the agenda. With ≤1 runnable
+//        task per turn (every regression scenario) the terminal state is byte-
+//        identical to G2 (hard regression).
 //
-// Execution stays SEQUENTIAL here (parallelism is G3). A graph team WITHOUT
-// dependencies still behaves identically to the linear one.
+// A graph team WITHOUT dependencies still behaves identically to the linear one.
 import type { ChatResult, LeadAction, TaskRow } from './team-types'
 import type { TeamStore } from './team-store'
 // type-only: reuse the linear coordinator's deps shape AS-IS (store + chat +
@@ -27,8 +33,28 @@ import { parseLeadActions, parseReviewVerdict } from './team-protocol'
 import { buildLeadContext, buildTaskPrompt, buildReviewPrompt, buildConsolidationPrompt } from './team-prompts'
 import { resolveAssignee, isBoardSettled, isRateLimit } from './team-board'
 import { buildAgenda } from './team-graph-agenda'
+import { runWithConcurrency } from './team-concurrency'
 
 const COST_PER_1M_TOKENS = 0.5
+
+// G3: per-task outcome of a fan-out bucket. The worker/reviewer fn NEVER throws —
+// it returns one of these so a failure in one in-flight task doesn't abort the
+// bookkeeping of the others; the terminal decision is made once, after, from the
+// collected outcomes (pickTerminal).
+type TurnOutcome =
+  | { kind: 'ok' }
+  | { kind: 'rate_limited' }
+  | { kind: 'error'; error: Error }
+
+/** Reduce a fan-out's outcomes to a single terminal decision, matching the old
+ *  sequential loop's precedence: any rate-limit short-circuits the run; else the
+ *  FIRST hard error re-throws (→ finish('failed') in the outer catch). All `ok`
+ *  → null (the turn proceeds). Pure. */
+function pickTerminal(outcomes: TurnOutcome[]): Extract<TurnOutcome, { kind: 'rate_limited' | 'error' }> | null {
+  if (outcomes.some(o => o.kind === 'rate_limited')) return { kind: 'rate_limited' }
+  const err = outcomes.find((o): o is Extract<TurnOutcome, { kind: 'error' }> => o.kind === 'error')
+  return err ?? null
+}
 
 export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<void> {
   const { store, chat, getTaskDiff, now = () => Date.now() } = deps
@@ -42,6 +68,12 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
   const workers = members.filter(m => m.role === 'worker')
   if (workers.length === 0) throw new Error('Team has no worker members')
   const reviewer = members.find(m => m.role === 'reviewer') ?? null
+
+  // G3: fan-out cap for parallel agendas. Default = roster width (one task per
+  // worker — "the whole team works at once"); a team sets `config.maxParallel` to
+  // throttle (e.g. a `:free` provider that 429s under burst → maxParallel: 1).
+  // Clamped to ≥1. runWithConcurrency further caps to the number of runnable tasks.
+  const maxParallel = Math.max(1, config.maxParallel ?? workers.length)
 
   const startMs = now()
   let tokensUsed = 0
@@ -144,36 +176,49 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
         if (task.status !== 'blocked') await store.updateTask(task.id, { status: 'blocked' })
       }
 
-      // EXECUTE / APPLY_CHANGES: the owner (a worker) runs the task. apply_changes
-      // is the retry re-queue — same worker path, the reviewNote rides in the
-      // prompt. Board order preserved (= position), so deps run before dependents.
+      // EXECUTE / APPLY_CHANGES: owners (workers) run their tasks. apply_changes is
+      // the retry re-queue — same worker path, the reviewNote rides in the prompt.
+      // Board order preserved (= position) → results collected in board order.
+      // G3: the bucket FANS OUT (≤ maxParallel) instead of a sequential `for`. Each
+      // task does its OWN bookkeeping and returns a TurnOutcome (never throws), so
+      // the fan-out always settles; the terminal decision is made once, after.
       const runnable = agenda
         .filter(i => (i.nextAction === 'execute' || i.nextAction === 'apply_changes') && assignedToWorker(i.task))
         .map(i => i.task)
-      for (const t of runnable) {
+      if (runnable.length > 0) {
         if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
-        const worker = workers.find(w => w.id === t.assigneeId)!
-        await store.updateTask(t.id, { status: 'doing' })
-        let out: ChatResult
-        try {
-          // taskId/runId ride in OPTIONS (not leadContext) so the code-agent can persist
-          // partial artifacts mid-loop (C2.1); chatWithAgent ignores unknown option keys.
-          out = await chat(worker.agentId, [{ role: 'user', content: buildTaskPrompt(t, t.reviewNote) }], undefined, { model: worker.model, effort: worker.effort, taskId: t.id, runId })
-        } catch (e) {
-          if (isRateLimit(e)) { await finish('rate_limited', null, 'Rate limit durante execução'); return }
-          throw e
+        const outcomes = await runWithConcurrency(runnable, maxParallel, async (t): Promise<TurnOutcome> => {
+          const worker = workers.find(w => w.id === t.assigneeId)!
+          await store.updateTask(t.id, { status: 'doing' })
+          let out: ChatResult
+          try {
+            // taskId/runId ride in OPTIONS (not leadContext) so the code-agent can persist
+            // partial artifacts mid-loop (C2.1); chatWithAgent ignores unknown option keys.
+            out = await chat(worker.agentId, [{ role: 'user', content: buildTaskPrompt(t, t.reviewNote) }], undefined, { model: worker.model, effort: worker.effort, taskId: t.id, runId })
+          } catch (e) {
+            if (isRateLimit(e)) return { kind: 'rate_limited' }
+            return { kind: 'error', error: e as Error }
+          }
+          // track() runs AFTER the await — JS is single-threaded, so `tokensUsed +=`
+          // never interleaves mid-statement; each task updates only its own row.
+          track(out)
+          await store.updateTask(t.id, {
+            status: reviewer ? 'review' : 'done', result: out.message, reviewNote: null,
+            // code-runs carry sandbox command logs; chat-runs leave this undefined
+            artifacts: out.artifacts,
+          })
+          await store.addMessage(runId, {
+            fromMemberId: worker.id, toMemberId: reviewer?.id ?? lead.id,
+            // message-log entry only — the full output is persisted in task.result
+            summary: `Concluí: ${t.title}`, content: out.message.slice(0, 2000), kind: 'message', taskId: t.id,
+          })
+          return { kind: 'ok' }
+        })
+        const terminal = pickTerminal(outcomes)
+        if (terminal) {
+          if (terminal.kind === 'rate_limited') { await finish('rate_limited', null, 'Rate limit durante execução'); return }
+          throw terminal.error
         }
-        track(out)
-        await store.updateTask(t.id, {
-          status: reviewer ? 'review' : 'done', result: out.message, reviewNote: null,
-          // code-runs carry sandbox command logs; chat-runs leave this undefined
-          artifacts: out.artifacts,
-        })
-        await store.addMessage(runId, {
-          fromMemberId: worker.id, toMemberId: reviewer?.id ?? lead.id,
-          // message-log entry only — the full output is persisted in task.result
-          summary: `Concluí: ${t.title}`, content: out.message.slice(0, 2000), kind: 'message', taskId: t.id,
-        })
       }
 
       // ── REVIEW (Reviewer) ── agenda re-derived: the workers above just moved
@@ -186,39 +231,49 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
         // accumulated state for every task being reviewed this turn). Best-effort:
         // a diff failure must never block the gate, so fall back to [] (text-only).
         const diff = toReview.length > 0 && getTaskDiff ? await getTaskDiff().catch(() => []) : []
-        for (const t of toReview) {
+        if (toReview.length > 0) {
           if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
-          // Persist what the reviewer sees so the UI can show it (best-effort, merged
-          // with the command log via the store; never blocks the review).
-          if (diff.length > 0) {
-            await store.updateTask(t.id, { artifacts: { reviewDiff: diff } }).catch(() => {})
-          }
-          let out: ChatResult
-          try {
-            out = await chat(reviewer.agentId, [{ role: 'user', content: buildReviewPrompt(t, diff) }], undefined, { model: reviewer.model, effort: reviewer.effort })
-          } catch (e) {
-            if (isRateLimit(e)) { await finish('rate_limited', null, 'Rate limit durante review'); return }
-            throw e
-          }
-          track(out)
-          const verdict = parseReviewVerdict(out.message)
-          if (verdict.approved) {
-            await store.updateTask(t.id, { status: 'done' })
-            await store.addMessage(runId, {
-              fromMemberId: reviewer.id, toMemberId: t.assigneeId, summary: 'Aprovado',
-              content: '@APPROVE', kind: 'review', taskId: t.id,
-            })
-          } else {
-            const nextRetry = t.retryCount + 1
-            const reason = verdict.reason ?? 'Refazer'
-            await store.updateTask(t.id, {
-              status: nextRetry <= config.retryCap ? 'todo' : 'rejected',
-              reviewNote: reason, retryCount: nextRetry,
-            })
-            await store.addMessage(runId, {
-              fromMemberId: reviewer.id, toMemberId: t.assigneeId, summary: 'Rejeitado',
-              content: reason, kind: 'review', taskId: t.id,
-            })
+          // G3: reviews FAN OUT too (≤ maxParallel). Same protocol as EXECUTE — each
+          // review does its own bookkeeping and returns a TurnOutcome (never throws).
+          const outcomes = await runWithConcurrency(toReview, maxParallel, async (t): Promise<TurnOutcome> => {
+            // Persist what the reviewer sees so the UI can show it (best-effort, merged
+            // with the command log via the store; never blocks the review).
+            if (diff.length > 0) {
+              await store.updateTask(t.id, { artifacts: { reviewDiff: diff } }).catch(() => {})
+            }
+            let out: ChatResult
+            try {
+              out = await chat(reviewer.agentId, [{ role: 'user', content: buildReviewPrompt(t, diff) }], undefined, { model: reviewer.model, effort: reviewer.effort })
+            } catch (e) {
+              if (isRateLimit(e)) return { kind: 'rate_limited' }
+              return { kind: 'error', error: e as Error }
+            }
+            track(out)
+            const verdict = parseReviewVerdict(out.message)
+            if (verdict.approved) {
+              await store.updateTask(t.id, { status: 'done' })
+              await store.addMessage(runId, {
+                fromMemberId: reviewer.id, toMemberId: t.assigneeId, summary: 'Aprovado',
+                content: '@APPROVE', kind: 'review', taskId: t.id,
+              })
+            } else {
+              const nextRetry = t.retryCount + 1
+              const reason = verdict.reason ?? 'Refazer'
+              await store.updateTask(t.id, {
+                status: nextRetry <= config.retryCap ? 'todo' : 'rejected',
+                reviewNote: reason, retryCount: nextRetry,
+              })
+              await store.addMessage(runId, {
+                fromMemberId: reviewer.id, toMemberId: t.assigneeId, summary: 'Rejeitado',
+                content: reason, kind: 'review', taskId: t.id,
+              })
+            }
+            return { kind: 'ok' }
+          })
+          const terminal = pickTerminal(outcomes)
+          if (terminal) {
+            if (terminal.kind === 'rate_limited') { await finish('rate_limited', null, 'Rate limit durante review'); return }
+            throw terminal.error
           }
         }
       }
