@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
+import { toast } from 'sonner'
 import {
   Megaphone,
   Plus,
@@ -17,6 +19,8 @@ import {
   AlertCircle,
   Play,
   Pause,
+  Sparkles,
+  Users2,
 } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -39,6 +43,7 @@ interface Campaign {
   status: string
   startDate: string
   endDate: string
+  teamId?: string | null
   posts: CampaignPost[]
   createdAt: string
 }
@@ -220,10 +225,14 @@ function CampaignCard({
   campaign,
   onStatusChange,
   updatingId,
+  onPlan,
+  planningId,
 }: {
   campaign: Campaign
   onStatusChange: (id: string, status: string) => void
   updatingId: string | null
+  onPlan: (id: string) => void
+  planningId: string | null
 }) {
   const [expanded, setExpanded] = useState(false)
   const st = STATUSES[campaign.status as keyof typeof STATUSES] ?? STATUSES.planning
@@ -232,6 +241,9 @@ function CampaignCard({
 
   const days = daysRemaining(campaign.endDate)
   const totalPosts = campaign.posts.length
+  const isPlanning = planningId === campaign.id
+  // Run is async: teamId set but no posts yet → the content team is still writing.
+  const planInProgress = !!campaign.teamId && totalPosts === 0
   const publishedPosts = campaign.posts.filter((p) => p.status === 'published').length
   const scheduledPosts = campaign.posts.filter((p) => p.status === 'scheduled').length
   const progress = totalPosts > 0 ? Math.round((publishedPosts / totalPosts) * 100) : 0
@@ -257,6 +269,17 @@ function CampaignCard({
 
           {/* Actions */}
           <div className="flex flex-shrink-0 items-center gap-2">
+            {totalPosts === 0 && (
+              <button
+                onClick={() => onPlan(campaign.id)}
+                disabled={isPlanning || planInProgress}
+                className="flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-xs text-violet-300 hover:bg-violet-500/20 transition-all disabled:opacity-50"
+                title="Um time de conteúdo (IA) planeja e escreve os posts"
+              >
+                {isPlanning || planInProgress ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                {isPlanning ? 'Iniciando...' : planInProgress ? 'Planejando...' : 'Planejar com IA'}
+              </button>
+            )}
             {campaign.status === 'planning' && (
               <button
                 onClick={() => onStatusChange(campaign.id, 'approved')}
@@ -315,7 +338,25 @@ function CampaignCard({
               {publishedPosts} publicados
             </span>
           )}
+          {campaign.teamId && (
+            <Link
+              href="/dashboard/teams"
+              className="flex items-center gap-1 text-violet-400 hover:text-violet-300 transition-colors"
+              title="Esta campanha é gerada por um time de conteúdo"
+            >
+              <Users2 className="h-3 w-3" />
+              Time vinculado
+            </Link>
+          )}
         </div>
+
+        {/* Plano em andamento (run assíncrona do time) */}
+        {planInProgress && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg border border-violet-500/20 bg-violet-500/5 px-3 py-2 text-xs text-violet-300">
+            <Loader2 className="h-3.5 w-3.5 flex-shrink-0 animate-spin" />
+            <span>O time de conteúdo está escrevendo os posts. Atualize a página em instantes para vê-los.</span>
+          </div>
+        )}
 
         {/* Progress bar */}
         {totalPosts > 0 && (
@@ -383,6 +424,7 @@ export default function ThreadsCampaignsPage() {
   const [showModal, setShowModal] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [planningId, setPlanningId] = useState<string | null>(null)
 
   const fetchCampaigns = useCallback(async () => {
     setLoading(true)
@@ -414,6 +456,25 @@ export default function ThreadsCampaignsPage() {
     }
   }
 
+  // Planejar com IA: dispara um time de conteúdo que escreve os posts (assíncrono).
+  const handlePlan = async (id: string) => {
+    setPlanningId(id)
+    try {
+      const res = await fetch(`/api/threads/campaigns/${id}/plan`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Erro ao iniciar planejamento')
+        return
+      }
+      toast.success('Planejamento iniciado — o time está escrevendo os posts. Eles aparecerão em instantes; atualize a página.')
+      await fetchCampaigns()
+    } catch {
+      toast.error('Erro de rede')
+    } finally {
+      setPlanningId(null)
+    }
+  }
+
   // Stats
   const activeCampaigns = campaigns.filter((c) => c.status === 'active').length
   const planningCampaigns = campaigns.filter((c) => c.status === 'planning').length
@@ -437,13 +498,14 @@ export default function ThreadsCampaignsPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <a
+            <Link
               href="/dashboard/teams"
               className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-all"
+              title="Times de conteúdo que geram suas campanhas"
             >
-              <Zap className="h-3.5 w-3.5" />
-              Planejar com IA
-            </a>
+              <Users2 className="h-3.5 w-3.5" />
+              Times
+            </Link>
             <button
               onClick={() => setShowModal(true)}
               className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-pink-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg hover:from-orange-400 hover:to-pink-500 transition-all"
@@ -503,8 +565,8 @@ export default function ThreadsCampaignsPage() {
             </div>
             <h3 className="mb-2 text-base font-semibold text-white">Nenhuma campanha</h3>
             <p className="mb-4 text-sm text-gray-500">
-              Crie uma campanha manualmente ou use a Orquestração{' '}
-              <strong className="text-gray-300">Planejamento de Campanha Threads</strong> para gerar tudo automaticamente.
+              Crie uma campanha e use o botão{' '}
+              <strong className="text-gray-300">Planejar com IA</strong> — um time de conteúdo escreve os posts automaticamente.
             </p>
             <button
               onClick={() => setShowModal(true)}
@@ -522,6 +584,8 @@ export default function ThreadsCampaignsPage() {
                 campaign={campaign}
                 onStatusChange={handleStatusChange}
                 updatingId={updatingId}
+                onPlan={handlePlan}
+                planningId={planningId}
               />
             ))}
           </div>

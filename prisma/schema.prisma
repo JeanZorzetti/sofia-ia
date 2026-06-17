@@ -1140,15 +1140,21 @@ model ThreadsCampaign {
   startDate   DateTime @map("start_date") @db.Timestamptz()
   endDate     DateTime @map("end_date") @db.Timestamptz()
   metadata    Json     @default("{}")
+  // Phase 1 (Teams subordination): a campaign is backed by a content Team. The
+  // Team plans/writes the posts; "Planejar com IA" instantiates it and ingests
+  // the run output into posts. SetNull so deleting the Team doesn't drop the campaign.
+  teamId      String?  @map("team_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
   user  User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team  Team?                 @relation(fields: [teamId], references: [id], onDelete: SetNull)
   posts ThreadsCampaignPost[]
 
   @@index([userId])
   @@index([status])
   @@index([startDate])
+  @@index([teamId])
   @@map("threads_campaigns")
 }
 
@@ -1191,6 +1197,7 @@ model Team {
   members TeamMember[]
   runs    TeamRun[]
   scheduledTeamRuns ScheduledTeamRun[]
+  threadsCampaigns  ThreadsCampaign[]
 
   @@index([createdBy])
   @@index([status])

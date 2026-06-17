@@ -13,6 +13,12 @@ export type StartTeamRunInput = {
   userId: string
   repoUrl?: string | null
   base?: string | null
+  /** Phase 1 (Teams subordination): optional same-process hook fired after a
+   *  CHAT-run completes (right after output webhooks). Lets a caller ingest the
+   *  run output — e.g. Threads campaigns → posts — without a self-webhook
+   *  round-trip. Best-effort: failures are logged, never thrown. Code-runs
+   *  (queued, out-of-process) ignore it. */
+  onComplete?: (runId: string) => Promise<void>
 }
 
 export type StartTeamRunResult = { runId: string; mode: TeamRunMode }
@@ -86,6 +92,10 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
         })
         const { dispatchTeamOutputs } = await import('@/lib/orchestration/team/team-outputs')
         await dispatchTeamOutputs(run.id)
+        if (input.onComplete) {
+          try { await input.onComplete(run.id) }
+          catch (err) { console.error('[Teams] onComplete hook failed:', err) }
+        }
       } catch (err) {
         console.error('[Teams] background run failed:', err)
       }
