@@ -29,8 +29,9 @@ function rosterBlock(members: MemberCtx[]): string {
 
 export function buildBoardSnapshot(tasks: TaskRow[], messages: MessageRow[]): string {
   if (tasks.length === 0) return 'Board vazio (nenhuma tarefa criada ainda).'
-  // `blocked` is graph-mode only (linear never sets it → empty col → no change).
-  const cols: TaskRow['status'][] = ['todo', 'doing', 'review', 'done', 'rejected', 'blocked']
+  // `blocked`/`clarify` are graph-mode only (linear never sets them → empty col →
+  // no change to the linear snapshot).
+  const cols: TaskRow['status'][] = ['todo', 'doing', 'review', 'done', 'rejected', 'blocked', 'clarify']
   const parts: string[] = []
   for (const col of cols) {
     const items = tasks.filter(t => t.status === col)
@@ -38,9 +39,17 @@ export function buildBoardSnapshot(tasks: TaskRow[], messages: MessageRow[]): st
     parts.push(`[${col.toUpperCase()}]`)
     for (const t of items) {
       const note = t.reviewNote ? ` (feedback: ${t.reviewNote})` : ''
+      // G6: surface the Worker's pending question on a `clarify` task so the Lead
+      // can answer it — the last message logged under the task, falling back to body.
+      let doubt = ''
+      if (col === 'clarify') {
+        const last = [...messages].reverse().find(m => m.taskId === t.id)
+        const q = last?.content || last?.summary || t.body || ''
+        if (q) doubt = ` (dúvida: ${q})`
+      }
       // Stable display id `#n` = position+1, so the Lead can reference a task in
-      // `[after:#n]` (G1). Position is immutable, so the id is stable across turns.
-      parts.push(`  - #${t.position + 1} ${t.title}${note}`)
+      // `[after:#n]` (G1) or `@CLARIFY [#n]` (G6). Position is immutable → stable id.
+      parts.push(`  - #${t.position + 1} ${t.title}${note}${doubt}`)
     }
   }
   const recent = messages.slice(-5)
@@ -51,12 +60,20 @@ export function buildBoardSnapshot(tasks: TaskRow[], messages: MessageRow[]): st
   return parts.join('\n')
 }
 
+// G6: the clarify directive is appended to the contract ONLY when a `clarify` task
+// is actually pending. Keeps the contract byte-identical for linear runs (which
+// never produce `clarify`) and for graph runs with no open doubt — strictly additive.
+const CLARIFY_DIRECTIVE = `@CLARIFY [#n] resposta — responda a uma dúvida pendente de um Worker (use o #id da tarefa em [CLARIFY]); ela volta a ser executada com a sua resposta.`
+
 export function buildLeadContext(
   mission: string,
   tasks: TaskRow[],
   messages: MessageRow[],
   members: MemberCtx[],
 ): string {
+  const contract = tasks.some(t => t.status === 'clarify')
+    ? `${DIRECTIVE_CONTRACT}\n${CLARIFY_DIRECTIVE}`
+    : DIRECTIVE_CONTRACT
   return [
     'Você é o LEAD de um time de agentes. Coordene o trabalho para cumprir a missão.',
     '',
@@ -66,11 +83,19 @@ export function buildLeadContext(
     '',
     `## Estado atual do board\n${buildBoardSnapshot(tasks, messages)}`,
     '',
-    `## Protocolo de resposta\n${DIRECTIVE_CONTRACT}`,
+    `## Protocolo de resposta\n${contract}`,
   ].join('\n')
 }
 
-export function buildTaskPrompt(task: TaskRow, feedback: string | null): string {
+export function buildTaskPrompt(
+  task: TaskRow,
+  feedback: string | null,
+  // G6: `allowClarify` is OPT-IN — ONLY `runTeamGraph` passes it. The linear
+  // coordinator (`runTeam`) calls this with TWO args, so its output stays
+  // byte-identical and its Worker is never told to emit `@CLARIFY` (which it
+  // wouldn't parse → would leak into `result`). Protects the linear path.
+  opts?: { allowClarify?: boolean },
+): string {
   const parts = [
     'Você é um WORKER do time. Execute EXCLUSIVAMENTE a tarefa abaixo e entregue o resultado completo.',
     '',
@@ -81,6 +106,9 @@ export function buildTaskPrompt(task: TaskRow, feedback: string | null): string 
     parts.push(`\n## ⚠️ Correção solicitada pelo Reviewer\n${feedback}\n\nRefaça corrigindo os pontos acima.`)
   }
   parts.push('\nAo terminar, responda apenas com o resultado da tarefa.')
+  if (opts?.allowClarify) {
+    parts.push('\nSe faltar informação ESSENCIAL e você não puder assumir com segurança, responda com `@CLARIFY <pergunta objetiva>` em vez de adivinhar.')
+  }
   return parts.join('\n')
 }
 

@@ -64,6 +64,8 @@ export function parseLeadActions(text: string): LeadAction[] {
     const taskM = line.match(/^@TASK\b\s*(.*)$/i)
     const msgM = line.match(/^@MESSAGE\b\s*(.*)$/i)
     const doneM = line.match(/^@DONE\b\s*(.*)$/i)
+    // G6: `@CLARIFY [#n] resposta` — the Lead answers a Worker's pending doubt.
+    const clarifyM = line.match(/^@CLARIFY\b\s*(.*)$/i)
 
     if (taskM) {
       flush()
@@ -73,6 +75,13 @@ export function parseLeadActions(text: string): LeadAction[] {
       flush()
       const { assignTo, text } = extractDirectives(msgM[1])
       actions.push({ type: 'message', to: assignTo?.value, summary: text })
+      current = null
+    } else if (clarifyM) {
+      flush()
+      // Read the leading display id `[#n]` / `#n` (same `#` scheme as `[after:#n]`),
+      // then the rest is the answer. No `#n` → unroutable, so the directive is dropped.
+      const dm = clarifyM[1].match(/^\s*\[?\s*#?\s*(\d+)\s*\]?\s*([\s\S]*)$/)
+      if (dm) actions.push({ type: 'clarify', display: Number(dm[1]), answer: dm[2].trim() })
       current = null
     } else if (doneM) {
       flush()
@@ -85,6 +94,19 @@ export function parseLeadActions(text: string): LeadAction[] {
   }
   flush()
   return actions
+}
+
+/**
+ * G6 — parse a Worker's output. A line starting with `@CLARIFY` means the Worker
+ * lacks essential info and is asking the Lead instead of guessing (→ the task parks
+ * in `clarify`). Anything else is a plain result — the pre-G6 path, unchanged.
+ * Mirrors `parseReviewVerdict`'s line-anchored match. ONLY `runTeamGraph` calls
+ * this; the linear coordinator keeps treating `out.message` as a result directly.
+ */
+export function parseWorkerOutput(text: string): { kind: 'result' } | { kind: 'clarify'; question: string } {
+  const m = text.match(/(?:^|\n)\s*@CLARIFY\b\s*([\s\S]*)/i)
+  if (m) return { kind: 'clarify', question: m[1].trim() }
+  return { kind: 'result' }
 }
 
 /**

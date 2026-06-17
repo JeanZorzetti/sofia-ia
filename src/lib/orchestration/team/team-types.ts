@@ -2,7 +2,10 @@
 // Shared types for the Polaris Teams coordination engine.
 
 export type TeamRole = 'lead' | 'worker' | 'reviewer'
-export type TaskStatus = 'todo' | 'doing' | 'review' | 'done' | 'rejected' | 'blocked'
+// `clarify` (G6, graph mode only): a Worker that lacks essential info asks the Lead
+// (`@CLARIFY`) instead of guessing; the task parks here until the Lead answers.
+// Migration-free — the column is `String @db.VarChar(20)`, so the value just fits.
+export type TaskStatus = 'todo' | 'doing' | 'review' | 'done' | 'rejected' | 'blocked' | 'clarify'
 export type RunStatus =
   | 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'rate_limited'
 export type MessageKind = 'message' | 'assignment' | 'review' | 'system'
@@ -47,7 +50,7 @@ export interface MessageRow {
 
 /** A directive parsed out of the Lead's output. */
 export interface LeadAction {
-  type: 'task' | 'message' | 'done'
+  type: 'task' | 'message' | 'done' | 'clarify'
   title?: string
   body?: string
   assignTo?: { kind: 'name' | 'role'; value: string }
@@ -58,6 +61,11 @@ export interface LeadAction {
    *  The graph executor resolves these to real task ids at creation time.
    *  Absent when no `[after:]` is declared (linear mode ignores it). */
   dependsOn?: number[]
+  /** G6: `@CLARIFY [#n] resposta` — the board DISPLAY id (`position+1`) of the
+   *  `clarify` task the Lead is answering, and the answer text. Only present on
+   *  `type: 'clarify'`. The graph executor resolves `#n`→real id and re-queues. */
+  display?: number
+  answer?: string
 }
 
 export interface ReviewVerdict {
@@ -72,6 +80,7 @@ export type TaskAction =
   | 'wait_dependency' // deps not all `done` → task is parked in `blocked`
   | 'assign_owner'    // no `assigneeId` → the Lead owns the assignment
   | 'review'          // status `review` → the Reviewer owns it
+  | 'clarify'         // G6: status `clarify` → the Lead owns it (answer the doubt)
   | 'apply_changes'   // rejected-but-retry (`todo` + `reviewNote` + `retryCount>0`) → the owner re-runs
   | 'execute'         // ready to run (deps done, has owner) → the owner runs it
   | 'terminal'        // `done` / `rejected` → no further action

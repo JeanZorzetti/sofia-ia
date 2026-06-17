@@ -29,7 +29,7 @@ import type { TeamStore } from './team-store'
 // type-only: reuse the linear coordinator's deps shape AS-IS (store + chat +
 // getTaskDiff + now). A type import does NOT touch the INTACT runTeam runtime.
 import type { RunTeamDeps } from './team-coordinator'
-import { parseLeadActions, parseReviewVerdict } from './team-protocol'
+import { parseLeadActions, parseReviewVerdict, parseWorkerOutput } from './team-protocol'
 import { buildLeadContext, buildTaskPrompt, buildReviewPrompt, buildConsolidationPrompt } from './team-prompts'
 import { resolveAssignee, isBoardSettled, isRateLimit } from './team-board'
 import { buildAgenda } from './team-graph-agenda'
@@ -148,6 +148,19 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
             fromMemberId: lead.id, toMemberId: assignee?.id ?? null,
             summary: a.title ?? null, content: a.body ?? a.title ?? '', kind: 'assignment', taskId: created.id,
           })
+        } else if (a.type === 'clarify') {
+          // G6: the Lead answers a parked `clarify` task. Resolve `#n`→real id and
+          // re-queue it as `todo` with the answer as `reviewNote` (the existing
+          // feedback channel buildTaskPrompt injects on re-run). NOT a rejection →
+          // retryCount is left untouched. Unknown `#n` is ignored (nothing to route).
+          const id = a.display != null ? displayToId.get(a.display) : undefined
+          if (id) {
+            await store.updateTask(id, { status: 'todo', reviewNote: a.answer ?? null })
+            await store.addMessage(runId, {
+              fromMemberId: lead.id, toMemberId: null,
+              summary: 'Esclarecimento', content: a.answer ?? '', kind: 'message', taskId: id,
+            })
+          }
         }
       }
 
@@ -194,7 +207,8 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
           try {
             // taskId/runId ride in OPTIONS (not leadContext) so the code-agent can persist
             // partial artifacts mid-loop (C2.1); chatWithAgent ignores unknown option keys.
-            out = await chat(worker.agentId, [{ role: 'user', content: buildTaskPrompt(t, t.reviewNote) }], undefined, { model: worker.model, effort: worker.effort, taskId: t.id, runId })
+            // G6: allowClarify is graph-only (OPT-IN) — lets this Worker emit @CLARIFY.
+            out = await chat(worker.agentId, [{ role: 'user', content: buildTaskPrompt(t, t.reviewNote, { allowClarify: true }) }], undefined, { model: worker.model, effort: worker.effort, taskId: t.id, runId })
           } catch (e) {
             if (isRateLimit(e)) return { kind: 'rate_limited' }
             return { kind: 'error', error: e as Error }
@@ -202,6 +216,18 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
           // track() runs AFTER the await — JS is single-threaded, so `tokensUsed +=`
           // never interleaves mid-statement; each task updates only its own row.
           track(out)
+          // G6: a Worker that lacks essential info parks the task in `clarify` and
+          // escalates the question to the Lead — NO result, NOT routed to review. The
+          // agenda derives `clarify`→lead next turn; isBoardSettled keeps the run alive.
+          const parsed = parseWorkerOutput(out.message)
+          if (parsed.kind === 'clarify') {
+            await store.updateTask(t.id, { status: 'clarify' })
+            await store.addMessage(runId, {
+              fromMemberId: worker.id, toMemberId: lead.id,
+              summary: `❓ ${parsed.question}`, content: parsed.question, kind: 'message', taskId: t.id,
+            })
+            return { kind: 'ok' }
+          }
           await store.updateTask(t.id, {
             status: reviewer ? 'review' : 'done', result: out.message, reviewNote: null,
             // code-runs carry sandbox command logs; chat-runs leave this undefined

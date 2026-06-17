@@ -19,12 +19,15 @@ import { depsSatisfied } from './team-board'
  * re-running it):
  *   1. `done` / `rejected`            → terminal      (owner none)
  *   2. `review`                       → review        (owner reviewer)
- *   3. deps not all `done`            → wait_dependency(owner none → parked `blocked`)
- *   4. no `assigneeId`                → assign_owner  (owner lead)
- *   5. `reviewNote` + `retryCount>0`  → apply_changes (owner = assignee) — the
+ *   3. `clarify` (G6)                 → clarify       (owner lead) — a Worker asked
+ *      a question and parked here; the Lead answers (escalation). Non-terminal, so
+ *      `isBoardSettled` keeps the run alive until it's answered (or maxTurns).
+ *   4. deps not all `done`            → wait_dependency(owner none → parked `blocked`)
+ *   5. no `assigneeId`                → assign_owner  (owner lead)
+ *   6. `reviewNote` + `retryCount>0`  → apply_changes (owner = assignee) — the
  *      review re-queued it as `todo`; apply_changes is DERIVED from that, not a
  *      new status. Same worker path as execute.
- *   6. otherwise (todo/doing/blocked, deps done, owned) → execute (owner = assignee)
+ *   7. otherwise (todo/doing/blocked, deps done, owned) → execute (owner = assignee)
  */
 export function deriveTaskAction(task: TaskRow, board: TaskRow[]): { nextAction: TaskAction; actionOwner: TaskActionOwner } {
   if (task.status === 'done' || task.status === 'rejected') {
@@ -32,6 +35,9 @@ export function deriveTaskAction(task: TaskRow, board: TaskRow[]): { nextAction:
   }
   if (task.status === 'review') {
     return { nextAction: 'review', actionOwner: 'reviewer' }
+  }
+  if (task.status === 'clarify') {
+    return { nextAction: 'clarify', actionOwner: 'lead' }
   }
   if (!depsSatisfied(task, board)) {
     return { nextAction: 'wait_dependency', actionOwner: 'none' }
