@@ -23,7 +23,7 @@ const DiffViewer = dynamic(() => import('./DiffViewer'), { ssr: false })
 interface Member { id: string; role: string; model: string | null; effort: string | null; agent: { id: string; name: string } }
 interface Team { id: string; name: string; members: Member[] }
 interface RunLite { id: string; status: string; mission: string; createdAt: string }
-interface BoardTask { id: string; title: string; status: string; assigneeId: string | null; retryCount: number; reviewNote: string | null; resultPreview: string }
+interface BoardTask { id: string; title: string; status: string; assigneeId: string | null; retryCount: number; reviewNote: string | null; dependsOn: string[]; resultPreview: string }
 interface Msg { id: string; fromMemberId: string | null; toMemberId: string | null; kind: string; summary: string | null; content: string; taskId: string | null }
 interface Metrics { turnsUsed: number | null; tokensUsed: number | null; estimatedCost: number | null; durationMs: number | null }
 interface CommandRun { cmd: string; stdout: string; stderr: string; exitCode: number; ms: number }
@@ -406,7 +406,11 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           {team && team.members.length > 0 && (
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
               <h2 className="font-semibold text-white text-sm mb-2 flex items-center gap-2"><Network className="h-4 w-4 text-white/40" /> Topologia</h2>
-              <TeamGraph members={team.members.map(m => ({ id: m.id, role: m.role, name: m.agent.name }))} activeId={activeId} />
+              <TeamGraph
+                members={team.members.map(m => ({ id: m.id, role: m.role, name: m.agent.name }))}
+                tasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, assigneeId: t.assigneeId, dependsOn: t.dependsOn ?? [] }))}
+                activeId={activeId}
+              />
             </div>
           )}
           <div className="rounded-xl border border-white/10 bg-white/5 p-4">

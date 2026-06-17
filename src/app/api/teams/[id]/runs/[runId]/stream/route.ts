@@ -60,6 +60,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                   select: {
                     id: true, title: true, status: true, assigneeId: true,
                     retryCount: true, reviewNote: true, result: true, artifacts: true,
+                    dependsOn: true,
                   },
                 },
               },
@@ -83,7 +84,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             send('board', {
               tasks: current.tasks.map(t => ({
                 id: t.id, title: t.title, status: t.status, assigneeId: t.assigneeId,
-                retryCount: t.retryCount, reviewNote: t.reviewNote,
+                retryCount: t.retryCount, reviewNote: t.reviewNote, dependsOn: t.dependsOn,
                 resultPreview: (t.result ?? '').slice(0, 300),
               })),
             })
