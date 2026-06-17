@@ -20,38 +20,47 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
 
+    // Ownership: conversa pertence ao usuário via agente OU via time (Fase 3 —
+    // conversas em modo Team têm agentId null e teamId setado). Usa AND para não
+    // colidir com o OR da busca textual.
     const where: any = {
-      agent: { createdBy: auth.id },
+      AND: [
+        {
+          OR: [
+            { agent: { createdBy: auth.id } },
+            { team: { createdBy: auth.id } },
+          ],
+        },
+      ],
     };
 
     if (status) {
-      where.status = status;
+      where.AND.push({ status });
     }
 
     if (channel) {
-      where.channel = channel;
+      where.AND.push({ channel });
     }
 
     if (agentId) {
-      where.agentId = agentId;
+      where.AND.push({ agentId });
     }
 
     if (search) {
-      where.OR = [
-        { lead: { nome: { contains: search, mode: 'insensitive' } } },
-        { lead: { telefone: { contains: search } } },
-        { lead: { email: { contains: search, mode: 'insensitive' } } },
-      ];
+      where.AND.push({
+        OR: [
+          { lead: { nome: { contains: search, mode: 'insensitive' } } },
+          { lead: { telefone: { contains: search } } },
+          { lead: { email: { contains: search, mode: 'insensitive' } } },
+        ],
+      });
     }
 
     if (startDate || endDate) {
-      where.lastMessageAt = {};
-      if (startDate) {
-        where.lastMessageAt.gte = new Date(startDate);
-      }
-      if (endDate) {
-        where.lastMessageAt.lte = new Date(endDate);
-      }
+      const lastMessageAt: any = {};
+      if (startDate) lastMessageAt.gte = new Date(startDate);
+      if (endDate) lastMessageAt.lte = new Date(endDate);
+      where.AND.push({ lastMessageAt });
     }
 
     const [conversations, total] = await Promise.all([
@@ -68,6 +77,7 @@ export async function GET(request: NextRequest) {
               score: true,
             },
           },
+          team: { select: { id: true, name: true } },
           messages: {
             orderBy: { sentAt: 'desc' },
             take: 1,

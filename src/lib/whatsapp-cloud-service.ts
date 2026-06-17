@@ -389,14 +389,49 @@ async function handleIncomingMessage(
             content: msg.content,
         }))
 
-        // 8. Gerar resposta com IA
-        const { chatWithAgent } = await import('@/lib/groq')
-
-        const aiResponse = await chatWithAgent(agent.id, messageHistory, {
+        // 8. Gerar resposta com IA — single-agent OU Team em modo conversa (Fase 3)
+        const leadContext = {
             leadName: lead.nome,
             leadPhone: lead.telefone,
             leadStatus: lead.status,
-        })
+        }
+
+        // Resolver o modo: a conversa pode estar fixada a um Team (override por
+        // conversa), ou o canal whatsapp do agente pode estar configurado p/ Team.
+        let teamId: string | null = conversation.teamId ?? null
+        if (!teamId) {
+            const waChannel = agent.channels?.find((c) => c.channel === 'whatsapp')
+            const cfg = (waChannel?.config ?? {}) as Record<string, unknown>
+            if (cfg.mode === 'team' && typeof cfg.teamId === 'string') {
+                teamId = cfg.teamId
+            }
+        }
+
+        let aiResponse: { message: string; model: string; usage?: unknown; confidence: number }
+
+        if (teamId) {
+            const { answerConversationWithTeam } = await import('@/lib/ai/team-conversation')
+            const teamResp = await answerConversationWithTeam(teamId, messageHistory, leadContext)
+            if (teamResp) {
+                aiResponse = teamResp
+                if (teamResp.delegatedTo?.length) {
+                    console.log(`[WA Cloud] Team ${teamId}: líder ${teamResp.respondedBy?.name} delegou a ${teamResp.delegatedTo.map((d) => d.name).join(', ')}`)
+                }
+                // Persistir o vínculo da conversa ao time (uma vez)
+                if (conversation.teamId !== teamId) {
+                    await prisma.conversation
+                        .update({ where: { id: conversation.id }, data: { teamId } })
+                        .catch(() => { })
+                }
+            } else {
+                // Time inexistente/sem líder → fallback single-agent
+                const { chatWithAgent } = await import('@/lib/groq')
+                aiResponse = await chatWithAgent(agent.id, messageHistory, leadContext)
+            }
+        } else {
+            const { chatWithAgent } = await import('@/lib/groq')
+            aiResponse = await chatWithAgent(agent.id, messageHistory, leadContext)
+        }
 
         if (!aiResponse.message) return
 
@@ -416,7 +451,7 @@ async function handleIncomingMessage(
                 messageType: 'text',
                 content: aiResponse.message,
                 isAiGenerated: true,
-                aiModel: agent.model,
+                aiModel: aiResponse.model || agent.model,
                 aiConfidence: aiResponse.confidence,
                 sentAt: new Date(),
             },

@@ -201,10 +201,31 @@ export async function chatWithAgent(
     // Silently skip MCP injection on error
   }
 
-  // ── Injetar tool delegate_to_agent no system prompt ───────
-  const delegationDepth = leadContext?.delegationDepth ?? 0
-  if (delegationDepth < 3) {
-    systemPrompt += `\n\n## Delegação de Tarefas\nVocê pode delegar tarefas para outros agentes usando a tool delegate_to_agent(toAgentId, message). Profundidade atual: ${delegationDepth}/3.`
+  // ── Protocolo de delegação em modo conversa (Fase 3 — Teams) ──────────────
+  // Injetado SÓ quando o caller (answerConversationWithTeam) passa o roster do
+  // time. A delegação é por TEXTO (provider-agnostic): o líder emite uma linha
+  // `DELEGATE: <agentId> | <msg>` que o orquestrador parseia/executa, escopada ao
+  // roster. Funciona em qualquer provider — inclusive a rota Claude CLI one-shot,
+  // que não suporta function-calling nativo. (O antigo bloco prometia uma tool
+  // `delegate_to_agent` que nunca foi registrada em nenhum branch — removido.)
+  const teamDelegation = leadContext?.teamDelegation as
+    | { roster: Array<{ agentId: string; name: string; role: string; description?: string }>; depth: number }
+    | undefined
+  if (teamDelegation && teamDelegation.roster.length > 0 && teamDelegation.depth < 3) {
+    const rosterList = teamDelegation.roster
+      .map(m => `- ${m.name} (${m.role}) — id: ${m.agentId}${m.description ? `: ${m.description}` : ''}`)
+      .join('\n')
+    systemPrompt += `\n\n## Time de especialistas (delegação interna)
+Você é o LÍDER deste atendimento e pode consultar especialistas do seu time ANTES de responder ao cliente. Especialistas disponíveis:
+${rosterList}
+
+Para consultar um especialista, escreva em uma linha isolada, exatamente neste formato:
+DELEGATE: <agentId> | <pergunta objetiva ao especialista>
+Regras:
+- Use SOMENTE os IDs listados acima. Pode emitir várias linhas DELEGATE (uma por especialista).
+- As respostas dos especialistas voltarão para você e então você escreve a resposta final ao cliente.
+- NUNCA mostre a linha DELEGATE, os IDs ou a existência do time ao cliente — é interno.
+- Se você já consegue responder bem sozinho, responda direto, sem delegar.`
   }
 
   // Buscar contexto da knowledge base se o agente tiver uma associada
@@ -259,11 +280,24 @@ export async function chatWithAgent(
       // Since CLI is one-shot with -p, we need to pass context.
       // MVP Decision: Pass the User's Message + System Prompt Instructions.
 
-      const lastMessage = messages[messages.length - 1]; // Only user message for now
+      // The CLI is one-shot (`--print`), so there's no multi-turn session: fold the
+      // whole conversation history into the prompt, otherwise the lead loses context
+      // (this matters in WhatsApp/Team conversation mode — Fase 3). System prompt is
+      // still passed separately via --system-prompt-file.
+      const history = messages.filter(m => m.role !== 'system');
+      let cliPrompt: string;
+      if (history.length <= 1) {
+        cliPrompt = history[history.length - 1]?.content ?? '';
+      } else {
+        const transcript = history
+          .map(m => `${m.role === 'user' ? 'Cliente' : 'Você'}: ${m.content}`)
+          .join('\n');
+        cliPrompt = `Histórico da conversa até agora:\n${transcript}\n\nResponda à última mensagem do Cliente.`;
+      }
 
       // We now pass system prompt separately to handle large prompts via file
       const response = await ClaudeCliService.generate(
-        lastMessage.content,
+        cliPrompt,
         workingDirectory,
         systemPrompt,
         cliModelId || undefined  // Pass model ID (undefined = CLI default)

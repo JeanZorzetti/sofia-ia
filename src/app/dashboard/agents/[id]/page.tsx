@@ -55,6 +55,7 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([])
   const [whatsappInstances, setWhatsappInstances] = useState<WhatsappInstance[]>([])
   const [models, setModels] = useState<any[]>([])
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -68,6 +69,8 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
     channels: {
       whatsapp: false,
       whatsappInstance: '',
+      whatsappMode: 'single',
+      whatsappTeamId: '',
       webchat: false,
       email: false
     },
@@ -82,7 +85,20 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
     fetchKnowledgeBases()
     fetchWhatsappInstances()
     fetchModels()
+    fetchTeams()
   }, [resolvedParams.id])
+
+  const fetchTeams = async () => {
+    try {
+      const response = await fetch('/api/teams')
+      const result = await response.json()
+      if (result.success && Array.isArray(result.data)) {
+        setTeams(result.data.map((t: any) => ({ id: t.id, name: t.name })))
+      }
+    } catch (error) {
+      console.error('Error fetching teams:', error)
+    }
+  }
 
   const fetchModels = async () => {
     try {
@@ -117,6 +133,8 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
           channels: {
             whatsapp: !!whatsappChannel,
             whatsappInstance: whatsappChannel?.config?.instanceName || '',
+            whatsappMode: whatsappChannel?.config?.mode === 'team' ? 'team' : 'single',
+            whatsappTeamId: whatsappChannel?.config?.teamId || '',
             webchat: agentData.channels.some((ch: any) => ch.channel === 'webchat'),
             email: agentData.channels.some((ch: any) => ch.channel === 'email')
           },
@@ -168,9 +186,16 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
 
       const channels = []
       if (formData.channels.whatsapp) {
+        const useTeam = formData.channels.whatsappMode === 'team' && !!formData.channels.whatsappTeamId
         channels.push({
           channel: 'whatsapp',
-          config: { instanceName: formData.channels.whatsappInstance || null },
+          config: {
+            instanceName: formData.channels.whatsappInstance || null,
+            // Fase 3: modo de atendimento do canal — 'single' (agente único) ou
+            // 'team' (líder do time responde e pode delegar a especialistas).
+            mode: useTeam ? 'team' : 'single',
+            teamId: useTeam ? formData.channels.whatsappTeamId : null,
+          },
           isActive: true
         })
       }
@@ -539,6 +564,47 @@ export default function AgentEditPage({ params }: { params: Promise<{ id: string
                     <p className="mt-1 text-xs text-white/40">
                       Vincule este agente a uma instância específica do WhatsApp
                     </p>
+
+                    <Label className="text-xs text-white/60 mb-2 mt-4 block">Modo de atendimento</Label>
+                    <select
+                      className="w-full rounded-lg border border-white/10 bg-[#0a0a0b] px-3 py-2 text-sm text-white"
+                      value={formData.channels.whatsappMode}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          channels: { ...formData.channels, whatsappMode: e.target.value }
+                        })
+                      }
+                    >
+                      <option value="single">Agente único (padrão)</option>
+                      <option value="team">Time (líder + especialistas)</option>
+                    </select>
+
+                    {formData.channels.whatsappMode === 'team' && (
+                      <>
+                        <Label className="text-xs text-white/60 mb-2 mt-3 block">Time</Label>
+                        <select
+                          className="w-full rounded-lg border border-white/10 bg-[#0a0a0b] px-3 py-2 text-sm text-white"
+                          value={formData.channels.whatsappTeamId}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              channels: { ...formData.channels, whatsappTeamId: e.target.value }
+                            })
+                          }
+                        >
+                          <option value="">Selecione um time…</option>
+                          {teams.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="mt-1 text-xs text-white/40">
+                          O agente líder do time responde às conversas deste canal e pode consultar os especialistas no mesmo ciclo.
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

@@ -19,6 +19,7 @@ import {
   X,
   Tag,
   UserCheck,
+  Users,
   Loader2,
   Filter,
   RotateCcw,
@@ -58,8 +59,15 @@ interface Conversation {
   unreadCount: number
   lastMessageAt: string
   messageCount: number
+  teamId?: string | null
+  team?: { id: string; name: string } | null
   lead: Lead
   messages: Message[]
+}
+
+interface TeamOption {
+  id: string
+  name: string
 }
 
 export default function ConversationsPage() {
@@ -73,11 +81,17 @@ export default function ConversationsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [channelFilter, setChannelFilter] = useState<string>('all')
+  const [teams, setTeams] = useState<TeamOption[]>([])
+  const [assigningTeam, setAssigningTeam] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchConversations()
   }, [statusFilter, channelFilter, searchTerm])
+
+  useEffect(() => {
+    fetchTeams()
+  }, [])
 
   useEffect(() => {
     if (selectedConversation) {
@@ -124,6 +138,40 @@ export default function ConversationsPage() {
       }
     } catch (error) {
       console.error('Erro ao buscar mensagens:', error)
+    }
+  }
+
+  const fetchTeams = async () => {
+    try {
+      const response = await fetch('/api/teams')
+      const result = await response.json()
+      if (result.success && Array.isArray(result.data)) {
+        setTeams(result.data.map((t: any) => ({ id: t.id, name: t.name })))
+      }
+    } catch (error) {
+      console.error('Erro ao buscar times:', error)
+    }
+  }
+
+  const handleAssignTeam = async (teamId: string | null) => {
+    if (!selectedConversation) return
+    try {
+      setAssigningTeam(true)
+      const response = await fetch(`/api/conversations/${selectedConversation.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamId }),
+      })
+      const result = await response.json()
+      if (result.success) {
+        const team = result.conversation?.team ?? null
+        setSelectedConversation({ ...selectedConversation, teamId, team })
+        fetchConversations()
+      }
+    } catch (error) {
+      console.error('Erro ao atribuir time:', error)
+    } finally {
+      setAssigningTeam(false)
     }
   }
 
@@ -382,6 +430,12 @@ export default function ConversationsPage() {
                               <Badge className="bg-blue-500/20 text-xs text-blue-400">
                                 <UserCheck className="mr-1 h-3 w-3" />
                                 Humano
+                              </Badge>
+                            )}
+                            {conv.teamId && (
+                              <Badge className="bg-purple-500/20 text-xs text-purple-400">
+                                <Users className="mr-1 h-3 w-3" />
+                                {conv.team?.name || 'Team'}
                               </Badge>
                             )}
                           </div>
@@ -654,6 +708,36 @@ export default function ConversationsPage() {
                     </p>
                   </div>
                 )}
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card border-white/10">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Users className="h-4 w-4" />
+                Atendimento
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <label className="text-xs text-white/60">
+                Quem responde esta conversa
+              </label>
+              <select
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white disabled:opacity-50"
+                value={selectedConversation.teamId || ''}
+                disabled={assigningTeam}
+                onChange={(e) => handleAssignTeam(e.target.value || null)}
+              >
+                <option value="">Agente único (padrão)</option>
+                {teams.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    Time: {t.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-white/40">
+                Com um time, o agente líder responde e pode consultar especialistas no mesmo ciclo.
+              </p>
             </CardContent>
           </Card>
 
