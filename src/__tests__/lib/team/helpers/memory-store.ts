@@ -39,6 +39,7 @@ export function createMemoryStore(opts: {
         id: `t${++taskSeq}`, title: data.title, body: data.body ?? null,
         status: data.status ?? 'todo', assigneeId: data.assigneeId ?? null,
         result: null, reviewNote: null, retryCount: 0, position: state.tasks.length,
+        dependsOn: data.dependsOn ?? [],
       }
       state.tasks.push(row)
       return clone(row)

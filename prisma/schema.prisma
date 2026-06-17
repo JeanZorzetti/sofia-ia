@@ -1306,6 +1306,7 @@ model TeamTask {
   result     String?  @db.Text
   reviewNote String?  @map("review_note") @db.Text
   artifacts  Json?    // code-runs: { commands: [{cmd,stdout,stderr,exitCode,ms}] } (Sub-projeto C)
+  dependsOn  String[] @default([]) @map("depends_on") // G1 (graph mode): TeamTask ids this task depends on; runTeamGraph gates execution on these
   retryCount Int      @default(0) @map("retry_count")
   position   Int      @default(0)
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()

@@ -11,7 +11,7 @@ const members: MemberCtx[] = [
 ]
 const task: TaskRow = {
   id: 't1', title: 'Validar form', body: 'cobrir e-mail', status: 'todo',
-  assigneeId: 'W', result: null, reviewNote: null, retryCount: 0, position: 0,
+  assigneeId: 'W', result: null, reviewNote: null, retryCount: 0, position: 0, dependsOn: [],
 }
 
 describe('buildLeadContext', () => {

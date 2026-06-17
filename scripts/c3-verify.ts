@@ -63,7 +63,7 @@ console.log('renderDiffForReview')
 console.log('buildReviewPrompt')
 const baseTask: TaskRow = {
   id: 't1', title: 'Implementar X', body: 'critério', status: 'review',
-  assigneeId: 'w1', result: 'feito', reviewNote: null, retryCount: 0, position: 0,
+  assigneeId: 'w1', result: 'feito', reviewNote: null, retryCount: 0, position: 0, dependsOn: [],
 }
 {
   // No diff → byte-identical to the pre-C3 prompt (chat-runs / C0 unchanged).
@@ -191,7 +191,7 @@ function makeStore(): TeamStore & { tasksById: Map<string, TaskRow & { artifacts
       const t: TaskRow & { artifacts?: unknown } = {
         id: `task-${++seq}`, title: data.title, body: data.body ?? null,
         status: data.status ?? 'todo', assigneeId: data.assigneeId ?? null,
-        result: null, reviewNote: null, retryCount: 0, position: tasksById.size,
+        result: null, reviewNote: null, retryCount: 0, position: tasksById.size, dependsOn: data.dependsOn ?? [],
       }
       tasksById.set(t.id, t)
       const { artifacts: _a, ...row } = t

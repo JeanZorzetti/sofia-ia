@@ -28,6 +28,10 @@ export interface TaskRow {
   reviewNote: string | null
   retryCount: number
   position: number
+  /** G1 (graph mode): ids of tasks this one depends on. `runTeamGraph` gates
+   *  execution on these being `done`. Always `[]` in linear mode (`runTeam`
+   *  never reads it), so the field is backward-compatible. */
+  dependsOn: string[]
 }
 
 /** Message as the coordinator sees it. */
@@ -50,6 +54,10 @@ export interface LeadAction {
   to?: string        // message target (member name)
   summary?: string   // message text
   text?: string      // done body
+  /** G1: `@TASK [after:#n]` dependencies, as board DISPLAY ids (`position+1`).
+   *  The graph executor resolves these to real task ids at creation time.
+   *  Absent when no `[after:]` is declared (linear mode ignores it). */
+  dependsOn?: number[]
 }
 
 export interface ReviewVerdict {

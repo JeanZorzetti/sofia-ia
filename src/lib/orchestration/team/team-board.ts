@@ -32,6 +32,19 @@ export function isBoardSettled(board: TaskRow[]): boolean {
   return board.length > 0 && board.every(t => t.status === 'done' || t.status === 'rejected')
 }
 
+/**
+ * G1 (graph mode): true when every dependency of `task` is a `done` task on the
+ * board. A task with no deps is always satisfied — so a dependency-free graph
+ * board gates exactly like the linear path. Missing/unknown dep ids count as
+ * UNSATISFIED (conservative: never run a task ahead of a dependency we can't
+ * confirm is done). Pure — safe to unit-test in isolation.
+ */
+export function depsSatisfied(task: TaskRow, board: TaskRow[]): boolean {
+  const deps = task.dependsOn ?? []
+  if (deps.length === 0) return true
+  return deps.every(depId => board.find(t => t.id === depId)?.status === 'done')
+}
+
 /** Detect provider rate-limit errors (mirrors the orchestration execute route). */
 export function isRateLimit(err: unknown): boolean {
   const e = err as { message?: string; stderr?: string }

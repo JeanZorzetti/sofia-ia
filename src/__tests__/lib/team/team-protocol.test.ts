@@ -63,6 +63,36 @@ describe('parseLeadActions', () => {
   it('returns [] when there is no directive', () => {
     expect(parseLeadActions('apenas texto livre, sem diretivas')).toEqual([])
   })
+
+  // ── G1: dependency declaration via [after:#n] ──
+  it('parses @TASK [after:#n] into a single dependency (display id)', () => {
+    const actions = parseLeadActions('@TASK [worker:Ana] [after:#2] Depende da 2')
+    expect(actions[0]).toMatchObject({
+      type: 'task',
+      title: 'Depende da 2',
+      assignTo: { kind: 'name', value: 'Ana' },
+      dependsOn: [2],
+    })
+  })
+
+  it('parses [after:#1,#3] into multiple dependencies', () => {
+    const actions = parseLeadActions('@TASK [worker:Ana] [after:#1,#3] T')
+    expect(actions[0].dependsOn).toEqual([1, 3])
+    expect(actions[0].title).toBe('T')
+  })
+
+  it('accepts [after:#n] before [worker:Nome] (order-independent)', () => {
+    const actions = parseLeadActions('@TASK [after:#1] [worker:Bob] T')
+    expect(actions[0].assignTo).toEqual({ kind: 'name', value: 'Bob' })
+    expect(actions[0].dependsOn).toEqual([1])
+    expect(actions[0].title).toBe('T')
+  })
+
+  it('leaves dependsOn undefined for a @TASK without [after:]', () => {
+    const actions = parseLeadActions('@TASK [worker:Ana] Sem dep')
+    expect(actions[0].dependsOn).toBeUndefined()
+    expect(actions[0].title).toBe('Sem dep')
+  })
 })
 
 describe('parseReviewVerdict', () => {

@@ -25,6 +25,20 @@ function scriptedChat(script: Record<string, string[]>): ChatFn {
   }
 }
 
+/** Wraps scriptedChat and records, in order, the title of each task the worker
+ *  (agentId 'aw') is asked to execute — read from the `## Tarefa\n<title>` line
+ *  buildTaskPrompt emits. Lets a test assert the EXECUTION ORDER of tasks. */
+function recordingChat(script: Record<string, string[]>, executed: string[]): ChatFn {
+  const base = scriptedChat(script)
+  return async (agentId, messages, ctx, opts) => {
+    if (agentId === 'aw') {
+      const m = (messages[0]?.content ?? '').match(/## Tarefa\n(\S+)/)
+      if (m) executed.push(m[1])
+    }
+    return base(agentId, messages, ctx, opts)
+  }
+}
+
 describe('pickTopology — default linear, opt-in graph', () => {
   it('falls back to linear for missing/invalid config', () => {
     expect(pickTopology(null)).toBe('linear')
@@ -73,5 +87,61 @@ describe('runTeamGraph — G0 parity with runTeam', () => {
     expect(gra.state.tasks[0].status).toBe('done')
     expect(gra.state.tasks.map(t => t.status)).toEqual(lin.state.tasks.map(t => t.status))
     expect(gra.state.status).toBe(lin.state.status)
+  })
+})
+
+describe('runTeamGraph — G1 dependency gating (DAG)', () => {
+  // Lead seeds A and B (B depends on the board #1 = A) in one turn, then @DONE.
+  const depScript = {
+    al: ['@TASK [worker:Ana] A\n@TASK [worker:Ana] [after:#1] B', '@DONE ok'],
+    aw: ['resultado A', 'resultado B'],
+    ar: ['@APPROVE', '@APPROVE'],
+  }
+
+  it('runs A before B when B depends on A — B never executes first', async () => {
+    const executed: string[] = []
+    const gra = createMemoryStore({ mission: 'M', members })
+    await runTeamGraph('run-1', { store: gra.store, chat: recordingChat(depScript, executed) })
+
+    expect(executed).toEqual(['A', 'B'])
+    expect(executed.indexOf('A')).toBeLessThan(executed.indexOf('B'))
+    const a = gra.state.tasks.find(t => t.title === 'A')!
+    const b = gra.state.tasks.find(t => t.title === 'B')!
+    expect(a.status).toBe('done')
+    expect(b.status).toBe('done')
+    expect(b.dependsOn).toEqual([a.id]) // display #1 resolved to A's real id
+  })
+
+  it('holds a dependent task in `blocked` while its dependency is not yet done', async () => {
+    // Cap at one turn: A runs and is approved (→ done), but B must NOT run this
+    // turn (its dep finishes only at the end of the turn) and stays `blocked`.
+    const executed: string[] = []
+    const gra = createMemoryStore({
+      mission: 'M', members, config: { maxTurns: 1, retryCap: 2 },
+    })
+    await runTeamGraph('run-1', { store: gra.store, chat: recordingChat(depScript, executed) })
+
+    expect(executed).toEqual(['A']) // B never executed
+    const a = gra.state.tasks.find(t => t.title === 'A')!
+    const b = gra.state.tasks.find(t => t.title === 'B')!
+    expect(a.status).toBe('done')
+    expect(b.status).toBe('blocked')
+  })
+
+  it('a graph team WITHOUT dependencies still runs like the linear path', async () => {
+    const script = {
+      al: ['@TASK [worker:Ana] X\n  faça', '@DONE concluído'],
+      aw: ['resultado da Ana'],
+      ar: ['@APPROVE'],
+    }
+    const lin = createMemoryStore({ mission: 'Fazer X', members })
+    await runTeam('run-1', { store: lin.store, chat: scriptedChat(script) })
+
+    const gra = createMemoryStore({ mission: 'Fazer X', members })
+    await runTeamGraph('run-1', { store: gra.store, chat: scriptedChat(script) })
+
+    expect(gra.state.status).toBe('completed')
+    expect(gra.state.tasks.map(t => t.status)).toEqual(lin.state.tasks.map(t => t.status))
+    expect(gra.state.finished?.output).toBe(lin.state.finished?.output)
   })
 })

@@ -23,6 +23,8 @@ export interface CreateTaskInput {
   assigneeId?: string | null
   status?: TaskStatus
   position?: number
+  /** G1: real task ids this task depends on (graph mode). Defaults to []. */
+  dependsOn?: string[]
 }
 
 export interface UpdateTaskInput {
@@ -141,7 +143,7 @@ export function createPrismaTeamStore(): TeamStore {
       return rows.map(t => ({
         id: t.id, title: t.title, body: t.body, status: t.status as TaskStatus,
         assigneeId: t.assigneeId, result: t.result, reviewNote: t.reviewNote,
-        retryCount: t.retryCount, position: t.position,
+        retryCount: t.retryCount, position: t.position, dependsOn: t.dependsOn,
       }))
     },
 
@@ -155,12 +157,13 @@ export function createPrismaTeamStore(): TeamStore {
           assigneeId: data.assigneeId ?? null,
           status: data.status ?? 'todo',
           position: data.position ?? count,
+          dependsOn: data.dependsOn ?? [],
         },
       })
       return {
         id: t.id, title: t.title, body: t.body, status: t.status as TaskStatus,
         assigneeId: t.assigneeId, result: t.result, reviewNote: t.reviewNote,
-        retryCount: t.retryCount, position: t.position,
+        retryCount: t.retryCount, position: t.position, dependsOn: t.dependsOn,
       }
     },
 

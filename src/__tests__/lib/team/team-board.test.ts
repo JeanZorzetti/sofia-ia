@@ -8,7 +8,7 @@ const worker = (id: string, name: string): MemberCtx =>
   ({ id, agentId: `a-${id}`, agentName: name, role: 'worker', model: null, effort: null })
 
 const task = (status: TaskRow['status']): TaskRow =>
-  ({ id: 't', title: 'x', body: null, status, assigneeId: null, result: null, reviewNote: null, retryCount: 0, position: 0 })
+  ({ id: 't', title: 'x', body: null, status, assigneeId: null, result: null, reviewNote: null, retryCount: 0, position: 0, dependsOn: [] })
 
 describe('resolveMemberByName', () => {
   it('matches case-insensitively, ignoring surrounding space', () => {

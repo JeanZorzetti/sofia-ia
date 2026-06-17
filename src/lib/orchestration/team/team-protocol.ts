@@ -4,17 +4,41 @@
 
 import type { LeadAction, ReviewVerdict } from './team-types'
 
-/** Extracts a leading `[key:value]` target from a directive remainder. */
-function extractTarget(rest: string): {
+/**
+ * Consume the leading `[key:value]` directives from a directive remainder.
+ * Recognises an assignment target (`[worker:Nome]` / `[role:worker]` / `[para:Nome]`)
+ * and, for G1, dependency declarations (`[after:#n]` / `[after:#1,#3]`). The two
+ * may appear in either order. Only the FIRST non-`after` bracket becomes the
+ * assignment target (parity with the legacy single-target parser); any further
+ * non-`after` bracket is left in the remaining text.
+ */
+function extractDirectives(rest: string): {
   assignTo?: { kind: 'name' | 'role'; value: string }
+  dependsOn?: number[]
   text: string
 } {
-  const m = rest.match(/^\s*\[([a-zA-Z]+)\s*:\s*([^\]]+)\]\s*(.*)$/)
-  if (!m) return { text: rest.trim() }
-  const key = m[1].toLowerCase()
-  const value = m[2].trim()
-  const kind: 'name' | 'role' = key === 'role' ? 'role' : 'name'
-  return { assignTo: { kind, value }, text: m[3].trim() }
+  let s = rest
+  let assignTo: { kind: 'name' | 'role'; value: string } | undefined
+  let dependsOn: number[] | undefined
+  for (;;) {
+    const m = s.match(/^\s*\[([a-zA-Z]+)\s*:\s*([^\]]+)\]\s*(.*)$/)
+    if (!m) break
+    const key = m[1].toLowerCase()
+    const value = m[2].trim()
+    const remainder = m[3]
+    if (key === 'after') {
+      // pull every integer out of e.g. "#1,#3" / "1, 3" / "#2"
+      const nums = (value.match(/\d+/g) ?? []).map(Number)
+      if (nums.length > 0) dependsOn = [...(dependsOn ?? []), ...nums]
+      s = remainder
+      continue
+    }
+    if (assignTo) break // second non-after bracket → leave it in the text
+    const kind: 'name' | 'role' = key === 'role' ? 'role' : 'name'
+    assignTo = { kind, value }
+    s = remainder
+  }
+  return { assignTo, dependsOn, text: s.trim() }
 }
 
 /**
@@ -43,11 +67,11 @@ export function parseLeadActions(text: string): LeadAction[] {
 
     if (taskM) {
       flush()
-      const { assignTo, text } = extractTarget(taskM[1])
-      current = { type: 'task', title: text || 'Tarefa', body: '', assignTo }
+      const { assignTo, dependsOn, text } = extractDirectives(taskM[1])
+      current = { type: 'task', title: text || 'Tarefa', body: '', assignTo, ...(dependsOn ? { dependsOn } : {}) }
     } else if (msgM) {
       flush()
-      const { assignTo, text } = extractTarget(msgM[1])
+      const { assignTo, text } = extractDirectives(msgM[1])
       actions.push({ type: 'message', to: assignTo?.value, summary: text })
       current = null
     } else if (doneM) {

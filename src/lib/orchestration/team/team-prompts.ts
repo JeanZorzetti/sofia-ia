@@ -8,13 +8,16 @@ import type { ChangedFile } from '../../git/repo-lifecycle'
 
 const DIRECTIVE_CONTRACT = `
 Responda SOMENTE com diretivas, uma por linha:
-@TASK [worker:NomeDoAgente] Título curto da tarefa
+@TASK [worker:NomeDoAgente] [after:#2] Título curto da tarefa
   (linhas indentadas = corpo/critério de aceite)
 @MESSAGE [para:NomeDoAgente] mensagem curta para um membro
 @DONE Texto final consolidado (use só quando TODAS as tarefas estiverem concluídas)
 
 Regras:
 - Atribua cada @TASK a um Worker pelo nome do roster abaixo.
+- [after:#n] é OPCIONAL: declara que a tarefa só pode começar depois que a tarefa
+  #n do board estiver concluída (use os #ids mostrados no board). Para múltiplas
+  dependências: [after:#1,#3]. Omita quando não houver dependência.
 - Não duplique tarefas que já existem no board.
 - Se o board já está todo concluído, responda apenas com @DONE e o resumo final.`.trim()
 
@@ -26,7 +29,8 @@ function rosterBlock(members: MemberCtx[]): string {
 
 export function buildBoardSnapshot(tasks: TaskRow[], messages: MessageRow[]): string {
   if (tasks.length === 0) return 'Board vazio (nenhuma tarefa criada ainda).'
-  const cols: TaskRow['status'][] = ['todo', 'doing', 'review', 'done', 'rejected']
+  // `blocked` is graph-mode only (linear never sets it → empty col → no change).
+  const cols: TaskRow['status'][] = ['todo', 'doing', 'review', 'done', 'rejected', 'blocked']
   const parts: string[] = []
   for (const col of cols) {
     const items = tasks.filter(t => t.status === col)
@@ -34,7 +38,9 @@ export function buildBoardSnapshot(tasks: TaskRow[], messages: MessageRow[]): st
     parts.push(`[${col.toUpperCase()}]`)
     for (const t of items) {
       const note = t.reviewNote ? ` (feedback: ${t.reviewNote})` : ''
-      parts.push(`  - ${t.title}${note}`)
+      // Stable display id `#n` = position+1, so the Lead can reference a task in
+      // `[after:#n]` (G1). Position is immutable, so the id is stable across turns.
+      parts.push(`  - #${t.position + 1} ${t.title}${note}`)
     }
   }
   const recent = messages.slice(-5)
