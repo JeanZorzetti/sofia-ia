@@ -16,7 +16,7 @@ import {
   Check,
   Loader2,
   Bot,
-  Network,
+  Users2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -59,7 +59,7 @@ Adapte o tom da marca conforme necessario.`,
       model: 'llama-3.3-70b-versatile',
     },
     orchestrationTemplate: {
-      name: 'Pipeline de Marketing',
+      name: 'Time de Marketing',
       description: 'Pesquisador de tendencias > Copywriter > Revisor de qualidade',
       agents: ['Pesquisador', 'Copywriter', 'Revisor'],
       strategy: 'sequential',
@@ -80,7 +80,7 @@ Identifique o problema do cliente, ofeca solucoes claras e escalade quando neces
       model: 'llama-3.3-70b-versatile',
     },
     orchestrationTemplate: {
-      name: 'Pipeline de Suporte',
+      name: 'Time de Suporte',
       description: 'Triagem > Atendente > Escalacao',
       agents: ['Triagem', 'Atendente', 'Escalacao'],
       strategy: 'sequential',
@@ -101,7 +101,7 @@ e apresente conclusoes claras e acionaveis.`,
       model: 'llama-3.3-70b-versatile',
     },
     orchestrationTemplate: {
-      name: 'Pipeline de Pesquisa',
+      name: 'Time de Pesquisa',
       description: 'Coletor > Analista > Sintetizador',
       agents: ['Coletor', 'Analista', 'Sintetizador'],
       strategy: 'sequential',
@@ -121,8 +121,8 @@ Sempre seja claro, objetivo e util nas suas respostas.`,
       model: 'llama-3.3-70b-versatile',
     },
     orchestrationTemplate: {
-      name: 'Minha Primeira Orquestracao',
-      description: 'Pipeline personalizado de agentes de IA',
+      name: 'Meu Primeiro Time',
+      description: 'Time personalizado de agentes de IA',
       agents: ['Agente 1', 'Agente 2'],
       strategy: 'sequential',
     },
@@ -287,7 +287,7 @@ export default function OnboardingPage() {
                   Bem-vindo a Polaris IA
                 </h1>
                 <p className="text-white/60">
-                  Vamos configurar sua primeira experiencia. Qual e o seu principal caso de uso?
+                  Vamos montar seu primeiro Team de agentes. Qual e o seu principal caso de uso?
                 </p>
               </div>
 
@@ -338,10 +338,10 @@ export default function OnboardingPage() {
                   <Bot className="h-8 w-8 text-blue-400" />
                 </div>
                 <h2 className="text-3xl font-bold text-white mb-2">
-                  Seu Primeiro Agente
+                  O Primeiro Membro do Time
                 </h2>
                 <p className="text-white/60">
-                  Criamos um template para {selectedOption.label.toLowerCase()}. Personalize como quiser.
+                  Todo Team comeca por um agente. Criamos um para {selectedOption.label.toLowerCase()} — personalize como quiser.
                 </p>
               </div>
 
@@ -386,13 +386,13 @@ export default function OnboardingPage() {
             >
               <div className="text-center mb-8">
                 <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500/20 mb-4">
-                  <Network className="h-8 w-8 text-green-400" />
+                  <Users2 className="h-8 w-8 text-green-400" />
                 </div>
                 <h2 className="text-3xl font-bold text-white mb-2">
-                  Primeira Orquestracao
+                  Seu Primeiro Team
                 </h2>
                 <p className="text-white/60">
-                  Uma orquestracao conecta varios agentes em um pipeline inteligente.
+                  Um Team reune seus agentes sob um lider que coordena e delega o trabalho. E o coracao da Polaris.
                 </p>
               </div>
 
@@ -400,19 +400,19 @@ export default function OnboardingPage() {
                 <CardContent className="pt-6 space-y-5">
                   <div>
                     <label className="block text-sm font-medium text-white/70 mb-2">
-                      Nome da Orquestracao
+                      Nome do Team
                     </label>
                     <Input
                       value={orchName}
                       onChange={(e) => setOrchName(e.target.value)}
-                      placeholder="Ex: Pipeline de Marketing"
+                      placeholder="Ex: Time de Marketing"
                       className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-white/70 mb-3">
-                      Agentes no Pipeline
+                      Agentes no Time
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {selectedOption.orchestrationTemplate.agents.map((agent, i) => (
@@ -429,7 +429,7 @@ export default function OnboardingPage() {
                       ))}
                     </div>
                     <p className="text-xs text-white/40 mt-3">
-                      Estrategia: Sequencial — cada agente passa o resultado para o proximo
+                      O lider do time coordena e delega as tarefas aos membros
                     </p>
                   </div>
                 </CardContent>
@@ -454,8 +454,8 @@ export default function OnboardingPage() {
                   Tudo pronto!
                 </h2>
                 <p className="text-white/60 max-w-md mx-auto">
-                  Seu agente <strong className="text-white">{agentName}</strong> e a orquestracao{' '}
-                  <strong className="text-white">{orchName}</strong> serao criados automaticamente.
+                  Seu Team <strong className="text-white">{orchName}</strong> e seu primeiro agente{' '}
+                  <strong className="text-white">{agentName}</strong> serao criados automaticamente.
                 </p>
               </div>
 
@@ -464,8 +464,8 @@ export default function OnboardingPage() {
                   <h3 className="text-white font-semibold mb-4">O que foi configurado:</h3>
                   <ul className="space-y-3">
                     {[
-                      { icon: Bot, text: `Agente: ${agentName}`, color: 'text-blue-400' },
-                      { icon: Network, text: `Orquestracao: ${orchName}`, color: 'text-green-400' },
+                      { icon: Users2, text: `Team: ${orchName}`, color: 'text-green-400' },
+                      { icon: Bot, text: `Membro: ${agentName}`, color: 'text-blue-400' },
                       { icon: Sparkles, text: `Caso de uso: ${selectedOption?.label}`, color: 'text-violet-400' },
                     ].map((item, i) => {
                       const Icon = item.icon
@@ -533,7 +533,7 @@ export default function OnboardingPage() {
                   </>
                 ) : (
                   <>
-                    Ir para o Dashboard
+                    Ir para o meu Team
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </>
                 )}

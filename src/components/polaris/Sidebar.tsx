@@ -63,6 +63,8 @@ type MenuItem = {
   href: string
   label: string
   icon: React.ElementType
+  // 'principal' = Teams (a feature principal); 'teams' = surface que roda através do Teams
+  badge?: 'principal' | 'teams'
 }
 
 type MenuSection = {
@@ -74,22 +76,30 @@ const menuSections: MenuSection[] = [
   {
     label: null,
     items: [
-      { href: '/dashboard',              label: 'Overview',      icon: LayoutDashboard },
-      { href: '/dashboard/agents',       label: 'Agentes de IA', icon: Bot },
-      { href: '/dashboard/conversations', label: 'Conversas',    icon: Inbox },
+      { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
     ],
   },
   {
-    label: 'Plataforma',
+    // A feature principal. Os surfaces abaixo rodam através do Teams (Fases 1-3 da subordinação).
+    label: 'Teams',
     items: [
-      { href: '/dashboard/skills',         label: 'Skills',        icon: Sparkles },
-      { href: '/dashboard/mcp',            label: 'MCP Servers',   icon: Network },
-      { href: '/dashboard/knowledge',      label: 'Knowledge Base', icon: Database },
-      { href: '/dashboard/workflows',      label: 'Workflows',     icon: Workflow },
-      { href: '/dashboard/models',         label: 'Modelos',       icon: Cpu },
-      { href: '/dashboard/teams',          label: 'Teams',         icon: Users2 },
-      { href: '/dashboard/files',          label: 'IDE',           icon: Terminal },
-      { href: '/dashboard/integrations',   label: 'Integrações',   icon: Plug },
+      { href: '/dashboard/teams',             label: 'Teams',     icon: Users2,    badge: 'principal' },
+      { href: '/dashboard/conversations',     label: 'Conversas', icon: Inbox,     badge: 'teams' },
+      { href: '/dashboard/workflows',         label: 'Workflows', icon: Workflow,  badge: 'teams' },
+      { href: '/dashboard/threads/campaigns', label: 'Campanhas', icon: Megaphone, badge: 'teams' },
+    ],
+  },
+  {
+    // Capacidades que os agentes de um time usam (era "Plataforma").
+    label: 'Capacidades',
+    items: [
+      { href: '/dashboard/agents',       label: 'Agentes de IA', icon: Bot },
+      { href: '/dashboard/skills',       label: 'Skills',        icon: Sparkles },
+      { href: '/dashboard/mcp',          label: 'MCP Servers',   icon: Network },
+      { href: '/dashboard/knowledge',    label: 'Knowledge Base', icon: Database },
+      { href: '/dashboard/models',       label: 'Modelos',       icon: Cpu },
+      { href: '/dashboard/files',        label: 'IDE',           icon: Terminal },
+      { href: '/dashboard/integrations', label: 'Integrações',   icon: Plug },
     ],
   },
   {
@@ -97,7 +107,6 @@ const menuSections: MenuSection[] = [
     items: [
       { href: '/dashboard/threads/calendar',  label: 'Calendário', icon: CalendarDays },
       { href: '/dashboard/threads/analytics', label: 'Analytics',  icon: BarChart2 },
-      { href: '/dashboard/threads/campaigns', label: 'Campanhas',  icon: Megaphone },
     ],
   },
   {
@@ -297,6 +306,21 @@ export function Sidebar() {
                     >
                       <Icon className="h-4.5 w-4.5 flex-shrink-0 h-[18px] w-[18px]" />
                       {!collapsed && <span className="truncate">{item.label}</span>}
+                      {!collapsed && item.badge === 'principal' && (
+                        <span className="ml-auto rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide bg-gradient-to-r from-purple-500/25 to-blue-500/25 text-purple-200 border border-purple-400/30">
+                          Principal
+                        </span>
+                      )}
+                      {!collapsed && item.badge === 'teams' && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="ml-auto flex items-center text-purple-400/70">
+                              <Users2 className="h-3.5 w-3.5" />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="right">Powered by Teams</TooltipContent>
+                        </Tooltip>
+                      )}
                     </Link>
                   )
 
