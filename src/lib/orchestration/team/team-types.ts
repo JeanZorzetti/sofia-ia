@@ -65,6 +65,28 @@ export interface ReviewVerdict {
   reason?: string
 }
 
+/** G2 (graph mode): the next action a task needs this turn, derived per-task by
+ *  the agenda state-machine (`deriveTaskAction`). Mirrors agent-teams-ai's
+ *  `agenda.js`. Additive — linear mode (`runTeam`) never reads it. */
+export type TaskAction =
+  | 'wait_dependency' // deps not all `done` → task is parked in `blocked`
+  | 'assign_owner'    // no `assigneeId` → the Lead owns the assignment
+  | 'review'          // status `review` → the Reviewer owns it
+  | 'apply_changes'   // rejected-but-retry (`todo` + `reviewNote` + `retryCount>0`) → the owner re-runs
+  | 'execute'         // ready to run (deps done, has owner) → the owner runs it
+  | 'terminal'        // `done` / `rejected` → no further action
+
+/** Who acts on a task this turn. `owner` = the task's `assigneeId` (a worker). */
+export type TaskActionOwner = 'lead' | 'owner' | 'reviewer' | 'none'
+
+/** One derived agenda entry: a task plus what to do with it and who acts.
+ *  `buildAgenda` produces these; the graph loop routes each to its owner. */
+export interface AgendaItem {
+  task: TaskRow
+  nextAction: TaskAction
+  actionOwner: TaskActionOwner
+}
+
 /** One shell command executed inside a sandbox during a code-run (Sub-projeto C). */
 export interface CommandRun {
   cmd: string

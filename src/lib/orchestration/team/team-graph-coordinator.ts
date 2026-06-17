@@ -4,16 +4,20 @@
 // Forked from runTeam (team-coordinator.ts) at G1. The linear coordinator stays
 // INTACT (the program-wide invariant); this sibling adds DAG behaviour
 // incrementally:
-//   G1 — task dependencies (THIS fatia): a task executes only once all its
-//        `dependsOn` tasks are `done`; otherwise it is parked in `blocked` and
-//        picked up in a later turn. The settle never completes while a blocked
-//        task is still pending.
-//   G2 — agenda state-machine (deriveTaskAction → nextAction/actionOwner)
+//   G1 — task dependencies: a task executes only once all its `dependsOn` tasks
+//        are `done`; otherwise it is parked in `blocked`.
+//   G2 — agenda state-machine (THIS fatia): the per-turn loop no longer runs
+//        fixed phases with inline gating. Instead `buildAgenda(board)` derives
+//        per task {nextAction, actionOwner} (deriveTaskAction in
+//        team-graph-agenda.ts) and each bucket is routed to its owner — Lead
+//        plans, owners execute/apply_changes, the reviewer reviews,
+//        wait_dependency tasks park in `blocked`. This is behaviour-preserving:
+//        the same gating/execution/review decisions, derived instead of inlined,
+//        so a graph run settles to the SAME terminal state (hard regression).
 //   G3 — parallel agendas (fan-out/fan-in with a concurrency cap)
 //
-// Everything other than (a) resolving `[after:#n]` deps at task creation and
-// (b) gating execution on those deps is byte-for-byte the linear loop, so a
-// graph team WITHOUT dependencies behaves identically to the linear one.
+// Execution stays SEQUENTIAL here (parallelism is G3). A graph team WITHOUT
+// dependencies still behaves identically to the linear one.
 import type { ChatResult, LeadAction, TaskRow } from './team-types'
 import type { TeamStore } from './team-store'
 // type-only: reuse the linear coordinator's deps shape AS-IS (store + chat +
@@ -21,7 +25,8 @@ import type { TeamStore } from './team-store'
 import type { RunTeamDeps } from './team-coordinator'
 import { parseLeadActions, parseReviewVerdict } from './team-protocol'
 import { buildLeadContext, buildTaskPrompt, buildReviewPrompt, buildConsolidationPrompt } from './team-prompts'
-import { resolveAssignee, isBoardSettled, isRateLimit, depsSatisfied } from './team-board'
+import { resolveAssignee, isBoardSettled, isRateLimit } from './team-board'
+import { buildAgenda } from './team-graph-agenda'
 
 const COST_PER_1M_TOKENS = 0.5
 
@@ -125,19 +130,26 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
         boardNow = await store.listTasks(runId)
       }
 
-      // ── EXECUTION (Workers) — G1 dependency gating ──
-      // A task runs only when ALL its deps are `done`. Eligible = todo/blocked
-      // tasks assigned to a worker whose deps are satisfied; the rest with unmet
-      // deps are parked in `blocked` (so the Lead/UI sees them and the board stays
-      // unsettled), to be re-evaluated next turn once their deps complete.
+      // ── AGENDA (G2): derive {nextAction, actionOwner} per task and route ──
+      // Replaces the fixed gate→execute→review phases with agenda-driven routing.
+      // One snapshot drives PARK + EXECUTE (mirrors G1, which used `boardNow` for
+      // both gating and `runnable`); REVIEW re-derives from a fresh board because
+      // the workers below produce new `review` tasks within this same turn.
       const assignedToWorker = (t: TaskRow) => !!t.assigneeId && workers.some(w => w.id === t.assigneeId)
-      const pending = boardNow.filter(t => (t.status === 'todo' || t.status === 'blocked') && assignedToWorker(t))
-      for (const t of pending) {
-        if (!depsSatisfied(t, boardNow) && t.status !== 'blocked') {
-          await store.updateTask(t.id, { status: 'blocked' })
-        }
+      const agenda = buildAgenda(boardNow)
+
+      // PARK: wait_dependency tasks → `blocked` (deps not all `done`), unless
+      // already blocked. Keeps the board unsettled so the run waits on the dep.
+      for (const { task } of agenda.filter(i => i.nextAction === 'wait_dependency')) {
+        if (task.status !== 'blocked') await store.updateTask(task.id, { status: 'blocked' })
       }
-      const runnable = pending.filter(t => depsSatisfied(t, boardNow))
+
+      // EXECUTE / APPLY_CHANGES: the owner (a worker) runs the task. apply_changes
+      // is the retry re-queue — same worker path, the reviewNote rides in the
+      // prompt. Board order preserved (= position), so deps run before dependents.
+      const runnable = agenda
+        .filter(i => (i.nextAction === 'execute' || i.nextAction === 'apply_changes') && assignedToWorker(i.task))
+        .map(i => i.task)
       for (const t of runnable) {
         if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
         const worker = workers.find(w => w.id === t.assigneeId)!
@@ -164,9 +176,12 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
         })
       }
 
-      // ── REVIEW (Reviewer) ──
+      // ── REVIEW (Reviewer) ── agenda re-derived: the workers above just moved
+      // tasks into `review` this turn, so the bucket must reflect the fresh board.
       if (reviewer) {
-        const toReview = (await store.listTasks(runId)).filter(t => t.status === 'review')
+        const toReview = buildAgenda(await store.listTasks(runId))
+          .filter(i => i.nextAction === 'review')
+          .map(i => i.task)
         // C3: capture the working-tree diff ONCE per review pass (it's the same
         // accumulated state for every task being reviewed this turn). Best-effort:
         // a diff failure must never block the gate, so fall back to [] (text-only).
