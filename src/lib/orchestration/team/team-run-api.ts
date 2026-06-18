@@ -1,12 +1,14 @@
 // HTTP↔domínio para as rotas de disparo de Team run por API key (SP4).
 // Mantém as rotas finas e dá um ponto puro testável. Reusado pela rota de sessão (status map).
 import type { TeamRunMode, TeamRunErrorCode } from './start-team-run'
+import type { GitMode } from '@/lib/git/git-delivery-plan'
 
 export interface ParsedTeamRunBody {
   mission: string          // já trimado; '' se ausente (startTeamRun lança missing_mission)
   mode: TeamRunMode        // 'code' só se body.mode === 'code', senão 'chat'
   repoUrl: string | null
   base: string | null
+  gitMode: GitMode | null  // S3.1: só 'direct' é aceito; qualquer outra coisa → null = legado 'pr'
 }
 
 function str(v: unknown): string {
@@ -26,6 +28,7 @@ export function parseTeamRunBody(body: unknown): ParsedTeamRunBody {
     mode,
     repoUrl: str(b.repoUrl) || null,
     base: str(b.base) || null,
+    gitMode: b.gitMode === 'direct' ? 'direct' : null,
   }
 }
 

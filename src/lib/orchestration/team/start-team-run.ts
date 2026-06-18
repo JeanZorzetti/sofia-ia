@@ -13,6 +13,10 @@ export type StartTeamRunInput = {
   userId: string
   repoUrl?: string | null
   base?: string | null
+  /** S3.1: git delivery mode for code-runs. 'direct' = commit na base sem PR;
+   *  qualquer outra coisa (null/'pr'/lixo) = legado (branch + PR draft). Sanitizado
+   *  no create (só grava 'direct' ou null). Inerte em chat-runs. */
+  gitMode?: string | null
   /** Phase 1 (Teams subordination): optional same-process hook fired after a
    *  CHAT-run completes (right after output webhooks). Lets a caller ingest the
    *  run output — e.g. Threads campaigns → posts — without a self-webhook
@@ -63,7 +67,9 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
   }
 
   const run = await prisma.teamRun.create({
-    data: { teamId, mission, status: 'pending', mode, repoUrl, baseBranch },
+    // gitMode sanitized at the single write point: only 'direct' or null ever lands
+    // in the column (never junk / never overflows VarChar(20)). null = legacy 'pr'.
+    data: { teamId, mission, status: 'pending', mode, repoUrl, baseBranch, gitMode: input.gitMode === 'direct' ? 'direct' : null },
   })
 
   if (mode === 'code') {

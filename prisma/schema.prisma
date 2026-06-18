@@ -1275,6 +1275,7 @@ model TeamRun {
   repoUrl       String?   @map("repo_url") @db.Text         // resolved repo (Team.config default or per-run override)
   baseBranch    String?   @map("base_branch") @db.VarChar(255) // PR target branch (default: main)
   branch        String?   @db.VarChar(255)                  // working branch: polaris/run-<id>
+  gitMode       String?   @map("git_mode") @db.VarChar(20)  // S3.1: 'pr' (default/legado: branch + PR draft) | 'direct' (commit na base, sem PR). null = legado = 'pr'.
   commitSha     String?   @map("commit_sha") @db.VarChar(64)
   prUrl         String?   @map("pr_url") @db.Text
   prNumber      Int?      @map("pr_number")

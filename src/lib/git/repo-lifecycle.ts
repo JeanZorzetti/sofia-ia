@@ -349,7 +349,13 @@ export async function setupRepo(sandbox: Sandbox, input: SetupRepoInput): Promis
     effectiveBase = (await run(sandbox, `git -C ${wd} rev-parse --abbrev-ref HEAD`, 'default-branch')).trim()
   }
 
-  await run(sandbox, `git -C ${wd} checkout -b ${shQuote(branch)}`, 'checkout')
+  // Working branch: create it UNLESS the caller asked to work on the base itself.
+  // Direct mode (S3.1) passes branch === base → stay on the cloned base branch (no
+  // new branch). PR mode passes branch = polaris/run-<id> (never equal to a base name),
+  // so this stays byte-identical to the pre-S3.1 behavior.
+  if (branch !== base) {
+    await run(sandbox, `git -C ${wd} checkout -b ${shQuote(branch)}`, 'checkout')
+  }
   await run(sandbox, `git -C ${wd} config user.name ${shQuote(authorName)}`, 'config name')
   await run(sandbox, `git -C ${wd} config user.email ${shQuote(authorEmail)}`, 'config email')
   return { base: effectiveBase }

@@ -23,6 +23,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       userId: auth.id,
       repoUrl: body?.repoUrl,
       base: body?.base,
+      gitMode: body?.gitMode, // S3.1: sanitized in startTeamRun (only 'direct' | null persists)
     })
 
     return NextResponse.json(

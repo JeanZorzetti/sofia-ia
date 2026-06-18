@@ -23,6 +23,7 @@ import { primaryClaudeToken, loadClaudeTokens } from '@/lib/ai/claude-token-pool
 import { getSandboxProvider } from '@/lib/sandbox'
 import type { Sandbox } from '@/lib/sandbox/types'
 import { setupRepo, commitAndPush, openPullRequest, buildPrBody, captureWorkingDiff } from '@/lib/git/repo-lifecycle'
+import { planGitDelivery } from '@/lib/git/git-delivery-plan'
 import { dispatchTeamOutputs } from '@/lib/orchestration/team/team-outputs'
 
 const concurrency = Number(process.env.CODE_RUN_CONCURRENCY ?? 2)
@@ -62,27 +63,33 @@ function buildPrTitle(mission: string): string {
 
 /** C1 git lifecycle around runTeam. Throws only for setup failures (so the job is
  *  marked failed); teardown failures are recorded but don't crash the job. */
-async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, baseBranch: string | null): Promise<void> {
+async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, baseBranch: string | null, gitMode: string | null): Promise<void> {
   const token = process.env.GITHUB_TOKEN
   if (!token) {
     await failRun(runId, 'GITHUB_TOKEN não configurada no worker — code-runs com repositório precisam dela')
     return
   }
   const base = baseBranch || 'main'
-  const branch = `polaris/run-${runId}`
+  // S3.1: single source of truth for branch + open-PR. 'pr' (default/legado) →
+  // working branch + draft PR; 'direct' → commit straight to the base, no PR.
+  const plan = planGitDelivery(gitMode, { runId, base })
 
   // SETUP — clone + branch. Failure here means the run can't start.
   // setupRepo returns the EFFECTIVE base (the repo's real default if `base` is absent).
+  // In direct mode plan.branch === base → setupRepo stays on the cloned base (no new branch).
   let effectiveBase = base
   try {
     const setup = await setupRepo(sandbox, {
-      repoUrl, token, branch, base, workdir: WORKDIR, authorName: AUTHOR_NAME, authorEmail: AUTHOR_EMAIL,
+      repoUrl, token, branch: plan.branch, base, workdir: WORKDIR, authorName: AUTHOR_NAME, authorEmail: AUTHOR_EMAIL,
     })
     effectiveBase = setup.base
   } catch (e) {
     await failRun(runId, `Setup do repositório falhou: ${(e as Error)?.message ?? e}`)
     return
   }
+  // Direct mode: the working branch follows the EFFECTIVE base (the repo's real
+  // default may differ from the requested base). PR mode: the run branch.
+  const branch = plan.openPr ? plan.branch : effectiveBase
   await prisma.teamRun
     .update({ where: { id: runId }, data: { sandboxId: sandbox.id, branch, baseBranch: effectiveBase } })
     .catch(() => {})
@@ -112,6 +119,18 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
       await prisma.teamRun
         .update({ where: { id: runId }, data: { changedFiles: [] as unknown as Prisma.InputJsonValue } })
         .catch(() => {})
+      return
+    }
+    // Direct mode (S3.1): the push already landed on the base. Persist the diff +
+    // commit for the delivery panel, but DON'T open a PR (prUrl/prNumber stay null).
+    if (!plan.openPr) {
+      await prisma.teamRun.update({
+        where: { id: runId },
+        data: {
+          commitSha: result.commitSha,
+          changedFiles: result.changedFiles as unknown as Prisma.InputJsonValue,
+        },
+      })
       return
     }
     const tasks = await prisma.teamTask.findMany({
@@ -146,12 +165,12 @@ const worker = new Worker<CodeRunJob>(
     const { runId } = job.data
     console.log(`[worker] starting code-run ${runId}`)
     const run = await prisma.teamRun.findUnique({
-      where: { id: runId }, select: { repoUrl: true, baseBranch: true },
+      where: { id: runId }, select: { repoUrl: true, baseBranch: true, gitMode: true },
     })
     const sandbox = await getSandboxProvider().create({ timeoutMs: SANDBOX_TIMEOUT_MS, templateId: SANDBOX_TEMPLATE })
     try {
       if (run?.repoUrl) {
-        await runWithRepo(sandbox, runId, run.repoUrl, run.baseBranch)
+        await runWithRepo(sandbox, runId, run.repoUrl, run.baseBranch, run.gitMode)
       } else {
         // C0 path: no repo — just run shell in a sandbox.
         await prisma.teamRun
