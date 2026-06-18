@@ -83,13 +83,17 @@ async function main() {
   // ── isClaudeRateLimit ─────────────────────────────────────────────────
   console.log('isClaudeRateLimit')
   {
-    for (const s of ['You hit your limit', 'rate limit exceeded', 'usage limit reached', 'HTTP 429', 'out of quota']) {
+    for (const s of [
+      'You hit your limit', 'rate limit exceeded', 'usage limit reached', 'HTTP 429', 'out of quota',
+      "You've hit your session limit · resets 5pm (UTC)",  // the real banner from prod
+      "You've hit your weekly limit", '5-hour limit reached', 'Too Many Requests',
+    ]) {
       assert.equal(isClaudeRateLimit(s), true, s)
     }
-    for (const s of ['compilation error', 'file not found', '', undefined, null]) {
+    for (const s of ['compilation error', 'file not found', 'added a rate limiter component', '', undefined, null]) {
       assert.equal(isClaudeRateLimit(s), false, String(s))
     }
-    ok('matches limit phrases, ignores others/empty/null')
+    ok('matches real limit banners (incl. "session limit"), ignores "rate limiter"/empty/null')
   }
 
   // ── withClaudeTokenFailover ───────────────────────────────────────────
@@ -176,7 +180,24 @@ async function main() {
     assert.equal(result.message, 'done')
     assert.equal(sb.execCalls[0].opts?.env?.CLAUDE_CODE_OAUTH_TOKEN, 'tokA')
     assert.equal(sb.execCalls[1].opts?.env?.CLAUDE_CODE_OAUTH_TOKEN, 'tokB')
-    ok('rate-limited sandbox run throws → failover reruns with next account token')
+    ok('rate-limited sandbox run (exit≠0) throws → failover reruns with next account token')
+  }
+  {
+    // THE real prod bug: CLI returns the limit banner as RESULT text with exit 0.
+    setEnv({ CLAUDE_CODE_OAUTH_TOKENS: 'tokA,tokB' })
+    const banner = '{"type":"result","subtype":"success","result":"You have hit your session limit, resets 5pm (UTC)","usage":{"input_tokens":0,"output_tokens":0}}'
+    const okStream = '{"type":"result","subtype":"success","result":"landing pronta","usage":{"input_tokens":1,"output_tokens":1}}'
+    const sb = fakeSandbox([
+      { stdout: banner, stderr: '', exitCode: 0, ms: 1 },   // tokA: limit banner, exit 0
+      { stdout: okStream, stderr: '', exitCode: 0, ms: 1 },  // tokB: real result
+    ])
+    const result = await withClaudeTokenFailover(
+      (token) => runClaudeInSandbox(sb, { workdir: '/r', model: 'claude-sonnet-4-6', prompt: 'p', token: token ?? '' }),
+      { isLimited: (e) => e instanceof ClaudeRateLimitError },
+    )
+    assert.equal(result.message, 'landing pronta')
+    assert.equal(sb.execCalls[1].opts?.env?.CLAUDE_CODE_OAUTH_TOKEN, 'tokB')
+    ok('exit-0 limit BANNER in result → throws → failover rotates (the prod bug)')
   }
 
   // ── coordinator contract: isRateLimit() recognizes the failover error ──

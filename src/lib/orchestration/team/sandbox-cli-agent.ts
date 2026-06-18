@@ -153,6 +153,13 @@ export async function runClaudeInSandbox(sandbox: Sandbox, input: RunClaudeInSan
 
   const parsed = parseStreamJson(res.stdout)
 
+  // The CLI may also emit the limit banner as its RESULT text with exit 0
+  // (e.g. "You've hit your session limit · resets 5pm (UTC)"). Treat that as a
+  // rate-limit too so the failover rotates accounts instead of "delivering" it.
+  if (isClaudeRateLimit(parsed.message)) {
+    throw new ClaudeRateLimitError(parsed.message.slice(0, 500))
+  }
+
   const message =
     parsed.message ||
     (res.exitCode !== 0

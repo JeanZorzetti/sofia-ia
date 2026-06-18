@@ -97,7 +97,11 @@ export function availableTokens(): { index: number; token: string }[] {
 }
 
 // ── rate-limit detection (single source of truth) ─────────────────────────────
-const RATE_LIMIT_RE = /rate limit|usage limit|hit your limit|429|quota/i
+// Matches the REAL Claude Code limit messages, which can arrive on stderr OR as the
+// success output itself (exit 0), e.g. "You've hit your session limit · resets 5pm
+// (UTC)". Word boundaries avoid false positives like "rate limiter".
+const RATE_LIMIT_RE =
+  /\brate[\s_-]?limit\b|\b(usage|session|weekly|daily|hourly|opus|sonnet)\s+limit\b|hit your .{0,30}?\blimit\b|\blimit reached\b|reached your .{0,30}?\blimit\b|too many requests|\b429\b|\bquota\b|resets?\b[^.\n]{0,20}\(utc\)/i
 
 export function isClaudeRateLimit(text: string | undefined | null): boolean {
   return !!text && RATE_LIMIT_RE.test(text)

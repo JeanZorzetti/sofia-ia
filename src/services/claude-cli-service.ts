@@ -107,7 +107,16 @@ export class ClaudeCliService {
                             return;
                         }
                     }
-                    resolve(this.parseResult(stdoutData));
+                    const result = this.parseResult(stdoutData);
+                    // The CLI prints the session/usage-limit banner to STDOUT with exit 0
+                    // (e.g. "You've hit your session limit · resets 5pm (UTC)"). Detect it
+                    // in the content and reject so the token-pool failover rotates accounts
+                    // instead of returning the banner as the agent's answer.
+                    if (isClaudeRateLimit(result.content)) {
+                        reject(new Error(result.content.slice(0, 300) || 'Claude usage limit'));
+                        return;
+                    }
+                    resolve(result);
                 });
 
                 // Feed the user prompt via stdin (cross-platform, no length limit).
