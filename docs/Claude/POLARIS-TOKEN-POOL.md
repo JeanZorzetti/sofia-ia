@@ -41,9 +41,10 @@ caminho:
 ```
 CLAUDE_CODE_OAUTH_TOKENS=sk-ant-oat-conta1,sk-ant-oat-conta2,sk-ant-oat-conta3
 ```
-- Aceita lista separada por **vírgula ou nova-linha**.
-- Alternativas: `CLAUDE_CODE_OAUTH_TOKEN_1/_2/_3` (numerado) ou o antigo `CLAUDE_CODE_OAUTH_TOKEN`
-  (1 conta — comportamento de antes).
+- Aceita lista separada por **vírgula ou nova-linha** (sem espaços é o ideal).
+- ⚠️ É **`CLAUDE_CODE_OAUTH_TOKENS`** (plural, com **S**). Por robustez, o singular
+  `CLAUDE_CODE_OAUTH_TOKEN` também aceita uma lista com vírgula (erro comum), mas prefira o plural.
+- Alternativa: `CLAUDE_CODE_OAUTH_TOKEN_1/_2/_3` (numerado).
 - Opcional: `CLAUDE_TOKEN_COOLDOWN_MS` (default `18000000` = 5h).
 
 Redeploy os dois serviços.

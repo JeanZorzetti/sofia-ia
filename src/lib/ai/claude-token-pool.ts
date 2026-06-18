@@ -42,7 +42,12 @@ export function loadClaudeTokens(): string[] {
 
   if (out.length === 0) {
     const single = process.env.CLAUDE_CODE_OAUTH_TOKEN
-    if (single && single.trim()) out.push(single.trim())
+    if (single && single.trim()) {
+      // Forgiving: accept a comma/newline list here too — a common mistake is using
+      // the SINGULAR var name for the pool. OAuth tokens never contain commas, so
+      // splitting a lone token is a no-op.
+      out.push(...single.split(/[,\n]/).map((s) => s.trim()).filter(Boolean))
+    }
   }
 
   _cached = [...new Set(out)] // de-dup, preserve order

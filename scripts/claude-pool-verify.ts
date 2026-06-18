@@ -62,6 +62,12 @@ async function main() {
     ok('single token (back-compat)')
   }
   {
+    // footgun-proof: singular var name holding a comma-list is also accepted
+    setEnv({ CLAUDE_CODE_OAUTH_TOKEN: 'a,b,c' })
+    assert.deepEqual(loadClaudeTokens(), ['a', 'b', 'c'])
+    ok('singular var with comma-list is accepted too (common mistake)')
+  }
+  {
     setEnv({})
     assert.deepEqual(loadClaudeTokens(), [])
     assert.equal(hasClaudeTokenPool(), false)
