@@ -10,6 +10,27 @@ export type RunStatus =
   | 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'rate_limited'
 export type MessageKind = 'message' | 'assignment' | 'review' | 'system'
 
+/** Per-member tool-capability policy (Teams V2 — Tema A, fatia S1.1).
+ *  Persisted in `TeamMember.capabilities` (Json), shape inspired by agent-teams-ai's
+ *  `TeamMemberMcpPolicy`. Lets a team scope *which* tools each member may actually
+ *  execute, independent of what the underlying `Agent` "knows".
+ *
+ *  Every field is OPTIONAL: an absent/null policy means "legacy behavior" — the
+ *  coder-model gate in `chatWithAgent` decides, exactly as before. S1.1 only PLUMBS
+ *  this end-to-end (member → ChatOptions → chatWithAgent reads/logs it); the gate is
+ *  re-wired to honor it in S1.2. */
+export interface CapabilityPolicy {
+  /** Master switch: enable provider-side tool execution (function calling) for this
+   *  member even when the model isn't a coder model. Absent → legacy gate. */
+  tools?: boolean
+  /** Restrict MCP execution to these `AgentMcpServer` ids. Absent → no MCP filter. */
+  mcpAllowlist?: string[]
+  /** Enable tool-skills (function-calling skills). Absent → legacy gate. */
+  toolSkills?: boolean
+  /** Enable the read-only filesystem tools. Absent → legacy gate. */
+  filesystem?: boolean
+}
+
 /** A resolved roster member (joins TeamMember + Agent.name). */
 export interface MemberCtx {
   id: string          // TeamMember.id
@@ -18,6 +39,9 @@ export interface MemberCtx {
   role: TeamRole
   model: string | null
   effort: string | null
+  /** S1.1: per-member capability policy (`TeamMember.capabilities` Json). Null/absent
+   *  → legacy behavior. The coordinator forwards this to `ChatOptions`; S1.2 enforces. */
+  capabilities?: CapabilityPolicy | null
 }
 
 /** Board card as the coordinator sees it. */
@@ -150,6 +174,10 @@ export interface ChatOptions {
    *  rawText/useVectorSearch — ignores it and chat-runs stay unaffected. */
   taskId?: string
   runId?: string
+  /** S1.1 (Teams V2 — Tema A): per-member capability policy. The coordinator forwards
+   *  `member.capabilities` here; `chatWithAgent` reads it (S2 enforces the gate).
+   *  Absent → legacy coder-model gate, behavior unchanged. */
+  capabilities?: CapabilityPolicy | null
 }
 
 /** Injectable execution primitive (real impl: chatWithAgent). */

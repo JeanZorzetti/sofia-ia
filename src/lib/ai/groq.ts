@@ -1,5 +1,8 @@
 import Groq from 'groq-sdk'
 import { withClaudeTokenFailover, isClaudeRateLimit } from '@/lib/ai/claude-token-pool'
+// type-only: Teams V2 (S1.1) per-member capability policy. A pure type import — no
+// runtime dependency on the orchestration layer (team-types.ts has none of its own).
+import type { CapabilityPolicy } from '@/lib/orchestration/team/team-types'
 
 let _groq: Groq | null = null
 
@@ -106,9 +109,19 @@ export async function chatWithAgent(
   agentId: string,
   messages: ChatMessage[],
   leadContext?: Record<string, any>,
-  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null; rawText?: boolean }
+  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null; rawText?: boolean; capabilities?: CapabilityPolicy | null }
 ) {
   const { prisma } = await import('@/lib/prisma')
+
+  // S1.1 (Teams V2 — Tema A): a team member may carry a capability policy that scopes
+  // *which* tools it can execute. This slice only PLUMBS it end-to-end (member →
+  // ChatOptions → here); reading it is intentionally INERT so a member without a
+  // policy keeps the exact legacy behavior. S1.2 re-wires the `toolsEnabled` gate
+  // (groq.ts) to honor `tools`/`mcpAllowlist`/`toolSkills`/`filesystem`.
+  const capabilityPolicy: CapabilityPolicy | null = options?.capabilities ?? null
+  if (capabilityPolicy && process.env.DEBUG_TEAM_CAPABILITIES === '1') {
+    console.log(`[chatWithAgent] capability policy received for agent ${agentId} (S1.1 — not yet enforced):`, capabilityPolicy)
+  }
 
   // Buscar agente do banco
   const agent = await prisma.agent.findUnique({

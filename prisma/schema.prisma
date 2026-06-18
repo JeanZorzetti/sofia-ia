@@ -1243,6 +1243,9 @@ model TeamMember {
   role      String   @db.VarChar(20)
   model     String?  @db.VarChar(100)
   effort    String?  @db.VarChar(20)
+  // Teams V2 (S1.1 — Tema A): per-member tool-capability policy (CapabilityPolicy).
+  // Shape: { tools?, mcpAllowlist?, toolSkills?, filesystem? }. Null → legacy gate.
+  capabilities Json?  @map("capabilities")
   position  Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 

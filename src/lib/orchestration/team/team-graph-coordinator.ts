@@ -106,7 +106,7 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
       try {
         leadOut = await chat(lead.agentId, [
           { role: 'user', content: buildLeadContext(mission, board0, msgs0, members) },
-        ], undefined, { model: lead.model, effort: lead.effort })
+        ], undefined, { model: lead.model, effort: lead.effort, capabilities: lead.capabilities })
       } catch (e) {
         if (isRateLimit(e)) { await finish('rate_limited', null, 'Rate limit durante planejamento'); return }
         throw e
@@ -208,7 +208,7 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
             // taskId/runId ride in OPTIONS (not leadContext) so the code-agent can persist
             // partial artifacts mid-loop (C2.1); chatWithAgent ignores unknown option keys.
             // G6: allowClarify is graph-only (OPT-IN) — lets this Worker emit @CLARIFY.
-            out = await chat(worker.agentId, [{ role: 'user', content: buildTaskPrompt(t, t.reviewNote, { allowClarify: true }) }], undefined, { model: worker.model, effort: worker.effort, taskId: t.id, runId })
+            out = await chat(worker.agentId, [{ role: 'user', content: buildTaskPrompt(t, t.reviewNote, { allowClarify: true }) }], undefined, { model: worker.model, effort: worker.effort, taskId: t.id, runId, capabilities: worker.capabilities })
           } catch (e) {
             if (isRateLimit(e)) return { kind: 'rate_limited' }
             return { kind: 'error', error: e as Error }
@@ -269,7 +269,7 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
             }
             let out: ChatResult
             try {
-              out = await chat(reviewer.agentId, [{ role: 'user', content: buildReviewPrompt(t, diff) }], undefined, { model: reviewer.model, effort: reviewer.effort })
+              out = await chat(reviewer.agentId, [{ role: 'user', content: buildReviewPrompt(t, diff) }], undefined, { model: reviewer.model, effort: reviewer.effort, capabilities: reviewer.capabilities })
             } catch (e) {
               if (isRateLimit(e)) return { kind: 'rate_limited' }
               return { kind: 'error', error: e as Error }
@@ -314,7 +314,7 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
         if (await cancelled()) { await finish('cancelled', null, 'Run cancelado pelo usuário'); return }
         let conso: ChatResult
         try {
-          conso = await chat(lead.agentId, [{ role: 'user', content: buildConsolidationPrompt(board) }], undefined, { model: lead.model, effort: lead.effort })
+          conso = await chat(lead.agentId, [{ role: 'user', content: buildConsolidationPrompt(board) }], undefined, { model: lead.model, effort: lead.effort, capabilities: lead.capabilities })
         } catch (e) {
           // Work is done and approved — don't lose it if the final synthesis call fails.
           // Fall back to a partial summary; surface rate-limits as such, else complete.

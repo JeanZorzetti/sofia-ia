@@ -7,6 +7,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import type {
   MemberCtx, TaskRow, MessageRow, TaskStatus, RunStatus, MessageKind, TeamRole, CodeArtifacts,
+  CapabilityPolicy,
 } from './team-types'
 
 export interface LoadedRun {
@@ -135,6 +136,9 @@ export function createPrismaTeamStore(): TeamStore {
           role: m.role as TeamRole,
           model: m.model,
           effort: m.effort,
+          // S1.1: per-member capability policy. The column is a Json blob; coerce to
+          // the policy shape (null when unset → legacy behavior downstream).
+          capabilities: (m.capabilities ?? null) as CapabilityPolicy | null,
         })),
       }
     },
