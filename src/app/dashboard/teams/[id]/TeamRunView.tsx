@@ -14,6 +14,8 @@ import {
 import { TeamOutputsPanel } from './TeamOutputsPanel'
 import { TeamSchedulesPanel } from './TeamSchedulesPanel'
 import { MemberActivityPanel } from './MemberActivityPanel'
+import { buildRunRequest, type RunMode } from './run-request'
+import type { GitMode } from '@/lib/git/git-delivery-plan'
 
 // ReactFlow must be client-only (no SSR) to avoid hydration/measure issues.
 const TeamGraph = dynamic(() => import('./TeamGraph'), { ssr: false })
@@ -32,7 +34,6 @@ interface CommandRun { cmd: string; stdout: string; stderr: string; exitCode: nu
 interface TerminalTask { taskId: string; title: string; artifacts: { commands: CommandRun[] } }
 interface ChangedFile { path: string; status: string; patch?: string; truncated?: boolean; binary?: boolean }
 interface Delivery { repoUrl: string | null; branch: string | null; prUrl: string | null; commitSha: string | null; changedFiles: ChangedFile[] }
-type RunMode = 'chat' | 'code'
 
 const EMPTY_DELIVERY: Delivery = { repoUrl: null, branch: null, prUrl: null, commitSha: null, changedFiles: [] }
 const FILE_STATUS_COLOR: Record<string, string> = {
@@ -72,6 +73,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [history, setHistory] = useState<RunLite[]>([])
   const [mission, setMission] = useState('')
   const [mode, setMode] = useState<RunMode>('chat')
+  const [gitMode, setGitMode] = useState<GitMode>('pr')
   const [runId, setRunId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<BoardTask[]>([])
   const [terminal, setTerminal] = useState<TerminalTask[]>([])
@@ -151,7 +153,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
     try {
       const res = await fetch(`/api/teams/${teamId}/run`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mission, mode }),
+        body: JSON.stringify(buildRunRequest({ mission, mode, gitMode })),
       })
       const json = await res.json()
       if (json.success && json.data?.runId) {
@@ -262,6 +264,36 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
             </span>
           )}
         </div>
+        {/* Git delivery mode (code-runs — Teams V2 S3.2): PR (review on GitHub) vs commit
+            straight to the base. Default PR. Inert in chat-run / code-run C0 (no repo bound),
+            so the toggle is harmless even for a team without a repo (S3.2 gotcha). */}
+        {mode === 'code' && (
+          <div className="flex flex-col gap-1.5">
+            <div className="inline-flex self-start rounded-lg border border-white/10 bg-white/5 p-0.5 text-xs">
+              {([
+                { key: 'pr', label: 'Abrir PR (revisar no GitHub)', Icon: GitPullRequest },
+                { key: 'direct', label: 'Commit direto na main', Icon: GitBranch },
+              ] as const).map(({ key, label, Icon }) => (
+                <button
+                  key={key}
+                  type="button"
+                  disabled={running}
+                  onClick={() => setGitMode(key)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-colors disabled:opacity-50 ${
+                    gitMode === key ? 'bg-blue-500/20 text-blue-300' : 'text-white/50 hover:text-white/80'
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" /> {label}
+                </button>
+              ))}
+            </div>
+            {gitMode === 'direct' && (
+              <span className="inline-flex items-center gap-1 text-[11px] text-amber-400/80">
+                ⚠️ commita direto na main, sem PR — autônomo, sem revisão
+              </span>
+            )}
+          </div>
+        )}
         <textarea
           ref={missionRef}
           className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 resize-y"
