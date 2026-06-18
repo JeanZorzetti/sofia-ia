@@ -13,6 +13,7 @@ import {
 
 import { TeamOutputsPanel } from './TeamOutputsPanel'
 import { TeamSchedulesPanel } from './TeamSchedulesPanel'
+import { MemberActivityPanel } from './MemberActivityPanel'
 
 // ReactFlow must be client-only (no SSR) to avoid hydration/measure issues.
 const TeamGraph = dynamic(() => import('./TeamGraph'), { ssr: false })
@@ -448,6 +449,12 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           </div>
         </div>
       </div>
+
+      {/* Per-member activity (Teams V2 — S2.1): additive section grouping the SSE-delivered
+          messages/tasks by member. No new route/query — derives from state already on the client. */}
+      {team && team.members.length > 0 && (
+        <MemberActivityPanel members={team.members} messages={messages} tasks={tasks} />
+      )}
 
       {/* Run error (failed / rate-limited / git delivery error) */}
       {runError && (
