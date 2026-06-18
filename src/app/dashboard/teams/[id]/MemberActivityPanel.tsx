@@ -10,9 +10,12 @@
 'use client'
 
 import {
-  Crown, Hammer, ShieldCheck, Send, Inbox, Repeat, ListChecks, Users, ArrowRight,
+  Crown, Hammer, ShieldCheck, Send, Inbox, Repeat, ListChecks, Users, ArrowRight, Sparkles, Coins,
 } from 'lucide-react'
 import { computeMemberStats, type MemberLike, type MessageLike, type TaskLike } from './member-stats'
+import { costForModel } from './member-usage'
+
+interface UsageEntry { memberId: string | null; tokens: number }
 
 const ROLE_ICON: Record<string, typeof Crown> = { lead: Crown, worker: Hammer, reviewer: ShieldCheck }
 const ROLE_CHIP: Record<string, string> = {
@@ -40,14 +43,21 @@ function entries(rec: Record<string, number>): [string, number][] {
 }
 
 export function MemberActivityPanel({
-  members, messages, tasks,
+  members, messages, tasks, usageByMember = [],
 }: {
   members: MemberLike[]
   messages: MessageLike[]
   tasks: TaskLike[]
+  usageByMember?: UsageEntry[]
 }) {
   const stats = computeMemberStats(members, messages, tasks)
   if (stats.length === 0) return null
+
+  // Build a lookup from memberId → tokens for the current run.
+  const usageMap = new Map<string, number>()
+  for (const u of usageByMember) {
+    if (u.memberId) usageMap.set(u.memberId, (usageMap.get(u.memberId) ?? 0) + u.tokens)
+  }
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -62,6 +72,9 @@ export function MemberActivityPanel({
           // Keep the timeline short — most recent activity is the most useful for debugging.
           const recent = s.timeline.slice(-6).reverse()
           const idle = s.sent === 0 && s.received === 0 && s.tasks.length === 0
+
+          const memberTokens = usageMap.get(s.memberId) ?? 0
+          const memberCost = costForModel(null, memberTokens) // flat rate per member (model breakdown not available here)
 
           return (
             <div key={s.memberId} className="rounded-lg border border-white/10 bg-white/[0.03] p-3 space-y-3">
@@ -79,6 +92,12 @@ export function MemberActivityPanel({
                 <span className="inline-flex items-center gap-1"><Inbox className="h-3 w-3" />{s.received} rec</span>
                 {s.retries > 0 && (
                   <span className="inline-flex items-center gap-1 text-amber-400/80"><Repeat className="h-3 w-3" />{s.retries} retries</span>
+                )}
+                {memberTokens > 0 && (
+                  <>
+                    <span className="inline-flex items-center gap-1 text-blue-400/70"><Sparkles className="h-3 w-3" />{memberTokens.toLocaleString()} tok</span>
+                    <span className="inline-flex items-center gap-1 text-emerald-400/70"><Coins className="h-3 w-3" />${memberCost.toFixed(4)}</span>
+                  </>
                 )}
               </div>
               {sentKinds.length > 0 && (

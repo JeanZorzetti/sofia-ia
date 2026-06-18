@@ -174,6 +174,10 @@ export interface ChatOptions {
    *  rawText/useVectorSearch — ignores it and chat-runs stay unaffected. */
   taskId?: string
   runId?: string
+  /** S2.2 (Teams V2 — Tema D2): identifies which TeamMember is making this call so
+   *  withUsageTracking can attribute tokens to the correct member. Passthrough only —
+   *  chatWithAgent ignores unknown option keys. */
+  memberId?: string
   /** S1.1 (Teams V2 — Tema A): per-member capability policy. The coordinator forwards
    *  `member.capabilities` here; `chatWithAgent` reads it (S2 enforces the gate).
    *  Absent → legacy coder-model gate, behavior unchanged. */

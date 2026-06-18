@@ -1252,9 +1252,10 @@ model TeamMember {
   team  Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
   agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  assignedTasks TeamTask[]
-  messagesFrom  TeamMessage[] @relation("MessagesFrom")
-  messagesTo    TeamMessage[] @relation("MessagesTo")
+  assignedTasks  TeamTask[]
+  messagesFrom   TeamMessage[] @relation("MessagesFrom")
+  messagesTo     TeamMessage[] @relation("MessagesTo")
+  memberUsages   TeamMemberUsage[]
 
   @@unique([teamId, agentId])
   @@index([teamId])
@@ -1289,9 +1290,10 @@ model TeamRun {
   completedAt   DateTime? @map("completed_at") @db.Timestamptz()
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
-  team     Team          @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  tasks    TeamTask[]
-  messages TeamMessage[]
+  team         Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  tasks        TeamTask[]
+  messages     TeamMessage[]
+  memberUsages TeamMemberUsage[]
 
   @@index([teamId])
   @@index([status])
@@ -1344,4 +1346,23 @@ model TeamMessage {
   @@index([runId])
   @@index([createdAt])
   @@map("team_messages")
+}
+
+// Teams V2 — S2.2: append-only per-call token attribution.
+// One row per successful chat() call. Bounded by (turns × members). Agrega no read.
+// FK de membro é SetNull (roster editado/deletado mid-run não derruba o run).
+model TeamMemberUsage {
+  id        String   @id @default(uuid()) @db.Uuid
+  runId     String   @map("run_id") @db.Uuid
+  memberId  String?  @map("member_id") @db.Uuid
+  model     String?  @db.VarChar(100)
+  tokens    Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  run    TeamRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  member TeamMember? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+
+  @@index([runId])
+  @@index([memberId])
+  @@map("team_member_usage")
 }

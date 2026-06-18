@@ -48,7 +48,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           // message log grows for the whole run. Fetch the run/tasks with a narrow
           // select and only the *new* messages past the cursor (`skip: lastMsgCount`
           // over a stable order) instead of re-reading every message each tick.
-          const [current, newMessages] = await Promise.all([
+          // S2.2: also aggregate token usage per member for the per-member panel.
+          const [current, newMessages, usageRows] = await Promise.all([
             prisma.teamRun.findUnique({
               where: { id: runId },
               select: {
@@ -73,6 +74,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 id: true, fromMemberId: true, toMemberId: true,
                 kind: true, summary: true, content: true, taskId: true,
               },
+            }),
+            prisma.teamMemberUsage.groupBy({
+              by: ['memberId'],
+              where: { runId },
+              _sum: { tokens: true },
             }),
           ])
           if (!current) return
@@ -117,12 +123,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           }
 
           // Status / metrics (+ git delivery fields for code-runs — Sub-projeto C C1)
+          // S2.2: usageByMember aggregated per tick for the per-member panel.
           send('status', {
             status: current.status, output: current.output, error: current.error,
             turnsUsed: current.turnsUsed, tokensUsed: current.tokensUsed,
             estimatedCost: current.estimatedCost, durationMs: current.durationMs,
             repoUrl: current.repoUrl, branch: current.branch, prUrl: current.prUrl,
             commitSha: current.commitSha, changedFiles: current.changedFiles,
+            usageByMember: usageRows.map(r => ({ memberId: r.memberId, tokens: r._sum.tokens ?? 0 })),
           })
 
           // Close on terminal status — but for code-runs bound to a repo, keep the

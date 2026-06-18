@@ -27,6 +27,7 @@ interface RunLite { id: string; status: string; mission: string; createdAt: stri
 interface BoardTask { id: string; title: string; status: string; assigneeId: string | null; retryCount: number; reviewNote: string | null; dependsOn: string[]; resultPreview: string }
 interface Msg { id: string; fromMemberId: string | null; toMemberId: string | null; kind: string; summary: string | null; content: string; taskId: string | null }
 interface Metrics { turnsUsed: number | null; tokensUsed: number | null; estimatedCost: number | null; durationMs: number | null }
+interface MemberUsageEntry { memberId: string | null; tokens: number }
 interface CommandRun { cmd: string; stdout: string; stderr: string; exitCode: number; ms: number }
 interface TerminalTask { taskId: string; title: string; artifacts: { commands: CommandRun[] } }
 interface ChangedFile { path: string; status: string; patch?: string; truncated?: boolean; binary?: boolean }
@@ -80,6 +81,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [output, setOutput] = useState<string | null>(null)
   const [runError, setRunError] = useState<string | null>(null)
   const [metrics, setMetrics] = useState<Metrics>({ turnsUsed: null, tokensUsed: null, estimatedCost: null, durationMs: null })
+  const [usageByMember, setUsageByMember] = useState<MemberUsageEntry[]>([])
   const [running, setRunning] = useState(false)
   const esRef = useRef<EventSource | null>(null)
   const feedRef = useRef<HTMLDivElement | null>(null)
@@ -122,6 +124,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
     esRef.current?.close()
     setTasks([]); setMessages([]); setOutput(null); setRunError(null); setTerminal([]); setDelivery(EMPTY_DELIVERY)
     setMetrics({ turnsUsed: null, tokensUsed: null, estimatedCost: null, durationMs: null })
+    setUsageByMember([])
     setRunning(assumeRunning)
     const es = new EventSource(`/api/teams/${teamId}/runs/${rid}/stream`)
     esRef.current = es
@@ -136,6 +139,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
         repoUrl: d.repoUrl ?? null, branch: d.branch ?? null, prUrl: d.prUrl ?? null,
         commitSha: d.commitSha ?? null, changedFiles: Array.isArray(d.changedFiles) ? d.changedFiles : [],
       })
+      if (Array.isArray(d.usageByMember)) setUsageByMember(d.usageByMember)
     })
     es.addEventListener('done', () => { es.close(); setRunning(false); loadTeam() })
     es.addEventListener('error', () => { es.close(); setRunning(false) })
@@ -453,7 +457,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
       {/* Per-member activity (Teams V2 — S2.1): additive section grouping the SSE-delivered
           messages/tasks by member. No new route/query — derives from state already on the client. */}
       {team && team.members.length > 0 && (
-        <MemberActivityPanel members={team.members} messages={messages} tasks={tasks} />
+        <MemberActivityPanel members={team.members} messages={messages} tasks={tasks} usageByMember={usageByMember} />
       )}
 
       {/* Run error (failed / rate-limited / git delivery error) */}

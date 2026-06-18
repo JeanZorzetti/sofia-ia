@@ -17,6 +17,7 @@ import type { CodeRunJob } from '@/lib/queue/code-run-queue'
 import { runTeamByTopology } from '@/lib/orchestration/team/team-executor'
 import { createPrismaTeamStore } from '@/lib/orchestration/team/team-store'
 import { createCodeChatFn } from '@/lib/orchestration/team/code-agent'
+import { withUsageTracking } from '@/lib/orchestration/team/member-usage-recorder'
 import { chatWithAgent } from '@/lib/ai/groq'
 import { primaryClaudeToken, loadClaudeTokens } from '@/lib/ai/claude-token-pool'
 import { getSandboxProvider } from '@/lib/sandbox'
@@ -90,7 +91,7 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
   // Share ONE store so the code-agent can stream partial artifacts mid-loop (C2.1).
   // C3: inject getTaskDiff so the reviewer sees the real working-tree diff (vs base).
   const store = createPrismaTeamStore()
-  const codeChat = createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store, claudeToken: CLAUDE_OAUTH_TOKEN })
+  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store, claudeToken: CLAUDE_OAUTH_TOKEN }))
   await runTeamByTopology(runId, {
     store,
     chat: codeChat,
@@ -157,7 +158,7 @@ const worker = new Worker<CodeRunJob>(
           .update({ where: { id: runId }, data: { sandboxId: sandbox.id } })
           .catch(() => {}) // best-effort metadata write
         const store = createPrismaTeamStore()
-        const codeChat = createCodeChatFn(sandbox, baseChat, { store, claudeToken: CLAUDE_OAUTH_TOKEN })
+        const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { store, claudeToken: CLAUDE_OAUTH_TOKEN }))
         await runTeamByTopology(runId, { store, chat: codeChat })
       }
       await dispatchTeamOutputs(runId)

@@ -86,9 +86,10 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
         const { runTeamByTopology } = await import('@/lib/orchestration/team/team-executor')
         const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
         const { chatWithAgent } = await import('@/lib/ai/groq')
+        const { withUsageTracking } = await import('@/lib/orchestration/team/member-usage-recorder')
         await runTeamByTopology(run.id, {
           store: createPrismaTeamStore(),
-          chat: (agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts),
+          chat: withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts)),
         })
         const { dispatchTeamOutputs } = await import('@/lib/orchestration/team/team-outputs')
         await dispatchTeamOutputs(run.id)
@@ -156,9 +157,10 @@ export async function runTeamAndWait(teamId: string, input: RunTeamAndWaitInput)
   const { runTeamByTopology } = await import('@/lib/orchestration/team/team-executor')
   const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
   const { chatWithAgent } = await import('@/lib/ai/groq')
+  const { withUsageTracking } = await import('@/lib/orchestration/team/member-usage-recorder')
   await runTeamByTopology(run.id, {
     store: createPrismaTeamStore(),
-    chat: (agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts),
+    chat: withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts)),
   })
 
   // Output webhooks (SP2) fire for engine runs too — best-effort, never fails the node.
