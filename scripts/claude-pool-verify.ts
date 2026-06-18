@@ -136,6 +136,23 @@ async function main() {
     assert.deepEqual(seen, ['FB'])
     ok('empty pool → single attempt with fallbackToken (back-compat)')
   }
+  {
+    // observability: a rotation emits a [claude-pool] warn line
+    setEnv({ CLAUDE_CODE_OAUTH_TOKENS: 't1,t2,t3' })
+    const logs: string[] = []
+    const orig = console.warn
+    console.warn = (...a: unknown[]) => { logs.push(a.map(String).join(' ')) }
+    try {
+      await withClaudeTokenFailover(
+        async (tok) => { if (tok === 't1') throw new Error('usage limit reached'); return 'ok' },
+        { isLimited: (e) => isClaudeRateLimit(String((e as Error).message)) },
+      )
+    } finally {
+      console.warn = orig
+    }
+    assert.ok(logs.some((l) => l.includes('[claude-pool]') && l.includes('rotacionando')), 'rotation log emitted')
+    ok('failover logs a [claude-pool] rotation line (observability)')
+  }
 
   // ── sandbox integration: rate-limit throws → failover rotates token ────
   console.log('runClaudeInSandbox + failover')

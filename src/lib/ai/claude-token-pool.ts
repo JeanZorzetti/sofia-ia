@@ -134,14 +134,22 @@ export async function withClaudeTokenFailover<T>(
     return run(opts.fallbackToken, 0) // no pool → single attempt (ambient/single token)
   }
 
+  const poolSize = loadClaudeTokens().length
   let lastErr: unknown
-  for (const { index, token } of candidates) {
+  for (let i = 0; i < candidates.length; i++) {
+    const { index, token } = candidates[i]
     try {
       return await run(token, index)
     } catch (err) {
       if (!opts.isLimited(err)) throw err // real failure → surface immediately
       markTokenLimited(index)
       lastErr = err
+      const next = candidates[i + 1]
+      if (next) {
+        console.warn(`[claude-pool] conta #${index + 1} no limite → rotacionando para conta #${next.index + 1} (pool de ${poolSize})`)
+      } else {
+        console.warn(`[claude-pool] todas as ${candidates.length} conta(s) disponíveis no limite — run vai terminar como rate_limited (pool de ${poolSize})`)
+      }
     }
   }
   throw new ClaudeRateLimitError(
