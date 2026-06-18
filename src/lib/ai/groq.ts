@@ -3,6 +3,9 @@ import { withClaudeTokenFailover, isClaudeRateLimit } from '@/lib/ai/claude-toke
 // type-only: Teams V2 (S1.1) per-member capability policy. A pure type import — no
 // runtime dependency on the orchestration layer (team-types.ts has none of its own).
 import type { CapabilityPolicy } from '@/lib/orchestration/team/team-types'
+// Teams V2 (S1.2): pure helpers that resolve the per-member tool gate + scope the tool
+// defs by policy. Extracted so the decision is unit-testable without DB/network.
+import { modelSupportsTools, resolveToolGate, selectApiTools } from '@/lib/ai/model-capabilities'
 
 let _groq: Groq | null = null
 
@@ -411,11 +414,18 @@ Regras:
     try {
       const { getOpenRouterClient } = await import('@/lib/openrouter')
 
-      // Feature Flag: Enable Tools for Coder models (Qwen, DeepSeek Coder, etc)
-      // rawText (code-runs) forces a plain completion — the code-team executes in the
-      // sandbox via @RUN, so provider-side FS tools / code-block writes would be wrong.
+      // Tool gate (Teams V2 — S1.2). The legacy gate enabled tools only for coder models;
+      // now a per-member capability policy can enable them on any tool-capable model (or
+      // disable them entirely). PRESERVED: rawText (code-runs) still forces a plain
+      // completion — the code-team executes in the sandbox via @RUN, so provider-side FS
+      // tools / code-block writes would be wrong. A member WITHOUT a policy → legacy gate.
       const isCoderModel = agent.model.includes('coder') || agent.model.includes('qwen')
-      let toolsEnabled = isCoderModel && !options?.rawText
+      const toolsEnabled = resolveToolGate({
+        capabilities: capabilityPolicy,
+        isCoderModel,
+        rawText: !!options?.rawText,
+        modelSupportsTools: modelSupportsTools(agent.model),
+      })
 
       // HYBRID APPROACH: read-only native tools + code via markdown blocks in text
       let currentSystemPrompt = systemPrompt
@@ -463,20 +473,36 @@ REGRAS PARA ESCREVER CÓDIGO:
           },
         }))
 
-      // MCP tool definitions
-      const mcpToolDefinitions = agentMcpServers.flatMap((ams: typeof agentMcpServers[0]) =>
+      // MCP tool definitions — tagged with the source AgentMcpServer.id (the join row)
+      // so the per-member policy (S1.2) can filter by `mcpAllowlist`. The tool NAME still
+      // uses the sliced McpServer.id (unchanged wire format); only the filter key is the
+      // AgentMcpServer.id.
+      const mcpDefsTagged = agentMcpServers.flatMap((ams: typeof agentMcpServers[0]) =>
         ((ams.mcpServer as any).tools as any[]).map((tool: any) => ({
-          type: 'function' as const,
-          function: {
-            name: `mcp__${(ams.mcpServer as any).id.slice(0, 8)}__${tool.name}`,
-            description: `[MCP: ${(ams.mcpServer as any).name}] ${tool.description || tool.name}`,
-            parameters: tool.inputSchema as Record<string, unknown>,
+          amsId: ams.id as string,
+          def: {
+            type: 'function' as const,
+            function: {
+              name: `mcp__${(ams.mcpServer as any).id.slice(0, 8)}__${tool.name}`,
+              description: `[MCP: ${(ams.mcpServer as any).name}] ${tool.description || tool.name}`,
+              parameters: tool.inputSchema as Record<string, unknown>,
+            },
           },
         }))
       )
 
-      const allTools = [...readOnlyToolDefinitions, ...toolSkillDefinitions, ...mcpToolDefinitions]
-      const apiTools = toolsEnabled ? allTools : undefined
+      // S1.2: scope the tool defs by the member's capability policy. A member WITHOUT a
+      // policy yields the legacy `[...readOnly, ...toolSkills, ...mcp]` array verbatim.
+      // An empty selection (everything scoped out) → no `tools` sent (undefined).
+      const selectedTools = toolsEnabled
+        ? selectApiTools({
+            capabilities: capabilityPolicy,
+            readOnlyDefs: readOnlyToolDefinitions,
+            toolSkillDefs: toolSkillDefinitions,
+            mcpDefs: mcpDefsTagged,
+          })
+        : []
+      const apiTools = selectedTools.length > 0 ? selectedTools : undefined
 
       // ReAct Loop with hybrid approach
       let loopCount = 0
