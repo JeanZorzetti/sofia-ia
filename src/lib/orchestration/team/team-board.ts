@@ -47,7 +47,10 @@ export function depsSatisfied(task: TaskRow, board: TaskRow[]): boolean {
 
 /** Detect provider rate-limit errors (mirrors the orchestration execute route). */
 export function isRateLimit(err: unknown): boolean {
-  const e = err as { message?: string; stderr?: string }
+  const e = err as { name?: string; message?: string; stderr?: string }
+  // Typed signal from the Claude token-pool failover (covers phrases the regex below
+  // doesn't, e.g. "usage limit"/"quota") → finish the run as rate_limited, not failed.
+  if (e?.name === 'ClaudeRateLimitError') return true
   const msg = `${e?.message ?? ''} ${e?.stderr ?? ''}`
   return /hit your limit|rate limit|too many requests|\b429\b/i.test(msg)
 }

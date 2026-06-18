@@ -12,6 +12,7 @@ import type { Sandbox } from '../../sandbox/types'
 import { parseCodeActions } from './code-protocol'
 import { providerOf } from '../../ai/model-availability'
 import { runClaudeInSandbox } from './sandbox-cli-agent'
+import { withClaudeTokenFailover, hasClaudeTokenPool, ClaudeRateLimitError } from '../../ai/claude-token-pool'
 
 const CODE_PROTOCOL_PROMPT = `
 Você está num SANDBOX Linux isolado e efêmero, com shell. Para EXECUTAR algo, responda com diretivas (uma por linha):
@@ -119,11 +120,16 @@ export function createCodeChatFn(
     // @RUN text proxy, which the autonomous CLI ignores (it would edit the worker FS).
     // Lead/reviewer/consolidation turns have no taskId → unaffected (stay text-only).
     const cliModel = chatOptions?.model
-    if (claudeToken && chatOptions?.taskId && cliModel && providerOf(cliModel) === 'claude-cli') {
+    if ((hasClaudeTokenPool() || claudeToken) && chatOptions?.taskId && cliModel && providerOf(cliModel) === 'claude-cli') {
       const firstUser = messages.find(m => m.role === 'user')
       const taskText = firstUser?.content ?? messages.map(m => m.content).join('\n\n')
       const prompt = workdir ? `${CLI_REPO_PREAMBLE}\n\n---\n\n${taskText}` : taskText
-      const result = await runClaudeInSandbox(sandbox, { workdir, model: cliModel, prompt, token: claudeToken })
+      // Token-pool failover: a rate-limited account throws ClaudeRateLimitError → retry
+      // the SAME task with the next account. Pool empty → single attempt with claudeToken.
+      const result = await withClaudeTokenFailover(
+        (token) => runClaudeInSandbox(sandbox, { workdir, model: cliModel, prompt, token: token ?? '' }),
+        { isLimited: (e) => e instanceof ClaudeRateLimitError, fallbackToken: claudeToken },
+      )
       // C2.1 live stream: persist the reconstructed command log so the terminal shows it.
       if (store && result.artifacts) {
         try { await store.updateTask(chatOptions.taskId, { artifacts: { commands: result.artifacts.commands } }) } catch { /* live-stream only */ }

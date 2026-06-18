@@ -1,4 +1,5 @@
 import Groq from 'groq-sdk'
+import { withClaudeTokenFailover, isClaudeRateLimit } from '@/lib/ai/claude-token-pool'
 
 let _groq: Groq | null = null
 
@@ -295,12 +296,18 @@ Regras:
         cliPrompt = `Histórico da conversa até agora:\n${transcript}\n\nResponda à última mensagem do Cliente.`;
       }
 
-      // We now pass system prompt separately to handle large prompts via file
-      const response = await ClaudeCliService.generate(
-        cliPrompt,
-        workingDirectory,
-        systemPrompt,
-        cliModelId || undefined  // Pass model ID (undefined = CLI default)
+      // We now pass system prompt separately to handle large prompts via file.
+      // Token-pool failover: if a subscription hits its limit, retry the SAME call
+      // with the next available account. Pool empty → one ambient attempt (back-compat).
+      const response = await withClaudeTokenFailover(
+        (token) => ClaudeCliService.generate(
+          cliPrompt,
+          workingDirectory,
+          systemPrompt,
+          cliModelId || undefined,  // Pass model ID (undefined = CLI default)
+          token,
+        ),
+        { isLimited: (e) => isClaudeRateLimit(String((e as Error)?.message ?? e)) },
       );
 
       return {

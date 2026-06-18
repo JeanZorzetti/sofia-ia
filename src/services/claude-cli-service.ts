@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import { isClaudeRateLimit } from '@/lib/ai/claude-token-pool';
 
 export class ClaudeCliService {
     /**
@@ -22,7 +23,7 @@ export class ClaudeCliService {
      * pipe fed an empty stdin and the CLI returned nothing.
      * The system prompt is offloaded to a temp file via --system-prompt-file.
      */
-    static async generate(prompt: string, cwd: string = process.cwd(), systemPrompt?: string, modelId?: string): Promise<{ content: string; usage?: any }> {
+    static async generate(prompt: string, cwd: string = process.cwd(), systemPrompt?: string, modelId?: string, oauthToken?: string): Promise<{ content: string; usage?: any }> {
         const tempDir = os.tmpdir();
         const randomId = Math.random().toString(36).substring(2, 15);
 
@@ -60,6 +61,9 @@ export class ClaudeCliService {
                 const env = { ...process.env, CI: 'true' } as NodeJS.ProcessEnv;
                 delete env.ANTHROPIC_API_KEY;
                 delete env.ANTHROPIC_AUTH_TOKEN;
+                // Pin the subscription account for this spawn (token-pool failover).
+                // Absent → inherit the ambient login / single CLAUDE_CODE_OAUTH_TOKEN.
+                if (oauthToken) env.CLAUDE_CODE_OAUTH_TOKEN = oauthToken;
 
                 // shell:true keeps Windows binary resolution (claude.cmd) working;
                 // the prompt is fed via stdin, not via the command line.
@@ -98,7 +102,7 @@ export class ClaudeCliService {
                         console.warn(`Claude CLI non-zero exit. Stderr: ${stderrData}`);
                         // Surface rate/usage limits so the coordinator can react
                         // (mirrors OpencodeCliService).
-                        if (/rate limit|usage limit|hit your limit|429/i.test(stderrData)) {
+                        if (isClaudeRateLimit(stderrData)) {
                             reject(new Error(stderrData.trim() || `Claude CLI rate limit (exit ${code})`));
                             return;
                         }

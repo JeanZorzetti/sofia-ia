@@ -14,6 +14,7 @@
 import type { Sandbox } from '../../sandbox/types'
 import type { ChatResult, CommandRun } from './team-types'
 import { resolveClaudeCliModel } from '../../ai/claude-models'
+import { ClaudeRateLimitError, isClaudeRateLimit } from '../../ai/claude-token-pool'
 
 const PROMPT_PATH = '/tmp/polaris_task.txt'
 const SYS_PATH = '/tmp/polaris_sys.txt'
@@ -142,6 +143,14 @@ export async function runClaudeInSandbox(sandbox: Sandbox, input: RunClaudeInSan
   }
 
   const res = await sandbox.exec(cmd, { cwd: workdir, timeoutMs, env })
+
+  // Rate-limit on THIS account → throw a typed signal so the caller's token-pool
+  // failover retries with the next account. Other (non-limit) failures keep the
+  // existing message-return path below, so their semantics are unchanged.
+  if (res.exitCode !== 0 && (isClaudeRateLimit(res.stderr) || isClaudeRateLimit(res.stdout))) {
+    throw new ClaudeRateLimitError(res.stderr?.slice(0, 500) || `Claude CLI rate limit (exit ${res.exitCode})`)
+  }
+
   const parsed = parseStreamJson(res.stdout)
 
   const message =

@@ -18,6 +18,7 @@ import { runTeamByTopology } from '@/lib/orchestration/team/team-executor'
 import { createPrismaTeamStore } from '@/lib/orchestration/team/team-store'
 import { createCodeChatFn } from '@/lib/orchestration/team/code-agent'
 import { chatWithAgent } from '@/lib/ai/groq'
+import { primaryClaudeToken } from '@/lib/ai/claude-token-pool'
 import { getSandboxProvider } from '@/lib/sandbox'
 import type { Sandbox } from '@/lib/sandbox/types'
 import { setupRepo, commitAndPush, openPullRequest, buildPrBody, captureWorkingDiff } from '@/lib/git/repo-lifecycle'
@@ -33,7 +34,10 @@ const AUTHOR_EMAIL = process.env.GIT_AUTHOR_EMAIL ?? 'polaris@polarisia.com.br'
 // Option B: subscription token for running claude-* members natively inside the
 // sandbox. Threaded into the code-agent; if absent, claude-* workers fall back to
 // the (broken-for-CLI) @RUN proxy.
-const CLAUDE_OAUTH_TOKEN = process.env.CLAUDE_CODE_OAUTH_TOKEN
+// Pool-aware: first token of the pool (or the single env token). The actual
+// per-task rotation happens inside the code-agent via withClaudeTokenFailover;
+// this just seeds the gate/threading so claude-* workers stay enabled.
+const CLAUDE_OAUTH_TOKEN = primaryClaudeToken()
 // Sandbox lifetime — agentic CLI sessions outlast the E2B default (~5 min).
 const SANDBOX_TIMEOUT_MS = Number(process.env.SANDBOX_TIMEOUT_MS ?? 15 * 60_000)
 // Custom E2B template (with claude/git/node pre-installed); undefined → provider base.
