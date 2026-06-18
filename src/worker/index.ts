@@ -18,7 +18,7 @@ import { runTeamByTopology } from '@/lib/orchestration/team/team-executor'
 import { createPrismaTeamStore } from '@/lib/orchestration/team/team-store'
 import { createCodeChatFn } from '@/lib/orchestration/team/code-agent'
 import { chatWithAgent } from '@/lib/ai/groq'
-import { primaryClaudeToken } from '@/lib/ai/claude-token-pool'
+import { primaryClaudeToken, loadClaudeTokens } from '@/lib/ai/claude-token-pool'
 import { getSandboxProvider } from '@/lib/sandbox'
 import type { Sandbox } from '@/lib/sandbox/types'
 import { setupRepo, commitAndPush, openPullRequest, buildPrBody, captureWorkingDiff } from '@/lib/git/repo-lifecycle'
@@ -174,3 +174,4 @@ worker.on('failed', (job: Job<CodeRunJob> | undefined, err: Error) =>
 )
 
 console.log(`[worker] code-run worker online (queue=${CODE_RUN_QUEUE}, concurrency=${concurrency})`)
+console.log(`[worker] claude token pool: ${loadClaudeTokens().length} conta(s) carregada(s) (>=2 habilita failover)`)
