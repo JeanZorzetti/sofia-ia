@@ -45,6 +45,9 @@ export async function createTeamWithRoster(input: CreateTeamInput) {
           model: m.model ?? null,
           effort: m.effort ?? null,
           position: m.position ?? i,
+          // S1.3: persist the policy when present; omit (→ SQL NULL = legacy) otherwise.
+          // `as object` mirrors the `config` cast above (Prisma Json input).
+          capabilities: m.capabilities ? (m.capabilities as object) : undefined,
         })),
       },
     },

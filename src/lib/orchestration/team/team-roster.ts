@@ -1,5 +1,6 @@
 // src/lib/orchestration/team/team-roster.ts
 // Pure validation for a team roster submitted to POST /api/teams.
+import type { CapabilityPolicy } from './team-types'
 
 export interface RosterInput {
   agentId: string
@@ -7,6 +8,10 @@ export interface RosterInput {
   model?: string | null
   effort?: string | null
   position?: number
+  /** S1.3: per-member tool-capability policy persisted to `TeamMember.capabilities`.
+   *  Absent/null → no policy (legacy gate). `validateRoster` stays permissive (no new
+   *  rule); the runtime gate (S1.2) interprets it. */
+  capabilities?: CapabilityPolicy | null
 }
 
 const VALID_ROLES = new Set(['lead', 'worker', 'reviewer'])

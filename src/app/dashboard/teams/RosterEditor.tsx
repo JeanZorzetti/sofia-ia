@@ -2,21 +2,28 @@
 // Shared roster editor used by both create (page.tsx) and edit (EditTeamModal).
 // The model picker reflects availability from /api/models: a colored dot per
 // status and unavailable models disabled (a run with a dead provider fails).
+// S1.3 (Teams V2 — Tema A): per-member tool-capability controls (tri-state Herdar/
+// Ligar/Desligar + MCP multiselect + tool-skills/filesystem toggles). The pure
+// roster<->payload mapping lives in ./roster-mapping so v2s3-verify can test it.
 'use client'
 
-import { useMemo, useState } from 'react'
-import { Cpu, Crown, Hammer, ShieldCheck, Search } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Cpu, Crown, Hammer, ShieldCheck, Search, Wrench, Server } from 'lucide-react'
 import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
+import {
+  INHERIT, rosterToMembers, mcpConnectionToOption,
+  type Role, type RosterRow, type McpOption,
+} from './roster-mapping'
 
-export type Role = 'lead' | 'worker' | 'reviewer'
+// Re-exported so existing importers (page.tsx) keep importing from './RosterEditor'.
+export { INHERIT, rosterToMembers }
+export type { Role, RosterRow }
+
 export type Availability = 'available' | 'unavailable' | 'unknown'
 export interface AgentLite { id: string; name: string }
 export interface ModelOption { id: string; name: string; provider: string; availability?: Availability }
-export interface RosterRow { agentId: string; role: Role; model: string; effort: string }
-
-export const INHERIT = 'inherit'
 
 const EFFORTS = [
   { value: INHERIT, label: 'Effort: auto' },
@@ -33,22 +40,25 @@ const ROLE_CHIP: Record<Role, string> = {
 const ROLE_ICON: Record<Role, typeof Crown> = { lead: Crown, worker: Hammer, reviewer: ShieldCheck }
 const ROLE_LABEL: Record<Role, string> = { lead: 'Lead', worker: 'Worker', reviewer: 'Reviewer' }
 
+// Tri-state tool gate (decision S1.3 #2): Herdar = no policy written (legacy coder gate),
+// Ligar = capabilities.tools:true (reveals MCP/skills/filesystem), Desligar = tools:false.
+type ToolMode = 'inherit' | 'on' | 'off'
+const TOOL_MODE_HINT: Record<ToolMode, string> = {
+  inherit: 'usa o gate padrão (modelo coder)',
+  on: 'habilita function calling neste membro',
+  off: 'desliga todas as ferramentas, mesmo em modelo coder',
+}
+function toolModeOf(row: RosterRow): ToolMode {
+  if (!row.caps) return 'inherit'
+  if (row.caps.tools === false) return 'off'
+  return 'on'
+}
+
 function dotCls(status?: Availability) {
   return status === 'available' ? 'bg-emerald-400'
     : status === 'unavailable' ? 'bg-red-400'
     : status === 'unknown' ? 'bg-amber-400'
     : 'bg-white/30'
-}
-
-/** Build the roster for the API: 'inherit' sentinel → null. */
-export function rosterToMembers(rows: RosterRow[]) {
-  return rows.map((r, i) => ({
-    agentId: r.agentId,
-    role: r.role,
-    model: r.model === INHERIT ? null : r.model,
-    effort: r.effort === INHERIT ? null : r.effort,
-    position: i,
-  }))
 }
 
 export default function RosterEditor({ agents, models, value, onChange }: {
@@ -63,6 +73,28 @@ export default function RosterEditor({ agents, models, value, onChange }: {
 
   const [query, setQuery] = useState('')
 
+  // MCP servers per agent for the multiselect: lazy fetch on first "Ligar", cached by
+  // agentId (decision S1.3 #3). The ref guarantees one fetch per agent even across the
+  // effect re-running (agents can have 0..N servers — no N up-front requests).
+  const [mcpCache, setMcpCache] = useState<Record<string, McpOption[] | 'loading'>>({})
+  const fetchedRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    value.forEach(r => {
+      if (r.caps?.tools === true && !fetchedRef.current.has(r.agentId)) {
+        const agentId = r.agentId
+        fetchedRef.current.add(agentId)
+        setMcpCache(c => ({ ...c, [agentId]: 'loading' }))
+        fetch(`/api/agents/${agentId}/mcp`)
+          .then(res => res.json())
+          .then(j => {
+            const opts = (j?.success && Array.isArray(j.data) ? j.data : []).map(mcpConnectionToOption)
+            setMcpCache(c => ({ ...c, [agentId]: opts }))
+          })
+          .catch(() => setMcpCache(c => ({ ...c, [agentId]: [] })))
+      }
+    })
+  }, [value])
+
   function toggleAgent(agentId: string) {
     onChange(
       value.some(r => r.agentId === agentId)
@@ -72,6 +104,42 @@ export default function RosterEditor({ agents, models, value, onChange }: {
   }
   const patchRow = (agentId: string, patch: Partial<RosterRow>) =>
     onChange(value.map(r => (r.agentId === agentId ? { ...r, ...patch } : r)))
+
+  function setToolMode(agentId: string, mode: ToolMode) {
+    const row = value.find(r => r.agentId === agentId)
+    if (mode === 'inherit') return patchRow(agentId, { caps: undefined })
+    if (mode === 'off') return patchRow(agentId, { caps: { tools: false } })
+    // 'on': keep sub-fields if we were already on, else start minimal { tools:true }.
+    const prev = row?.caps && row.caps.tools !== false ? row.caps : {}
+    patchRow(agentId, { caps: { ...prev, tools: true } })
+  }
+
+  // MCP multiselect: absent allowlist = all servers allowed; toggling normalizes "all
+  // selected" back to absent (byte-identical to legacy: every MCP tool passes).
+  const mcpChecked = (row: RosterRow, amsId: string) => {
+    const allow = row.caps?.mcpAllowlist
+    return allow ? allow.includes(amsId) : true
+  }
+  function toggleMcp(agentId: string, amsId: string, allIds: string[]) {
+    const row = value.find(r => r.agentId === agentId)
+    if (!row?.caps) return
+    const current = row.caps.mcpAllowlist ?? allIds
+    const next = current.includes(amsId) ? current.filter(x => x !== amsId) : [...current, amsId]
+    const caps = { ...row.caps }
+    if (next.length === allIds.length && allIds.every(id => next.includes(id))) delete caps.mcpAllowlist
+    else caps.mcpAllowlist = next
+    patchRow(agentId, { caps })
+  }
+  // toolSkills/filesystem: absent → inherit (included); explicit false → excluded. Keep the
+  // object minimal — checked drops the key, unchecked writes false (matches selectApiTools).
+  function setFlag(agentId: string, key: 'toolSkills' | 'filesystem', enabled: boolean) {
+    const row = value.find(r => r.agentId === agentId)
+    if (!row?.caps) return
+    const caps = { ...row.caps }
+    if (enabled) delete caps[key]
+    else caps[key] = false
+    patchRow(agentId, { caps })
+  }
 
   // Selected agents float to the top so the active roster stays visible no
   // matter how many agents exist; then filter by name. Ordering keys off the
@@ -173,6 +241,87 @@ export default function RosterEditor({ agents, models, value, onChange }: {
                 </Select>
               </div>
             )}
+
+            {row && (() => {
+              const mode = toolModeOf(row)
+              const mcp = mcpCache[a.id]
+              return (
+                <div className="mt-2 pl-7">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="inline-flex items-center gap-1 text-[11px] text-white/40">
+                      <Wrench className="h-3.5 w-3.5" /> Ferramentas
+                    </span>
+                    <Select value={mode} onValueChange={v => setToolMode(a.id, v as ToolMode)}>
+                      <SelectTrigger className={`${triggerCls} w-[120px]`}><SelectValue /></SelectTrigger>
+                      <SelectContent className={contentCls}>
+                        <SelectItem value="inherit">Herdar</SelectItem>
+                        <SelectItem value="on">Ligar</SelectItem>
+                        <SelectItem value="off">Desligar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-[11px] text-white/30">{TOOL_MODE_HINT[mode]}</span>
+                  </div>
+
+                  {mode === 'on' && (
+                    <div className="mt-2 space-y-2.5 rounded-lg border border-white/10 bg-white/[0.02] p-2.5">
+                      <div>
+                        <p className="text-[11px] text-white/40 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                          <Server className="h-3 w-3" /> MCP servers
+                        </p>
+                        {(mcp === undefined || mcp === 'loading') && <p className="text-[11px] text-white/30">Carregando…</p>}
+                        {Array.isArray(mcp) && mcp.length === 0 && (
+                          <p className="text-[11px] text-white/30">Nenhum MCP server configurado neste agente.</p>
+                        )}
+                        {Array.isArray(mcp) && mcp.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {mcp.map(opt => {
+                              const checked = mcpChecked(row, opt.amsId)
+                              return (
+                                <button
+                                  key={opt.amsId}
+                                  type="button"
+                                  onClick={() => toggleMcp(a.id, opt.amsId, mcp.map(o => o.amsId))}
+                                  className={`inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border transition-colors ${
+                                    checked ? 'border-blue-400/40 bg-blue-500/15 text-blue-200' : 'border-white/10 bg-white/5 text-white/40 hover:text-white/70'
+                                  }`}
+                                  title={checked ? 'Permitido — clique para remover' : 'Bloqueado — clique para permitir'}
+                                >
+                                  {opt.name}{opt.toolCount > 0 ? ` · ${opt.toolCount}` : ''}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                        {Array.isArray(mcp) && mcp.length > 0 && (
+                          <p className="text-[10px] text-white/25 mt-1">Todos permitidos = sem restrição. Desmarque para escopar.</p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-4">
+                        <label className="inline-flex items-center gap-1.5 text-[11px] text-white/60 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5 accent-blue-500"
+                            checked={row.caps?.toolSkills !== false}
+                            onChange={e => setFlag(a.id, 'toolSkills', e.target.checked)}
+                          />
+                          Tool-skills
+                        </label>
+                        <label className="inline-flex items-center gap-1.5 text-[11px] text-white/60 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5 accent-blue-500"
+                            checked={row.caps?.filesystem !== false}
+                            onChange={e => setFlag(a.id, 'filesystem', e.target.checked)}
+                          />
+                          Filesystem (read-only)
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         )
       })}

@@ -54,6 +54,8 @@ export const PATCH = withAuth(async (request, auth, { params }: { params: Promis
           data: members.map((m, i) => ({
             teamId: id, agentId: m.agentId, role: m.role,
             model: m.model ?? null, effort: m.effort ?? null, position: m.position ?? i,
+            // S1.3: persist the per-member policy; omit → SQL NULL (legacy gate).
+            capabilities: m.capabilities ? (m.capabilities as object) : undefined,
           })),
         }),
       ])

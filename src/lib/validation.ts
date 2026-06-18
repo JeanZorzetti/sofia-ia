@@ -86,12 +86,23 @@ export const updateAgentSchema = z.object({
 // Permissivo de proposito: `validateRoster`/`createTeamWithRoster` continuam
 // fazendo a validacao de dominio; aqui so garantimos os tipos basicos.
 
+// S1.3 (Teams V2 — Tema A): per-member tool-capability policy. Without this field the
+// `z.object` parse would silently DROP `capabilities` from the payload (z.object strips
+// unknown keys), so nothing would persist. Shape mirrors `CapabilityPolicy` in team-types.
+const capabilityPolicySchema = z.object({
+  tools: z.boolean().optional(),
+  mcpAllowlist: z.array(z.string()).optional(),
+  toolSkills: z.boolean().optional(),
+  filesystem: z.boolean().optional(),
+})
+
 const teamMemberSchema = z.object({
   agentId: z.string(),
   role: z.string(),
   model: z.string().nullish(),
   effort: z.string().nullish(),
   position: z.number().optional(),
+  capabilities: capabilityPolicySchema.nullish(),
 })
 
 export const createTeamSchema = z.object({
