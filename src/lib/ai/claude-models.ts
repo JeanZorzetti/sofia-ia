@@ -5,6 +5,8 @@
 
 const CLAUDE_CLI_MODEL_MAP: Record<string, string | undefined> = {
   'claude-code-cli': undefined, // CLI default → omit --model
+  'claude-opus-4-8': 'claude-opus-4-8',
+  'claude-opus-4-7': 'claude-opus-4-7',
   'claude-opus-4-6': 'claude-opus-4-6',
   'claude-sonnet-4-6': 'claude-sonnet-4-6',
   'claude-opus-4-5': 'claude-opus-4-5-20251101',

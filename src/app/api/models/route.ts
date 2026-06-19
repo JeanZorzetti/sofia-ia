@@ -32,6 +32,8 @@ export async function GET(request: NextRequest) {
             // Ollama (self-hosted, OpenAI-compatible) — no Groq rate limits
             { id: 'ollama/qwen2.5:7b-instruct', name: 'Qwen 2.5 7B Instruct (Ollama)', provider: 'Ollama' },
             // Claude Code CLI models — all available via local CLI with --model flag
+            { id: 'claude-opus-4-8', name: 'Claude Opus 4.8', provider: 'Claude Code' },
+            { id: 'claude-opus-4-7', name: 'Claude Opus 4.7', provider: 'Claude Code' },
             { id: 'claude-opus-4-6', name: 'Claude Opus 4.6', provider: 'Claude Code' },
             { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6', provider: 'Claude Code' },
             { id: 'claude-opus-4-5', name: 'Claude Opus 4.5', provider: 'Claude Code' },
