@@ -10,7 +10,11 @@ export type TeamRole = 'lead' | 'worker' | 'reviewer'
 export type TaskStatus = 'todo' | 'doing' | 'review' | 'done' | 'rejected' | 'blocked' | 'clarify'
 export type RunStatus =
   | 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'rate_limited'
-export type MessageKind = 'message' | 'assignment' | 'review' | 'system'
+// `user` (V2.2 S4): a steering message the human injects while a run is `running`.
+// The Lead surfaces it in its next planning turn (buildLeadContext) — cooperative
+// steering, never interrupts a call in flight. Migration-free: the column is
+// `String @db.VarChar(20)`, so the value just fits.
+export type MessageKind = 'message' | 'assignment' | 'review' | 'system' | 'user'
 
 /** Per-member tool-capability policy (Teams V2 — Tema A, fatia S1.1).
  *  Persisted in `TeamMember.capabilities` (Json), shape inspired by agent-teams-ai's

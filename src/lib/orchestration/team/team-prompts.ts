@@ -68,6 +68,26 @@ export function buildBoardSnapshot(tasks: TaskRow[], messages: MessageRow[]): st
 // never produce `clarify`) and for graph runs with no open doubt — strictly additive.
 const CLARIFY_DIRECTIVE = `@CLARIFY [#n] resposta — responda a uma dúvida pendente de um Worker (use o #id da tarefa em [CLARIFY]); ela volta a ser executada com a sua resposta.`
 
+// V2.2 S4: heading for the live-steering block. Mid-run messages the human injects
+// (`kind:'user'`) surface here so the Lead picks them up in its next planning turn.
+export const USER_STEERING_HEADING = 'Mensagens do usuário durante a execução'
+
+/**
+ * V2.2 S4: render the block of human steering messages (`kind:'user'`) injected
+ * while the run is live. Returns the section lines to splice into the Lead context
+ * BETWEEN the board and the protocol, or `[]` when there are none — so a run with
+ * no injected messages produces a byte-identical legacy context.
+ */
+function buildUserSteeringBlock(messages: MessageRow[]): string[] {
+  const steers = messages.filter(m => m.kind === 'user')
+  if (steers.length === 0) return []
+  const lines = steers.map(m => `- ${(m.content ?? '').trim()}`).join('\n')
+  return [
+    '',
+    `## ${USER_STEERING_HEADING}\n${lines}\n\nLeve estas instruções em conta no seu próximo planejamento.`,
+  ]
+}
+
 export function buildLeadContext(
   mission: string,
   tasks: TaskRow[],
@@ -85,6 +105,9 @@ export function buildLeadContext(
     `## Roster\n${rosterBlock(members)}`,
     '',
     `## Estado atual do board\n${buildBoardSnapshot(tasks, messages)}`,
+    // V2.2 S4: live-steering block (empty array when no `kind:'user'` message → the
+    // output is byte-identical to the legacy context for every existing run).
+    ...buildUserSteeringBlock(messages),
     '',
     `## Protocolo de resposta\n${contract}`,
   ].join('\n')

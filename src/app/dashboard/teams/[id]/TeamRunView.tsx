@@ -94,6 +94,8 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [metrics, setMetrics] = useState<Metrics>({ turnsUsed: null, tokensUsed: null, estimatedCost: null, durationMs: null })
   const [usageByMember, setUsageByMember] = useState<MemberUsageEntry[]>([])
   const [running, setRunning] = useState(false)
+  const [steer, setSteer] = useState('') // S4: live-steering input (message injected mid-run)
+  const [steerSending, setSteerSending] = useState(false)
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null) // S2.2: task whose history timeline is open
   const [highlightId, setHighlightId] = useState<string | null>(null) // S3.2: relation-target task flashed on navigation
   const esRef = useRef<EventSource | null>(null)
@@ -211,6 +213,24 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
     } catch {
       setStatus('failed'); setRunning(false)
     }
+  }
+
+  // S4: inject a steering message into the live run. The Lead surfaces it next turn
+  // (cooperative — never interrupts a call). The SSE stream delivers the persisted
+  // message back into the feed (~1s), so there's no optimistic insert to dedup.
+  async function sendSteer() {
+    const text = steer.trim()
+    if (!text || !runId || steerSending) return
+    setSteerSending(true)
+    try {
+      const res = await fetch(`/api/teams/${teamId}/runs/${runId}/messages`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: text }),
+      })
+      const json = await res.json()
+      if (json.success) setSteer('') // keep the text on failure so the user can retry
+    } catch { /* network error — keep the text for retry */ }
+    finally { setSteerSending(false) }
   }
 
   function selectRun(run: RunLite) {
@@ -545,23 +565,51 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           <div ref={feedRef} className="space-y-2 max-h-[420px] overflow-y-auto custom-scrollbar pr-1">
             {messages.length === 0 && <p className="text-white/30 text-sm">Sem atividade ainda. Dispare uma missão para ver os agentes coordenarem.</p>}
             {messages.map(m => {
-              const Icon = m.kind === 'assignment' ? ClipboardList : m.kind === 'review' ? CheckCircle2 : MessageSquare
+              // S4: a `user` message is human steering injected mid-run — render it
+              // distinctly ("Você → Lead", emerald) so it stands out in the feed.
+              const isUser = m.kind === 'user'
+              const Icon = m.kind === 'assignment' ? ClipboardList : m.kind === 'review' ? CheckCircle2 : isUser ? MessageCircle : MessageSquare
               const tint = m.kind === 'assignment' ? 'text-blue-400 border-blue-400/30'
                 : m.kind === 'review' ? 'text-purple-400 border-purple-400/30'
+                : isUser ? 'text-emerald-400 border-emerald-400/40'
                 : 'text-white/50 border-white/10'
               return (
                 <div key={m.id} className={`rounded-lg border-l-2 bg-white/[0.03] px-3 py-2 ${tint.split(' ')[1]}`}>
                   <div className="flex items-center gap-1.5 text-[11px] text-white/40">
                     <Icon className={`h-3 w-3 ${tint.split(' ')[0]}`} />
-                    <span className="text-white/60">{nameFor(m.fromMemberId)}</span>
-                    <span>→ {nameFor(m.toMemberId)}</span>
-                    <span className="ml-auto uppercase tracking-wider">{m.kind}</span>
+                    <span className="text-white/60">{isUser ? 'Você' : nameFor(m.fromMemberId)}</span>
+                    <span>→ {isUser ? 'Lead' : nameFor(m.toMemberId)}</span>
+                    <span className="ml-auto uppercase tracking-wider">{isUser ? 'steering' : m.kind}</span>
                   </div>
                   <div className="text-[13px] text-white/80 mt-1 whitespace-pre-wrap break-words">{m.summary || m.content}</div>
                 </div>
               )
             })}
           </div>
+          {/* S4: live steering composer — only while the run is in flight. Sends a
+              message the Lead picks up on its next planning turn (coordinator intacto). */}
+          {running && runId && (
+            <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
+              <input
+                type="text"
+                value={steer}
+                onChange={e => setSteer(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendSteer() } }}
+                placeholder="Enviar instrução ao time durante a execução…"
+                disabled={steerSending}
+                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 disabled:opacity-50"
+              />
+              <button
+                type="button"
+                onClick={sendSteer}
+                disabled={steerSending || !steer.trim()}
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500/90 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                {steerSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                Enviar
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="space-y-4">

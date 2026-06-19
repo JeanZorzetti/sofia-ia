@@ -29,7 +29,7 @@ levantadas pelo usuário. Mesmo padrão dos ciclos V2 / V2.1:
 | **S2.1** | 2 | Helper PURO `model-efforts.ts` (`effortsForModel`) + dropdown derivado do modelo no `RosterEditor` + clamp no save (PATCH + `create-team`) | não | ✅ |
 | **S2.2** | 2 | Fiar `effort` no caminho Claude Code CLI (`ClaudeCliService` `--effort` + branch CLI em `groq.ts`); clamp xhigh/max→high no OpenRouter | não | ✅ |
 | **S3** | 3 | `Team.config.systemPrompt` + `appendTeamSystemPrompt` (puro) + injeção via wrapper `chat` (coordinator intacto) + campo na UI | não | ✅ |
-| **S4** | 4 | `POST .../runs/[runId]/messages` (`kind:'user'`) + surfacing no `buildLeadContext` + composer ao vivo no `TeamRunView` | não | — |
+| **S4** | 4 | `POST .../runs/[runId]/messages` (`kind:'user'`) + surfacing no `buildLeadContext` + composer ao vivo no `TeamRunView` | não | ✅ |
 | **S5** | 5a | Botão "Visualizar" → vista grafo/canvas expandida (`@xyflow/react` + `team-graph-view`), nós enriquecidos | não | — |
 | **S6** | 5b | Imagens/visão: campos de mídia no `TeamMessage`, upload no composer, pass-through ao Claude CLI, render no feed | **sim** | — |
 
@@ -111,3 +111,40 @@ Entregue:
   vão pelo worker (wrapper próprio) e o caminho dominante CLI-nativo-no-sandbox monta prompt
   próprio. **E2E live pendente** (rodar time chat com `config.systemPrompt` e ver a diretriz
   refletida; time sem prompt = idêntico ao legado).
+
+## S4 — Mensagens durante a execução (item 4) ✅
+
+Enquanto um run está `running`, o usuário injeta uma mensagem de steering cooperativo
+que o **Lead** lê no próximo turno de planejamento — sem interromper a chamada em curso.
+Run sem mensagem injetada = comportamento byte-idêntico ao atual.
+
+**Decisões confirmadas (AskUserQuestion):** (1) quem recebe = **só o Lead** no próximo
+turno (steering via planejamento, coordinator mais simples/seguro; workers em curso NÃO
+recebem); (2) surfacing = **bloco `## Mensagens do usuário durante a execução`** inserido
+ENTRE o board e o protocolo no `buildLeadContext`; (3) escopo = **rota + surfacing +
+composer ao vivo numa fatia só**.
+
+Entregue:
+- **Tipo** (`team-types.ts`): `MessageKind` ganhou `'user'` (coluna é `String @db.VarChar(20)`
+  → **sem migração**, o valor só cabe).
+- **Surfacing PURO** (`team-prompts.ts`): const `USER_STEERING_HEADING` + helper
+  `buildUserSteeringBlock(messages)` (filtra `kind==='user'`, um bullet trimado por
+  mensagem; **`[]` quando não há nenhuma** → contexto byte-idêntico ao legado). Spliced
+  no `buildLeadContext` via `...buildUserSteeringBlock(messages)` entre o board e o
+  protocolo. **Coordinator INTACTO** — ele já relê `listMessages` por turno e passa o
+  array ao builder; a mudança é só no builder.
+- **Rota nova** `POST /api/teams/[id]/runs/[runId]/messages` (Next 16 async params): auth +
+  ownership (`team.createdBy`), guard `STEERABLE={running,pending}` (espelha o DELETE),
+  grava `TeamMessage{kind:'user', content}` com `from/toMemberId` null (humano, não membro
+  → sem FK de membro pra violar). Cap 2000 chars, trim, rejeita vazio.
+- **UI** (`TeamRunView`): composer ao vivo (input + Enviar) renderizado SÓ quando `running`,
+  abaixo do feed de atividade; POST → SSE entrega a mensagem persistida de volta ao feed
+  (~1s, sem insert otimista pra dedup). Mensagem `kind:'user'` renderizada distinta no feed
+  ("Você → Lead", emerald, label `steering`).
+- **SSE intocado**: o stream já seleciona `kind`/`content` e emite mensagens novas por
+  delta → a injetada aparece sem mudança no `stream/route.ts`.
+- **Sem migração, sem dep nova, coordinator/flow-canvas/output-webhooks INTOCADOS.**
+  `scripts/v22s4-verify.ts` (casos a–c) + regressão `g6-verify` (35, golden do coordinator
+  com `buildLeadContext`) + `c3-verify` (15) + `tsc --noEmit` = 0 erros.
+- **E2E live pendente** (rodar um time, mandar mensagem durante o run, ver o Lead acatar no
+  próximo turno; run sem mensagem = idêntico ao legado).
