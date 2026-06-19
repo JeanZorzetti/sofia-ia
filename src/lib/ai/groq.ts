@@ -461,35 +461,10 @@ REGRAS PARA ESCREVER CÓDIGO:
       // write_file is NOT included — code is extracted from markdown blocks to avoid garbled args
       const { readOnlyToolDefinitions, filesystemTools } = await import('@/lib/tools/filesystem')
 
-      // Tool skills — add to function calling tools
-      const toolSkillDefinitions = agentSkills
-        .filter((as: typeof agentSkills[0]) => (as.skill as any).type === 'tool' && (as.skill as any).toolDefinition)
-        .map((as: typeof agentSkills[0]) => ({
-          type: 'function' as const,
-          function: (as.skill as any).toolDefinition as {
-            name: string
-            description: string
-            parameters: Record<string, unknown>
-          },
-        }))
-
-      // MCP tool definitions — tagged with the source AgentMcpServer.id (the join row)
-      // so the per-member policy (S1.2) can filter by `mcpAllowlist`. The tool NAME still
-      // uses the sliced McpServer.id (unchanged wire format); only the filter key is the
-      // AgentMcpServer.id.
-      const mcpDefsTagged = agentMcpServers.flatMap((ams: typeof agentMcpServers[0]) =>
-        ((ams.mcpServer as any).tools as any[]).map((tool: any) => ({
-          amsId: ams.id as string,
-          def: {
-            type: 'function' as const,
-            function: {
-              name: `mcp__${(ams.mcpServer as any).id.slice(0, 8)}__${tool.name}`,
-              description: `[MCP: ${(ams.mcpServer as any).name}] ${tool.description || tool.name}`,
-              parameters: tool.inputSchema as Record<string, unknown>,
-            },
-          },
-        }))
-      )
+      // S1.1: tool defs (tool-skills + tagged MCP) are now built by the shared helper,
+      // which the Groq-native path also uses. Same shape as the former inline build.
+      const { buildAgentToolDefs } = await import('@/lib/ai/agent-tools')
+      const { toolSkillDefinitions, mcpDefsTagged } = buildAgentToolDefs({ agentSkills, agentMcpServers })
 
       // S1.2: scope the tool defs by the member's capability policy. A member WITHOUT a
       // policy yields the legacy `[...readOnly, ...toolSkills, ...mcp]` array verbatim.
@@ -548,49 +523,17 @@ REGRAS PARA ESCREVER CÓDIGO:
             }
 
             console.log(`[Agent Tool] Loop ${loopCount + 1}: ${fnName}`, fnArgs)
-            let toolResult: string
 
-            // Handle MCP tool calls
-            if (fnName.startsWith('mcp__')) {
-              const parts = fnName.split('__')
-              const serverIdPrefix = parts[1]
-              const toolName = parts.slice(2).join('__')
-              const ams = agentMcpServers.find((s: typeof agentMcpServers[0]) => (s.mcpServer as any).id.startsWith(serverIdPrefix))
-              if (ams) {
-                try {
-                  const { mcpClient } = await import('@/lib/mcp/client')
-                  const mcpResult = await mcpClient.callTool(
-                    (ams.mcpServer as any).url,
-                    toolName,
-                    fnArgs,
-                    (ams.mcpServer as any).headers as Record<string, string>
-                  )
-                  toolResult = mcpResult.content.map((c: any) => c.text || '').join('\n')
-                } catch (mcpErr) {
-                  toolResult = `MCP error: ${String(mcpErr)}`
-                }
-              } else {
-                toolResult = `MCP server not found for tool: ${fnName}`
-              }
-            // Handle skill tool calls
-            } else if (toolSkillDefinitions.some((t: any) => t.function.name === fnName)) {
-              const matchedSkill = agentSkills.find((as: typeof agentSkills[0]) => ((as.skill as any).toolDefinition as any)?.name === fnName)
-              if (matchedSkill && (matchedSkill.skill as any).toolCode) {
-                try {
-                  const { executeToolSkill } = await import('@/lib/skills/executor')
-                  const skillResult = await executeToolSkill((matchedSkill.skill as any).toolCode, fnArgs)
-                  toolResult = skillResult.success ? JSON.stringify(skillResult.output) : `Erro: ${skillResult.error}`
-                } catch (skillErr) {
-                  toolResult = `Skill error: ${String(skillErr)}`
-                }
-              } else {
-                toolResult = `Skill not found or has no code: ${fnName}`
-              }
-            } else {
-              // Default: filesystem tools
-              const result = await filesystemTools.execute(fnName, fnArgs)
-              toolResult = typeof result === 'string' ? result : JSON.stringify(result)
-            }
+            // S1.1: dispatch (MCP → tool-skill → filesystem) is now the shared helper,
+            // also used by the Groq-native path. Logic is byte-faithful to the former inline.
+            const { executeAgentToolCall } = await import('@/lib/ai/agent-tools')
+            const toolResult = await executeAgentToolCall({
+              fnName,
+              fnArgs,
+              agentMcpServers,
+              agentSkills,
+              toolSkillDefinitions,
+            })
 
             currentMessages.push({
               role: 'tool',
@@ -776,6 +719,94 @@ REGRAS PARA ESCREVER CÓDIGO:
       })
     } catch (err) {
       console.error('[CognitivePipeline] Error, falling through to standard Groq:', err)
+    }
+  }
+
+  // ── Groq com tools por política de capacidade (Teams V2.1 — S1.1, Tema A') ──
+  // O V2 S1 entregou a política de capacidade por membro, mas a EXECUÇÃO de tools só
+  // rodava no path OpenRouter. Aqui o path Groq nativo (OpenAI-compatible) honra o MESMO
+  // gate (resolveToolGate) e a MESMA filtragem (selectApiTools), reusando o dispatch
+  // compartilhado (executeAgentToolCall). Sem política / modelo sem suporte → cai na
+  // completion plana abaixo (byte-idêntico ao legado). rawText (code-runs) força gate off.
+  {
+    const isCoderModel = agent.model.includes('coder') || agent.model.includes('qwen')
+    const groqToolsEnabled = resolveToolGate({
+      capabilities: capabilityPolicy,
+      isCoderModel,
+      rawText: !!options?.rawText,
+      modelSupportsTools: modelSupportsTools(agent.model),
+    })
+
+    if (groqToolsEnabled) {
+      const { readOnlyToolDefinitions } = await import('@/lib/tools/filesystem')
+      const { buildAgentToolDefs, executeAgentToolCall } = await import('@/lib/ai/agent-tools')
+      const { toolSkillDefinitions, mcpDefsTagged } = buildAgentToolDefs({ agentSkills, agentMcpServers })
+
+      // Same policy scoping as the OpenRouter path. Empty selection → no `tools` sent.
+      const selectedTools = selectApiTools({
+        capabilities: capabilityPolicy,
+        readOnlyDefs: readOnlyToolDefinitions,
+        toolSkillDefs: toolSkillDefinitions,
+        mcpDefs: mcpDefsTagged,
+      })
+      const apiTools = selectedTools.length > 0 ? selectedTools : undefined
+
+      if (apiTools) {
+        const toolSystemPrompt = `${systemPrompt}\n\nVocê tem acesso a ferramentas (via function calling): use-as para explorar arquivos (list_files, read_file), executar skills e servidores MCP habilitados, e então responda em texto.`
+        const loopMessages: any[] = [{ role: 'system', content: toolSystemPrompt }, ...messages]
+        const MAX_GROQ_TOOL_LOOPS = 8
+        let finalMessage = ''
+        let finalUsage: any = { total_tokens: 0 }
+
+        for (let i = 0; i < MAX_GROQ_TOOL_LOOPS; i++) {
+          const toolCompletion = await getGroqClient().chat.completions.create({
+            model: agent.model,
+            messages: loopMessages,
+            tools: apiTools as any,
+            tool_choice: 'auto',
+            temperature: agent.temperature,
+            max_tokens: 4096,
+          })
+
+          const responseMsg = toolCompletion.choices[0]?.message
+          const toolCalls = responseMsg?.tool_calls
+          finalUsage = toolCompletion.usage || finalUsage
+
+          console.log(`[Groq ${agent.model}] Tool loop ${i + 1}/${MAX_GROQ_TOOL_LOOPS} content_len=${(responseMsg?.content || '').length} tool_calls=${toolCalls?.length || 0}`)
+
+          if (toolCalls && toolCalls.length > 0) {
+            loopMessages.push(responseMsg as any)
+            for (const tc of toolCalls as any[]) {
+              let fnArgs: any
+              try {
+                fnArgs = JSON.parse(tc.function.arguments)
+              } catch {
+                loopMessages.push({ role: 'tool', tool_call_id: tc.id, content: 'Erro: argumentos JSON inválidos.' })
+                continue
+              }
+              const toolResult = await executeAgentToolCall({
+                fnName: tc.function.name,
+                fnArgs,
+                agentMcpServers,
+                agentSkills,
+                toolSkillDefinitions,
+              })
+              loopMessages.push({ role: 'tool', tool_call_id: tc.id, content: toolResult })
+            }
+            continue
+          }
+
+          finalMessage = responseMsg?.content || ''
+          break
+        }
+
+        return {
+          message: finalMessage || 'O agente executou ações mas não gerou uma resposta textual.',
+          model: agent.model,
+          usage: finalUsage,
+          confidence: 0.9,
+        }
+      }
     }
   }
 

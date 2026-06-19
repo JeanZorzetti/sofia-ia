@@ -39,6 +39,19 @@ const TOOL_CAPABLE_PREFIXES = [
   'x-ai/grok',          // Grok — tool calling
 ]
 
+/** Groq-native model ids (bare, NO vendor slug — so they never reach the OpenRouter `/`
+ *  branch in chatWithAgent) that support native function calling. Teams V2.1 — S1.1
+ *  (Tema A'): the V2 S1 gate only fired on the OpenRouter path; these prefixes let the
+ *  Groq-native path honor the SAME per-member capability policy. Kept SEPARATE from
+ *  TOOL_CAPABLE_PREFIXES (OpenRouter slugs) and conservative — an unknown Groq id → false,
+ *  so the gate falls back to a plain text completion (no `tools` sent → no 400).
+ *  NB: these never collide with OpenRouter llama ids, which start with `meta-llama/`. */
+const GROQ_TOOL_CAPABLE_PREFIXES = [
+  'llama-3.3', // llama-3.3-70b-versatile — tool use
+  'llama-3.1', // llama-3.1-8b-instant / 70b-versatile — tool use
+  'llama3-',   // llama3-70b-8192 / llama3-8b-8192 — tool use
+]
+
 /** Does this OpenRouter model support native function calling (tools)?
  *  Pure + conservative: coder/qwen are recognized FIRST (legacy parity — the pre-S1.2
  *  gate enabled tools for them and they work, so a legacy coder run must NOT regress to
@@ -48,7 +61,9 @@ export function modelSupportsTools(model: string | null | undefined): boolean {
   if (!model) return false
   const m = model.toLowerCase()
   if (m.includes('coder') || m.includes('qwen')) return true
-  return TOOL_CAPABLE_PREFIXES.some(prefix => m.startsWith(prefix))
+  if (TOOL_CAPABLE_PREFIXES.some(prefix => m.startsWith(prefix))) return true
+  // S1.1: bare Groq-native ids (no '/') that support function calling.
+  return GROQ_TOOL_CAPABLE_PREFIXES.some(prefix => m.startsWith(prefix))
 }
 
 /** Resolve whether provider-side tool execution (function calling) is ON for this call.
