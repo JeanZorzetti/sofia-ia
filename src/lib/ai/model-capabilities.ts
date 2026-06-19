@@ -52,14 +52,43 @@ const GROQ_TOOL_CAPABLE_PREFIXES = [
   'llama3-',   // llama3-70b-8192 / llama3-8b-8192 — tool use
 ]
 
-/** Does this OpenRouter model support native function calling (tools)?
- *  Pure + conservative: coder/qwen are recognized FIRST (legacy parity — the pre-S1.2
- *  gate enabled tools for them and they work, so a legacy coder run must NOT regress to
- *  tools-off), known families are allowed, everything else → false (graceful fallback to
- *  text; no crash, no 400). */
+/** Ollama model FAMILIES (bare names, after stripping the `ollama/` prefix and the `:tag`)
+ *  known to support native function calling. Teams V2.1 — S1.2 (Tema A'): the V2 S1 gate
+ *  only fired on OpenRouter; S1.1 added Groq; this lets the self-hosted Ollama path honor
+ *  the SAME per-member policy. Kept SEPARATE and conservative (decision S1.2 #1) — an
+ *  Ollama id whose family isn't here → false, so the gate falls back to a plain text
+ *  completion (no `tools` sent → no 400). Ollama tooling is best-effort, so the loop also
+ *  degrades to text if the endpoint never returns `tool_calls`. */
+const OLLAMA_TOOL_CAPABLE_PREFIXES = [
+  'llama3.1',             // Llama 3.1 — tool use
+  'llama3.2',             // Llama 3.2 — tool use
+  'llama3.3',             // Llama 3.3 — tool use
+  'llama3-groq-tool-use', // Groq's tool-use-tuned Llama 3
+  'qwen2.5',              // Qwen2.5 / qwen2.5-coder — tool use
+  'qwen3',                // Qwen3 — tool use
+  'mistral',              // mistral / mistral-nemo / mistral-small / mistral-large — tool use
+  'mixtral',              // Mixtral — tool use
+  'command-r',            // command-r / command-r-plus — tool use
+  'firefunction-v2',      // purpose-built for function calling
+  'hermes3',              // Hermes 3 — tool use
+]
+
+/** Does this model support native function calling (tools)?
+ *  Pure + conservative: Ollama ids (`ollama/<family>:<tag>`) are decided FIRST, on the
+ *  bare family only, against their own allowlist — kept separate so handling the `ollama/`
+ *  prefix can never change results for non-ollama ids (S1.2 regression guard). Then
+ *  coder/qwen are recognized (legacy parity — the pre-S1.2 gate enabled tools for them and
+ *  they work, so a legacy coder run must NOT regress to tools-off), known families are
+ *  allowed, everything else → false (graceful fallback to text; no crash, no 400). */
 export function modelSupportsTools(model: string | null | undefined): boolean {
   if (!model) return false
   const m = model.toLowerCase()
+  // S1.2: Ollama ids carry the `ollama/` prefix and a `:tag` (e.g. `ollama/llama3.1:8b`).
+  // Decide on the BARE family name only; unknown family → false (graceful text fallback).
+  if (m.startsWith('ollama/')) {
+    const bare = m.slice('ollama/'.length).split(':')[0] // strip prefix + :tag
+    return OLLAMA_TOOL_CAPABLE_PREFIXES.some(prefix => bare.startsWith(prefix))
+  }
   if (m.includes('coder') || m.includes('qwen')) return true
   if (TOOL_CAPABLE_PREFIXES.some(prefix => m.startsWith(prefix))) return true
   // S1.1: bare Groq-native ids (no '/') that support function calling.

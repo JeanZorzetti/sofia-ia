@@ -389,11 +389,101 @@ Regras:
 
   // Check if model is Ollama (e.g. ollama/qwen2.5:7b-instruct) — route to the
   // self-hosted OpenAI-compatible endpoint. MUST come before the '/' OpenRouter
-  // check below (ollama ids contain '/'). Plain text completion: the code-team
-  // parses @RUN/@DONE from the text, so no native tool-calling is needed here.
+  // check below (ollama ids contain '/').
   if (agent.model.startsWith('ollama/')) {
     const { getOllamaClient } = await import('@/lib/ai/ollama')
     const ollamaModel = agent.model.slice('ollama/'.length)
+
+    // ── Ollama com tools por política de capacidade (Teams V2.1 — S1.2, Tema A') ──
+    // Mesmo gate (resolveToolGate) + filtragem (selectApiTools) + dispatch
+    // (executeAgentToolCall) dos paths Groq/OpenRouter, agora no endpoint Ollama
+    // (OpenAI-compatible). Sem política / modelo sem suporte / rawText → cai na completion
+    // plana abaixo (byte-idêntica ao legado). rawText (code-runs que parseiam @RUN/@DONE do
+    // texto) força gate off via resolveToolGate. modelSupportsTools recebe o id COMPLETO
+    // (com `ollama/`); o create usa o id bare (ollamaModel). Best-effort: se o endpoint não
+    // devolver tool_calls, o loop encerra em texto.
+    const isCoderModel = agent.model.includes('coder') || agent.model.includes('qwen')
+    const ollamaToolsEnabled = resolveToolGate({
+      capabilities: capabilityPolicy,
+      isCoderModel,
+      rawText: !!options?.rawText,
+      modelSupportsTools: modelSupportsTools(agent.model),
+    })
+
+    if (ollamaToolsEnabled) {
+      const { readOnlyToolDefinitions } = await import('@/lib/tools/filesystem')
+      const { buildAgentToolDefs, executeAgentToolCall } = await import('@/lib/ai/agent-tools')
+      const { toolSkillDefinitions, mcpDefsTagged } = buildAgentToolDefs({ agentSkills, agentMcpServers })
+
+      // Same policy scoping as the Groq/OpenRouter paths. Empty selection → no `tools` sent.
+      const selectedTools = selectApiTools({
+        capabilities: capabilityPolicy,
+        readOnlyDefs: readOnlyToolDefinitions,
+        toolSkillDefs: toolSkillDefinitions,
+        mcpDefs: mcpDefsTagged,
+      })
+      const apiTools = selectedTools.length > 0 ? selectedTools : undefined
+
+      if (apiTools) {
+        const toolSystemPrompt = `${systemPrompt}\n\nVocê tem acesso a ferramentas (via function calling): use-as para explorar arquivos (list_files, read_file), executar skills e servidores MCP habilitados, e então responda em texto.`
+        const loopMessages: any[] = [{ role: 'system', content: toolSystemPrompt }, ...messages]
+        const MAX_OLLAMA_TOOL_LOOPS = 8
+        let finalMessage = ''
+        let finalUsage: any = { total_tokens: 0 }
+
+        for (let i = 0; i < MAX_OLLAMA_TOOL_LOOPS; i++) {
+          const toolCompletion = await getOllamaClient().chat.completions.create({
+            model: ollamaModel,
+            messages: loopMessages,
+            tools: apiTools as any,
+            tool_choice: 'auto',
+            temperature: agent.temperature,
+            max_tokens: 4096,
+          })
+
+          const responseMsg = toolCompletion.choices[0]?.message
+          const toolCalls = responseMsg?.tool_calls
+          finalUsage = toolCompletion.usage || finalUsage
+
+          console.log(`[Ollama ${ollamaModel}] Tool loop ${i + 1}/${MAX_OLLAMA_TOOL_LOOPS} content_len=${(responseMsg?.content || '').length} tool_calls=${toolCalls?.length || 0}`)
+
+          if (toolCalls && toolCalls.length > 0) {
+            loopMessages.push(responseMsg as any)
+            for (const tc of toolCalls as any[]) {
+              let fnArgs: any
+              try {
+                fnArgs = JSON.parse(tc.function.arguments)
+              } catch {
+                loopMessages.push({ role: 'tool', tool_call_id: tc.id, content: 'Erro: argumentos JSON inválidos.' })
+                continue
+              }
+              const toolResult = await executeAgentToolCall({
+                fnName: tc.function.name,
+                fnArgs,
+                agentMcpServers,
+                agentSkills,
+                toolSkillDefinitions,
+              })
+              loopMessages.push({ role: 'tool', tool_call_id: tc.id, content: toolResult })
+            }
+            continue
+          }
+
+          finalMessage = responseMsg?.content || ''
+          break
+        }
+
+        return {
+          message: finalMessage || 'O agente executou ações mas não gerou uma resposta textual.',
+          model: agent.model,
+          usage: finalUsage,
+          confidence: 0.9,
+        }
+      }
+    }
+
+    // ── Ollama padrão (completion plana — gate off / sem tools / rawText) ──
+    // Byte-idêntica ao legado: o code-team parseia @RUN/@DONE do texto, sem tool-calling.
     const completion = await getOllamaClient().chat.completions.create({
       model: ollamaModel,
       messages: [{ role: 'system', content: systemPrompt }, ...messages],
