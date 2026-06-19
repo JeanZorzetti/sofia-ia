@@ -12,12 +12,14 @@
 // Pure except for the injected `sandbox`, so it's unit-testable with a fake sandbox.
 
 import type { Sandbox } from '../../sandbox/types'
-import type { ChatResult, CommandRun } from './team-types'
+import type { ChatResult, CommandRun, CapabilityPolicy } from './team-types'
 import { resolveClaudeCliModel } from '../../ai/claude-models'
 import { ClaudeRateLimitError, isClaudeRateLimit } from '../../ai/claude-token-pool'
+import { buildCliToolFlags, renderClaudeCliFlags, type CliMcpServerDescriptor } from '../../ai/cli-tool-flags'
 
 const PROMPT_PATH = '/tmp/polaris_task.txt'
 const SYS_PATH = '/tmp/polaris_sys.txt'
+const MCP_PATH = '/tmp/polaris_mcp.json'
 const MAX_OUTPUT_CHARS = 4_000
 const MAX_COMMANDS = 200
 
@@ -34,6 +36,13 @@ export interface RunClaudeInSandboxInput {
   token: string
   /** Hard timeout for the agentic session, in ms. */
   timeoutMs?: number
+  /** S1.3: member capability policy. In the SANDBOX, writes are the deliverable and
+   *  isolated → preserved (skip-permissions stays on); the policy's only effect here is
+   *  honoring `mcpAllowlist`. An explicit `filesystem:false` opts the member out to
+   *  read-only. Absent → today's exact command (regression). */
+  capabilities?: CapabilityPolicy | null
+  /** S1.3: the member agent's MCP servers (caller-resolved), filtered by `mcpAllowlist`. */
+  mcpServers?: CliMcpServerDescriptor[]
 }
 
 function truncate(s: string, max: number): string {
@@ -117,10 +126,22 @@ export function parseStreamJson(stdout: string): ParsedStream {
  * like the code-agent's (message + artifacts.commands for the terminal/diff UI).
  */
 export async function runClaudeInSandbox(sandbox: Sandbox, input: RunClaudeInSandboxInput): Promise<ChatResult> {
-  const { workdir, model, prompt, systemPrompt, token, timeoutMs = 15 * 60_000 } = input
+  const { workdir, model, prompt, systemPrompt, token, timeoutMs = 15 * 60_000, capabilities, mcpServers } = input
 
   await sandbox.writeFile(PROMPT_PATH, prompt)
   if (systemPrompt) await sandbox.writeFile(SYS_PATH, systemPrompt)
+
+  // S1.3: policy → CLI flags for the CODE-RUN (sandbox) context. No policy →
+  // buildCliToolFlags returns {} and renderClaudeCliFlags emits exactly
+  // `--dangerously-skip-permissions` (byte-identical to the legacy command). A policy
+  // keeps writes (skip ON) and only adds --mcp-config for the allowed servers.
+  const toolFlags = buildCliToolFlags({ capabilities, context: 'code-run-sandbox', mcpServers })
+  let mcpConfigPath: string | undefined
+  if (toolFlags.mcpConfig) {
+    await sandbox.writeFile(MCP_PATH, JSON.stringify(toolFlags.mcpConfig))
+    mcpConfigPath = MCP_PATH
+  }
+  const toolArgs = renderClaudeCliFlags(toolFlags, { mcpConfigPath })
 
   const cliModel = resolveClaudeCliModel(model)
   // Self-bootstrap: install the CLI if the sandbox template doesn't already ship it.
@@ -128,7 +149,7 @@ export async function runClaudeInSandbox(sandbox: Sandbox, input: RunClaudeInSan
   // one it installs on first use (needs node in the base template).
   const ensure = '{ command -v claude >/dev/null 2>&1 || npm i -g @anthropic-ai/claude-code >/dev/null 2>&1 ; }'
   const flags = [
-    'claude --print --dangerously-skip-permissions',
+    `claude --print ${toolArgs.join(' ')}`,
     '--output-format stream-json --verbose',
   ]
   if (systemPrompt) flags.push(`--system-prompt-file ${SYS_PATH}`)

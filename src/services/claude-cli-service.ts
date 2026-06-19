@@ -4,6 +4,8 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import { isClaudeRateLimit } from '@/lib/ai/claude-token-pool';
+import { buildCliToolFlags, renderClaudeCliFlags, type CliMcpServerDescriptor } from '@/lib/ai/cli-tool-flags';
+import type { CapabilityPolicy } from '@/lib/orchestration/team/team-types';
 
 export class ClaudeCliService {
     /**
@@ -23,24 +25,54 @@ export class ClaudeCliService {
      * pipe fed an empty stdin and the CLI returned nothing.
      * The system prompt is offloaded to a temp file via --system-prompt-file.
      */
-    static async generate(prompt: string, cwd: string = process.cwd(), systemPrompt?: string, modelId?: string, oauthToken?: string): Promise<{ content: string; usage?: any }> {
+    static async generate(
+        prompt: string,
+        cwd: string = process.cwd(),
+        systemPrompt?: string,
+        modelId?: string,
+        oauthToken?: string,
+        // Teams V2.1 — S1.3: a team member may carry a capability policy. This is a
+        // CHAT-RUN on the worker/HOST FS (no sandbox), so a policy ALWAYS demotes the CLI
+        // to read-only + `--permission-mode plan` (writes would hit /app — isolation hole)
+        // and honors `mcpAllowlist` via --mcp-config. Absent → today's exact command.
+        capabilityOpts?: { capabilities?: CapabilityPolicy | null; mcpServers?: CliMcpServerDescriptor[] },
+    ): Promise<{ content: string; usage?: any }> {
         const tempDir = os.tmpdir();
         const randomId = Math.random().toString(36).substring(2, 15);
 
         let tempSystemPromptPath: string | null = null;
+        let tempMcpConfigPath: string | null = null;
 
         const cleanup = () => {
-            if (tempSystemPromptPath && fs.existsSync(tempSystemPromptPath)) {
-                try { fs.unlinkSync(tempSystemPromptPath); } catch (e) { /* ignore */ }
+            for (const p of [tempSystemPromptPath, tempMcpConfigPath]) {
+                if (p && fs.existsSync(p)) {
+                    try { fs.unlinkSync(p); } catch (e) { /* ignore */ }
+                }
             }
         };
 
         return new Promise((resolve, reject) => {
             try {
+                // S1.3: resolve the policy → CLI flags for the CHAT-RUN (host) context.
+                // No policy → buildCliToolFlags returns {} and renderClaudeCliFlags emits
+                // exactly `--dangerously-skip-permissions` (byte-identical to the legacy cmd).
+                const toolFlags = buildCliToolFlags({
+                    capabilities: capabilityOpts?.capabilities,
+                    context: 'chat-run',
+                    mcpServers: capabilityOpts?.mcpServers,
+                });
+                if (toolFlags.mcpConfig) {
+                    tempMcpConfigPath = path.join(tempDir, `claude_mcp_${randomId}.json`);
+                    fs.writeFileSync(tempMcpConfigPath, JSON.stringify(toolFlags.mcpConfig), 'utf8');
+                }
+                const flagArgs = renderClaudeCliFlags(toolFlags, {
+                    mcpConfigPath: tempMcpConfigPath ? `"${tempMcpConfigPath}"` : undefined,
+                });
+
                 // Build the command. The prompt is fed via stdin (below), so the
                 // command line stays short regardless of prompt size.
                 // --output-format json gives us the response + token usage.
-                let shellCmd = `claude --print --dangerously-skip-permissions --output-format json`;
+                let shellCmd = `claude --print ${flagArgs.join(' ')} --output-format json`;
 
                 // Offload system prompt to a temp file (avoids arg length limits).
                 if (systemPrompt) {

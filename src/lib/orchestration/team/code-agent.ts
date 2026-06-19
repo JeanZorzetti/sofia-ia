@@ -9,6 +9,7 @@
 import type { ChatFn, ChatMessageInput, ChatResult, CommandRun } from './team-types'
 import type { TeamStore } from './team-store'
 import type { Sandbox } from '../../sandbox/types'
+import type { CliMcpServerDescriptor } from '../../ai/cli-tool-flags'
 import { parseCodeActions } from './code-protocol'
 import { providerOf } from '../../ai/model-availability'
 import { runClaudeInSandbox } from './sandbox-cli-agent'
@@ -63,9 +64,14 @@ export interface CodeChatFnOptions {
    *  (it edits the repo directly) instead of the @RUN proxy — which the autonomous
    *  CLI ignores. Absent → claude-* workers fall back to the (broken) @RUN path. */
   claudeToken?: string
+  /** S1.3 (Teams V2.1 — Tema A'): resolve an agent's MCP servers (DB-backed) so the
+   *  Claude-CLI-in-sandbox path can honor the member's `mcpAllowlist` via --mcp-config.
+   *  Injected (the worker provides the Prisma-backed impl) to keep this module pure.
+   *  Absent → no MCP config is passed (writes still preserved; legacy command otherwise). */
+  resolveMcpServers?: (agentId: string) => Promise<CliMcpServerDescriptor[]>
 }
 
-const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store' | 'claudeToken'> = {
+const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store' | 'claudeToken' | 'resolveMcpServers'> = {
   maxSteps: 8,
   perCommandTimeoutMs: 120_000,
   maxOutputChars: 4_000,
@@ -111,7 +117,7 @@ export function createCodeChatFn(
   options: CodeChatFnOptions = {},
 ): ChatFn {
   const { maxSteps, perCommandTimeoutMs, maxOutputChars } = { ...DEFAULTS, ...options }
-  const { workdir, store, claudeToken } = options
+  const { workdir, store, claudeToken, resolveMcpServers } = options
 
   return async (agentId, messages, leadContext, chatOptions) => {
     // ── Option B: native Claude CLI inside the sandbox ──
@@ -124,10 +130,17 @@ export function createCodeChatFn(
       const firstUser = messages.find(m => m.role === 'user')
       const taskText = firstUser?.content ?? messages.map(m => m.content).join('\n\n')
       const prompt = workdir ? `${CLI_REPO_PREAMBLE}\n\n---\n\n${taskText}` : taskText
+      // S1.3: forward the member capability policy (chatOptions.capabilities — already
+      // threaded by the coordinator) + its agent's MCP servers so the sandbox CLI honors
+      // mcpAllowlist. Writes stay enabled (sandbox is isolated); no policy → legacy command.
+      const mcpServers = resolveMcpServers ? await resolveMcpServers(agentId).catch(() => []) : []
       // Token-pool failover: a rate-limited account throws ClaudeRateLimitError → retry
       // the SAME task with the next account. Pool empty → single attempt with claudeToken.
       const result = await withClaudeTokenFailover(
-        (token) => runClaudeInSandbox(sandbox, { workdir, model: cliModel, prompt, token: token ?? '' }),
+        (token) => runClaudeInSandbox(sandbox, {
+          workdir, model: cliModel, prompt, token: token ?? '',
+          capabilities: chatOptions?.capabilities, mcpServers,
+        }),
         { isLimited: (e) => e instanceof ClaudeRateLimitError, fallbackToken: claudeToken },
       )
       // C2.1 live stream: persist the reconstructed command log so the terminal shows it.

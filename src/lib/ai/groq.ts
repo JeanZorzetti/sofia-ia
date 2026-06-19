@@ -312,6 +312,19 @@ Regras:
         cliPrompt = `Histórico da conversa até agora:\n${transcript}\n\nResponda à última mensagem do Cliente.`;
       }
 
+      // S1.3 (Teams V2.1 — Tema A'): forward the member capability policy + its agent's
+      // MCP servers so a policy-carrying member runs read-only on the host FS (no Write/
+      // Bash) and honors mcpAllowlist. Built from the already-loaded `agentMcpServers`;
+      // no policy → descriptors unused (generate emits the legacy command verbatim).
+      const { toCliMcpDescriptor } = await import('@/lib/ai/cli-tool-flags');
+      const cliMcpServers = (agentMcpServers ?? []).map((ams: typeof agentMcpServers[0]) => toCliMcpDescriptor({
+        amsId: ams.id,
+        name: ams.mcpServer.name,
+        url: ams.mcpServer.url,
+        transport: ams.mcpServer.transport,
+        headers: (ams.mcpServer.headers as Record<string, unknown>) ?? null,
+      }));
+
       // We now pass system prompt separately to handle large prompts via file.
       // Token-pool failover: if a subscription hits its limit, retry the SAME call
       // with the next available account. Pool empty → one ambient attempt (back-compat).
@@ -322,6 +335,7 @@ Regras:
           systemPrompt,
           cliModelId || undefined,  // Pass model ID (undefined = CLI default)
           token,
+          { capabilities: capabilityPolicy, mcpServers: cliMcpServers },
         ),
         { isLimited: (e) => isClaudeRateLimit(String((e as Error)?.message ?? e)) },
       );

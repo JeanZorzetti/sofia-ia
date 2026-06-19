@@ -17,6 +17,7 @@ import type { CodeRunJob } from '@/lib/queue/code-run-queue'
 import { runTeamByTopology } from '@/lib/orchestration/team/team-executor'
 import { createPrismaTeamStore } from '@/lib/orchestration/team/team-store'
 import { createCodeChatFn } from '@/lib/orchestration/team/code-agent'
+import { toCliMcpDescriptor, type CliMcpServerDescriptor } from '@/lib/ai/cli-tool-flags'
 import { withUsageTracking } from '@/lib/orchestration/team/member-usage-recorder'
 import { chatWithAgent } from '@/lib/ai/groq'
 import { primaryClaudeToken, loadClaudeTokens } from '@/lib/ai/claude-token-pool'
@@ -42,6 +43,30 @@ const AUTHOR_EMAIL = process.env.GIT_AUTHOR_EMAIL ?? 'polaris@polarisia.com.br'
 const CLAUDE_OAUTH_TOKEN = primaryClaudeToken()
 // Sandbox lifetime — agentic CLI sessions outlast the E2B default (~5 min).
 const SANDBOX_TIMEOUT_MS = Number(process.env.SANDBOX_TIMEOUT_MS ?? 15 * 60_000)
+
+// S1.3 (Teams V2.1 — Tema A'): DB-backed resolver injected into the code-agent so the
+// Claude-CLI-in-sandbox path can honor a member's `mcpAllowlist` via --mcp-config. Only
+// active HTTP/SSE MCP servers (the schema's only transports) are reachable from the
+// sandbox. Best-effort: a failure yields [] (no MCP config; writes still preserved).
+async function resolveAgentMcpServers(agentId: string): Promise<CliMcpServerDescriptor[]> {
+  try {
+    const rows = await prisma.agentMcpServer.findMany({
+      where: { agentId, enabled: true },
+      include: { mcpServer: true },
+    })
+    return rows
+      .filter(r => r.mcpServer?.status === 'active')
+      .map(r => toCliMcpDescriptor({
+        amsId: r.id,
+        name: r.mcpServer.name,
+        url: r.mcpServer.url,
+        transport: r.mcpServer.transport,
+        headers: (r.mcpServer.headers as Record<string, unknown>) ?? null,
+      }))
+  } catch {
+    return []
+  }
+}
 // Custom E2B template (with claude/git/node pre-installed); undefined → provider base.
 const SANDBOX_TEMPLATE = process.env.SANDBOX_TEMPLATE || undefined
 
@@ -98,7 +123,7 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
   // Share ONE store so the code-agent can stream partial artifacts mid-loop (C2.1).
   // C3: inject getTaskDiff so the reviewer sees the real working-tree diff (vs base).
   const store = createPrismaTeamStore()
-  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store, claudeToken: CLAUDE_OAUTH_TOKEN }))
+  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers }))
   await runTeamByTopology(runId, {
     store,
     chat: codeChat,
@@ -177,7 +202,7 @@ const worker = new Worker<CodeRunJob>(
           .update({ where: { id: runId }, data: { sandboxId: sandbox.id } })
           .catch(() => {}) // best-effort metadata write
         const store = createPrismaTeamStore()
-        const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { store, claudeToken: CLAUDE_OAUTH_TOKEN }))
+        const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers }))
         await runTeamByTopology(runId, { store, chat: codeChat })
       }
       await dispatchTeamOutputs(runId)

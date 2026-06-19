@@ -15,6 +15,14 @@ export class OpencodeCliService {
      * cross-platform). The previous `type <file> | opencode` only worked on the
      * Windows cmd shell — on Linux/Docker `type` does not print a file, so the
      * pipe fed an empty stdin and the CLI returned nothing.
+     *
+     * Teams V2.1 — S1.3 LIMITATION (decision #2): unlike the Claude CLI, `opencode run`
+     * exposes NO per-run tool/permission/MCP flags (verified against the installed binary:
+     * only -m/--agent/--format/--variant/--thinking). MCP + permissions live in config
+     * files / `opencode mcp` / agent definitions, not flags. So a member's CapabilityPolicy
+     * canNOT be translated to flags here — we deliberately do NOT invent one. Opencode
+     * members therefore keep today's behavior; the policy is honored on the Claude CLI path
+     * (claude-cli-service.ts / sandbox-cli-agent.ts) and the function-calling providers.
      */
     static async generate(
         prompt: string,

@@ -37,7 +37,10 @@
 - **Caveat:** Ollama local é best-effort; manter o fallback gracioso (modelo sem suporte → texto).
 - **Verificação:** `scripts/v21s2-verify.ts` — gate + filtragem de política no path Ollama; regressão (sem policy = atual).
 
-### Fatia S1.3 — Política → flags nos providers-agente (Claude CLI / Opencode CLI)
+### Fatia S1.3 — Política → flags nos providers-agente (Claude CLI / Opencode CLI) ✅ FEITA
+
+> **Entregue (2026-06-19, versão segura completa):** helper PURO `src/lib/ai/cli-tool-flags.ts` (`buildCliToolFlags({capabilities,context,mcpServers})` + `renderClaudeCliFlags` + `toCliMcpDescriptor`). **Chat-run host** ([claude-cli-service.ts](../../src/services/claude-cli-service.ts)): política → read-only (`--allowedTools Read,Glob,Grep,LS`) + `--permission-mode plan` + `--mcp-config` da allowlist, **sem `--dangerously-skip-permissions`** (fecha o furo de FS — Write/Bash bloqueados mesmo com `tools:true`). **Code-run E2B** ([sandbox-cli-agent.ts](../../src/lib/orchestration/team/sandbox-cli-agent.ts)): escrita **preservada** (skip ON), só honra `mcpAllowlist` via `--mcp-config` (`filesystem:false` = opt-out a read-only). Threading: `chatWithAgent`→`generate` (chat) e `chatOptions.capabilities`+resolver MCP injetado no worker→`runClaudeInSandbox` (code). **Opencode = limitação documentada** (o binário instalado não expõe flag de tool/permission/MCP no `run`; nada inventado). **Sem `--dangerously-skip-permissions`/policy = comando byte-idêntico ao atual** (regressão). Verificação: `scripts/v21s3-verify.ts` (6 casos a–e) + `tsc` limpo. **Sem migração. Coordinator INTACTO.** Flags ancoradas no `claude --help` real. **Pendente:** E2E autenticado em prod.
+
 - **Natureza diferente:** o CLI **já executa tools**. Traduzir `CapabilityPolicy` em flags em vez de montar loop:
   - `--allowedTools` / `--disallowedTools` a partir de `tools`/`toolSkills`/`filesystem`;
   - `--mcp-config` a partir de `mcpAllowlist` (ids de `AgentMcpServer`);
@@ -102,7 +105,7 @@ Três itens independentes e baratos, todos por injeção/UI, **coordinator intac
 
 ## Sequência recomendada e verificação E2E final
 
-**Ordem:** Sprint 1 (S1.1 ✅ → S1.2 🔜 → S1.3) → Sprint 2 (S2.1 → S2.2) → Sprint 3 (S3.1 → S3.2 → S3.3).
+**Ordem:** Sprint 1 (S1.1 ✅ → S1.2 ✅ → S1.3 ✅) → Sprint 2 (S2.1 → S2.2) → Sprint 3 (S3.1 → S3.2 → S3.3).
 
 **Por quê nessa ordem:** Tema A' é o maior salto de valor e destrava o investimento do V2 S1; Tema E é quick win de observabilidade; Tema F é polimento barato. S1.3 pode cair para backlog se o caveat de FS pesar.
 
