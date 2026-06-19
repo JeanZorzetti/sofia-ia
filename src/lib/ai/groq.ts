@@ -9,6 +9,7 @@ import { modelSupportsTools, resolveToolGate, selectApiTools } from '@/lib/ai/mo
 // Teams V2.1 (S3.1): pure concat of a member's per-team `workflow` onto the system
 // prompt. Absent/empty → prompt unchanged (regression). Testable without DB/network.
 import { appendMemberWorkflow } from '@/lib/orchestration/team/member-workflow'
+import { appendTeamSystemPrompt } from '@/lib/orchestration/team/team-system-prompt'
 // Teams V2.2 (S2.2): translate the member's effort to the value OpenRouter accepts
 // (low/medium/high — xhigh/max clamp to high). Pure; the CLI path keeps the raw tier.
 import { openRouterReasoningEffort } from '@/lib/ai/model-efforts'
@@ -118,7 +119,7 @@ export async function chatWithAgent(
   agentId: string,
   messages: ChatMessage[],
   leadContext?: Record<string, any>,
-  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null; rawText?: boolean; capabilities?: CapabilityPolicy | null; workflow?: string | null }
+  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null; rawText?: boolean; capabilities?: CapabilityPolicy | null; workflow?: string | null; teamSystemPrompt?: string | null }
 ) {
   const { prisma } = await import('@/lib/prisma')
 
@@ -154,6 +155,13 @@ export async function chatWithAgent(
 
   // Construir prompt do sistema
   let systemPrompt = agent.systemPrompt
+
+  // S3 (Teams V2.2 — item 3): a TEAM may carry a shared system prompt (culture /
+  // guard-rails / tone) applied to EVERY member, injected by the run caller
+  // (start-team-run.ts) via options. It sits BETWEEN the Agent's own prompt and the
+  // per-member workflow (agente → time → workflow), so the team is common culture and
+  // the workflow (most specific) colors last. Absent/empty → unchanged (legacy).
+  systemPrompt = appendTeamSystemPrompt(systemPrompt, options?.teamSystemPrompt)
 
   // S3.1 (Teams V2.1 — Tema F1): concatenate the member's per-team `workflow` right
   // after the Agent's own prompt, so the team-scoped instruction colors every later

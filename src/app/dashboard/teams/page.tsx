@@ -3,11 +3,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Users, Plus, Loader2, ArrowRight, Pencil, Trash2, X, GitBranch, Play, Search, Wand2, LayoutTemplate, Network } from 'lucide-react'
+import { Users, Plus, Loader2, ArrowRight, Pencil, Trash2, X, GitBranch, Play, Search, Wand2, LayoutTemplate, Network, Sparkles } from 'lucide-react'
 import RosterEditor, {
   INHERIT, rosterToMembers, type AgentLite, type ModelOption, type RosterRow,
 } from './RosterEditor'
-import { buildTeamConfig, topologyOf, maxParallelOf, type Topology } from '@/lib/orchestration/team/team-config-ui'
+import { buildTeamConfig, topologyOf, maxParallelOf, systemPromptOf, type Topology } from '@/lib/orchestration/team/team-config-ui'
 import { MagicCreateModal } from '@/components/polaris/MagicCreateModal'
 import { TeamTemplatesDialog } from './TeamTemplatesDialog'
 
@@ -27,6 +27,29 @@ function RepoBindingFields({ repoUrl, defaultBranch, onRepoUrl, onDefaultBranch 
       <input className={inputCls} placeholder="Branch base (default: main)" value={defaultBranch} onChange={e => onDefaultBranch(e.target.value)} />
       <p className="text-[11px] text-white/30">
         Se preenchido, missões em modo <span className="text-white/50">Código</span> clonam este repo e abrem um Pull Request com as mudanças. O token do GitHub fica só no servidor (worker), nunca exposto aos agentes.
+      </p>
+    </div>
+  )
+}
+
+// Team-wide system prompt (S3 — V2.2 item 3): shared culture / guard-rails / tone
+// applied to EVERY member, on top of each agent's own prompt and per-member workflow.
+function TeamSystemPromptField({ systemPrompt, onSystemPrompt }: {
+  systemPrompt: string; onSystemPrompt: (v: string) => void
+}) {
+  return (
+    <div className="space-y-2 rounded-lg border border-white/10 bg-white/[0.02] p-3">
+      <p className="text-xs text-white/40 uppercase tracking-wider flex items-center gap-1.5">
+        <Sparkles className="h-3.5 w-3.5" /> System prompt do time (opcional)
+      </p>
+      <textarea
+        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 min-h-[80px] resize-y"
+        placeholder="Cultura, tom, guard-rails comuns a todos os membros deste time…"
+        value={systemPrompt}
+        onChange={e => onSystemPrompt(e.target.value)}
+      />
+      <p className="text-[11px] text-white/30">
+        Aplicado a <span className="text-white/50">todos os membros</span>, entre o prompt de cada agente e o workflow por-membro. Vazio = sem efeito.
       </p>
     </div>
   )
@@ -88,6 +111,7 @@ function TeamFormModal({
   title, icon: Icon, name, onName, agents, models, roster, onRoster,
   topology, maxParallel, onTopology, onMaxParallel,
   repoUrl, defaultBranch, onRepoUrl, onDefaultBranch,
+  systemPrompt, onSystemPrompt,
   error, submitting, submitLabel, onSubmit, onClose,
 }: {
   title: string
@@ -106,6 +130,8 @@ function TeamFormModal({
   defaultBranch: string
   onRepoUrl: (v: string) => void
   onDefaultBranch: (v: string) => void
+  systemPrompt: string
+  onSystemPrompt: (v: string) => void
   error: string | null
   submitting: boolean
   submitLabel: string
@@ -137,6 +163,7 @@ function TeamFormModal({
             Effort só afeta modelos de raciocínio (Claude/OpenRouter). Disponibilidade dos modelos em <Link href="/dashboard/models" className="text-blue-400 hover:underline">Modelos</Link>.
           </p>
         </div>
+        <TeamSystemPromptField systemPrompt={systemPrompt} onSystemPrompt={onSystemPrompt} />
         <GraphTopologyField topology={topology} maxParallel={maxParallel} onTopology={onTopology} onMaxParallel={onMaxParallel} />
         <RepoBindingFields repoUrl={repoUrl} defaultBranch={defaultBranch} onRepoUrl={onRepoUrl} onDefaultBranch={onDefaultBranch} />
         {error && <p className="text-red-400 text-sm">{error}</p>}
@@ -173,6 +200,7 @@ export default function TeamsPage() {
   const [maxParallel, setMaxParallel] = useState('')
   const [repoUrl, setRepoUrl] = useState('')
   const [defaultBranch, setDefaultBranch] = useState('')
+  const [systemPrompt, setSystemPrompt] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -185,6 +213,7 @@ export default function TeamsPage() {
   const [editMaxParallel, setEditMaxParallel] = useState('')
   const [editRepoUrl, setEditRepoUrl] = useState('')
   const [editDefaultBranch, setEditDefaultBranch] = useState('')
+  const [editSystemPrompt, setEditSystemPrompt] = useState('')
   const [editError, setEditError] = useState<string | null>(null)
   const [editSaving, setEditSaving] = useState(false)
 
@@ -205,7 +234,7 @@ export default function TeamsPage() {
 
   function openCreate() {
     setError(null); setName(''); setRoster([]); setTopology('linear'); setMaxParallel('')
-    setRepoUrl(''); setDefaultBranch('')
+    setRepoUrl(''); setDefaultBranch(''); setSystemPrompt('')
     setCreating(true)
   }
 
@@ -216,13 +245,13 @@ export default function TeamsPage() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name, members: rosterToMembers(roster),
-          config: buildTeamConfig({}, { repoUrl, defaultBranch, topology, maxParallel }),
+          config: buildTeamConfig({}, { repoUrl, defaultBranch, topology, maxParallel, systemPrompt }),
         }),
       })
       const json = await res.json()
       if (!json.success) { setError(json.error); return }
       setName(''); setRoster([]); setTopology('linear'); setMaxParallel('')
-      setRepoUrl(''); setDefaultBranch(''); setCreating(false)
+      setRepoUrl(''); setDefaultBranch(''); setSystemPrompt(''); setCreating(false)
       await load()
     } catch {
       setError('Erro de conexão')
@@ -231,7 +260,7 @@ export default function TeamsPage() {
 
   async function openEdit(teamId: string) {
     setEditId(teamId); setEditError(null); setEditName(''); setEditRoster([])
-    setEditConfig({}); setEditTopology('linear'); setEditMaxParallel(''); setEditRepoUrl(''); setEditDefaultBranch('')
+    setEditConfig({}); setEditTopology('linear'); setEditMaxParallel(''); setEditRepoUrl(''); setEditDefaultBranch(''); setEditSystemPrompt('')
     const res = await fetch(`/api/teams/${teamId}`)
     const json = await res.json()
     if (json.success) {
@@ -247,6 +276,7 @@ export default function TeamsPage() {
       setEditMaxParallel(maxParallelOf(cfg))
       setEditRepoUrl(typeof cfg.repoUrl === 'string' ? cfg.repoUrl : '')
       setEditDefaultBranch(typeof cfg.defaultBranch === 'string' ? cfg.defaultBranch : '')
+      setEditSystemPrompt(systemPromptOf(cfg))
     }
   }
 
@@ -261,6 +291,7 @@ export default function TeamsPage() {
           config: buildTeamConfig(editConfig, {
             repoUrl: editRepoUrl, defaultBranch: editDefaultBranch,
             topology: editTopology, maxParallel: editMaxParallel,
+            systemPrompt: editSystemPrompt,
           }),
         }),
       })
@@ -412,6 +443,8 @@ export default function TeamsPage() {
           defaultBranch={defaultBranch}
           onRepoUrl={setRepoUrl}
           onDefaultBranch={setDefaultBranch}
+          systemPrompt={systemPrompt}
+          onSystemPrompt={setSystemPrompt}
           error={error}
           submitting={saving}
           submitLabel={saving ? 'Criando…' : 'Criar time'}
@@ -439,6 +472,8 @@ export default function TeamsPage() {
           defaultBranch={editDefaultBranch}
           onRepoUrl={setEditRepoUrl}
           onDefaultBranch={setEditDefaultBranch}
+          systemPrompt={editSystemPrompt}
+          onSystemPrompt={setEditSystemPrompt}
           error={editError}
           submitting={editSaving}
           submitLabel="Salvar"

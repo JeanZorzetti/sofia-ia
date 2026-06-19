@@ -28,7 +28,7 @@ levantadas pelo usuário. Mesmo padrão dos ciclos V2 / V2.1:
 | **S1** | 1 | Opus 4.8/4.7 no caminho Claude Code CLI (`models/route.ts` + `CLAUDE_CLI_MODEL_MAP`) | não | ✅ `16bca9d` |
 | **S2.1** | 2 | Helper PURO `model-efforts.ts` (`effortsForModel`) + dropdown derivado do modelo no `RosterEditor` + clamp no save (PATCH + `create-team`) | não | ✅ |
 | **S2.2** | 2 | Fiar `effort` no caminho Claude Code CLI (`ClaudeCliService` `--effort` + branch CLI em `groq.ts`); clamp xhigh/max→high no OpenRouter | não | ✅ |
-| **S3** | 3 | `Team.config.systemPrompt` + `appendTeamSystemPrompt` em `groq.ts` + injeção via wrapper `chat` (coordinator intacto) | não | — |
+| **S3** | 3 | `Team.config.systemPrompt` + `appendTeamSystemPrompt` (puro) + injeção via wrapper `chat` (coordinator intacto) + campo na UI | não | ✅ |
 | **S4** | 4 | `POST .../runs/[runId]/messages` (`kind:'user'`) + surfacing no `buildLeadContext` + composer ao vivo no `TeamRunView` | não | — |
 | **S5** | 5a | Botão "Visualizar" → vista grafo/canvas expandida (`@xyflow/react` + `team-graph-view`), nós enriquecidos | não | — |
 | **S6** | 5b | Imagens/visão: campos de mídia no `TeamMessage`, upload no composer, pass-through ao Claude CLI, render no feed | **sim** | — |
@@ -73,3 +73,41 @@ Entregue:
 - **Deferido**: honrar effort no caminho **sandbox/code-run** (`sandbox-cli-agent.ts`) — fora do
   escopo S2 (chat-run apenas); DeepSeek-R1-on-OpenRouter perde low/medium/high (sem fonte
   autoritativa de que honra `reasoning_effort`; coerente com "capacidade real").
+
+## S3 — System prompt do TIME (item 3) ✅
+
+O time inteiro carrega um system prompt comum (cultura / guard-rails / tom) aplicado a
+TODO membro, **além** do prompt por-agente e do `workflow` por-membro (S3.1 do V2.1).
+Vazio = legado byte-idêntico.
+
+**Decisões confirmadas (AskUserQuestion):** (1) posição na pilha = **agente → time →
+workflow** (time = cultura comum; workflow = mais específico, colore por último); (2)
+formato = **cabeçalho markdown** `## Diretrizes do time` (espelha `## Workflow deste time`);
+(3) escopo = **campo na UI + persistência + aplicação numa fatia só**.
+
+Entregue:
+- **Helper PURO novo** `src/lib/orchestration/team/team-system-prompt.ts` (mesmo padrão de
+  `member-workflow.ts`): `appendTeamSystemPrompt(systemPrompt, teamSystemPrompt?)` (vazio/
+  null/whitespace → inalterado; texto → `\n\n## Diretrizes do time\n<trim>`) +
+  `readTeamSystemPrompt(config)` (lê `config.systemPrompt`, trim, null se ausente/inválido) +
+  const `TEAM_SYSTEM_PROMPT_HEADING`.
+- **Aplicação** (`groq.ts` `chatWithAgent`): `appendTeamSystemPrompt` chamado ENTRE
+  `let systemPrompt = agent.systemPrompt` e `appendMemberWorkflow` → ordem agente → time →
+  workflow. Tipo de `options` ganhou `teamSystemPrompt?`.
+- **Injeção** via wrapper `chat` em `start-team-run.ts` (ambos `startTeamRun` chat-branch +
+  `runTeamAndWait`): `readTeamSystemPrompt(team.config)` resolvido 1x → `{ ...opts,
+  teamSystemPrompt }`. **Coordinator INTACTO** (constante de time, não per-membro → não
+  precisa tocar os call-sites do coordinator, diferente do workflow da S3.1).
+- **Persistência** sem mudança de rota: `config` no schema é `z.record` aberto + PATCH faz
+  **merge raso** (preserva `outputWebhooks`/`schedules`/`repoUrl`) + `create-team` passa
+  `config` adiante. **Sem migração** (`Team.config` é JSON).
+- **UI** (uma fatia): helper PURO `team-config-ui.ts` ganhou `systemPrompt` no
+  `TeamConfigForm` + `buildTeamConfig` (set/drop trim) + reader `systemPromptOf`; `page.tsx`
+  ganhou `TeamSystemPromptField` (textarea) + props no `TeamFormModal` + estados create/edit
+  + leitura no `openEdit`. Vazio → key dropada (config limpo).
+- **Coordinator + flow-canvas + output-webhooks INTOCADOS.** `scripts/v22s3-verify.ts`
+  (casos a–d, 4 grupos) + `g4_1-verify` (20, sem regressão) + `tsc --noEmit` = 0 erros.
+- **Deferido (mesma limitação aceita da S3.1):** **code-runs** não recebem o prompt do time —
+  vão pelo worker (wrapper próprio) e o caminho dominante CLI-nativo-no-sandbox monta prompt
+  próprio. **E2E live pendente** (rodar time chat com `config.systemPrompt` e ver a diretriz
+  refletida; time sem prompt = idêntico ao legado).

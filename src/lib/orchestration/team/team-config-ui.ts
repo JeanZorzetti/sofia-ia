@@ -17,6 +17,8 @@ export interface TeamConfigForm {
   topology?: Topology
   /** Raw text from the number input; parsed here (empty/invalid → dropped). */
   maxParallel?: string
+  /** S3 (V2.2 — item 3): team-wide system prompt. Trimmed; empty → dropped. */
+  systemPrompt?: string
 }
 
 /**
@@ -44,6 +46,11 @@ export function buildTeamConfig(base: Record<string, unknown>, form: TeamConfigF
   if (form.topology === 'graph' && Number.isFinite(n) && n >= 1) cfg.maxParallel = n
   else delete cfg.maxParallel
 
+  // System prompt (S3): team-wide culture/guard-rails. Only persist non-empty (trimmed);
+  // empty → drop the key so an unset team stays byte-identical to its legacy config.
+  const sys = (form.systemPrompt ?? '').trim()
+  if (sys) cfg.systemPrompt = sys; else delete cfg.systemPrompt
+
   return cfg
 }
 
@@ -58,4 +65,10 @@ export function topologyOf(config: unknown): Topology {
 export function maxParallelOf(config: unknown): string {
   const v = config && typeof config === 'object' ? (config as Record<string, unknown>).maxParallel : undefined
   return typeof v === 'number' && Number.isFinite(v) ? String(v) : ''
+}
+
+/** Read the team system prompt back as the form's string value ('' when unset). S3. */
+export function systemPromptOf(config: unknown): string {
+  const v = config && typeof config === 'object' ? (config as Record<string, unknown>).systemPrompt : undefined
+  return typeof v === 'string' ? v : ''
 }

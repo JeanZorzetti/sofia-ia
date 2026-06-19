@@ -93,9 +93,16 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
         const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
         const { chatWithAgent } = await import('@/lib/ai/groq')
         const { withUsageTracking } = await import('@/lib/orchestration/team/member-usage-recorder')
+        // S3 (Teams V2.2 — item 3): resolve the team-wide system prompt ONCE and bake it
+        // into the chat wrapper, so every member call inherits it WITHOUT touching the
+        // coordinator (it's a team-level constant, not per-member). Null → byte-identical
+        // legacy call. (Code-runs go through the worker, which has its own wrapper; the
+        // dominant CLI-native sandbox path builds its own prompt — same caveat as S3.1.)
+        const { readTeamSystemPrompt } = await import('@/lib/orchestration/team/team-system-prompt')
+        const teamSystemPrompt = readTeamSystemPrompt(team.config)
         await runTeamByTopology(run.id, {
           store: createPrismaTeamStore(),
-          chat: withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts)),
+          chat: withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, { ...opts, teamSystemPrompt })),
         })
         const { dispatchTeamOutputs } = await import('@/lib/orchestration/team/team-outputs')
         await dispatchTeamOutputs(run.id)
@@ -164,9 +171,13 @@ export async function runTeamAndWait(teamId: string, input: RunTeamAndWaitInput)
   const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
   const { chatWithAgent } = await import('@/lib/ai/groq')
   const { withUsageTracking } = await import('@/lib/orchestration/team/member-usage-recorder')
+  // S3 (Teams V2.2 — item 3): same team-wide system prompt injection as startTeamRun's
+  // chat branch — baked into the wrapper, coordinator untouched. Null → legacy call.
+  const { readTeamSystemPrompt } = await import('@/lib/orchestration/team/team-system-prompt')
+  const teamSystemPrompt = readTeamSystemPrompt(team.config)
   await runTeamByTopology(run.id, {
     store: createPrismaTeamStore(),
-    chat: withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, opts)),
+    chat: withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, { ...opts, teamSystemPrompt })),
   })
 
   // Output webhooks (SP2) fire for engine runs too — best-effort, never fails the node.
