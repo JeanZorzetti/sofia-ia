@@ -44,6 +44,10 @@ export interface MemberCtx {
   /** S1.1: per-member capability policy (`TeamMember.capabilities` Json). Null/absent
    *  → legacy behavior. The coordinator forwards this to `ChatOptions`; S1.2 enforces. */
   capabilities?: CapabilityPolicy | null
+  /** V2.1 S3.1: per-member custom workflow instruction (`TeamMember.workflow`). Null/
+   *  absent → only the Agent's own system prompt (legacy). The coordinator forwards this
+   *  to `ChatOptions`; `chatWithAgent` concatenates it via `appendMemberWorkflow`. */
+  workflow?: string | null
 }
 
 /** Board card as the coordinator sees it. */
@@ -188,6 +192,10 @@ export interface ChatOptions {
    *  `member.capabilities` here; `chatWithAgent` reads it (S2 enforces the gate).
    *  Absent → legacy coder-model gate, behavior unchanged. */
   capabilities?: CapabilityPolicy | null
+  /** V2.1 S3.1 (Tema F1): per-member custom workflow instruction. The coordinator
+   *  forwards `member.workflow` here; `chatWithAgent` concatenates it onto the Agent's
+   *  system prompt via `appendMemberWorkflow`. Absent/empty → prompt unchanged (legacy). */
+  workflow?: string | null
 }
 
 /** Injectable execution primitive (real impl: chatWithAgent). */

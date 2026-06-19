@@ -12,6 +12,9 @@ export interface RosterInput {
    *  Absent/null → no policy (legacy gate). `validateRoster` stays permissive (no new
    *  rule); the runtime gate (S1.2) interprets it. */
   capabilities?: CapabilityPolicy | null
+  /** S3.1: per-member custom workflow instruction persisted to `TeamMember.workflow`.
+   *  Absent/null/empty → only the Agent's own system prompt (legacy). No validation rule. */
+  workflow?: string | null
 }
 
 const VALID_ROLES = new Set(['lead', 'worker', 'reviewer'])

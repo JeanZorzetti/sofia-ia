@@ -8,7 +8,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Cpu, Crown, Hammer, ShieldCheck, Search, Wrench, Server } from 'lucide-react'
+import { Cpu, Crown, Hammer, ShieldCheck, Search, Wrench, Server, Workflow } from 'lucide-react'
 import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
@@ -239,6 +239,23 @@ export default function RosterEditor({ agents, models, value, onChange }: {
                     {EFFORTS.map(e => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {/* S3.1 (Tema F1): per-member workflow — appended to the agent's system prompt
+                ONLY in this team. Empty = inherit the agent's prompt as-is (legacy). */}
+            {row && (
+              <div className="mt-2 pl-7">
+                <label className="flex items-center gap-1 text-[11px] text-white/40 mb-1">
+                  <Workflow className="h-3.5 w-3.5" /> Workflow neste time <span className="text-white/25">(opcional)</span>
+                </label>
+                <textarea
+                  value={row.workflow ?? ''}
+                  onChange={e => patchRow(a.id, { workflow: e.target.value })}
+                  placeholder="Instrução custom só neste time, anexada ao prompt do agente. Ex.: Sempre cite fontes e entregue em bullets curtos."
+                  rows={2}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-white/30 resize-y"
+                />
               </div>
             )}
 

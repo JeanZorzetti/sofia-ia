@@ -6,6 +6,9 @@ import type { CapabilityPolicy } from '@/lib/orchestration/team/team-types'
 // Teams V2 (S1.2): pure helpers that resolve the per-member tool gate + scope the tool
 // defs by policy. Extracted so the decision is unit-testable without DB/network.
 import { modelSupportsTools, resolveToolGate, selectApiTools } from '@/lib/ai/model-capabilities'
+// Teams V2.1 (S3.1): pure concat of a member's per-team `workflow` onto the system
+// prompt. Absent/empty → prompt unchanged (regression). Testable without DB/network.
+import { appendMemberWorkflow } from '@/lib/orchestration/team/member-workflow'
 
 let _groq: Groq | null = null
 
@@ -112,7 +115,7 @@ export async function chatWithAgent(
   agentId: string,
   messages: ChatMessage[],
   leadContext?: Record<string, any>,
-  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null; rawText?: boolean; capabilities?: CapabilityPolicy | null }
+  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null; rawText?: boolean; capabilities?: CapabilityPolicy | null; workflow?: string | null }
 ) {
   const { prisma } = await import('@/lib/prisma')
 
@@ -148,6 +151,12 @@ export async function chatWithAgent(
 
   // Construir prompt do sistema
   let systemPrompt = agent.systemPrompt
+
+  // S3.1 (Teams V2.1 — Tema F1): concatenate the member's per-team `workflow` right
+  // after the Agent's own prompt, so the team-scoped instruction colors every later
+  // augmentation (memory/lead/plugins/skills/knowledge). Absent/empty workflow →
+  // appendMemberWorkflow returns systemPrompt unchanged (byte-identical to legacy).
+  systemPrompt = appendMemberWorkflow(systemPrompt, options?.workflow)
 
   // Injetar memória do agente se memoryEnabled (busca userId do contexto do lead ou da primeira mensagem)
   if ((agent as any).memoryEnabled) {

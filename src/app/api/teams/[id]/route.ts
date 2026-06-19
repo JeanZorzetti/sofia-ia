@@ -56,6 +56,8 @@ export const PATCH = withAuth(async (request, auth, { params }: { params: Promis
             model: m.model ?? null, effort: m.effort ?? null, position: m.position ?? i,
             // S1.3: persist the per-member policy; omit → SQL NULL (legacy gate).
             capabilities: m.capabilities ? (m.capabilities as object) : undefined,
+            // S3.1: persist the per-member workflow; empty/omit → SQL NULL (legacy prompt).
+            workflow: m.workflow?.trim() ? m.workflow.trim() : undefined,
           })),
         }),
       ])

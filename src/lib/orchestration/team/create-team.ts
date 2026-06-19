@@ -48,6 +48,8 @@ export async function createTeamWithRoster(input: CreateTeamInput) {
           // S1.3: persist the policy when present; omit (→ SQL NULL = legacy) otherwise.
           // `as object` mirrors the `config` cast above (Prisma Json input).
           capabilities: m.capabilities ? (m.capabilities as object) : undefined,
+          // S3.1: persist the workflow when non-empty; omit (→ SQL NULL = legacy) otherwise.
+          workflow: m.workflow?.trim() ? m.workflow.trim() : undefined,
         })),
       },
     },

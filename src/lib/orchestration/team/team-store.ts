@@ -152,6 +152,8 @@ export function createPrismaTeamStore(): TeamStore {
           // S1.1: per-member capability policy. The column is a Json blob; coerce to
           // the policy shape (null when unset → legacy behavior downstream).
           capabilities: (m.capabilities ?? null) as CapabilityPolicy | null,
+          // V2.1 S3.1: per-member workflow instruction. Null → legacy (Agent prompt only).
+          workflow: m.workflow ?? null,
         })),
       }
     },

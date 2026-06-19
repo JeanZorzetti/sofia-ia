@@ -17,6 +17,9 @@ export interface RosterRow {
   effort: string
   /** Per-member tool-capability policy (S1.1 shape). Absent → no policy written (legacy). */
   caps?: CapabilityPolicy
+  /** S3.1: per-member custom workflow instruction. Absent/empty → no workflow written
+   *  (legacy: only the Agent's own system prompt). */
+  workflow?: string
 }
 
 /** Sentinel used by the model/effort pickers for "inherit from the agent". */
@@ -31,6 +34,9 @@ export interface RosterMemberPayload {
   effort: string | null
   position: number
   capabilities?: CapabilityPolicy
+  /** S3.1: present only when the row carries a non-empty workflow; a legacy member
+   *  serializes without the key (byte-identical to pre-S3.1). */
+  workflow?: string
 }
 
 /** Build the members payload for POST/PATCH /api/teams.
@@ -46,6 +52,9 @@ export function rosterToMembers(rows: RosterRow[]): RosterMemberPayload[] {
     effort: r.effort === INHERIT ? null : r.effort,
     position: i,
     ...(r.caps ? { capabilities: r.caps } : {}),
+    // S3.1: only emit `workflow` for a non-empty (trimmed) instruction; an untouched
+    // member serializes without the key, so its prompt stays byte-identical (legacy).
+    ...(r.workflow?.trim() ? { workflow: r.workflow.trim() } : {}),
   }))
 }
 

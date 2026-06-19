@@ -1246,6 +1246,10 @@ model TeamMember {
   // Teams V2 (S1.1 — Tema A): per-member tool-capability policy (CapabilityPolicy).
   // Shape: { tools?, mcpAllowlist?, toolSkills?, filesystem? }. Null → legacy gate.
   capabilities Json?  @map("capabilities")
+  // Teams V2.1 (S3.1 — Tema F1): per-member custom workflow instruction, concatenated
+  // to the Agent's system prompt ONLY within this team. Null → only the Agent's own
+  // prompt (byte-identical to legacy). Free-form text, no length cap (@db.Text).
+  workflow  String?  @db.Text
   position  Int      @default(0)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
 

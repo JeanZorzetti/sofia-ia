@@ -103,6 +103,10 @@ const teamMemberSchema = z.object({
   effort: z.string().nullish(),
   position: z.number().optional(),
   capabilities: capabilityPolicySchema.nullish(),
+  // S3.1 (Teams V2.1 — Tema F1): per-member custom workflow instruction. Without this
+  // field z.object would strip it from the payload (unknown keys dropped), so nothing
+  // would persist. Nullish so a legacy member omitting it parses unchanged.
+  workflow: z.string().nullish(),
 })
 
 export const createTeamSchema = z.object({

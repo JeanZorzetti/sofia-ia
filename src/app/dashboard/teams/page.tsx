@@ -236,9 +236,10 @@ export default function TeamsPage() {
     const json = await res.json()
     if (json.success) {
       setEditName(json.data.name)
-      setEditRoster((json.data.members ?? []).map((m: { agentId: string; role: RosterRow['role']; model: string | null; effort: string | null; capabilities?: RosterRow['caps'] | null }) => ({
+      setEditRoster((json.data.members ?? []).map((m: { agentId: string; role: RosterRow['role']; model: string | null; effort: string | null; capabilities?: RosterRow['caps'] | null; workflow?: string | null }) => ({
         agentId: m.agentId, role: m.role, model: m.model ?? INHERIT, effort: m.effort ?? INHERIT,
         ...(m.capabilities ? { caps: m.capabilities } : {}),
+        ...(m.workflow ? { workflow: m.workflow } : {}),
       })))
       const cfg = (json.data.config && typeof json.data.config === 'object' ? json.data.config : {}) as Record<string, unknown>
       setEditConfig(cfg)
