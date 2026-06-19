@@ -8,7 +8,7 @@ import {
   ArrowLeft, Crown, Hammer, ShieldCheck, Cpu, Send, Loader2, Rocket,
   ClipboardList, MessageSquare, CheckCircle2, XCircle, History, Sparkles,
   Clock, Coins, Repeat, Network, Terminal as TerminalIcon, MessageCircle, Code2,
-  GitBranch, GitPullRequest, ExternalLink,
+  GitBranch, GitPullRequest, ExternalLink, ChevronRight, ChevronDown,
 } from 'lucide-react'
 
 import { TeamOutputsPanel } from './TeamOutputsPanel'
@@ -16,6 +16,8 @@ import { TeamSchedulesPanel } from './TeamSchedulesPanel'
 import { MemberActivityPanel } from './MemberActivityPanel'
 import { buildRunRequest, type RunMode } from './run-request'
 import type { GitMode } from '@/lib/git/git-delivery-plan'
+import type { TaskHistoryEvent } from '@/lib/orchestration/team/task-history'
+import { taskEventView, type TaskEventIconKey } from '@/lib/orchestration/team/task-event-view'
 
 // ReactFlow must be client-only (no SSR) to avoid hydration/measure issues.
 const TeamGraph = dynamic(() => import('./TeamGraph'), { ssr: false })
@@ -26,7 +28,7 @@ const DiffViewer = dynamic(() => import('./DiffViewer'), { ssr: false })
 interface Member { id: string; role: string; model: string | null; effort: string | null; agent: { id: string; name: string } }
 interface Team { id: string; name: string; members: Member[] }
 interface RunLite { id: string; status: string; mission: string; createdAt: string }
-interface BoardTask { id: string; title: string; status: string; assigneeId: string | null; retryCount: number; reviewNote: string | null; dependsOn: string[]; resultPreview: string }
+interface BoardTask { id: string; title: string; status: string; assigneeId: string | null; retryCount: number; reviewNote: string | null; dependsOn: string[]; resultPreview: string; historyEvents: TaskHistoryEvent[] }
 interface Msg { id: string; fromMemberId: string | null; toMemberId: string | null; kind: string; summary: string | null; content: string; taskId: string | null }
 interface Metrics { turnsUsed: number | null; tokensUsed: number | null; estimatedCost: number | null; durationMs: number | null }
 interface MemberUsageEntry { memberId: string | null; tokens: number }
@@ -48,6 +50,11 @@ const COLUMNS: { key: string; label: string; dot: string }[] = [
 ]
 
 const ROLE_ICON: Record<string, typeof Crown> = { lead: Crown, worker: Hammer, reviewer: ShieldCheck }
+// S2.2: lucide icon per task lifecycle event (iconKey from the pure taskEventView).
+const EVENT_ICON: Record<TaskEventIconKey, typeof Crown> = {
+  created: ClipboardList, status: Repeat, owner: Hammer,
+  review_requested: ShieldCheck, approved: CheckCircle2, changes: XCircle,
+}
 const ROLE_CHIP: Record<string, string> = {
   lead: 'bg-amber-500/20 text-amber-400',
   worker: 'bg-blue-500/20 text-blue-400',
@@ -85,6 +92,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [metrics, setMetrics] = useState<Metrics>({ turnsUsed: null, tokensUsed: null, estimatedCost: null, durationMs: null })
   const [usageByMember, setUsageByMember] = useState<MemberUsageEntry[]>([])
   const [running, setRunning] = useState(false)
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null) // S2.2: task whose history timeline is open
   const esRef = useRef<EventSource | null>(null)
   const feedRef = useRef<HTMLDivElement | null>(null)
   const missionRef = useRef<HTMLTextAreaElement | null>(null)
@@ -120,6 +128,20 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   }
   function nameFor(id: string | null): string {
     return memberOf(id)?.agent.name ?? (id ? '?' : '—')
+  }
+  // S2.2: resolve a timeline event's actor. It's a TeamMember id OR a role sentinel
+  // (`lead`/`reviewer`) when the store couldn't derive the member id from the task row;
+  // map the sentinels to the role's agent name, falling back to the role label.
+  function actorName(actor: string): string {
+    const m = memberOf(actor)
+    if (m) return m.agent.name
+    if (actor === 'lead') return team?.members.find(x => x.role === 'lead')?.agent.name ?? 'Lead'
+    if (actor === 'reviewer') return team?.members.find(x => x.role === 'reviewer')?.agent.name ?? 'Reviewer'
+    return actor
+  }
+  function fmtEventTime(at: string): string {
+    const d = new Date(at)
+    return isNaN(d.getTime()) ? '' : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   }
 
   function openStream(rid: string, assumeRunning: boolean) {
@@ -348,6 +370,10 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
               <div className="space-y-2">
                 {colTasks.map(t => {
                   const rejected = t.status === 'rejected'
+                  // S2.2: per-task lifecycle timeline (legacy / event-less tasks degrade to
+                  // a non-interactive card, exactly like before — no toggle, no crash).
+                  const events = Array.isArray(t.historyEvents) ? t.historyEvents : []
+                  const expanded = expandedTaskId === t.id
                   return (
                     <div key={t.id} className={`rounded-lg border p-2.5 text-sm ${rejected ? 'border-red-500/30 bg-red-500/5' : 'border-white/10 bg-white/5'}`}>
                       <div className="font-medium text-white/90 text-[13px] leading-snug">{t.title}</div>
@@ -359,6 +385,40 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
                       {t.reviewNote && <div className="mt-1.5 text-[11px] text-amber-400/80 border-l-2 border-amber-400/40 pl-2">↩ {t.reviewNote}</div>}
                       {t.resultPreview && t.status === 'done' && (
                         <div className="mt-1.5 text-[11px] text-white/40 line-clamp-2">{t.resultPreview}</div>
+                      )}
+                      {events.length > 0 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedTaskId(expanded ? null : t.id)}
+                            className="mt-2 inline-flex items-center gap-1 text-[10px] text-white/40 hover:text-white/70 transition-colors"
+                            aria-expanded={expanded}
+                          >
+                            {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                            <History className="h-3 w-3" /> Histórico ({events.length})
+                          </button>
+                          {expanded && (
+                            <ol className="mt-1.5 space-y-1.5 border-l border-white/10 pl-2.5">
+                              {events.map((ev, i) => {
+                                const view = taskEventView(ev)
+                                const Icon = EVENT_ICON[view.iconKey] ?? Repeat
+                                const owner = ev.type === 'owner_changed'
+                                  ? nameFor((ev.detail?.to as string | undefined) ?? null)
+                                  : null
+                                return (
+                                  <li key={i} className="flex items-start gap-1.5 text-[11px] leading-relaxed">
+                                    <Icon className={`h-3 w-3 mt-0.5 shrink-0 ${view.tone}`} />
+                                    <span className="min-w-0 flex-1 text-white/70">
+                                      {view.label}{owner ? ` ${owner}` : ''}
+                                      <span className="text-white/30"> · {actorName(ev.actor)}</span>
+                                    </span>
+                                    <span className="shrink-0 text-white/30 tabular-nums">{fmtEventTime(ev.at)}</span>
+                                  </li>
+                                )
+                              })}
+                            </ol>
+                          )}
+                        </>
                       )}
                     </div>
                   )

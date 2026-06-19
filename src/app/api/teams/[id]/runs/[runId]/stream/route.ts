@@ -61,7 +61,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                   select: {
                     id: true, title: true, status: true, assigneeId: true,
                     retryCount: true, reviewNote: true, result: true, artifacts: true,
-                    dependsOn: true,
+                    dependsOn: true, historyEvents: true,
                   },
                 },
               },
@@ -84,14 +84,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           if (!current) return
           pollErrors = 0
 
-          // Task board changes (signature of id:status:retry)
-          const sig = current.tasks.map(t => `${t.id}:${t.status}:${t.retryCount}`).join('|')
+          // Task board changes (signature of id:status:retry + history length).
+          // S2.2: include the per-task history length so a new lifecycle event re-emits
+          // the board even when status/retry don't change (e.g. an owner_changed) — the
+          // timeline arrives live instead of waiting for the next status transition.
+          const sig = current.tasks
+            .map(t => `${t.id}:${t.status}:${t.retryCount}:${Array.isArray(t.historyEvents) ? t.historyEvents.length : 0}`)
+            .join('|')
           if (sig !== lastTaskSig) {
             send('board', {
               tasks: current.tasks.map(t => ({
                 id: t.id, title: t.title, status: t.status, assigneeId: t.assigneeId,
                 retryCount: t.retryCount, reviewNote: t.reviewNote, dependsOn: t.dependsOn,
                 resultPreview: (t.result ?? '').slice(0, 300),
+                historyEvents: Array.isArray(t.historyEvents) ? t.historyEvents : [],
               })),
             })
             lastTaskSig = sig

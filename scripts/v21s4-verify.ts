@@ -12,11 +12,14 @@
 //   (c) owner_changed when assigneeId changes; task_created on creation.
 //   (d) a non-transition update (reviewDiff/result/retry only, or same status) yields NO event.
 //   (e) no events / null column → behavior identical to today (regression).
+//   (f) S2.2 read-side: taskEventView maps each event type → label/tone/iconKey
+//       (status_changed embeds the pt-BR from→to); taskStatusLabel falls back safely.
 import assert from 'node:assert/strict'
 import {
   appendTaskEvent, taskCreatedEvent, taskEventFromUpdate,
   ACTOR_LEAD, ACTOR_REVIEWER, type TaskHistoryEvent,
 } from '../src/lib/orchestration/team/task-history'
+import { taskEventView, taskStatusLabel } from '../src/lib/orchestration/team/task-event-view'
 
 let passed = 0
 function ok(name: string) { passed++; console.log(`  ✓ ${name}`) }
@@ -139,6 +142,38 @@ function main() {
     assert.deepEqual(appendTaskEvent(undefined, original[0]), [original[0]])
     assert.deepEqual(appendTaskEvent('garbage' as unknown, original[0]), [original[0]])
     ok('(e) non-transitions leave the column null; appendTaskEvent is immutable + coerces non-arrays')
+  }
+
+  // ── (f) S2.2 read-side: taskEventView maps event → label/tone/iconKey ──
+  console.log('(f) S2.2 read-side: taskEventView → label/tone/iconKey por tipo')
+  {
+    // status_changed embeds the pt-BR from→to.
+    const status = taskEventView({ type: 'status_changed', actor: 'w1', at: AT, detail: { from: 'todo', to: 'doing' } })
+    assert.equal(status.label, 'A fazer → Fazendo')
+    assert.equal(status.iconKey, 'status')
+    assert.equal(status.tone, 'text-blue-400')
+
+    // each type maps to its own iconKey (no collisions) + a stable label.
+    assert.equal(taskEventView({ type: 'task_created', actor: ACTOR_LEAD, at: AT }).iconKey, 'created')
+    assert.equal(taskEventView({ type: 'review_requested', actor: 'w1', at: AT }).iconKey, 'review_requested')
+    assert.equal(taskEventView({ type: 'review_approved', actor: ACTOR_REVIEWER, at: AT }).iconKey, 'approved')
+    assert.equal(taskEventView({ type: 'review_changes_requested', actor: ACTOR_REVIEWER, at: AT }).iconKey, 'changes')
+
+    // owner_changed: first assignment vs reassignment (component appends the name).
+    assert.equal(taskEventView({ type: 'owner_changed', actor: ACTOR_LEAD, at: AT, detail: { from: null, to: 'w2' } }).label, 'Atribuída a')
+    assert.equal(taskEventView({ type: 'owner_changed', actor: ACTOR_LEAD, at: AT, detail: { from: 'w1', to: 'w2' } }).label, 'Reatribuída para')
+
+    // taskStatusLabel: known → pt-BR, unknown → raw, non-string → em-dash.
+    assert.equal(taskStatusLabel('review'), 'Review')
+    assert.equal(taskStatusLabel('weird'), 'weird')
+    assert.equal(taskStatusLabel(undefined), '—')
+
+    // a status change into an unknown target degrades to the raw value (no crash).
+    assert.equal(
+      taskEventView({ type: 'status_changed', actor: 'w1', at: AT, detail: { from: 'review', to: 'rejected' } }).label,
+      'Review → Rejeitado',
+    )
+    ok('(f) taskEventView maps type→label/tone/iconKey; taskStatusLabel falls back safely')
   }
 
   console.log(`\n✅ v21s4 verify: ${passed} assertions passed`)
