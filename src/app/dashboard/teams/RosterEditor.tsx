@@ -16,6 +16,7 @@ import {
   INHERIT, rosterToMembers, mcpConnectionToOption,
   type Role, type RosterRow, type McpOption,
 } from './roster-mapping'
+import { effortsForModel } from '@/lib/ai/model-efforts'
 
 // Re-exported so existing importers (page.tsx) keep importing from './RosterEditor'.
 export { INHERIT, rosterToMembers }
@@ -25,12 +26,17 @@ export type Availability = 'available' | 'unavailable' | 'unknown'
 export interface AgentLite { id: string; name: string }
 export interface ModelOption { id: string; name: string; provider: string; availability?: Availability }
 
-const EFFORTS = [
-  { value: INHERIT, label: 'Effort: auto' },
-  { value: 'low', label: 'Low' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'high', label: 'High' },
-]
+// S2.1 (Teams V2.2 — item 2): the effort dropdown is no longer a fixed list — it's derived
+// from the member's model via effortsForModel() so each model offers exactly the tiers it
+// supports (Opus 4.7/4.8 add xhigh/max; Haiku/Sonnet-4.5/Groq/Ollama offer only "auto"). The
+// "auto" sentinel (INHERIT) is always present.
+const EFFORT_LABEL: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High', xhigh: 'XHigh', max: 'Max' }
+function effortOptions(model: string) {
+  return [
+    { value: INHERIT, label: 'Effort: auto' },
+    ...effortsForModel(model).map(e => ({ value: e, label: EFFORT_LABEL[e] ?? e })),
+  ]
+}
 
 const ROLE_CHIP: Record<Role, string> = {
   lead: 'bg-amber-500/20 text-amber-400',
@@ -104,6 +110,15 @@ export default function RosterEditor({ agents, models, value, onChange }: {
   }
   const patchRow = (agentId: string, patch: Partial<RosterRow>) =>
     onChange(value.map(r => (r.agentId === agentId ? { ...r, ...patch } : r)))
+
+  // S2.1: changing the member's model re-scopes the effort tiers — if the current effort
+  // isn't supported by the new model, reset it to "auto" so we never carry e.g. `max` onto a
+  // Haiku. Supported effort (or `auto`) is preserved.
+  function setModel(agentId: string, model: string) {
+    const row = value.find(r => r.agentId === agentId)
+    const keep = !row || row.effort === INHERIT || effortsForModel(model).includes(row.effort as never)
+    patchRow(agentId, { model, ...(keep ? {} : { effort: INHERIT }) })
+  }
 
   function setToolMode(agentId: string, mode: ToolMode) {
     const row = value.find(r => r.agentId === agentId)
@@ -212,7 +227,7 @@ export default function RosterEditor({ agents, models, value, onChange }: {
 
                 <div className="flex items-center gap-1.5">
                   <Cpu className="h-3.5 w-3.5 text-white/30" />
-                  <Select value={row.model} onValueChange={v => patchRow(a.id, { model: v })}>
+                  <Select value={row.model} onValueChange={v => setModel(a.id, v)}>
                     <SelectTrigger className={`${triggerCls} w-[200px]`}><SelectValue /></SelectTrigger>
                     <SelectContent className={contentCls}>
                       <SelectItem value={INHERIT}>Herdar do agente</SelectItem>
@@ -236,7 +251,7 @@ export default function RosterEditor({ agents, models, value, onChange }: {
                 <Select value={row.effort} onValueChange={v => patchRow(a.id, { effort: v })}>
                   <SelectTrigger className={`${triggerCls} w-[120px]`}><SelectValue /></SelectTrigger>
                   <SelectContent className={contentCls}>
-                    {EFFORTS.map(e => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
+                    {effortOptions(row.model).map(e => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

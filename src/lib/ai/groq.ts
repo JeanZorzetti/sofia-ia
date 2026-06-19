@@ -9,6 +9,9 @@ import { modelSupportsTools, resolveToolGate, selectApiTools } from '@/lib/ai/mo
 // Teams V2.1 (S3.1): pure concat of a member's per-team `workflow` onto the system
 // prompt. Absent/empty → prompt unchanged (regression). Testable without DB/network.
 import { appendMemberWorkflow } from '@/lib/orchestration/team/member-workflow'
+// Teams V2.2 (S2.2): translate the member's effort to the value OpenRouter accepts
+// (low/medium/high — xhigh/max clamp to high). Pure; the CLI path keeps the raw tier.
+import { openRouterReasoningEffort } from '@/lib/ai/model-efforts'
 
 let _groq: Groq | null = null
 
@@ -345,6 +348,7 @@ Regras:
           cliModelId || undefined,  // Pass model ID (undefined = CLI default)
           token,
           { capabilities: capabilityPolicy, mcpServers: cliMcpServers },
+          reasoningEffort,  // S2.2: per-member effort → CLI --effort flag (null = no flag)
         ),
         { isLimited: (e) => isClaudeRateLimit(String((e as Error)?.message ?? e)) },
       );
@@ -606,7 +610,9 @@ REGRAS PARA ESCREVER CÓDIGO:
           temperature: agent.temperature,
           max_tokens: 8192,
           ...(apiTools ? { tools: apiTools } : {}),
-          ...(reasoningEffort ? { reasoning_effort: reasoningEffort as 'low' | 'medium' | 'high' } : {}),
+          // S2.2: clamp xhigh/max → high (the cast hid that OpenRouter only takes 3 tiers);
+          // null/unknown → no key (byte-identical to legacy).
+          ...((() => { const e = openRouterReasoningEffort(reasoningEffort); return e ? { reasoning_effort: e } : {} })()),
         })
 
         const responseMessage = completion.choices[0]?.message

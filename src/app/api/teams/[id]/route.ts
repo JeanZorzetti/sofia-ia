@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { validateRoster } from '@/lib/orchestration/team/team-roster'
 import { withAuth } from '@/lib/with-auth'
 import { parseJson, updateTeamSchema } from '@/lib/validation'
+import { clampEffort } from '@/lib/ai/model-efforts'
 
 async function ownTeam(id: string, userId: string) {
   return prisma.team.findFirst({ where: { id, createdBy: userId } })
@@ -53,7 +54,9 @@ export const PATCH = withAuth(async (request, auth, { params }: { params: Promis
         prisma.teamMember.createMany({
           data: members.map((m, i) => ({
             teamId: id, agentId: m.agentId, role: m.role,
-            model: m.model ?? null, effort: m.effort ?? null, position: m.position ?? i,
+            // S2.1: clamp effort to a tier the chosen model supports (else null), so we never
+            // persist e.g. `max` on a Haiku. model=null (inherit) is permissive.
+            model: m.model ?? null, effort: clampEffort(m.model ?? null, m.effort ?? null), position: m.position ?? i,
             // S1.3: persist the per-member policy; omit → SQL NULL (legacy gate).
             capabilities: m.capabilities ? (m.capabilities as object) : undefined,
             // S3.1: persist the per-member workflow; empty/omit → SQL NULL (legacy prompt).

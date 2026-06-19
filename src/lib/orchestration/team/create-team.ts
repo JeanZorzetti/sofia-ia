@@ -2,6 +2,7 @@
 // Shared team creation used by POST /api/teams and POST /api/teams/magic-create.
 import { prisma } from '@/lib/prisma'
 import { validateRoster, type RosterInput } from './team-roster'
+import { clampEffort } from '@/lib/ai/model-efforts'
 
 export interface CreateTeamInput {
   name?: string
@@ -43,7 +44,9 @@ export async function createTeamWithRoster(input: CreateTeamInput) {
           agentId: m.agentId,
           role: m.role,
           model: m.model ?? null,
-          effort: m.effort ?? null,
+          // S2.1: clamp effort to a tier the chosen model supports (else null). Shared by
+          // POST /api/teams, magic-create and template deploy. model=null (inherit) is permissive.
+          effort: clampEffort(m.model ?? null, m.effort ?? null),
           position: m.position ?? i,
           // S1.3: persist the policy when present; omit (→ SQL NULL = legacy) otherwise.
           // `as object` mirrors the `config` cast above (Prisma Json input).

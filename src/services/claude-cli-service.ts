@@ -5,6 +5,7 @@ import fs from 'fs';
 import os from 'os';
 import { isClaudeRateLimit } from '@/lib/ai/claude-token-pool';
 import { buildCliToolFlags, renderClaudeCliFlags, type CliMcpServerDescriptor } from '@/lib/ai/cli-tool-flags';
+import { claudeCliEffortFlag } from '@/lib/ai/model-efforts';
 import type { CapabilityPolicy } from '@/lib/orchestration/team/team-types';
 
 export class ClaudeCliService {
@@ -36,6 +37,10 @@ export class ClaudeCliService {
         // to read-only + `--permission-mode plan` (writes would hit /app — isolation hole)
         // and honors `mcpAllowlist` via --mcp-config. Absent → today's exact command.
         capabilityOpts?: { capabilities?: CapabilityPolicy | null; mcpServers?: CliMcpServerDescriptor[] },
+        // Teams V2.2 — S2.2: per-member reasoning effort. The CLI honors all five tiers
+        // natively (`claude --effort low|medium|high|xhigh|max`); absent/`inherit` → no flag
+        // (command byte-identical to legacy). The model-aware clamp already ran at save time.
+        effort?: string | null,
     ): Promise<{ content: string; usage?: any }> {
         const tempDir = os.tmpdir();
         const randomId = Math.random().toString(36).substring(2, 15);
@@ -85,6 +90,10 @@ export class ClaudeCliService {
                 if (modelId) {
                     shellCmd += ` --model ${modelId}`;
                 }
+
+                // S2.2: append --effort <tier> when the member carries one. Empty for
+                // inherit/unknown so the command stays byte-identical to the legacy spawn.
+                shellCmd += claudeCliEffortFlag(effort);
 
                 console.log(`[Claude CLI] Executing: ${shellCmd.substring(0, 120)}...`);
 
