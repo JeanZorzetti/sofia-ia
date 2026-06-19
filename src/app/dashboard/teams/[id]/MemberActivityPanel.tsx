@@ -10,10 +10,11 @@
 'use client'
 
 import {
-  Crown, Hammer, ShieldCheck, Send, Inbox, Repeat, ListChecks, Users, ArrowRight, Sparkles, Coins,
+  Crown, Hammer, ShieldCheck, Send, Inbox, Repeat, ListChecks, Users, ArrowRight, Sparkles, Coins, AlertTriangle,
 } from 'lucide-react'
 import { computeMemberStats, type MemberLike, type MessageLike, type TaskLike } from './member-stats'
 import { costForModel } from './member-usage'
+import { classifyProviderError, pickAdvisoryMemberId, type ProviderAdvisory } from '@/lib/orchestration/team/provider-advisory'
 
 interface UsageEntry { memberId: string | null; tokens: number }
 
@@ -38,17 +39,37 @@ const KIND_LABEL: Record<string, string> = {
   message: 'msg', assignment: 'atribuição', review: 'review', system: 'sistema',
 }
 
+// S3.3: per-member provider advisory chip. Label + explanatory tooltip per category (decision:
+// "chip + tooltip explicativo"). The chip only renders on the member picked by the read-side
+// heuristic; the run-level "Erro" box below the panel remains the honest source of truth.
+const ADVISORY_META: Record<ProviderAdvisory, { label: string; tip: string }> = {
+  quota_exhausted: {
+    label: 'quota esgotada',
+    tip: 'A cota/limite de uso da conta deste provider se esgotou. Aguarde o reset do ciclo ou troque o modelo/provider deste membro.',
+  },
+  rate_limited: {
+    label: 'limite atingido',
+    tip: 'O provider limitou a taxa de requisições (rate limit / 429). Costuma liberar em minutos a horas — aguarde ou troque o modelo/provider deste membro.',
+  },
+  provider_overloaded: {
+    label: 'provider sobrecarregado',
+    tip: 'O provider está sobrecarregado/indisponível no momento (capacidade). Tente novamente em instantes ou troque o provider deste membro.',
+  },
+}
+
 function entries(rec: Record<string, number>): [string, number][] {
   return Object.entries(rec).filter(([, n]) => n > 0)
 }
 
 export function MemberActivityPanel({
-  members, messages, tasks, usageByMember = [],
+  members, messages, tasks, usageByMember = [], runStatus, runError,
 }: {
   members: MemberLike[]
   messages: MessageLike[]
   tasks: TaskLike[]
   usageByMember?: UsageEntry[]
+  runStatus?: string
+  runError?: string | null
 }) {
   const stats = computeMemberStats(members, messages, tasks)
   if (stats.length === 0) return null
@@ -58,6 +79,11 @@ export function MemberActivityPanel({
   for (const u of usageByMember) {
     if (u.memberId) usageMap.set(u.memberId, (usageMap.get(u.memberId) ?? 0) + u.tokens)
   }
+
+  // S3.3 — provider advisory: classify the run-level error/status, then heuristically pin it to
+  // one member. No category (success / normal failure) → no chip = legacy panel (regression).
+  const advisory = classifyProviderError(runError, runStatus)
+  const advisoryMemberId = advisory ? pickAdvisoryMemberId(members, tasks, messages) : null
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -79,11 +105,19 @@ export function MemberActivityPanel({
           return (
             <div key={s.memberId} className="rounded-lg border border-white/10 bg-white/[0.03] p-3 space-y-3">
               {/* Identity */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className={`inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-full ${ROLE_CHIP[s.role] ?? 'bg-white/10 text-white/60'}`}>
                   <Icon className="h-3 w-3" /> {s.role}
                 </span>
                 <span className="text-sm font-medium text-white/90 truncate">{s.name}</span>
+                {advisory && s.memberId === advisoryMemberId && (
+                  <span
+                    title={ADVISORY_META[advisory].tip}
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/25 cursor-help"
+                  >
+                    <AlertTriangle className="h-3 w-3" /> {ADVISORY_META[advisory].label}
+                  </span>
+                )}
               </div>
 
               {/* Counters */}

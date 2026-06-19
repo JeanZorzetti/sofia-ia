@@ -604,7 +604,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
       {/* Per-member activity (Teams V2 — S2.1): additive section grouping the SSE-delivered
           messages/tasks by member. No new route/query — derives from state already on the client. */}
       {team && team.members.length > 0 && (
-        <MemberActivityPanel members={team.members} messages={messages} tasks={tasks} usageByMember={usageByMember} />
+        <MemberActivityPanel members={team.members} messages={messages} tasks={tasks} usageByMember={usageByMember} runStatus={status} runError={runError} />
       )}
 
       {/* Run error (failed / rate-limited / git delivery error) */}

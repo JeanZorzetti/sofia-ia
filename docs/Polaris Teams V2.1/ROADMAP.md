@@ -83,7 +83,10 @@ Três itens independentes e baratos, todos por injeção/UI, **coordinator intac
 - **UI/uso:** navegação entre tasks relacionadas no board; `blocks` é o inverso de `dependsOn` (derivável ou persistido). Não muda a lógica de agendamento do DAG (G), só enriquece.
 - **Verificação:** `scripts/v21s6-verify.ts` — relations persistem e renderizam; DAG/agenda inalterados.
 
-### Fatia S3.3 — Advisory por membro (F3)
+### Fatia S3.3 — Advisory por membro (F3) ✅ FEITA (commit `6c58654`, 2026-06-19)
+
+> **Entregue:** chip de advisory por membro no painel "Por membro" com `quota_exhausted`/`rate_limited`/`provider_overloaded`, derivado do erro run-level que os coordinators já levantam. **SÓ UI — sem schema, sem migração, coordinator INTACTO.** Helper PURO `src/lib/orchestration/team/provider-advisory.ts`: `classifyProviderError(error, status)` refina a string/status nas 3 categorias (texto vence status; `null` = sem chip = legado) e `pickAdvisoryMemberId(members, tasks, messages)` faz a **atribuição read-side (decisão A, confirmada com o usuário)** — doing→owner, review→reviewer, sem-task-viva→lead (planejamento/consolidação), fallback→último autor. UI: chip ⚠ + label curto + **tooltip explicativo** (decisão de UX confirmada) na linha de identidade do card (`MemberActivityPanel.tsx`); `TeamRunView` passa `runStatus`/`runError`. Run sem erro = nenhum chip = painel byte-idêntico ao atual (regressão). A caixa "Erro" run-level abaixo do painel segue sendo a fonte da verdade honesta. Verificação: `scripts/v21s7-verify.ts` (3 grupos a–c) + `tsc --noEmit` limpo. **Pendente:** E2E manual (forçar 429 num membro). **🏁 Fecha o Sprint 3 e o ciclo V2.1.**
+
 - **UI:** chip por membro no painel (V2 S2) com `quota_exhausted`/`rate_limited`/`provider_overloaded`, derivado do erro que o `chat()` já levanta (a Polaris já trata rate-limit Claude via `claude-token-pool`). Sem nova engine — é surface do que já existe.
 - **Verificação:** E2E manual — forçar 429 num membro e confirmar o chip.
 
@@ -105,7 +108,7 @@ Três itens independentes e baratos, todos por injeção/UI, **coordinator intac
 
 ## Sequência recomendada e verificação E2E final
 
-**Ordem:** Sprint 1 (S1.1 ✅ → S1.2 ✅ → S1.3 ✅) → Sprint 2 (S2.1 → S2.2) → Sprint 3 (S3.1 → S3.2 → S3.3).
+**Ordem:** Sprint 1 (S1.1 ✅ → S1.2 ✅ → S1.3 ✅) → Sprint 2 (S2.1 ✅ → S2.2 ✅) → Sprint 3 (S3.1 ✅ → S3.2 ✅ → S3.3 ✅). **🏁 CICLO V2.1 COMPLETO (2026-06-19).**
 
 **Por quê nessa ordem:** Tema A' é o maior salto de valor e destrava o investimento do V2 S1; Tema E é quick win de observabilidade; Tema F é polimento barato. S1.3 pode cair para backlog se o caveat de FS pesar.
 
