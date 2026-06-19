@@ -9,6 +9,12 @@ import type {
   MemberCtx, TaskRow, MessageRow, TaskStatus, RunStatus, MessageKind, TeamRole, CodeArtifacts,
   CapabilityPolicy,
 } from './team-types'
+// S2.1: pure derivation of the per-task lifecycle timeline. The store appends an
+// event right where it already persists each transition, so the coordinator stays
+// byte-identical (see task-history.ts).
+import {
+  appendTaskEvent, taskCreatedEvent, taskEventFromUpdate, type TaskHistoryEvent,
+} from './task-history'
 
 export interface LoadedRun {
   runId: string
@@ -83,6 +89,13 @@ export function isMemberFkViolation(err: unknown): boolean {
   const m = e.meta ?? {}
   const target = `${m.field_name ?? ''} ${m.constraint ?? ''} ${Array.isArray(m.target) ? m.target.join(' ') : (m.target ?? '')}`.toLowerCase()
   return target.includes('member') || target.includes('assignee')
+}
+
+/** Coerce the `history_events` Json column into the read shape. NULL (legacy task)
+ *  or any non-array value → undefined, so a task without a timeline reads exactly
+ *  as it did before S2.1. */
+function coerceHistory(raw: unknown): TaskHistoryEvent[] | undefined {
+  return Array.isArray(raw) ? (raw as TaskHistoryEvent[]) : undefined
 }
 
 export interface TeamStore {
@@ -177,19 +190,27 @@ export function createPrismaTeamStore(): TeamStore {
         id: t.id, title: t.title, body: t.body, status: t.status as TaskStatus,
         assigneeId: t.assigneeId, result: t.result, reviewNote: t.reviewNote,
         retryCount: t.retryCount, position: t.position, dependsOn: t.dependsOn,
+        historyEvents: coerceHistory(t.historyEvents),
       }))
     },
 
     async createTask(runId, data) {
       const count = await prisma.teamTask.count({ where: { runId } })
+      const status = data.status ?? 'todo'
+      const assigneeId = data.assigneeId ?? null
+      // S2.1: seed the timeline with `task_created` (coordinator unchanged — the
+      // event is derived here from the data the store already receives).
+      const seedHistory = (aid: string | null): Prisma.InputJsonValue =>
+        [taskCreatedEvent({ assigneeId: aid, status }, new Date().toISOString())] as unknown as Prisma.InputJsonValue
       const base = {
         runId,
         title: data.title.slice(0, 500),
         body: data.body ?? null,
-        assigneeId: data.assigneeId ?? null,
-        status: data.status ?? 'todo',
+        assigneeId,
+        status,
         position: data.position ?? count,
         dependsOn: data.dependsOn ?? [],
+        historyEvents: seedHistory(assigneeId),
       }
       let t
       try {
@@ -199,12 +220,13 @@ export function createPrismaTeamStore(): TeamStore {
         // unassigned (matching `onDelete: SetNull`) instead of crashing the run.
         if (!isMemberFkViolation(err)) throw err
         console.warn('[TeamStore] createTask: assignee no longer exists, creating task unassigned')
-        t = await prisma.teamTask.create({ data: { ...base, assigneeId: null } })
+        t = await prisma.teamTask.create({ data: { ...base, assigneeId: null, historyEvents: seedHistory(null) } })
       }
       return {
         id: t.id, title: t.title, body: t.body, status: t.status as TaskStatus,
         assigneeId: t.assigneeId, result: t.result, reviewNote: t.reviewNote,
         retryCount: t.retryCount, position: t.position, dependsOn: t.dependsOn,
+        historyEvents: coerceHistory(t.historyEvents),
       }
     },
 
@@ -212,25 +234,53 @@ export function createPrismaTeamStore(): TeamStore {
       // `artifacts` is a Prisma Json column; only touch it when explicitly provided
       // (undefined = leave as-is, so chat-runs never write the field).
       const { artifacts, ...rest } = data
+      const onlyReviewDiff = artifacts !== undefined && artifacts.commands === undefined && artifacts.reviewDiff !== undefined
+      // We must read the prior row to (a) shallow-merge a reviewDiff-only artifacts
+      // write (C3) and/or (b) derive the S2.1 lifecycle event for a status/owner
+      // transition. Fetch once, only when one of those applies (a pure result/retry
+      // write needs no read — same as before).
+      const needsPrev = onlyReviewDiff || data.status !== undefined || data.assigneeId !== undefined
+      const prev = needsPrev
+        ? await prisma.teamTask.findUnique({
+            where: { id: taskId },
+            select: { status: true, assigneeId: true, artifacts: true, historyEvents: true },
+          })
+        : null
+
       let artifactsData: Prisma.InputJsonValue | undefined
       if (artifacts !== undefined) {
         // C3: a review-diff write must NOT clobber the command log the code-agent
         // already streamed (C2.1), and vice-versa. Shallow-merge with the current
         // artifacts so each key (`commands` / `reviewDiff`) is preserved.
-        const onlyReviewDiff = artifacts.commands === undefined && artifacts.reviewDiff !== undefined
         if (onlyReviewDiff) {
-          const cur = await prisma.teamTask.findUnique({ where: { id: taskId }, select: { artifacts: true } })
-          const prev = (cur?.artifacts && typeof cur.artifacts === 'object' ? cur.artifacts : {}) as Record<string, unknown>
-          artifactsData = { ...prev, reviewDiff: artifacts.reviewDiff } as unknown as Prisma.InputJsonValue
+          const prevArt = (prev?.artifacts && typeof prev.artifacts === 'object' ? prev.artifacts : {}) as Record<string, unknown>
+          artifactsData = { ...prevArt, reviewDiff: artifacts.reviewDiff } as unknown as Prisma.InputJsonValue
         } else {
           artifactsData = artifacts as unknown as Prisma.InputJsonValue
         }
       }
+
+      // S2.1: append the lifecycle event for this transition. `taskEventFromUpdate`
+      // returns null when the update isn't a trackable transition (e.g. a reviewDiff-
+      // or retryCount-only write) → historyEvents left untouched (run stays identical).
+      let historyData: Prisma.InputJsonValue | undefined
+      if (prev) {
+        const event = taskEventFromUpdate(
+          { status: prev.status, assigneeId: prev.assigneeId },
+          { status: data.status, assigneeId: data.assigneeId },
+          new Date().toISOString(),
+        )
+        if (event) {
+          historyData = appendTaskEvent(prev.historyEvents, event) as unknown as Prisma.InputJsonValue
+        }
+      }
+
       await prisma.teamTask.update({
         where: { id: taskId },
         data: {
           ...rest,
           ...(artifactsData !== undefined ? { artifacts: artifactsData } : {}),
+          ...(historyData !== undefined ? { historyEvents: historyData } : {}),
         },
       })
     },

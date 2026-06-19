@@ -1,6 +1,8 @@
 // src/lib/orchestration/team/team-types.ts
 // Shared types for the Polaris Teams coordination engine.
 
+import type { TaskHistoryEvent } from './task-history'
+
 export type TeamRole = 'lead' | 'worker' | 'reviewer'
 // `clarify` (G6, graph mode only): a Worker that lacks essential info asks the Lead
 // (`@CLARIFY`) instead of guessing; the task parks here until the Lead answers.
@@ -59,6 +61,10 @@ export interface TaskRow {
    *  execution on these being `done`. Always `[]` in linear mode (`runTeam`
    *  never reads it), so the field is backward-compatible. */
   dependsOn: string[]
+  /** V2.1 S2.1: append-only lifecycle timeline (`history_events` Json). NULL/absent
+   *  on legacy tasks. The coordinator never reads it — the store writes it from each
+   *  transition and S2.2 renders it in TeamRunView. */
+  historyEvents?: TaskHistoryEvent[] | null
 }
 
 /** Message as the coordinator sees it. */

@@ -1312,6 +1312,7 @@ model TeamTask {
   result     String?  @db.Text
   reviewNote String?  @map("review_note") @db.Text
   artifacts  Json?    // code-runs: { commands: [{cmd,stdout,stderr,exitCode,ms}] } (Sub-projeto C)
+  historyEvents Json? @map("history_events") // V2.1 S2.1: append-only lifecycle timeline [{type,actor,at,detail?}]; NULL = legacy task (no events)
   dependsOn  String[] @default([]) @map("depends_on") // G1 (graph mode): TeamTask ids this task depends on; runTeamGraph gates execution on these
   retryCount Int      @default(0) @map("retry_count")
   position   Int      @default(0)
