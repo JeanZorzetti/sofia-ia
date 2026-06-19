@@ -30,7 +30,7 @@ levantadas pelo usuário. Mesmo padrão dos ciclos V2 / V2.1:
 | **S2.2** | 2 | Fiar `effort` no caminho Claude Code CLI (`ClaudeCliService` `--effort` + branch CLI em `groq.ts`); clamp xhigh/max→high no OpenRouter | não | ✅ |
 | **S3** | 3 | `Team.config.systemPrompt` + `appendTeamSystemPrompt` (puro) + injeção via wrapper `chat` (coordinator intacto) + campo na UI | não | ✅ |
 | **S4** | 4 | `POST .../runs/[runId]/messages` (`kind:'user'`) + surfacing no `buildLeadContext` + composer ao vivo no `TeamRunView` | não | ✅ |
-| **S5** | 5a | Botão "Visualizar" → vista grafo/canvas expandida (`@xyflow/react` + `team-graph-view`), nós enriquecidos | não | ✅ `1f839d6` |
+| **S5** | 5a | Botão "Visualizar" → vista grafo/canvas expandida (`@xyflow/react` + `team-graph-view`), nós enriquecidos | não | ✅ `9373494` |
 | **S6** | 5b | Imagens/visão: campos de mídia no `TeamMessage`, upload no composer, pass-through ao Claude CLI, render no feed | **sim** | — |
 
 Ordem por valor/risco: **S1 → S2 → S3 → S4 → S5 → S6**.
