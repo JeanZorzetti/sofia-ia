@@ -139,9 +139,14 @@ export async function runTeamGraph(runId: string, deps: RunTeamDeps): Promise<vo
           const dependsOn = (a.dependsOn ?? [])
             .map(n => displayToId.get(n))
             .filter((id): id is string => !!id)
+          // S3.2: same resolution for `[related:#n]` cross-links (DISPLAY-only; the
+          // agenda never reads `related`, so this never affects scheduling).
+          const related = (a.related ?? [])
+            .map(n => displayToId.get(n))
+            .filter((id): id is string => !!id)
           const created = await store.createTask(runId, {
             title: a.title ?? 'Tarefa', body: a.body ?? null,
-            assigneeId: assignee?.id ?? null, status: 'todo', dependsOn,
+            assigneeId: assignee?.id ?? null, status: 'todo', dependsOn, related,
           })
           displayToId.set(created.position + 1, created.id)
           await store.addMessage(runId, {

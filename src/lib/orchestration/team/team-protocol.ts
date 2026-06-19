@@ -6,39 +6,44 @@ import type { LeadAction, ReviewVerdict } from './team-types'
 
 /**
  * Consume the leading `[key:value]` directives from a directive remainder.
- * Recognises an assignment target (`[worker:Nome]` / `[role:worker]` / `[para:Nome]`)
- * and, for G1, dependency declarations (`[after:#n]` / `[after:#1,#3]`). The two
- * may appear in either order. Only the FIRST non-`after` bracket becomes the
- * assignment target (parity with the legacy single-target parser); any further
- * non-`after` bracket is left in the remaining text.
+ * Recognises an assignment target (`[worker:Nome]` / `[role:worker]` / `[para:Nome]`),
+ * for G1 dependency declarations (`[after:#n]` / `[after:#1,#3]`), and for S3.2 free
+ * cross-links (`[related:#n]` / `[related:#1,#3]`). They may appear in any order. Only
+ * the FIRST non-`after`/non-`related` bracket becomes the assignment target (parity with
+ * the legacy single-target parser); any further such bracket is left in the text.
  */
 function extractDirectives(rest: string): {
   assignTo?: { kind: 'name' | 'role'; value: string }
   dependsOn?: number[]
+  related?: number[]
   text: string
 } {
   let s = rest
   let assignTo: { kind: 'name' | 'role'; value: string } | undefined
   let dependsOn: number[] | undefined
+  let related: number[] | undefined
   for (;;) {
     const m = s.match(/^\s*\[([a-zA-Z]+)\s*:\s*([^\]]+)\]\s*(.*)$/)
     if (!m) break
     const key = m[1].toLowerCase()
     const value = m[2].trim()
     const remainder = m[3]
-    if (key === 'after') {
+    if (key === 'after' || key === 'related') {
       // pull every integer out of e.g. "#1,#3" / "1, 3" / "#2"
       const nums = (value.match(/\d+/g) ?? []).map(Number)
-      if (nums.length > 0) dependsOn = [...(dependsOn ?? []), ...nums]
+      if (nums.length > 0) {
+        if (key === 'after') dependsOn = [...(dependsOn ?? []), ...nums]
+        else related = [...(related ?? []), ...nums]
+      }
       s = remainder
       continue
     }
-    if (assignTo) break // second non-after bracket → leave it in the text
+    if (assignTo) break // second non-relation bracket → leave it in the text
     const kind: 'name' | 'role' = key === 'role' ? 'role' : 'name'
     assignTo = { kind, value }
     s = remainder
   }
-  return { assignTo, dependsOn, text: s.trim() }
+  return { assignTo, dependsOn, related, text: s.trim() }
 }
 
 /**
@@ -69,8 +74,8 @@ export function parseLeadActions(text: string): LeadAction[] {
 
     if (taskM) {
       flush()
-      const { assignTo, dependsOn, text } = extractDirectives(taskM[1])
-      current = { type: 'task', title: text || 'Tarefa', body: '', assignTo, ...(dependsOn ? { dependsOn } : {}) }
+      const { assignTo, dependsOn, related, text } = extractDirectives(taskM[1])
+      current = { type: 'task', title: text || 'Tarefa', body: '', assignTo, ...(dependsOn ? { dependsOn } : {}), ...(related ? { related } : {}) }
     } else if (msgM) {
       flush()
       const { assignTo, text } = extractDirectives(msgM[1])

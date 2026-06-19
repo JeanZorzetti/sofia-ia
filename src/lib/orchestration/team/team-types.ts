@@ -65,6 +65,12 @@ export interface TaskRow {
    *  execution on these being `done`. Always `[]` in linear mode (`runTeam`
    *  never reads it), so the field is backward-compatible. */
   dependsOn: string[]
+  /** V2.1 S3.2 (graph mode): free cross-link ids (`related` column, NOT NULL DEFAULT
+   *  '{}' → the Prisma store always provides it). DISPLAY/navigation only — the agenda/
+   *  DAG never reads it (`depsSatisfied` gates on `dependsOn` alone). Optional so legacy
+   *  in-memory stores/test literals stay valid (read it as `related ?? []`). The inverse
+   *  `blocks` relation is DERIVED read-side (task-relations.ts) — no column, never here. */
+  related?: string[]
   /** V2.1 S2.1: append-only lifecycle timeline (`history_events` Json). NULL/absent
    *  on legacy tasks. The coordinator never reads it — the store writes it from each
    *  transition and S2.2 renders it in TeamRunView. */
@@ -95,6 +101,11 @@ export interface LeadAction {
    *  The graph executor resolves these to real task ids at creation time.
    *  Absent when no `[after:]` is declared (linear mode ignores it). */
   dependsOn?: number[]
+  /** S3.2: `@TASK [related:#n]` cross-links, as board DISPLAY ids (`position+1`).
+   *  The graph executor resolves these to real task ids at creation time (same as
+   *  `dependsOn`). Absent when no `[related:]` is declared. DISPLAY-only — never
+   *  enters the agenda's execution gate. */
+  related?: number[]
   /** G6: `@CLARIFY [#n] resposta` — the board DISPLAY id (`position+1`) of the
    *  `clarify` task the Lead is answering, and the answer text. Only present on
    *  `type: 'clarify'`. The graph executor resolves `#n`→real id and re-queues. */

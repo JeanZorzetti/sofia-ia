@@ -36,6 +36,9 @@ export interface CreateTaskInput {
   position?: number
   /** G1: real task ids this task depends on (graph mode). Defaults to []. */
   dependsOn?: string[]
+  /** S3.2: real task ids this task cross-links to (free `related`). DISPLAY-only,
+   *  never gates execution. Defaults to []. */
+  related?: string[]
 }
 
 export interface UpdateTaskInput {
@@ -192,6 +195,7 @@ export function createPrismaTeamStore(): TeamStore {
         id: t.id, title: t.title, body: t.body, status: t.status as TaskStatus,
         assigneeId: t.assigneeId, result: t.result, reviewNote: t.reviewNote,
         retryCount: t.retryCount, position: t.position, dependsOn: t.dependsOn,
+        related: t.related,
         historyEvents: coerceHistory(t.historyEvents),
       }))
     },
@@ -212,6 +216,7 @@ export function createPrismaTeamStore(): TeamStore {
         status,
         position: data.position ?? count,
         dependsOn: data.dependsOn ?? [],
+        related: data.related ?? [],
         historyEvents: seedHistory(assigneeId),
       }
       let t
@@ -228,6 +233,7 @@ export function createPrismaTeamStore(): TeamStore {
         id: t.id, title: t.title, body: t.body, status: t.status as TaskStatus,
         assigneeId: t.assigneeId, result: t.result, reviewNote: t.reviewNote,
         retryCount: t.retryCount, position: t.position, dependsOn: t.dependsOn,
+        related: t.related,
         historyEvents: coerceHistory(t.historyEvents),
       }
     },

@@ -18,6 +18,9 @@ Regras:
 - [after:#n] é OPCIONAL: declara que a tarefa só pode começar depois que a tarefa
   #n do board estiver concluída (use os #ids mostrados no board). Para múltiplas
   dependências: [after:#1,#3]. Omita quando não houver dependência.
+- [related:#n] é OPCIONAL: cria um vínculo de REFERÊNCIA com a tarefa #n (sem ordem de
+  execução — serve só para navegação no board). Para várias: [related:#1,#3]. Omita
+  quando não houver relação.
 - Não duplique tarefas que já existem no board.
 - Se o board já está todo concluído, responda apenas com @DONE e o resumo final.`.trim()
 

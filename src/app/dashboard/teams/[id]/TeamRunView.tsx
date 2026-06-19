@@ -1,7 +1,7 @@
 // src/app/dashboard/teams/[id]/TeamRunView.tsx
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import {
@@ -9,6 +9,7 @@ import {
   ClipboardList, MessageSquare, CheckCircle2, XCircle, History, Sparkles,
   Clock, Coins, Repeat, Network, Terminal as TerminalIcon, MessageCircle, Code2,
   GitBranch, GitPullRequest, ExternalLink, ChevronRight, ChevronDown,
+  ArrowDownLeft, ArrowUpRight, Link2,
 } from 'lucide-react'
 
 import { TeamOutputsPanel } from './TeamOutputsPanel'
@@ -18,6 +19,7 @@ import { buildRunRequest, type RunMode } from './run-request'
 import type { GitMode } from '@/lib/git/git-delivery-plan'
 import type { TaskHistoryEvent } from '@/lib/orchestration/team/task-history'
 import { taskEventView, type TaskEventIconKey } from '@/lib/orchestration/team/task-event-view'
+import { deriveTaskRelations } from '@/lib/orchestration/team/task-relations'
 
 // ReactFlow must be client-only (no SSR) to avoid hydration/measure issues.
 const TeamGraph = dynamic(() => import('./TeamGraph'), { ssr: false })
@@ -28,7 +30,7 @@ const DiffViewer = dynamic(() => import('./DiffViewer'), { ssr: false })
 interface Member { id: string; role: string; model: string | null; effort: string | null; agent: { id: string; name: string } }
 interface Team { id: string; name: string; members: Member[] }
 interface RunLite { id: string; status: string; mission: string; createdAt: string }
-interface BoardTask { id: string; title: string; status: string; assigneeId: string | null; retryCount: number; reviewNote: string | null; dependsOn: string[]; resultPreview: string; historyEvents: TaskHistoryEvent[] }
+interface BoardTask { id: string; title: string; status: string; assigneeId: string | null; retryCount: number; reviewNote: string | null; dependsOn: string[]; related: string[]; resultPreview: string; historyEvents: TaskHistoryEvent[] }
 interface Msg { id: string; fromMemberId: string | null; toMemberId: string | null; kind: string; summary: string | null; content: string; taskId: string | null }
 interface Metrics { turnsUsed: number | null; tokensUsed: number | null; estimatedCost: number | null; durationMs: number | null }
 interface MemberUsageEntry { memberId: string | null; tokens: number }
@@ -93,9 +95,31 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [usageByMember, setUsageByMember] = useState<MemberUsageEntry[]>([])
   const [running, setRunning] = useState(false)
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null) // S2.2: task whose history timeline is open
+  const [highlightId, setHighlightId] = useState<string | null>(null) // S3.2: relation-target task flashed on navigation
   const esRef = useRef<EventSource | null>(null)
   const feedRef = useRef<HTMLDivElement | null>(null)
   const missionRef = useRef<HTMLTextAreaElement | null>(null)
+  const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map()) // S3.2: task id → card el, for scroll-to navigation
+  const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // S3.2: derive each task's DISPLAY relations — `blocks` (inverse of dependsOn) and the
+  // symmetric `related` cross-links. Pure helper; never touches the agenda/DAG. taskById
+  // resolves a relation id → its title for the navigation chips.
+  const taskById = useMemo(() => new Map(tasks.map(t => [t.id, t])), [tasks])
+  const relations = useMemo(
+    () => deriveTaskRelations(tasks.map(t => ({ id: t.id, dependsOn: t.dependsOn ?? [], related: t.related ?? [] }))),
+    [tasks],
+  )
+
+  // S3.2: scroll the related card into view and flash it for 1.5s.
+  function gotoTask(id: string) {
+    const el = cardRefs.current.get(id)
+    if (!el) return
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    setHighlightId(id)
+    if (highlightTimer.current) clearTimeout(highlightTimer.current)
+    highlightTimer.current = setTimeout(() => setHighlightId(cur => (cur === id ? null : cur)), 1500)
+  }
 
   async function loadTeam() {
     const r = await fetch(`/api/teams/${teamId}`)
@@ -105,7 +129,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
 
   useEffect(() => {
     loadTeam()
-    return () => { esRef.current?.close() }
+    return () => { esRef.current?.close(); if (highlightTimer.current) clearTimeout(highlightTimer.current) }
   }, [teamId])
 
   // Deep-link from the "Rodar" button on the teams grid (?focus=mission):
@@ -374,14 +398,45 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
                   // a non-interactive card, exactly like before — no toggle, no crash).
                   const events = Array.isArray(t.historyEvents) ? t.historyEvents : []
                   const expanded = expandedTaskId === t.id
+                  // S3.2: navigation chips. `depende de` = this task's dependsOn (filtered to
+                  // tasks still on the board); `bloqueia` = derived inverse; `relacionada` =
+                  // symmetric cross-links. Empty groups → no chips (legacy card unchanged).
+                  const rel = relations.get(t.id) ?? { blocks: [], related: [] }
+                  const relGroups: { key: string; label: string; Icon: typeof Crown; tone: string; ids: string[] }[] = [
+                    { key: 'dep', label: 'depende de', Icon: ArrowDownLeft, tone: 'border-amber-400/30 text-amber-300/80 hover:bg-amber-400/10', ids: (t.dependsOn ?? []).filter(id => taskById.has(id)) },
+                    { key: 'blk', label: 'bloqueia', Icon: ArrowUpRight, tone: 'border-red-400/30 text-red-300/80 hover:bg-red-400/10', ids: rel.blocks },
+                    { key: 'rel', label: 'relacionada', Icon: Link2, tone: 'border-sky-400/30 text-sky-300/80 hover:bg-sky-400/10', ids: rel.related },
+                  ]
+                  const hasRelations = relGroups.some(g => g.ids.length > 0)
+                  const highlighted = highlightId === t.id
                   return (
-                    <div key={t.id} className={`rounded-lg border p-2.5 text-sm ${rejected ? 'border-red-500/30 bg-red-500/5' : 'border-white/10 bg-white/5'}`}>
+                    <div
+                      key={t.id}
+                      ref={el => { if (el) cardRefs.current.set(t.id, el); else cardRefs.current.delete(t.id) }}
+                      className={`rounded-lg border p-2.5 text-sm transition-shadow ${rejected ? 'border-red-500/30 bg-red-500/5' : 'border-white/10 bg-white/5'} ${highlighted ? 'ring-2 ring-blue-400/70 ring-offset-1 ring-offset-[#0b0b0f]' : ''}`}
+                    >
                       <div className="font-medium text-white/90 text-[13px] leading-snug">{t.title}</div>
                       <div className="flex items-center gap-2 mt-1.5 text-[11px] text-white/40">
                         <span>{nameFor(t.assigneeId)}</span>
                         {t.retryCount > 0 && <span className="text-amber-400/70">retry {t.retryCount}</span>}
                         {rejected && <span className="inline-flex items-center gap-0.5 text-red-400"><XCircle className="h-3 w-3" />rejeitado</span>}
                       </div>
+                      {hasRelations && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {relGroups.flatMap(g => g.ids.map(id => (
+                            <button
+                              key={`${g.key}:${id}`}
+                              type="button"
+                              onClick={() => gotoTask(id)}
+                              title={`${g.label}: ${taskById.get(id)?.title ?? ''}`}
+                              className={`inline-flex items-center gap-1 max-w-[160px] rounded-full border px-1.5 py-0.5 text-[10px] transition-colors ${g.tone}`}
+                            >
+                              <g.Icon className="h-2.5 w-2.5 shrink-0" />
+                              <span className="truncate">{taskById.get(id)?.title ?? '—'}</span>
+                            </button>
+                          )))}
+                        </div>
+                      )}
                       {t.reviewNote && <div className="mt-1.5 text-[11px] text-amber-400/80 border-l-2 border-amber-400/40 pl-2">↩ {t.reviewNote}</div>}
                       {t.resultPreview && t.status === 'done' && (
                         <div className="mt-1.5 text-[11px] text-white/40 line-clamp-2">{t.resultPreview}</div>

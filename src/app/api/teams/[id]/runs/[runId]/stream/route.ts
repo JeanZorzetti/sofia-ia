@@ -61,7 +61,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                   select: {
                     id: true, title: true, status: true, assigneeId: true,
                     retryCount: true, reviewNote: true, result: true, artifacts: true,
-                    dependsOn: true, historyEvents: true,
+                    dependsOn: true, related: true, historyEvents: true,
                   },
                 },
               },
@@ -96,6 +96,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               tasks: current.tasks.map(t => ({
                 id: t.id, title: t.title, status: t.status, assigneeId: t.assigneeId,
                 retryCount: t.retryCount, reviewNote: t.reviewNote, dependsOn: t.dependsOn,
+                related: t.related,
                 resultPreview: (t.result ?? '').slice(0, 300),
                 historyEvents: Array.isArray(t.historyEvents) ? t.historyEvents : [],
               })),
