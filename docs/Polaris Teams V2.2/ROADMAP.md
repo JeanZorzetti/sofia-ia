@@ -30,7 +30,7 @@ levantadas pelo usuário. Mesmo padrão dos ciclos V2 / V2.1:
 | **S2.2** | 2 | Fiar `effort` no caminho Claude Code CLI (`ClaudeCliService` `--effort` + branch CLI em `groq.ts`); clamp xhigh/max→high no OpenRouter | não | ✅ |
 | **S3** | 3 | `Team.config.systemPrompt` + `appendTeamSystemPrompt` (puro) + injeção via wrapper `chat` (coordinator intacto) + campo na UI | não | ✅ |
 | **S4** | 4 | `POST .../runs/[runId]/messages` (`kind:'user'`) + surfacing no `buildLeadContext` + composer ao vivo no `TeamRunView` | não | ✅ |
-| **S5** | 5a | Botão "Visualizar" → vista grafo/canvas expandida (`@xyflow/react` + `team-graph-view`), nós enriquecidos | não | — |
+| **S5** | 5a | Botão "Visualizar" → vista grafo/canvas expandida (`@xyflow/react` + `team-graph-view`), nós enriquecidos | não | ✅ `1f839d6` |
 | **S6** | 5b | Imagens/visão: campos de mídia no `TeamMessage`, upload no composer, pass-through ao Claude CLI, render no feed | **sim** | — |
 
 Ordem por valor/risco: **S1 → S2 → S3 → S4 → S5 → S6**.
@@ -148,3 +148,37 @@ Entregue:
   com `buildLeadContext`) + `c3-verify` (15) + `tsc --noEmit` = 0 erros.
 - **E2E live pendente** (rodar um time, mandar mensagem durante o run, ver o Lead acatar no
   próximo turno; run sem mensagem = idêntico ao legado).
+
+## S5 — Vista "Visualizar" (grafo expandido, item 5a) ✅
+
+Hoje o `TeamRunView` mostra só um grafo COMPACTO na sidebar ("Topologia"). A S5 adiciona um
+botão **"Visualizar"** que abre uma vista **expandida** (modal fullscreen, interativa) do
+mesmo grafo board-driven, com **nós enriquecidos**. O grafo compacto fica intocado.
+
+**Decisões confirmadas (AskUserQuestion):** (1) conteúdo = **time + tarefas** (board completo
+com dependências e relações); (2) UI = **modal fullscreen** sobreposto (não empurra layout);
+(3) enriquecimento = **todos os quatro** — tokens por membro, owner por tarefa, status legível,
+arestas `related`.
+
+Entregue:
+- **Builder PURO estendido** `team-graph-view.ts` — o já-existente `buildTeamGraph` (do ciclo
+  "Grafo" G4/G5) ganhou `TeamGraphOpts.expanded?` + `usageByMember?` + `relations?`. **Todo o
+  enriquecimento é gated em `expanded`** → com a flag off (caminho do `TeamGraph.tsx` compacto)
+  a saída é **byte-idêntica** ao legado. Em `expanded`: label do membro ganha total de tokens
+  (`fmtTokens`, soma por membro, escala k/M, `memberId` null ignorado); label da tarefa ganha
+  owner (🛠 nome) + status legível (PT); arestas `related` (roxo tracejado, **deduplicadas por
+  par** já que a relação é simétrica). `blocks` **não** vira aresta — é o inverso de `dependsOn`,
+  já desenhado como aresta de dependência.
+- **Componente novo client-only** `TeamGraphView.tsx` — overlay fullscreen (`role=dialog`,
+  fecha por ×/backdrop/Esc) com `<ReactFlow>` interativo (pan/zoom/fitView + `Controls` +
+  `MiniMap`) consumindo `buildTeamGraph(..., { expanded:true, usageByMember, relations })`.
+  Legenda explica o vocabulário das arestas. Montado via `dynamic(ssr:false)`.
+- **UI** (`TeamRunView.tsx`): botão "Visualizar" ao lado do título "Topologia" → estado
+  `graphOpen` → render do modal reusando o estado **já no cliente** (`team`, `tasks`,
+  `usageByMember`, `relations` do `deriveTaskRelations`, `activeId`, `handoff`, `running`).
+  **Sem rota/query nova.** O `TeamGraph.tsx` compacto não foi tocado.
+- **Coordinator + flow-canvas + output-webhooks INTOCADOS. Sem migração, sem dep nova**
+  (`@xyflow/react` já estava). `scripts/v22s5-verify.ts` (casos a–d) + regressão `g4-verify`
+  (32) + `g5-verify` (18, golden do grafo compacto) + `tsc --noEmit` = 0 erros.
+- **E2E live pendente** (abrir um run, clicar "Visualizar", conferir nós com tokens/owner/status
+  e as arestas related; grafo compacto = idêntico ao legado).

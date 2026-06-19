@@ -9,7 +9,7 @@ import {
   ClipboardList, MessageSquare, CheckCircle2, XCircle, History, Sparkles,
   Clock, Coins, Repeat, Network, Terminal as TerminalIcon, MessageCircle, Code2,
   GitBranch, GitPullRequest, ExternalLink, ChevronRight, ChevronDown,
-  ArrowDownLeft, ArrowUpRight, Link2,
+  ArrowDownLeft, ArrowUpRight, Link2, Maximize2,
 } from 'lucide-react'
 
 import { TeamOutputsPanel } from './TeamOutputsPanel'
@@ -23,6 +23,8 @@ import { deriveTaskRelations } from '@/lib/orchestration/team/task-relations'
 
 // ReactFlow must be client-only (no SSR) to avoid hydration/measure issues.
 const TeamGraph = dynamic(() => import('./TeamGraph'), { ssr: false })
+// S5 (V2.2): expanded "Visualizar" graph modal — also client-only (ReactFlow + DOM).
+const TeamGraphView = dynamic(() => import('./TeamGraphView'), { ssr: false })
 // xterm.js + diff2html are DOM-only → client-only (Sub-projeto C — C2).
 const SandboxTerminal = dynamic(() => import('./SandboxTerminal'), { ssr: false })
 const DiffViewer = dynamic(() => import('./DiffViewer'), { ssr: false })
@@ -97,6 +99,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [steer, setSteer] = useState('') // S4: live-steering input (message injected mid-run)
   const [steerSending, setSteerSending] = useState(false)
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null) // S2.2: task whose history timeline is open
+  const [graphOpen, setGraphOpen] = useState(false) // S5: expanded "Visualizar" graph modal open
   const [highlightId, setHighlightId] = useState<string | null>(null) // S3.2: relation-target task flashed on navigation
   const esRef = useRef<EventSource | null>(null)
   const feedRef = useRef<HTMLDivElement | null>(null)
@@ -615,7 +618,17 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
         <div className="space-y-4">
           {team && team.members.length > 0 && (
             <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-              <h2 className="font-semibold text-white text-sm mb-2 flex items-center gap-2"><Network className="h-4 w-4 text-white/40" /> Topologia</h2>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="font-semibold text-white text-sm flex items-center gap-2"><Network className="h-4 w-4 text-white/40" /> Topologia</h2>
+                {/* S5: open the enriched fullscreen graph (tokens / owner / status / relations). */}
+                <button
+                  type="button"
+                  onClick={() => setGraphOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" /> Visualizar
+                </button>
+              </div>
               <TeamGraph
                 members={team.members.map(m => ({ id: m.id, role: m.role, name: m.agent.name }))}
                 tasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, assigneeId: t.assigneeId, dependsOn: t.dependsOn ?? [] }))}
@@ -671,6 +684,21 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           <h2 className="font-semibold text-white text-sm mb-3 flex items-center gap-2"><Rocket className="h-4 w-4 text-emerald-400" /> Entrega final</h2>
           <pre className="whitespace-pre-wrap break-words text-sm text-white/80 font-sans">{output}</pre>
         </div>
+      )}
+
+      {/* S5: expanded "Visualizar" graph modal — enriched + interactive, reuses the
+          same state already on the client (no new route/query). */}
+      {graphOpen && team && team.members.length > 0 && (
+        <TeamGraphView
+          members={team.members.map(m => ({ id: m.id, role: m.role, name: m.agent.name }))}
+          tasks={tasks.map(t => ({ id: t.id, title: t.title, status: t.status, assigneeId: t.assigneeId, dependsOn: t.dependsOn ?? [] }))}
+          activeId={activeId}
+          handoff={handoff}
+          running={running}
+          usageByMember={usageByMember}
+          relations={relations}
+          onClose={() => setGraphOpen(false)}
+        />
       )}
     </div>
   )

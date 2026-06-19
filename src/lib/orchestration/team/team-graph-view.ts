@@ -33,9 +33,27 @@ export interface GraphTask {
 // G5: the current live handoff (Lead→Worker on assignment, Worker→Reviewer on
 // review) plus whether the run is still live. Optional 4th param so the G4
 // positional signature `buildTeamGraph(members, tasks, activeId)` keeps working.
+//
+// V2.2 S5 ("Visualizar"): the expanded graph view layers extra context on top of
+// the same board-driven layout. ALL of it is gated on `expanded` — when the flag
+// is off (the compact sidebar `TeamGraph.tsx` path) the output is byte-identical
+// to the G4/G5 graph, so `scripts/v22s5-verify.ts` can assert that invariant.
+export interface GraphUsage { memberId: string | null; tokens: number }
+export interface GraphRelations { blocks: string[]; related: string[] }
 export interface TeamGraphOpts {
   handoff?: { fromMemberId: string; toMemberId: string } | null
   running?: boolean
+  /** S5: opt into the enriched "Visualizar" rendering (token/owner/status labels +
+   *  `related` edges). Omitted/false → compact output unchanged. */
+  expanded?: boolean
+  /** S5: per-member token totals for the run (memberId → tokens). Shown on member
+   *  nodes only when `expanded`. */
+  usageByMember?: GraphUsage[]
+  /** S5: derived display relations (`deriveTaskRelations` output) — adds the
+   *  symmetric `related` edges between task nodes when `expanded`. `blocks` is the
+   *  inverse of `dependsOn`, already drawn as dependency edges, so it is NOT
+   *  re-drawn here. */
+  relations?: Map<string, GraphRelations>
 }
 
 export interface TeamGraphData { nodes: Node[]; edges: Edge[] }
@@ -97,15 +115,39 @@ const memberLabel = (role: string, name: string) => {
   return `${g} ${name}`
 }
 
-function taskLabel(t: GraphTask, reviewerName: string | null): string {
+// S5: in the expanded view the task node also spells out its owner (🛠 name) and a
+// readable status label; the compact branch returns the byte-identical G4 label.
+function taskLabel(
+  t: GraphTask, reviewerName: string | null, expanded: boolean, ownerName: string | null,
+): string {
   const badge = t.status === 'blocked' ? '🔒 ' : ''
   const chip = reviewerName ? ` · 🛡 ${reviewerName}` : ''
-  return `${badge}${t.title}${chip}`
+  if (!expanded) return `${badge}${t.title}${chip}`
+  const owner = ownerName ? ` · 🛠 ${ownerName}` : ''
+  return `${badge}${t.title}${owner} · ${statusLabel(t.status)}${chip}`
 }
 
 const SUBTLE_EDGE = { stroke: 'rgba(255,255,255,0.2)' }
 const OWNER_EDGE = { stroke: 'rgba(255,255,255,0.25)' }
 const DEP_EDGE = { stroke: 'rgba(245,158,11,0.55)', strokeDasharray: '5 4' } // amber dependency
+// S5 (expanded only): the symmetric `related` cross-link — purple, finely dashed,
+// intentionally distinct from the amber dependency edge so the two read apart.
+const RELATED_EDGE = { stroke: 'rgba(168,85,247,0.55)', strokeDasharray: '2 4' }
+
+// S5: status labels (expanded task nodes). Mirrors the kanban copy in TeamRunView
+// (todo/doing/review/done) plus the graph-only rejected/blocked states.
+const STATUS_LABEL_PT: Record<string, string> = {
+  todo: 'A fazer', doing: 'Fazendo', review: 'Review', done: 'Concluído',
+  rejected: 'Rejeitado', blocked: 'Bloqueado',
+}
+const statusLabel = (s: string) => STATUS_LABEL_PT[s] ?? s
+
+// S5: compact token formatting for member nodes (e.g. 12_345 → "12.3k tok").
+function fmtTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M tok`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k tok`
+  return `${n} tok`
+}
 // G5: the live handoff edge — vivid cyan + thicker stroke, intentionally distinct
 // from the subtle white glow the active member's edges already get via `animated`.
 const HANDOFF_EDGE = { stroke: '#22d3ee', strokeWidth: 3 }
@@ -118,11 +160,16 @@ const taskNodeId = (id: string) => `task-${id}`
 // the builder stays pure and only emits the className string + data flag.
 function buildMemberNode(
   m: GraphMember, role: string, x: number, y: number, active: boolean, thinking: boolean,
+  expanded: boolean, tokens: number | null,
 ): Node {
+  // S5: the expanded view appends the member's run token total when available;
+  // compact (or no usage) keeps the original `memberLabel` byte-for-byte.
+  const base = memberLabel(role, m.name)
+  const label = expanded && tokens != null ? `${base} · ${fmtTokens(tokens)}` : base
   return {
     id: m.id,
     position: { x, y },
-    data: { kind: 'member', label: memberLabel(role, m.name), thinking },
+    data: { kind: 'member', label, thinking },
     style: memberStyle(active),
     className: thinking ? 'rf-thinking' : undefined,
     draggable: false,
@@ -162,6 +209,20 @@ export function buildTeamGraph(
   const reviewer = members.find(m => m.role === 'reviewer')
   const reviewerName = reviewer?.name ?? null
 
+  // S5: enriched "Visualizar" rendering. All of this is inert when `expanded` is
+  // false (compact sidebar path) → byte-identical output.
+  const expanded = !!opts?.expanded
+  // memberId → run token total (summed; null memberId / non-expanded ignored).
+  const usageMap = new Map<string, number>()
+  if (expanded && opts?.usageByMember) {
+    for (const u of opts.usageByMember) {
+      if (u.memberId) usageMap.set(u.memberId, (usageMap.get(u.memberId) ?? 0) + u.tokens)
+    }
+  }
+  const tokensOf = (id: string): number | null => (expanded && usageMap.has(id) ? usageMap.get(id)! : null)
+  // memberId → display name, for the owner chip on expanded task nodes.
+  const memberName = new Map(members.map(m => [m.id, m.name]))
+
   const totalW = Math.max(workers.length, 1) * GAP_X
   const centerX = totalW / 2 - NODE_W / 2
 
@@ -172,12 +233,12 @@ export function buildTeamGraph(
   const memberX = new Map<string, number>()
   if (lead) {
     memberX.set(lead.id, centerX)
-    nodes.push(buildMemberNode(lead, 'lead', centerX, ROW_LEAD_Y, lead.id === activeId, running && lead.id === activeId))
+    nodes.push(buildMemberNode(lead, 'lead', centerX, ROW_LEAD_Y, lead.id === activeId, running && lead.id === activeId, expanded, tokensOf(lead.id)))
   }
   workers.forEach((w, i) => {
     const x = i * GAP_X
     memberX.set(w.id, x)
-    nodes.push(buildMemberNode(w, 'worker', x, ROW_WORKER_Y, w.id === activeId, running && w.id === activeId))
+    nodes.push(buildMemberNode(w, 'worker', x, ROW_WORKER_Y, w.id === activeId, running && w.id === activeId, expanded, tokensOf(w.id)))
     if (lead) {
       const hand = isHandoff(lead.id, w.id)
       edges.push({ id: `l-${w.id}`, source: lead.id, target: w.id, animated: hand || w.id === activeId, style: hand ? HANDOFF_EDGE : SUBTLE_EDGE })
@@ -189,7 +250,7 @@ export function buildTeamGraph(
   })
   if (reviewer) {
     memberX.set(reviewer.id, centerX)
-    nodes.push(buildMemberNode(reviewer, 'reviewer', centerX, ROW_REVIEWER_Y, reviewer.id === activeId, running && reviewer.id === activeId))
+    nodes.push(buildMemberNode(reviewer, 'reviewer', centerX, ROW_REVIEWER_Y, reviewer.id === activeId, running && reviewer.id === activeId, expanded, tokensOf(reviewer.id)))
     if (lead) {
       const hand = isHandoff(reviewer.id, lead.id)
       edges.push({ id: `r-l`, source: reviewer.id, target: lead.id, animated: hand || reviewer.id === activeId, style: hand ? HANDOFF_EDGE : { stroke: 'rgba(255,255,255,0.12)', strokeDasharray: '4 4' } })
@@ -208,12 +269,13 @@ export function buildTeamGraph(
     columnCount.set(colX, k + 1)
 
     const showReviewer = t.status === 'review' ? reviewerName : null
+    const ownerName = owned ? (memberName.get(t.assigneeId!) ?? null) : null
     nodes.push({
       id: taskNodeId(t.id),
       position: { x: colX, y: TASK_BASE_Y + k * TASK_GAP_Y },
       data: {
         kind: 'task',
-        label: taskLabel(t, showReviewer),
+        label: taskLabel(t, showReviewer, expanded, ownerName),
         status: t.status,
         blocked: t.status === 'blocked',
         reviewer: showReviewer,
@@ -233,6 +295,24 @@ export function buildTeamGraph(
         id: `d-${depId}-${t.id}`, source: taskNodeId(depId), target: taskNodeId(t.id),
         animated: true, style: DEP_EDGE,
       })
+    }
+  }
+
+  // ── S5 (expanded): symmetric `related` cross-link edges ──
+  // `related` is symmetric (each pair shows on both cards), so we de-dupe by the
+  // unordered id pair to draw a single edge. `blocks` is intentionally skipped: it
+  // is the inverse of `dependsOn`, already rendered above as dependency edges.
+  if (expanded && opts?.relations) {
+    const seen = new Set<string>()
+    for (const t of tasks) {
+      for (const otherId of opts.relations.get(t.id)?.related ?? []) {
+        if (otherId === t.id || !taskIds.has(otherId)) continue
+        const [a, b] = t.id < otherId ? [t.id, otherId] : [otherId, t.id]
+        const key = `${a}|${b}`
+        if (seen.has(key)) continue
+        seen.add(key)
+        edges.push({ id: `rel-${a}-${b}`, source: taskNodeId(a), target: taskNodeId(b), style: RELATED_EDGE })
+      }
     }
   }
 
