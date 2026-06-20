@@ -31,9 +31,9 @@ levantadas pelo usuário. Mesmo padrão dos ciclos V2 / V2.1:
 | **S3** | 3 | `Team.config.systemPrompt` + `appendTeamSystemPrompt` (puro) + injeção via wrapper `chat` (coordinator intacto) + campo na UI | não | ✅ |
 | **S4** | 4 | `POST .../runs/[runId]/messages` (`kind:'user'`) + surfacing no `buildLeadContext` + composer ao vivo no `TeamRunView` | não | ✅ |
 | **S5** | 5a | Botão "Visualizar" → vista grafo/canvas expandida (`@xyflow/react` + `team-graph-view`), nós enriquecidos | não | ✅ `9373494` |
-| **S6** | 5b | Imagens/visão: campos de mídia no `TeamMessage`, upload no composer, pass-through ao Claude CLI, render no feed | **sim** | — |
+| **S6** | 5b | Imagens/visão: campos de mídia no `TeamMessage`, upload no composer, pass-through ao Claude CLI, render no feed | **sim** | ✅ `a1df8c5` |
 
-Ordem por valor/risco: **S1 → S2 → S3 → S4 → S5 → S6**.
+Ordem por valor/risco: **S1 → S2 → S3 → S4 → S5 → S6**. 🏁 **Ciclo V2.2 COMPLETO.**
 
 ## S1 — Modelos atuais da Claude (item 1)
 
@@ -182,3 +182,62 @@ Entregue:
   (32) + `g5-verify` (18, golden do grafo compacto) + `tsc --noEmit` = 0 erros.
 - **E2E live pendente** (abrir um run, clicar "Visualizar", conferir nós com tokens/owner/status
   e as arestas related; grafo compacto = idêntico ao legado).
+
+## S6 — Imagens/visão (item 5b) ✅ `a1df8c5`
+
+Anexar **imagens** à missão e/ou a uma mensagem de steering ao vivo; o arquivo chega a um
+membro Claude-CLI com visão (a tool `Read` renderiza imagem) e é renderizado no feed.
+
+**Decisões confirmadas (AskUserQuestion):** (1) storage = **MinIO** (instância existente
+`sofia-minio.7c17iw.easypanel.host`); (2) onde anexa = **ambos** (missão + composer ao vivo
+do S4); (3) quem recebe = **o Lead surfaça o caminho local e DELEGA** a análise visual a um
+membro com visão (consistente com o "só o Lead" do S4); caminho não-CLI (OpenRouter/Groq/
+Ollama) vê só o texto (limitação documentada, como S2/S3).
+
+**Descoberta de arquitetura:** chat-runs rodam no **mesmo processo** do app via `after()`
+(só code-runs vão pro worker separado) → o processo que recebe o upload é o mesmo que materializa
+e spawna o CLI. O `claude --help` **não tem flag de imagem por caminho local** (o `--file` é
+download por `file_id` da Files API) → o mecanismo é **caminho-no-prompt + Read tool**, habilitado
+por `--add-dir` no dir temp do run.
+
+Entregue:
+- **Schema/migração** `TeamMessage.attachments Json?` (migração formal `20260619160000_add_team_message_attachments`,
+  **aplicada manual** via `migrate deploy` no host real `sofia_db@2.24.207.200:5435` ANTES do
+  push — `migrate status` confirmou só ela pendente + "up to date" depois). Nullable → linhas
+  legadas intocadas (byte-idêntico).
+- **Helper PURO novo** `team-attachments.ts`: tipos `TeamAttachment`/`MessageAttachment` +
+  `parseAttachments` (defensivo, cap `MAX_ATTACHMENTS=4`, dropa mime/key inválidos) +
+  `validateUpload`/`isImageMime` (png/jpeg/webp/gif, `MAX_ATTACHMENT_BYTES=5MB`) +
+  `safeAttachmentName`/`attachmentObjectKey`/`attachmentRunDir`/`attachmentLocalPath` (paths
+  determinísticos, baseDir injetável p/ teste) + `resolveAttachments` + `buildAttachmentRefLines`
+  (linhas de ref com path + nota de delegação à visão; `[]` sem anexo).
+- **Storage** `src/lib/storage/minio.ts` (lazy, padrão Groq; dep `minio`): `putAttachment`/
+  `downloadAttachmentTo`/`getAttachmentStream` + `ensureBucket`. Env: `MINIO_SERVER_URL`/
+  `MINIO_ROOT_USER`/`MINIO_ROOT_PASSWORD`/`MINIO_BUCKET` (default `team-attachments`).
+- **Materialização** `materialize-attachments.ts`: `materializeRunAttachments(runId)` baixa os
+  objetos do run pro dir temp (idempotente, best-effort), retorna o dir (null se sem anexo).
+- **Surfacing**: `buildUserSteeringBlock` anexa as ref-lines sob o bullet (vazio sem anexo →
+  **coordinator/`buildLeadContext` intactos, byte-idêntico**). O store mapeia o JSONB →
+  `MessageRow.attachments` com o path resolvido (sem IO no read).
+- **Pass-through**: `ClaudeCliService` ganhou param `attachmentDir` → ` --add-dir "<dir>"`
+  (vazio sem anexo); `groq.ts` lê `options.attachmentDir` e repassa; `start-team-run` materializa
+  + injeta `attachmentDir` no wrapper `chat` (mesmo padrão do `teamSystemPrompt` da S3 —
+  coordinator intacto) + grava a imagem da missão como `kind:'user'` inicial.
+- **Rotas**: `run` + `messages` detectam `multipart/form-data` (upload → MinIO via
+  `uploadImagesFromForm`), JSON segue legado; proxy `GET .../attachment?key=` (auth + ownership +
+  key validada contra as mensagens do run) streama o objeto; SSE + run GET surfaçam `{name,mime,key}`.
+- **UI** (`TeamRunView`): `ImageAttachBar` (pick + chips, cap 4) no mission composer (só chat) e no
+  composer ao vivo; `<img>` no feed via o proxy.
+- **Coordinator + flow-canvas + output-webhooks INTOCADOS.** `scripts/v22s6-verify.ts` (a–e, 5
+  asserts) + regressão `g6`=35 (golden coordinator/`buildLeadContext`) + `v22s4`=3 + `v22s5`=4 +
+  `tsc --noEmit` = 0 erros. Os eslint `no-explicit-any` são pré-existentes/informativos.
+- **Deferido (limitação aceita):** visão só no caminho **Claude CLI** (não OpenRouter/Groq/
+  Ollama); **code-runs** não recebem imagem (worker separado, fora do escopo chat). Se o
+  container reiniciar mid-run, o temp local some (MinIO mantém o durável; re-materializa no
+  próximo upload, não por turno).
+- **⚠️ Deploy:** setar as env vars do MinIO no container do app no EasyPanel ANTES do deploy.
+- **E2E live pendente** (anexar imagem na missão/ao vivo, ver o membro com visão analisar e a
+  imagem no feed; run sem imagem = idêntico ao legado).
+
+🏁🏁 **CICLO V2.2 COMPLETO** (S1→S6, coordinator intocado o tempo todo). Não abrir Sessão 7 —
+não há mais fatias planejadas.
