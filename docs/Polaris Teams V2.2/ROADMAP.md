@@ -232,9 +232,28 @@ Entregue:
   asserts) + regressão `g6`=35 (golden coordinator/`buildLeadContext`) + `v22s4`=3 + `v22s5`=4 +
   `tsc --noEmit` = 0 erros. Os eslint `no-explicit-any` são pré-existentes/informativos.
 - **Deferido (limitação aceita):** visão só no caminho **Claude CLI** (não OpenRouter/Groq/
-  Ollama); **code-runs** não recebem imagem (worker separado, fora do escopo chat). Se o
-  container reiniciar mid-run, o temp local some (MinIO mantém o durável; re-materializa no
-  próximo upload, não por turno).
+  Ollama). Se o container reiniciar mid-run (chat), o temp local some (MinIO mantém o durável;
+  re-materializa no próximo upload, não por turno).
+
+### S6-code — imagens no modo CÓDIGO ✅ `6554479` (follow-up, mesma sessão)
+
+Estende a visão aos **code-runs** (missão + steering ao vivo). Code-runs rodam num **worker
+separado → sandbox E2B**, então o mecanismo do chat (temp no mesmo processo) não vale: o worker
+**materializa a imagem DENTRO do sandbox** no **mesmo caminho determinístico** do chat
+(`attachmentLocalPath`) e dá `--add-dir` ao Claude CLI in-sandbox.
+
+- `minio.ts` `getAttachmentBuffer` (baixa objeto p/ memória); `materialize-attachments.ts`
+  `materializeRunAttachmentsToSandbox` (base64 → `sandbox.writeFile` → `base64 -d` via exec,
+  pois `Sandbox.writeFile` só aceita string; **idempotente via `test -f`** → roda antes de cada
+  worker-turn, pega missão + imagens ao vivo).
+- `sandbox-cli-agent.ts` `runClaudeInSandbox` +param `addDir`→`--add-dir`; `code-agent.ts`
+  injeta `syncAttachments()` (worker provê, mantém o módulo testável) chamado no branch Option B
+  antes do `runClaudeInSandbox`; `worker/index.ts` provê em runWithRepo + no-repo; `start-team-run`
+  grava a msg de imagem da missão p/ **ambos** os modos; UI mostra o `ImageAttachBar` da missão
+  nos 2 modos. **Decisão 3 inalterada** (Lead surfaça/delega o path; o worker-turn lê no sandbox).
+- **Coordinator intacto, SEM migração** (reusa a coluna `attachments`). `v22s6`=5 (+assert "arquivo
+  dentro do --add-dir") + regressões `c0`=12/`c1`=23/`c2`=20/`c3`=15 + `g6`=35 + `tsc`=0.
+- **E2E live pendente** (code-run com imagem na missão/ao vivo; membro claude-cli lê no sandbox).
 - **⚠️ Deploy:** setar as env vars do MinIO no container do app no EasyPanel ANTES do deploy.
 - **E2E live pendente** (anexar imagem na missão/ao vivo, ver o membro com visão analisar e a
   imagem no feed; run sem imagem = idêntico ao legado).
