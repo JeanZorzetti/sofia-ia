@@ -11,6 +11,7 @@ import {
   detectPreviewConfig, readPreviewOverride, PREVIEW_TTL_MS, PREVIEW_SANDBOX_MARGIN_MS,
 } from '../src/lib/orchestration/team/preview-server'
 import { buildRunRequest } from '../src/app/dashboard/teams/[id]/run-request'
+import { shouldKeepPolling } from '../src/app/dashboard/teams/[id]/preview-poll'
 
 let passed = 0
 function ok(label: string, condition: boolean) {
@@ -106,6 +107,23 @@ console.log('(g) buildRunRequest appends previewEnabled ONLY for code-runs with 
   const codeOn = buildRunRequest({ mission: 'm', mode: 'code', gitMode: 'pr', previewEnabled: true })
   ok('code-run preview-on sets true', codeOn.previewEnabled === true)
   ok('still carries gitMode', codeOn.gitMode === 'pr')
+}
+
+// ── (h) shouldKeepPolling: the bug that left the panel empty ─────────────────
+// Regression: a completed run with a still-null preview MUST keep polling so the panel
+// observes null→starting→live without a manual reload (the worker boots the dev server a
+// few seconds AFTER the run completes).
+console.log('(h) shouldKeepPolling keeps polling through the null→starting→live window')
+{
+  ok('null preview + running run → keep', shouldKeepPolling({ runStatus: 'running', previewStatus: null }))
+  ok('null preview + COMPLETED run → keep (preview imminent — THE BUG)', shouldKeepPolling({ runStatus: 'completed', previewStatus: null }))
+  ok("'starting' → keep", shouldKeepPolling({ runStatus: 'completed', previewStatus: 'starting' }))
+  ok("'live' → keep", shouldKeepPolling({ runStatus: 'completed', previewStatus: 'live' }))
+  ok("'failed' preview → stop", !shouldKeepPolling({ runStatus: 'completed', previewStatus: 'failed' }))
+  ok("'stopped' → stop", !shouldKeepPolling({ runStatus: 'completed', previewStatus: 'stopped' }))
+  ok("'expired' → stop", !shouldKeepPolling({ runStatus: 'completed', previewStatus: 'expired' }))
+  ok('null preview + FAILED run → stop (preview never starts)', !shouldKeepPolling({ runStatus: 'failed', previewStatus: null }))
+  ok('null preview + cancelled run → stop', !shouldKeepPolling({ runStatus: 'cancelled', previewStatus: null }))
 }
 
 console.log(`\n✅ preview verify: ${passed} assertions passed`)

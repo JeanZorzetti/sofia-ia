@@ -7,15 +7,16 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MonitorPlay, Monitor, Smartphone, RefreshCw, Square, ExternalLink, Loader2, Clock, AlertTriangle } from 'lucide-react'
+import { shouldKeepPolling, RUN_FAILED } from './preview-poll'
 
 interface PreviewState {
+  runStatus: string | null
   previewEnabled: boolean
   previewStatus: string | null
   previewUrl: string | null
   previewExpiresAt: string | null
 }
 
-const ACTIVE = new Set(['starting', 'live'])
 const POLL_MS = 4000
 
 function fmtCountdown(ms: number): string {
@@ -43,12 +44,13 @@ export default function PreviewPanel({ teamId, runId }: { teamId: string; runId:
     }
   }, [base])
 
-  // Poll while the preview is active (starting | live); stop once terminal.
+  // Poll until the preview reaches a terminal state (failed/stopped/expired) — keeping it
+  // running through the null→starting→live window so the iframe appears without a reload.
   useEffect(() => {
     fetchState()
     timerRef.current = setInterval(() => {
       setState(cur => {
-        if (cur && !ACTIVE.has(cur.previewStatus ?? '')) {
+        if (cur && !shouldKeepPolling(cur)) {
           if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
           return cur
         }
@@ -77,6 +79,8 @@ export default function PreviewPanel({ teamId, runId }: { teamId: string; runId:
   }
 
   if (!state || !state.previewEnabled) return null
+  // previewEnabled but the run failed before any preview could start → nothing to show.
+  if (!state.previewStatus && RUN_FAILED.has(state.runStatus ?? '')) return null
 
   const status = state.previewStatus
   const remaining = state.previewExpiresAt ? new Date(state.previewExpiresAt).getTime() - now : 0
@@ -146,6 +150,12 @@ export default function PreviewPanel({ teamId, runId }: { teamId: string; runId:
           </div>
         )}
       </div>
+
+      {!status && (
+        <div className="flex items-center justify-center gap-2 h-[120px] text-sm text-white/50">
+          <Loader2 className="h-4 w-4 animate-spin" /> Preview iniciará quando o run concluir…
+        </div>
+      )}
 
       {status === 'starting' && (
         <div className="flex items-center justify-center gap-2 h-[120px] text-sm text-white/50">
