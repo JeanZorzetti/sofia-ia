@@ -18,23 +18,29 @@ export interface RunComposerState {
   mission: string
   mode: RunMode
   gitMode: GitMode
+  /** Preview mode (Lovable-style): live iframe of the site after a code-run. */
+  previewEnabled?: boolean
 }
 
-/** Body for POST /api/teams/[id]/run. `gitMode` optional: present only for code-runs. */
+/** Body for POST /api/teams/[id]/run. `gitMode`/`previewEnabled` optional: code-runs only. */
 export interface RunRequestBody {
   mission: string
   mode: RunMode
   gitMode?: GitMode
+  previewEnabled?: boolean
 }
 
 /** Build the run POST body from the composer state.
  *  - Always { mission, mode }.
  *  - `gitMode` ONLY when mode === 'code'; chat-run omits the key entirely → byte-identical
- *    to the legacy payload. */
-export function buildRunRequest({ mission, mode, gitMode }: RunComposerState): RunRequestBody {
+ *    to the legacy payload.
+ *  - `previewEnabled` appended ONLY when a code-run has it ON; omitted otherwise so the
+ *    chat path and preview-off code-runs stay byte-identical to the pre-preview payload. */
+export function buildRunRequest({ mission, mode, gitMode, previewEnabled }: RunComposerState): RunRequestBody {
   return {
     mission,
     mode,
     ...(mode === 'code' ? { gitMode } : {}),
+    ...(mode === 'code' && previewEnabled ? { previewEnabled: true } : {}),
   }
 }

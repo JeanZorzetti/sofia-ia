@@ -36,6 +36,8 @@ function fakeSandbox(results: CommandResult[]): Sandbox & { execCalls: { cmd: st
       return results[Math.min(i++, results.length - 1)]
     },
     async writeFile(): Promise<void> {},
+    async getPreviewUrl(): Promise<string> { return '' },
+    async setTimeout(): Promise<void> {},
     async close(): Promise<void> {},
   }
 }

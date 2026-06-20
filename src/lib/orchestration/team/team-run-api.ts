@@ -9,6 +9,7 @@ export interface ParsedTeamRunBody {
   repoUrl: string | null
   base: string | null
   gitMode: GitMode | null  // S3.1: só 'direct' é aceito; qualquer outra coisa → null = legado 'pr'
+  previewEnabled: boolean  // Preview mode: sobe dev server + iframe pós-run (só code-run com repo)
 }
 
 function str(v: unknown): string {
@@ -29,6 +30,7 @@ export function parseTeamRunBody(body: unknown): ParsedTeamRunBody {
     repoUrl: str(b.repoUrl) || null,
     base: str(b.base) || null,
     gitMode: b.gitMode === 'direct' ? 'direct' : null,
+    previewEnabled: b.previewEnabled === true || b.previewEnabled === 'true',
   }
 }
 

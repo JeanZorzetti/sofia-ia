@@ -32,6 +32,8 @@ function fakeSandbox(stdout = ''): Sandbox & {
       return { stdout, stderr: '', exitCode: 0, ms: 1 }
     },
     async writeFile(path: string, content: string): Promise<void> { writes.push({ path, content }) },
+    async getPreviewUrl(): Promise<string> { return '' },
+    async setTimeout(): Promise<void> {},
     async close() {},
   }
 }

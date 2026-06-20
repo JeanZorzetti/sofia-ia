@@ -1285,6 +1285,14 @@ model TeamRun {
   prNumber      Int?      @map("pr_number")
   changedFiles  Json?     @map("changed_files")             // [{path,status}] from git diff --name-status
   outputDispatches Json? @map("output_dispatches")         // SP2: [{type,destination,status,error?,sentAt}]
+  // Preview mode (Lovable-style): after a code-run completes, the worker keeps the
+  // sandbox alive, starts the project's dev server, and exposes a public URL. Lifecycle
+  // is driven off these fields (reaper/extend/stop reuse `sandboxId`). Inert otherwise.
+  previewEnabled   Boolean   @default(false) @map("preview_enabled") // set from the mission composer toggle (code-runs only)
+  previewStatus    String?   @map("preview_status") @db.VarChar(20)  // 'starting' | 'live' | 'failed' | 'stopped' | 'expired'
+  previewUrl       String?   @map("preview_url") @db.Text            // public E2B host URL (https://{port}-{sandboxId}.e2b.app)
+  previewPort      Int?      @map("preview_port")                    // dev server port exposed for the preview
+  previewExpiresAt DateTime? @map("preview_expires_at") @db.Timestamptz() // when the reaper kills the sandbox
   output        String?   @db.Text
   turnsUsed     Int?      @map("turns_used")
   tokensUsed    Int?      @map("tokens_used")

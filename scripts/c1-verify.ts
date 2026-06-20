@@ -88,6 +88,8 @@ function scriptedSandbox(responder: Responder = () => ({})): Sandbox & { calls: 
       return { stdout: r.stdout ?? '', stderr: r.stderr ?? '', exitCode: r.exitCode ?? 0, ms: 1 }
     },
     async writeFile() {},
+    async getPreviewUrl() { return '' },
+    async setTimeout() {},
     async close() {},
   }
 }

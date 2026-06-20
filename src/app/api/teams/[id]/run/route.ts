@@ -30,6 +30,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         repoUrl: form.get('repoUrl'),
         base: form.get('base'),
         gitMode: form.get('gitMode'),
+        previewEnabled: form.get('previewEnabled'),
       }
       attachments = await uploadImagesFromForm(id, form)
     } else {
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       repoUrl: body?.repoUrl as string | undefined,
       base: body?.base as string | undefined,
       gitMode: body?.gitMode as string | undefined, // S3.1: sanitized in startTeamRun (only 'direct' | null persists)
+      previewEnabled: body?.previewEnabled === true || body?.previewEnabled === 'true', // Preview mode (gated to code-run + repo in startTeamRun)
       attachments,
     })
 

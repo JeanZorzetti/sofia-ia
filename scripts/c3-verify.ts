@@ -24,6 +24,8 @@ function scriptedSandbox(responder: Responder = () => ({})): Sandbox & { calls: 
       return { stdout: r.stdout ?? '', stderr: r.stderr ?? '', exitCode: r.exitCode ?? 0, ms: 1 }
     },
     async writeFile() {},
+    async getPreviewUrl() { return '' },
+    async setTimeout() {},
     async close() {},
   }
 }
@@ -150,7 +152,7 @@ async function main() {
   {
     // exec throws → [] (exception swallowed)
     const sbx: Sandbox = {
-      id: 'x', async exec() { throw new Error('sandbox gone') }, async writeFile() {}, async close() {},
+      id: 'x', async exec() { throw new Error('sandbox gone') }, async writeFile() {}, async getPreviewUrl() { return '' }, async setTimeout() {}, async close() {},
     }
     assert.deepEqual(await captureWorkingDiff(sbx, { workdir: '/w', base: 'main' }), [])
     ok('exec throws → [] (exception swallowed)')

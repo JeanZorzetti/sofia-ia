@@ -43,6 +43,17 @@ class E2BSandbox implements ISandbox {
     await this.sbx.files.write(path, content)
   }
 
+  async getPreviewUrl(port: number): Promise<string> {
+    // E2B exposes any bound port at `{port}-{sandboxId}.e2b.app`. getHost returns the
+    // bare host (no scheme); wrap to https. `await` tolerates sync- or promise-returning SDKs.
+    const host = await this.sbx.getHost(port)
+    return `https://${host}`
+  }
+
+  async setTimeout(ms: number): Promise<void> {
+    await this.sbx?.setTimeout?.(ms)
+  }
+
   async close(): Promise<void> {
     await this.sbx?.kill?.()
   }
@@ -57,6 +68,13 @@ export function createE2BProvider(): SandboxProvider {
       const sbx = opts?.templateId
         ? await (Sandbox as any).create(opts.templateId, { apiKey, timeoutMs: opts?.timeoutMs })
         : await (Sandbox as any).create({ apiKey, timeoutMs: opts?.timeoutMs })
+      return new E2BSandbox(sbx)
+    },
+    async connect(id: string): Promise<ISandbox> {
+      const apiKey = process.env.E2B_API_KEY
+      if (!apiKey) throw new Error('E2B_API_KEY não configurada — preview precisa reconectar ao sandbox')
+      const { Sandbox } = await loadE2B()
+      const sbx = await (Sandbox as any).connect(id, { apiKey })
       return new E2BSandbox(sbx)
     },
   }

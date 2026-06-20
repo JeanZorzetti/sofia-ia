@@ -30,6 +30,13 @@ export interface Sandbox {
   /** Write a file inside the sandbox (used to hand large prompts to in-sandbox CLIs
    *  without shell-escaping). Creates parent dirs as needed. */
   writeFile(path: string, content: string): Promise<void>
+  /** Public URL that proxies to a port bound inside the sandbox (Preview mode).
+   *  E2B: `https://{port}-{sandboxId}.e2b.app`. Used to embed a dev server in an iframe. */
+  getPreviewUrl(port: number): Promise<string>
+  /** Extend the sandbox lifetime to `ms` from NOW (Preview mode keep-alive). This is
+   *  the hard cost ceiling: the provider self-destructs the sandbox when it elapses,
+   *  even if the reaper never runs. */
+  setTimeout(ms: number): Promise<void>
   /** Tear the sandbox down (idempotent; call in a finally). */
   close(): Promise<void>
 }
@@ -43,4 +50,7 @@ export interface CreateSandboxOptions {
 
 export interface SandboxProvider {
   create(opts?: CreateSandboxOptions): Promise<Sandbox>
+  /** Reconnect to an already-running sandbox by id (Preview mode: extend/stop/reap run
+   *  in the web app, not the worker that created it). Throws if the sandbox is gone. */
+  connect(id: string): Promise<Sandbox>
 }

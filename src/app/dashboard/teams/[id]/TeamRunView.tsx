@@ -9,7 +9,7 @@ import {
   ClipboardList, MessageSquare, CheckCircle2, XCircle, History, Sparkles,
   Clock, Coins, Repeat, Network, Terminal as TerminalIcon, MessageCircle, Code2,
   GitBranch, GitPullRequest, ExternalLink, ChevronRight, ChevronDown,
-  ArrowDownLeft, ArrowUpRight, Link2, Maximize2, ImagePlus, X,
+  ArrowDownLeft, ArrowUpRight, Link2, Maximize2, ImagePlus, X, MonitorPlay,
 } from 'lucide-react'
 
 import { TeamOutputsPanel } from './TeamOutputsPanel'
@@ -28,6 +28,9 @@ const TeamGraphView = dynamic(() => import('./TeamGraphView'), { ssr: false })
 // xterm.js + diff2html are DOM-only → client-only (Sub-projeto C — C2).
 const SandboxTerminal = dynamic(() => import('./SandboxTerminal'), { ssr: false })
 const DiffViewer = dynamic(() => import('./DiffViewer'), { ssr: false })
+// Preview mode (Lovable-style): live iframe of the run's dev server. Polls its own
+// endpoint, so it's self-contained — client-only (iframe + DOM).
+const PreviewPanel = dynamic(() => import('./PreviewPanel'), { ssr: false })
 
 // S6: image attach constraints (mirror server caps in team-attachments.ts).
 const ACCEPT_IMAGES = 'image/png,image/jpeg,image/webp,image/gif'
@@ -122,6 +125,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [mission, setMission] = useState('')
   const [mode, setMode] = useState<RunMode>('chat')
   const [gitMode, setGitMode] = useState<GitMode>('pr')
+  const [previewEnabled, setPreviewEnabled] = useState(false) // Preview mode: live iframe after a code-run
   const [runId, setRunId] = useState<string | null>(null)
   const [tasks, setTasks] = useState<BoardTask[]>([])
   const [terminal, setTerminal] = useState<TerminalTask[]>([])
@@ -242,7 +246,7 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
     setRunning(true); setStatus('pending')
     try {
       // S6: send multipart when the mission carries images (chat or code); JSON otherwise.
-      const req = buildRunRequest({ mission, mode, gitMode })
+      const req = buildRunRequest({ mission, mode, gitMode, previewEnabled })
       const useForm = missionImages.length > 0
       let res: Response
       if (useForm) {
@@ -422,6 +426,22 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
               </span>
             )}
           </div>
+        )}
+        {/* Preview mode (Lovable-style): after a repo-bound code-run, boot the dev server in
+            the sandbox and embed it in an iframe. Needs a repo (inert otherwise — gated server
+            side in startTeamRun). Keeps the sandbox alive ~15min (E2B cost), so it's opt-in. */}
+        {mode === 'code' && (
+          <label className="inline-flex items-center gap-2 self-start text-xs text-white/60 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={previewEnabled}
+              disabled={running}
+              onChange={e => setPreviewEnabled(e.target.checked)}
+              className="accent-cyan-500 h-3.5 w-3.5"
+            />
+            <MonitorPlay className="h-3.5 w-3.5 text-cyan-400" /> Preview ao vivo
+            <span className="text-white/35">— sobe o site num iframe após o run (precisa de repo; mantém sandbox ~15min)</span>
+          </label>
         )}
         <textarea
           ref={missionRef}
@@ -622,6 +642,10 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
 
       {/* Diff viewer (code-runs — Sub-projeto C C2): per-file patches via diff2html */}
       {delivery.changedFiles.some(f => f.patch) && <DiffViewer changedFiles={delivery.changedFiles} />}
+
+      {/* Preview mode (Lovable-style): live iframe of the dev server. Self-contained —
+          renders nothing unless the run opted in (it polls its own endpoint). */}
+      {runId && <PreviewPanel teamId={teamId} runId={runId} />}
 
       {/* Activity feed + history */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

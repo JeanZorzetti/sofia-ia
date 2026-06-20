@@ -27,6 +27,7 @@ import type { Sandbox } from '@/lib/sandbox/types'
 import { setupRepo, commitAndPush, openPullRequest, buildPrBody, captureWorkingDiff } from '@/lib/git/repo-lifecycle'
 import { planGitDelivery } from '@/lib/git/git-delivery-plan'
 import { dispatchTeamOutputs } from '@/lib/orchestration/team/team-outputs'
+import { detectPreviewConfig, readPreviewOverride, startPreviewServer, PREVIEW_TTL_MS, PREVIEW_SANDBOX_MARGIN_MS } from '@/lib/orchestration/team/preview-server'
 
 const concurrency = Number(process.env.CODE_RUN_CONCURRENCY ?? 2)
 
@@ -185,15 +186,51 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
   }
 }
 
+/** Preview mode: after a successful repo-bound code-run, boot the project's dev server
+ *  inside the SAME sandbox and expose a public URL, then KEEP THE SANDBOX ALIVE (the
+ *  caller skips close()). Returns true when the preview went live (→ keep-alive). Any
+ *  failure here is swallowed: the run already delivered its diff/PR. The sandbox's
+ *  extended timeout is the hard cost ceiling even if the reaper never runs. */
+async function startRunPreview(sandbox: Sandbox, runId: string): Promise<boolean> {
+  const run = await prisma.teamRun.findUnique({
+    where: { id: runId },
+    select: { status: true, team: { select: { config: true } } },
+  })
+  if (run?.status !== 'completed') return false
+  try {
+    await prisma.teamRun.update({ where: { id: runId }, data: { previewStatus: 'starting' } }).catch(() => {})
+    const pkg = await sandbox.exec('cat package.json', { cwd: WORKDIR, timeoutMs: 8_000 })
+    const config = detectPreviewConfig(pkg.exitCode === 0 ? pkg.stdout : null, readPreviewOverride(run.team?.config))
+    const { url, port } = await startPreviewServer(sandbox, { workdir: WORKDIR, config })
+    await sandbox.setTimeout(PREVIEW_TTL_MS + PREVIEW_SANDBOX_MARGIN_MS).catch(() => {})
+    await prisma.teamRun.update({
+      where: { id: runId },
+      data: {
+        previewStatus: 'live',
+        previewUrl: url,
+        previewPort: port,
+        previewExpiresAt: new Date(Date.now() + PREVIEW_TTL_MS),
+      },
+    })
+    console.log(`[worker] ${runId} preview live at ${url}`)
+    return true
+  } catch (e) {
+    console.error(`[worker] ${runId} preview falhou:`, (e as Error)?.message ?? e)
+    await prisma.teamRun.update({ where: { id: runId }, data: { previewStatus: 'failed' } }).catch(() => {})
+    return false
+  }
+}
+
 const worker = new Worker<CodeRunJob>(
   CODE_RUN_QUEUE,
   async (job: Job<CodeRunJob>) => {
     const { runId } = job.data
     console.log(`[worker] starting code-run ${runId}`)
     const run = await prisma.teamRun.findUnique({
-      where: { id: runId }, select: { repoUrl: true, baseBranch: true, gitMode: true },
+      where: { id: runId }, select: { repoUrl: true, baseBranch: true, gitMode: true, previewEnabled: true },
     })
     const sandbox = await getSandboxProvider().create({ timeoutMs: SANDBOX_TIMEOUT_MS, templateId: SANDBOX_TEMPLATE })
+    let keepAlive = false
     try {
       if (run?.repoUrl) {
         await runWithRepo(sandbox, runId, run.repoUrl, run.baseBranch, run.gitMode)
@@ -207,8 +244,14 @@ const worker = new Worker<CodeRunJob>(
         await runTeamByTopology(runId, { store, chat: codeChat })
       }
       await dispatchTeamOutputs(runId)
+      // Preview only makes sense for a repo-bound project (something to serve).
+      if (run?.repoUrl && run.previewEnabled) {
+        keepAlive = await startRunPreview(sandbox, runId)
+      }
     } finally {
-      await sandbox.close().catch(() => {}) // always tear down — avoids leaked/charged sandboxes
+      // Keep the sandbox alive when a preview is live; otherwise always tear it down
+      // (avoids leaked/charged sandboxes).
+      if (!keepAlive) await sandbox.close().catch(() => {})
     }
   },
   { connection: getQueueConnection(), concurrency },

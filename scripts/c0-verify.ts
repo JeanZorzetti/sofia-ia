@@ -64,6 +64,8 @@ function fakeSandbox(): Sandbox & { calls: string[] } {
       return { stdout: `out:${cmd}`, stderr: '', exitCode: 0, ms: 1 }
     },
     async writeFile() {},
+    async getPreviewUrl() { return '' },
+    async setTimeout() {},
     async close() {},
   }
 }

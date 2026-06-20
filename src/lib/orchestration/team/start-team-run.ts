@@ -18,6 +18,10 @@ export type StartTeamRunInput = {
    *  qualquer outra coisa (null/'pr'/lixo) = legado (branch + PR draft). Sanitizado
    *  no create (só grava 'direct' ou null). Inerte em chat-runs. */
   gitMode?: string | null
+  /** Preview mode (Lovable-style): after a repo-bound code-run completes, the worker
+   *  keeps the sandbox alive, boots the dev server and exposes a public URL for an
+   *  iframe. Only persisted (and acted on) for code-runs; inert in chat-runs. */
+  previewEnabled?: boolean
   /** Phase 1 (Teams subordination): optional same-process hook fired after a
    *  CHAT-run completes (right after output webhooks). Lets a caller ingest the
    *  run output — e.g. Threads campaigns → posts — without a self-webhook
@@ -74,7 +78,12 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
   const run = await prisma.teamRun.create({
     // gitMode sanitized at the single write point: only 'direct' or null ever lands
     // in the column (never junk / never overflows VarChar(20)). null = legacy 'pr'.
-    data: { teamId, mission, status: 'pending', mode, repoUrl, baseBranch, gitMode: input.gitMode === 'direct' ? 'direct' : null },
+    // previewEnabled only for code-runs WITH a repo (nothing to serve otherwise).
+    data: {
+      teamId, mission, status: 'pending', mode, repoUrl, baseBranch,
+      gitMode: input.gitMode === 'direct' ? 'direct' : null,
+      previewEnabled: input.previewEnabled === true && mode === 'code' && !!repoUrl,
+    },
   })
 
   // S6 (item 5b): persist mission images as an initial `kind:'user'` message so the
