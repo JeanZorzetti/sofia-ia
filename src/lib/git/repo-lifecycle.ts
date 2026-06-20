@@ -104,6 +104,32 @@ export function shQuote(s: string): string {
   return `'${s.replace(/'/g, `'\\''`)}'`
 }
 
+/**
+ * Regenerable build-artifact directories that must NEVER be committed. They blow past
+ * GitHub's 100MB/file limit (e.g. `node_modules/@next/swc-linux-x64-gnu/*.node` ≈ 125MB),
+ * which makes the push fail with `GH001: Large files detected` / `pre-receive hook declined`.
+ * We exclude them from `git add` as a SAFETY NET for client repos that lack a proper
+ * `.gitignore`. A repo that already ignores these is unaffected (the exclude is redundant);
+ * a repo that legitimately versions a `dist/` is the rare exception (it can keep a custom
+ * `.gitignore`/branch). The agent edits source — build outputs are never the deliverable.
+ */
+export const STAGE_EXCLUDE_DIRS = [
+  'node_modules',
+  '.next', '.nuxt', '.svelte-kit', '.turbo', '.cache', '.parcel-cache',
+  'dist', 'build', 'out', 'coverage',
+  '__pycache__', '.venv', 'venv',
+  'target', '.gradle',
+] as const
+
+/**
+ * `git` exclude pathspecs that drop each artifact dir at ANY depth (monorepo-safe),
+ * using the `exclude,glob` pathspec magic. Used to scope `git add` so it stages
+ * everything except those dirs. e.g. node_modules -> exclude glob of its contents.
+ */
+export function stageExcludePathspecs(dirs: readonly string[] = STAGE_EXCLUDE_DIRS): string[] {
+  return dirs.map(d => `:(exclude,glob)**/${d}/**`)
+}
+
 /** Reduce an arbitrary string to a safe one-line commit subject (≤72 chars). */
 export function sanitizeCommitSubject(s: string): string {
   const oneLine = s.replace(/\s+/g, ' ').trim()
@@ -373,7 +399,10 @@ export async function commitAndPush(sandbox: Sandbox, input: CommitPushInput): P
   const wd = shQuote(workdir)
   const baseRef = `origin/${base}`
 
-  await run(sandbox, `git -C ${wd} add -A`, 'add')
+  // Stage everything EXCEPT regenerable build artifacts (node_modules, .next, …), so a
+  // repo without a proper .gitignore doesn't get a >100MB binary rejected on push.
+  const excludeSpecs = stageExcludePathspecs().map(shQuote).join(' ')
+  await run(sandbox, `git -C ${wd} add -A -- ${shQuote('.')} ${excludeSpecs}`, 'add')
 
   // Commit uncommitted work. (If the agent already committed, the tree is clean → skip.)
   const status = await run(sandbox, `git -C ${wd} status --porcelain`, 'status')
