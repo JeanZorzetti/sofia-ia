@@ -234,15 +234,69 @@ async function startRunPreview(sandbox: Sandbox, runId: string): Promise<boolean
   }
 }
 
+/** Continuation (Lovable iteration): the sandbox already has the repo on `branch` with the
+ *  parent's committed work and a running preview. SKIP the clone — run the team in the
+ *  existing workdir and commit the incremental diff to the SAME branch (the PR, if any,
+ *  auto-updates on push; no new PR is opened). Coordinator INTACT. */
+async function continueWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, branch: string, base: string): Promise<void> {
+  const token = process.env.GITHUB_TOKEN
+  if (!token) {
+    await failRun(runId, 'GITHUB_TOKEN não configurada no worker — code-runs com repositório precisam dela')
+    return
+  }
+  await prisma.teamRun.update({ where: { id: runId }, data: { sandboxId: sandbox.id } }).catch(() => {})
+
+  const store = createPrismaTeamStore()
+  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId) }))
+  await runTeamByTopology(runId, {
+    store,
+    chat: codeChat,
+    getTaskDiff: () => captureWorkingDiff(sandbox, { workdir: WORKDIR, base }),
+  })
+
+  const finished = await prisma.teamRun.findUnique({ where: { id: runId }, select: { status: true, output: true, mission: true } })
+  if (finished?.status !== 'completed') return
+  try {
+    const result = await commitAndPush(sandbox, {
+      repoUrl, token, branch, base, workdir: WORKDIR, message: finished.output || finished.mission,
+    })
+    await prisma.teamRun.update({
+      where: { id: runId },
+      data: {
+        ...(result.hasChanges ? { commitSha: result.commitSha } : {}),
+        changedFiles: (result.hasChanges ? result.changedFiles : []) as unknown as Prisma.InputJsonValue,
+      },
+    })
+  } catch (e) {
+    const msg = `Entrega git falhou: ${(e as Error)?.message ?? e}`
+    console.error(`[worker] ${runId}: ${msg}`)
+    await prisma.teamRun.update({ where: { id: runId }, data: { error: msg } }).catch(() => {})
+  }
+}
+
 const worker = new Worker<CodeRunJob>(
   CODE_RUN_QUEUE,
   async (job: Job<CodeRunJob>) => {
     const { runId } = job.data
     console.log(`[worker] starting code-run ${runId}`)
     const run = await prisma.teamRun.findUnique({
-      where: { id: runId }, select: { repoUrl: true, baseBranch: true, gitMode: true, previewEnabled: true },
+      where: { id: runId }, select: { repoUrl: true, baseBranch: true, gitMode: true, previewEnabled: true, parentRunId: true, branch: true, sandboxId: true },
     })
-    const sandbox = await getSandboxProvider().create({ timeoutMs: SANDBOX_TIMEOUT_MS, templateId: SANDBOX_TEMPLATE })
+    // Continuation reuses the parent's still-alive sandbox (no clone). If the reconnect fails
+    // (TTL elapsed between submit and pickup), fail clearly — the UI gates the follow-up on a
+    // live preview, so this is rare.
+    const isContinuation = !!(run?.parentRunId && run.sandboxId && run.repoUrl)
+    let sandbox: Sandbox
+    if (isContinuation) {
+      try {
+        sandbox = await getSandboxProvider().connect(run!.sandboxId!)
+      } catch (e) {
+        await failRun(runId, `A sessão de preview expirou antes da continuação — dispare uma nova missão (${(e as Error)?.message ?? e})`)
+        return
+      }
+    } else {
+      sandbox = await getSandboxProvider().create({ timeoutMs: SANDBOX_TIMEOUT_MS, templateId: SANDBOX_TEMPLATE })
+    }
     // Keep the sandbox alive for the WHOLE run. The sandbox is born with a fixed lifetime
     // (SANDBOX_TIMEOUT_MS); a run that outlasts it would get the sandbox killed mid-flight
     // and the git teardown would fail with "Sandbox is probably not running anymore". The
@@ -254,7 +308,9 @@ const worker = new Worker<CodeRunJob>(
     })
     let keepAlive = false
     try {
-      if (run?.repoUrl) {
+      if (isContinuation) {
+        await continueWithRepo(sandbox, runId, run!.repoUrl!, run!.branch || run!.baseBranch || 'main', run!.baseBranch || 'main')
+      } else if (run?.repoUrl) {
         await runWithRepo(sandbox, runId, run.repoUrl, run.baseBranch, run.gitMode)
       } else {
         // C0 path: no repo — just run shell in a sandbox.

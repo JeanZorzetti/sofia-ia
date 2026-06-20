@@ -22,6 +22,10 @@ export type StartTeamRunInput = {
    *  keeps the sandbox alive, boots the dev server and exposes a public URL for an
    *  iframe. Only persisted (and acted on) for code-runs; inert in chat-runs. */
   previewEnabled?: boolean
+  /** Iteration (Lovable follow-up): continue a previous run IN ITS LIVE SANDBOX — reuse the
+   *  branch + working tree + running preview, committing only the incremental diff. Requires
+   *  the parent to be a completed code-run whose preview is still live. */
+  continueFromRunId?: string
   /** Phase 1 (Teams subordination): optional same-process hook fired after a
    *  CHAT-run completes (right after output webhooks). Lets a caller ingest the
    *  run output — e.g. Threads campaigns → posts — without a self-webhook
@@ -36,7 +40,7 @@ export type StartTeamRunInput = {
 
 export type StartTeamRunResult = { runId: string; mode: TeamRunMode }
 
-export type TeamRunErrorCode = 'not_found' | 'invalid_roster' | 'missing_mission' | 'queue_unavailable'
+export type TeamRunErrorCode = 'not_found' | 'invalid_roster' | 'missing_mission' | 'queue_unavailable' | 'continuation_unavailable'
 
 export class TeamRunError extends Error {
   code: TeamRunErrorCode
@@ -63,6 +67,62 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
 
   const mission = input.mission?.trim()
   if (!mission) throw new TeamRunError('missing_mission', 'Missão é obrigatória')
+
+  // Iteration (Lovable follow-up): continue a previous run IN ITS LIVE SANDBOX. Reuses the
+  // branch + working tree + running preview; the worker connects (no clone) and commits the
+  // incremental diff. The coordinator stays INTACT — this is just a different run shape.
+  if (input.continueFromRunId) {
+    const parent = await prisma.teamRun.findFirst({
+      where: { id: input.continueFromRunId, teamId, team: { createdBy: input.userId } },
+      select: {
+        id: true, mode: true, repoUrl: true, baseBranch: true, branch: true, gitMode: true, sandboxId: true,
+        previewEnabled: true, previewStatus: true, previewUrl: true, previewPort: true, previewExpiresAt: true,
+        prUrl: true, prNumber: true, commitSha: true,
+      },
+    })
+    if (!parent) throw new TeamRunError('not_found', 'Run pai não encontrada')
+    if (parent.mode !== 'code' || !parent.repoUrl) {
+      throw new TeamRunError('continuation_unavailable', 'Só dá pra iterar em code-runs com repositório')
+    }
+    if (parent.previewStatus !== 'live' || !parent.sandboxId) {
+      throw new TeamRunError('continuation_unavailable', 'A sessão de preview expirou — dispare uma nova missão')
+    }
+
+    const run = await prisma.teamRun.create({
+      data: {
+        teamId, mission, status: 'pending', mode: 'code', parentRunId: parent.id,
+        repoUrl: parent.repoUrl, baseBranch: parent.baseBranch, branch: parent.branch, gitMode: parent.gitMode,
+        sandboxId: parent.sandboxId,
+        prUrl: parent.prUrl, prNumber: parent.prNumber, commitSha: parent.commitSha,
+        // Inherit the LIVE preview so the iframe stays up during the follow-up (HMR updates it).
+        previewEnabled: parent.previewEnabled, previewStatus: 'live',
+        previewUrl: parent.previewUrl, previewPort: parent.previewPort, previewExpiresAt: parent.previewExpiresAt,
+      },
+    })
+    // Hand the sandbox over: the parent must stop "owning" it so the reaper / lazy-expiry
+    // don't kill the sandbox the child is now using ('superseded' is ignored by both).
+    await prisma.teamRun.update({ where: { id: parent.id }, data: { previewStatus: 'superseded' } }).catch(() => {})
+
+    if (input.attachments && input.attachments.length > 0) {
+      await prisma.teamMessage.create({
+        data: {
+          runId: run.id, kind: 'user',
+          content: 'Imagens anexadas à missão (para análise visual).',
+          attachments: input.attachments as unknown as object,
+        },
+      })
+    }
+
+    try {
+      const { enqueueCodeRun } = await import('@/lib/queue/code-run-queue')
+      await enqueueCodeRun(run.id)
+    } catch (err) {
+      await prisma.teamRun.update({ where: { id: run.id }, data: { status: 'failed', error: 'Fila indisponível (REDIS_URL não configurada?)' } })
+      console.error('[Teams] enqueue continuation failed:', err)
+      throw new TeamRunError('queue_unavailable', 'Fila de code-runs indisponível')
+    }
+    return { runId: run.id, mode: 'code' }
+  }
 
   // Repo binding (code-runs only): hybrid resolution — request override, then Team.config.
   // The git token is NEVER stored here; it lives only in the worker env.

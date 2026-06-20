@@ -31,6 +31,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         base: form.get('base'),
         gitMode: form.get('gitMode'),
         previewEnabled: form.get('previewEnabled'),
+        continueFromRunId: form.get('continueFromRunId'),
       }
       attachments = await uploadImagesFromForm(id, form)
     } else {
@@ -45,6 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       base: body?.base as string | undefined,
       gitMode: body?.gitMode as string | undefined, // S3.1: sanitized in startTeamRun (only 'direct' | null persists)
       previewEnabled: body?.previewEnabled === true || body?.previewEnabled === 'true', // Preview mode (gated to code-run + repo in startTeamRun)
+      continueFromRunId: (typeof body?.continueFromRunId === 'string' && body.continueFromRunId) ? body.continueFromRunId : undefined, // Lovable-style iteration
       attachments,
     })
 

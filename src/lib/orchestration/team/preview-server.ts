@@ -112,6 +112,14 @@ export function readPreviewOverride(teamConfig: unknown): PreviewOverride {
 const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
 const tail = (s: string, n = 1200) => (s.length > n ? s.slice(-n) : s)
 
+/** HTTP status of a port inside the sandbox, '000' when nothing answers. */
+async function probePort(sandbox: Sandbox, workdir: string, port: number): Promise<string> {
+  const r = await sandbox
+    .exec(`curl -s -o /dev/null -m 3 -w "%{http_code}" http://localhost:${port}`, { cwd: workdir, timeoutMs: 8_000 })
+    .catch(() => null)
+  return (r?.stdout || '').trim() || '000'
+}
+
 /** Single-quote a path for safe embedding in a shell command (handles spaces, e.g. `teste 2`). */
 function shQuote(s: string): string {
   return `'${s.replace(/'/g, `'\\''`)}'`
@@ -146,6 +154,13 @@ export async function startPreviewServer(
   const installTimeoutMs = opts.installTimeoutMs ?? 5 * 60_000
   const readyTimeoutMs = opts.readyTimeoutMs ?? 90_000
 
+  // Continuation: the dev/static server from the previous run is likely still bound on this
+  // port (the sandbox is reused). Reuse it — files are already updated (HMR for dev; the
+  // static server reads per-request) — so we skip install + a duplicate server.
+  if ((await probePort(sandbox, workdir, plan.port)) !== '000') {
+    return { url: await sandbox.getPreviewUrl(plan.port), port: plan.port }
+  }
+
   let command: string
   if (plan.kind === 'dev') {
     const install = await sandbox.exec(plan.installCommand ?? DEFAULT_INSTALL, { cwd: workdir, timeoutMs: installTimeoutMs })
@@ -168,11 +183,7 @@ export async function startPreviewServer(
   const deadline = Date.now() + readyTimeoutMs
   let lastCode = '000'
   while (Date.now() < deadline) {
-    const probe = await sandbox.exec(
-      `curl -s -o /dev/null -m 3 -w "%{http_code}" http://localhost:${plan.port}`,
-      { cwd: workdir, timeoutMs: 8_000 },
-    )
-    lastCode = (probe.stdout || '').trim() || '000'
+    lastCode = await probePort(sandbox, workdir, plan.port)
     if (lastCode !== '000') break
     await delay(2_000)
   }

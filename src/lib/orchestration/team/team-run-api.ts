@@ -40,4 +40,5 @@ export const TEAM_RUN_STATUS_BY_CODE: Record<TeamRunErrorCode, number> = {
   invalid_roster: 400,
   missing_mission: 400,
   queue_unavailable: 503,
+  continuation_unavailable: 409,
 }

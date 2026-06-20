@@ -6,7 +6,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { MonitorPlay, Monitor, Smartphone, RefreshCw, Square, ExternalLink, Loader2, Clock, AlertTriangle } from 'lucide-react'
+import { MonitorPlay, Monitor, Smartphone, RefreshCw, Square, ExternalLink, Loader2, Clock, AlertTriangle, Send, Wand2 } from 'lucide-react'
 import { shouldKeepPolling, RUN_FAILED } from './preview-poll'
 
 interface PreviewState {
@@ -26,11 +26,22 @@ function fmtCountdown(ms: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
-export default function PreviewPanel({ teamId, runId }: { teamId: string; runId: string }) {
+export default function PreviewPanel({
+  teamId, runId, onContinue, running,
+}: {
+  teamId: string
+  runId: string
+  /** Lovable iteration: submit a change request → continue this run in its live sandbox. */
+  onContinue?: (mission: string) => Promise<void> | void
+  /** A run is currently executing (disables the follow-up composer). */
+  running?: boolean
+}) {
   const [state, setState] = useState<PreviewState | null>(null)
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop')
   const [busy, setBusy] = useState<'extend' | 'stop' | null>(null)
   const [now, setNow] = useState(() => Date.now())
+  const [followUp, setFollowUp] = useState('')
+  const [sending, setSending] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const base = `/api/teams/${teamId}/runs/${runId}/preview`
@@ -77,6 +88,12 @@ export default function PreviewPanel({ teamId, runId }: { teamId: string; runId:
     setBusy('stop')
     try { await fetch(`${base}/stop`, { method: 'POST' }); await fetchState() }
     finally { setBusy(null) }
+  }
+  async function submitFollowUp() {
+    const t = followUp.trim()
+    if (!t || !onContinue || running || sending) return
+    setSending(true)
+    try { await onContinue(t); setFollowUp('') } finally { setSending(false) }
   }
 
   if (!state || !state.previewEnabled) return null
@@ -173,6 +190,31 @@ export default function PreviewPanel({ teamId, runId }: { teamId: string; runId:
             className="bg-white"
             style={{ width: device === 'mobile' ? 390 : '100%', height: 640, border: 'none' }}
           />
+        </div>
+      )}
+
+      {/* Lovable iteration: ask for a change → continue this run in the SAME live sandbox
+          (the dev server hot-reloads / static re-serves, so the iframe above updates). */}
+      {status === 'live' && onContinue && (
+        <div className="flex items-center gap-2 border-t border-white/10 pt-3">
+          <Wand2 className="h-4 w-4 text-cyan-400 shrink-0" />
+          <input
+            type="text"
+            value={followUp}
+            onChange={e => setFollowUp(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitFollowUp() } }}
+            placeholder={running ? 'Aplicando alteração…' : 'Pedir uma alteração ao site… (ex.: deixe o hero azul, adicione uma seção de contato)'}
+            disabled={running || sending}
+            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 disabled:opacity-50"
+          />
+          <button
+            type="button"
+            onClick={submitFollowUp}
+            disabled={running || sending || !followUp.trim()}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-cyan-500/90 hover:bg-cyan-500 disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-colors"
+          >
+            {sending || running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Iterar
+          </button>
         </div>
       )}
 

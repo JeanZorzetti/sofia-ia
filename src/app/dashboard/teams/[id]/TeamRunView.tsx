@@ -273,6 +273,30 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
     }
   }
 
+  // Lovable iteration: continue the current run IN ITS LIVE SANDBOX — a follow-up change
+  // request that reuses the branch + working tree + running preview (commits the incremental
+  // diff). Switches the view to the new continuation run and streams it; the inherited live
+  // preview keeps the iframe up while the team applies the change (HMR / static re-serve).
+  async function continueRun(missionText: string) {
+    if (!missionText.trim() || !runId || running) return
+    setRunning(true); setStatus('pending')
+    try {
+      const res = await fetch(`/api/teams/${teamId}/run`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mission: missionText, mode: 'code', continueFromRunId: runId }),
+      })
+      const json = await res.json()
+      if (json.success && json.data?.runId) {
+        setRunId(json.data.runId)
+        openStream(json.data.runId, true)
+      } else {
+        setStatus(json.error ?? 'failed'); setRunning(false)
+      }
+    } catch {
+      setStatus('failed'); setRunning(false)
+    }
+  }
+
   // S4: inject a steering message into the live run. The Lead surfaces it next turn
   // (cooperative — never interrupts a call). The SSE stream delivers the persisted
   // message back into the feed (~1s), so there's no optimistic insert to dedup.
@@ -644,8 +668,9 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
       {delivery.changedFiles.some(f => f.patch) && <DiffViewer changedFiles={delivery.changedFiles} />}
 
       {/* Preview mode (Lovable-style): live iframe of the dev server. Self-contained —
-          renders nothing unless the run opted in (it polls its own endpoint). */}
-      {runId && <PreviewPanel teamId={teamId} runId={runId} />}
+          renders nothing unless the run opted in (it polls its own endpoint). onContinue
+          wires the follow-up composer → a continuation run in the SAME live sandbox. */}
+      {runId && <PreviewPanel teamId={teamId} runId={runId} running={running} onContinue={continueRun} />}
 
       {/* Activity feed + history */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
