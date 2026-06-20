@@ -24,6 +24,7 @@ import { chatWithAgent } from '@/lib/ai/groq'
 import { primaryClaudeToken, loadClaudeTokens } from '@/lib/ai/claude-token-pool'
 import { getSandboxProvider } from '@/lib/sandbox'
 import type { Sandbox } from '@/lib/sandbox/types'
+import { startSandboxHeartbeat } from '@/lib/sandbox/heartbeat'
 import { setupRepo, commitAndPush, openPullRequest, buildPrBody, captureWorkingDiff } from '@/lib/git/repo-lifecycle'
 import { planGitDelivery } from '@/lib/git/git-delivery-plan'
 import { dispatchTeamOutputs } from '@/lib/orchestration/team/team-outputs'
@@ -230,6 +231,15 @@ const worker = new Worker<CodeRunJob>(
       where: { id: runId }, select: { repoUrl: true, baseBranch: true, gitMode: true, previewEnabled: true },
     })
     const sandbox = await getSandboxProvider().create({ timeoutMs: SANDBOX_TIMEOUT_MS, templateId: SANDBOX_TEMPLATE })
+    // Keep the sandbox alive for the WHOLE run. The sandbox is born with a fixed lifetime
+    // (SANDBOX_TIMEOUT_MS); a run that outlasts it would get the sandbox killed mid-flight
+    // and the git teardown would fail with "Sandbox is probably not running anymore". The
+    // heartbeat renews the lifetime on each tick; SANDBOX_TIMEOUT_MS stays the cost ceiling
+    // if the worker dies (ticks stop → sandbox self-destructs).
+    const heartbeat = startSandboxHeartbeat(sandbox, {
+      ttlMs: SANDBOX_TIMEOUT_MS,
+      onError: e => console.error(`[worker] ${runId} heartbeat falhou:`, (e as Error)?.message ?? e),
+    })
     let keepAlive = false
     try {
       if (run?.repoUrl) {
@@ -244,11 +254,15 @@ const worker = new Worker<CodeRunJob>(
         await runTeamByTopology(runId, { store, chat: codeChat })
       }
       await dispatchTeamOutputs(runId)
+      // Work delivered — stop the heartbeat so the preview (if any) governs the sandbox
+      // lifetime via its own setTimeout; otherwise the sandbox is torn down below.
+      heartbeat.stop()
       // Preview only makes sense for a repo-bound project (something to serve).
       if (run?.repoUrl && run.previewEnabled) {
         keepAlive = await startRunPreview(sandbox, runId)
       }
     } finally {
+      heartbeat.stop() // idempotent — also covers the error path
       // Keep the sandbox alive when a preview is live; otherwise always tear it down
       // (avoids leaked/charged sandboxes).
       if (!keepAlive) await sandbox.close().catch(() => {})
