@@ -84,9 +84,15 @@ function main() {
     const expected = path.join('/base', 'polaris-team-att', 'run1', 'abc123-foo_bar.png')
     assert.equal(attachmentLocalPath('run1', key, '/base'), expected, 'local path = runDir + basename(key)')
     assert.equal(attachmentRunDir('run1', '/base'), path.join('/base', 'polaris-team-att', 'run1'), 'runDir determinístico')
+    // code-run invariant: the file lives UNDER the run dir, so `--add-dir <runDir>`
+    // (chat-run host + code-run sandbox) always grants the CLI access to read it.
+    assert.ok(
+      attachmentLocalPath('run1', key, '/base').startsWith(attachmentRunDir('run1', '/base') + path.sep),
+      'arquivo fica dentro do runDir → --add-dir cobre',
+    )
     const resolved = resolveAttachments('run1', [{ name: 'a.png', mime: 'image/png', size: 1, key }], '/base')
     assert.equal(resolved[0].path, expected, 'resolveAttachments anexa o path local')
-    ok('(c) nomes/keys/paths determinísticos e seguros')
+    ok('(c) nomes/keys/paths determinísticos e seguros; arquivo dentro do --add-dir')
   }
 
   // ── (d) buildAttachmentRefLines ──

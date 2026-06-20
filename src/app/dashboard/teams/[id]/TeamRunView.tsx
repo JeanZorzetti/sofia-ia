@@ -241,9 +241,9 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
     if (!mission.trim()) return
     setRunning(true); setStatus('pending')
     try {
-      // S6: send multipart when the mission carries images (chat only); JSON otherwise.
+      // S6: send multipart when the mission carries images (chat or code); JSON otherwise.
       const req = buildRunRequest({ mission, mode, gitMode })
-      const useForm = mode === 'chat' && missionImages.length > 0
+      const useForm = missionImages.length > 0
       let res: Response
       if (useForm) {
         const fd = new FormData()
@@ -432,8 +432,8 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           onChange={e => setMission(e.target.value)}
           disabled={running}
         />
-        {/* S6: attach images to the mission (chat-runs only — vision targets chat teams) */}
-        {mode === 'chat' && <ImageAttachBar images={missionImages} setImages={setMissionImages} disabled={running} />}
+        {/* S6: attach images to the mission (chat + code; code-runs sync them into the sandbox) */}
+        <ImageAttachBar images={missionImages} setImages={setMissionImages} disabled={running} />
         <div className="flex items-center gap-3 flex-wrap">
           <button
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors"

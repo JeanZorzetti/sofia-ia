@@ -69,9 +69,14 @@ export interface CodeChatFnOptions {
    *  Injected (the worker provides the Prisma-backed impl) to keep this module pure.
    *  Absent → no MCP config is passed (writes still preserved; legacy command otherwise). */
   resolveMcpServers?: (agentId: string) => Promise<CliMcpServerDescriptor[]>
+  /** S6: materialize the run's image attachments INTO the sandbox (vision) and return
+   *  the dir to grant the CLI via --add-dir. Injected (worker provides the impl) to keep
+   *  this module pure/testable. Called before each Option B worker turn (idempotent), so
+   *  it picks up mission + live-steering images alike. Absent → no images (legacy). */
+  syncAttachments?: () => Promise<string | null>
 }
 
-const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store' | 'claudeToken' | 'resolveMcpServers'> = {
+const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store' | 'claudeToken' | 'resolveMcpServers' | 'syncAttachments'> = {
   maxSteps: 8,
   perCommandTimeoutMs: 120_000,
   maxOutputChars: 4_000,
@@ -117,7 +122,7 @@ export function createCodeChatFn(
   options: CodeChatFnOptions = {},
 ): ChatFn {
   const { maxSteps, perCommandTimeoutMs, maxOutputChars } = { ...DEFAULTS, ...options }
-  const { workdir, store, claudeToken, resolveMcpServers } = options
+  const { workdir, store, claudeToken, resolveMcpServers, syncAttachments } = options
 
   return async (agentId, messages, leadContext, chatOptions) => {
     // ── Option B: native Claude CLI inside the sandbox ──
@@ -134,12 +139,15 @@ export function createCodeChatFn(
       // threaded by the coordinator) + its agent's MCP servers so the sandbox CLI honors
       // mcpAllowlist. Writes stay enabled (sandbox is isolated); no policy → legacy command.
       const mcpServers = resolveMcpServers ? await resolveMcpServers(agentId).catch(() => []) : []
+      // S6: sync the run's images into the sandbox (idempotent) and grant the CLI read
+      // access via --add-dir. Null when the run has no attachments → command unchanged.
+      const addDir = syncAttachments ? await syncAttachments().catch(() => null) : null
       // Token-pool failover: a rate-limited account throws ClaudeRateLimitError → retry
       // the SAME task with the next account. Pool empty → single attempt with claudeToken.
       const result = await withClaudeTokenFailover(
         (token) => runClaudeInSandbox(sandbox, {
           workdir, model: cliModel, prompt, token: token ?? '',
-          capabilities: chatOptions?.capabilities, mcpServers,
+          capabilities: chatOptions?.capabilities, mcpServers, addDir,
         }),
         { isLimited: (e) => e instanceof ClaudeRateLimitError, fallbackToken: claudeToken },
       )

@@ -43,6 +43,9 @@ export interface RunClaudeInSandboxInput {
   capabilities?: CapabilityPolicy | null
   /** S1.3: the member agent's MCP servers (caller-resolved), filtered by `mcpAllowlist`. */
   mcpServers?: CliMcpServerDescriptor[]
+  /** S6: per-run image attachment dir inside the sandbox (vision). When set, the CLI gets
+   *  `--add-dir <dir>` so a member can Read the materialized image. Absent → no flag. */
+  addDir?: string | null
 }
 
 function truncate(s: string, max: number): string {
@@ -126,7 +129,7 @@ export function parseStreamJson(stdout: string): ParsedStream {
  * like the code-agent's (message + artifacts.commands for the terminal/diff UI).
  */
 export async function runClaudeInSandbox(sandbox: Sandbox, input: RunClaudeInSandboxInput): Promise<ChatResult> {
-  const { workdir, model, prompt, systemPrompt, token, timeoutMs = 15 * 60_000, capabilities, mcpServers } = input
+  const { workdir, model, prompt, systemPrompt, token, timeoutMs = 15 * 60_000, capabilities, mcpServers, addDir } = input
 
   await sandbox.writeFile(PROMPT_PATH, prompt)
   if (systemPrompt) await sandbox.writeFile(SYS_PATH, systemPrompt)
@@ -154,6 +157,8 @@ export async function runClaudeInSandbox(sandbox: Sandbox, input: RunClaudeInSan
   ]
   if (systemPrompt) flags.push(`--system-prompt-file ${SYS_PATH}`)
   if (cliModel) flags.push(`--model ${cliModel}`)
+  // S6: grant the in-sandbox CLI read access to the image attachment dir (vision).
+  if (addDir) flags.push(`--add-dir "${addDir}"`)
   const cmd = `${ensure} && cat ${PROMPT_PATH} | ${flags.join(' ')}`
 
   // Auth + sandbox flags via the env channel (token never in the command string/log).

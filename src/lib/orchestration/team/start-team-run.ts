@@ -78,9 +78,9 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
   })
 
   // S6 (item 5b): persist mission images as an initial `kind:'user'` message so the
-  // Lead surfaces them in turn 1 (same path as live steering). Chat-runs only — the
-  // vision feature targets chat teams; code-runs go through a separate worker process.
-  if (mode === 'chat' && input.attachments && input.attachments.length > 0) {
+  // Lead surfaces them in turn 1 (same path as live steering). Both modes: chat-runs
+  // materialize on the app host; code-runs sync them into the sandbox per worker turn.
+  if (input.attachments && input.attachments.length > 0) {
     await prisma.teamMessage.create({
       data: {
         runId: run.id,

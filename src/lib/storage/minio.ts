@@ -60,6 +60,16 @@ export async function downloadAttachmentTo(key: string, destPath: string): Promi
   await c.fGetObject(getBucket(), key, destPath)
 }
 
+/** Fetch an object fully into a Buffer (used to materialize an image INTO an E2B
+ *  sandbox for code-runs, where we can't write to the worker host FS the CLI reads). */
+export async function getAttachmentBuffer(key: string): Promise<Buffer> {
+  const c = await getClient()
+  const stream = await c.getObject(getBucket(), key)
+  const chunks: Buffer[] = []
+  for await (const chunk of stream) chunks.push(chunk as Buffer)
+  return Buffer.concat(chunks)
+}
+
 /** Fetch an object as a stream + content type (used by the proxy GET route to render
  *  the image in the feed). */
 export async function getAttachmentStream(key: string): Promise<{ stream: Readable; mime: string }> {

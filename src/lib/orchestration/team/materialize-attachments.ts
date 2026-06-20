@@ -9,7 +9,8 @@
 import fs from 'fs'
 import { prisma } from '@/lib/prisma'
 import { parseAttachments, attachmentRunDir, attachmentLocalPath } from './team-attachments'
-import { downloadAttachmentTo } from '@/lib/storage/minio'
+import { downloadAttachmentTo, getAttachmentBuffer } from '@/lib/storage/minio'
+import type { Sandbox } from '@/lib/sandbox/types'
 
 /**
  * Download every image attached to the run's messages into the per-run temp dir.
@@ -48,6 +49,48 @@ export async function materializeRunAttachments(runId: string): Promise<string |
       await downloadAttachmentTo(att.key, dest)
     } catch (err) {
       console.error(`[Teams S6] failed to materialize ${att.key}:`, err)
+    }
+  }
+  return dir
+}
+
+/**
+ * S6 (code-runs): materialize the run's images INTO an E2B sandbox at the SAME
+ * deterministic path used elsewhere (`attachmentLocalPath`), so the in-sandbox Claude
+ * CLI can Read them with `--add-dir <runDir>`. Code-runs execute in a separate worker
+ * process whose sandbox FS is NOT the worker host FS, so we can't reuse the host
+ * materializer above. Idempotent (skips files already present via `test -f`) so it can
+ * be called before every worker turn (picks up mission + live-steering images alike).
+ * Binary-safe via base64 (Sandbox.writeFile only takes a string). Returns the run dir
+ * when there is ≥1 attachment, else null.
+ */
+export async function materializeRunAttachmentsToSandbox(sandbox: Sandbox, runId: string): Promise<string | null> {
+  let rows: { attachments: unknown }[]
+  try {
+    rows = await prisma.teamMessage.findMany({ where: { runId }, select: { attachments: true } })
+  } catch (err) {
+    console.error('[Teams S6] failed to list attachments (sandbox):', err)
+    return null
+  }
+
+  const all = rows.flatMap(r => parseAttachments(r.attachments))
+  if (all.length === 0) return null
+
+  const dir = attachmentRunDir(runId)
+  await sandbox.exec(`mkdir -p "${dir}"`).catch(() => {})
+
+  for (const att of all) {
+    const dest = attachmentLocalPath(runId, att.key)
+    // idempotent: skip if the sandbox already has this file (exit 0 = present).
+    const present = await sandbox.exec(`test -f "${dest}"`).then(r => r.exitCode === 0).catch(() => false)
+    if (present) continue
+    try {
+      const buf = await getAttachmentBuffer(att.key)
+      const b64Path = `${dest}.b64`
+      await sandbox.writeFile(b64Path, buf.toString('base64'))
+      await sandbox.exec(`base64 -d "${b64Path}" > "${dest}" && rm -f "${b64Path}"`)
+    } catch (err) {
+      console.error(`[Teams S6] failed to materialize ${att.key} into sandbox:`, err)
     }
   }
   return dir
