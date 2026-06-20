@@ -28,7 +28,7 @@ import { startSandboxHeartbeat } from '@/lib/sandbox/heartbeat'
 import { setupRepo, commitAndPush, openPullRequest, buildPrBody, captureWorkingDiff } from '@/lib/git/repo-lifecycle'
 import { planGitDelivery } from '@/lib/git/git-delivery-plan'
 import { dispatchTeamOutputs } from '@/lib/orchestration/team/team-outputs'
-import { detectPreviewConfig, readPreviewOverride, startPreviewServer, PREVIEW_TTL_MS, PREVIEW_SANDBOX_MARGIN_MS } from '@/lib/orchestration/team/preview-server'
+import { detectPreviewPlan, deriveProjectDir, readPreviewOverride, startPreviewServer, PREVIEW_TTL_MS, PREVIEW_SANDBOX_MARGIN_MS } from '@/lib/orchestration/team/preview-server'
 
 const concurrency = Number(process.env.CODE_RUN_CONCURRENCY ?? 2)
 
@@ -195,14 +195,23 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
 async function startRunPreview(sandbox: Sandbox, runId: string): Promise<boolean> {
   const run = await prisma.teamRun.findUnique({
     where: { id: runId },
-    select: { status: true, team: { select: { config: true } } },
+    select: { status: true, changedFiles: true, team: { select: { config: true } } },
   })
   if (run?.status !== 'completed') return false
   try {
-    await prisma.teamRun.update({ where: { id: runId }, data: { previewStatus: 'starting' } }).catch(() => {})
-    const pkg = await sandbox.exec('cat package.json', { cwd: WORKDIR, timeoutMs: 8_000 })
-    const config = detectPreviewConfig(pkg.exitCode === 0 ? pkg.stdout : null, readPreviewOverride(run.team?.config))
-    const { url, port } = await startPreviewServer(sandbox, { workdir: WORKDIR, config })
+    await prisma.teamRun.update({ where: { id: runId }, data: { previewStatus: 'starting', previewError: null } }).catch(() => {})
+    // The site may live in a subdir (agents often scaffold into e.g. `teste 2/`); derive it
+    // from the run's changed files. The dir may contain spaces — exec `cwd` handles that.
+    const projectDir = deriveProjectDir(run.changedFiles as Array<{ path: string }> | null)
+    const previewWorkdir = projectDir ? `${WORKDIR}/${projectDir}` : WORKDIR
+    const pkg = await sandbox.exec('cat package.json', { cwd: previewWorkdir, timeoutMs: 8_000 })
+    const idx = await sandbox.exec('test -f index.html && echo yes || echo no', { cwd: previewWorkdir, timeoutMs: 8_000 })
+    const plan = detectPreviewPlan(
+      pkg.exitCode === 0 ? pkg.stdout : null,
+      idx.stdout.trim() === 'yes',
+      readPreviewOverride(run.team?.config),
+    )
+    const { url, port } = await startPreviewServer(sandbox, { workdir: previewWorkdir, plan })
     await sandbox.setTimeout(PREVIEW_TTL_MS + PREVIEW_SANDBOX_MARGIN_MS).catch(() => {})
     await prisma.teamRun.update({
       where: { id: runId },
@@ -213,11 +222,14 @@ async function startRunPreview(sandbox: Sandbox, runId: string): Promise<boolean
         previewExpiresAt: new Date(Date.now() + PREVIEW_TTL_MS),
       },
     })
-    console.log(`[worker] ${runId} preview live at ${url}`)
+    console.log(`[worker] ${runId} preview live at ${url} (dir=${projectDir || '.'}, kind=${plan.kind})`)
     return true
   } catch (e) {
-    console.error(`[worker] ${runId} preview falhou:`, (e as Error)?.message ?? e)
-    await prisma.teamRun.update({ where: { id: runId }, data: { previewStatus: 'failed' } }).catch(() => {})
+    const msg = (e as Error)?.message ?? String(e)
+    console.error(`[worker] ${runId} preview falhou:`, msg)
+    await prisma.teamRun
+      .update({ where: { id: runId }, data: { previewStatus: 'failed', previewError: msg.slice(0, 1000) } })
+      .catch(() => {})
     return false
   }
 }

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const run = await prisma.teamRun.findFirst({
       where: { id: runId, teamId: id, team: { createdBy: auth.id } },
-      select: { status: true, previewEnabled: true, previewStatus: true, previewUrl: true, previewExpiresAt: true, sandboxId: true },
+      select: { status: true, previewEnabled: true, previewStatus: true, previewUrl: true, previewExpiresAt: true, previewError: true, sandboxId: true },
     })
     if (!run) return NextResponse.json({ success: false, error: 'Run not found' }, { status: 404 })
 
@@ -40,6 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         previewStatus,
         previewUrl,
         previewExpiresAt: run.previewExpiresAt,
+        previewError: run.previewError,
       },
     })
   } catch (error) {

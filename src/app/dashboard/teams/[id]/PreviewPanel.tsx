@@ -15,6 +15,7 @@ interface PreviewState {
   previewStatus: string | null
   previewUrl: string | null
   previewExpiresAt: string | null
+  previewError: string | null
 }
 
 const POLL_MS = 4000
@@ -176,8 +177,15 @@ export default function PreviewPanel({ teamId, runId }: { teamId: string; runId:
       )}
 
       {status === 'failed' && (
-        <div className="flex items-center gap-2 text-sm text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-          <AlertTriangle className="h-4 w-4 shrink-0" /> O preview não subiu (install ou dev server falhou). A entrega de código (diff/PR) não foi afetada.
+        <div className="space-y-2 text-sm text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" /> O preview não subiu. A entrega de código (diff/PR) não foi afetada.
+          </div>
+          {state.previewError && (
+            <pre className="text-[11px] text-amber-200/70 whitespace-pre-wrap break-words max-h-40 overflow-y-auto custom-scrollbar bg-black/30 rounded p-2 font-mono">
+              {state.previewError}
+            </pre>
+          )}
         </div>
       )}
 

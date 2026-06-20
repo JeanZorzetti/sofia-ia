@@ -1293,6 +1293,7 @@ model TeamRun {
   previewUrl       String?   @map("preview_url") @db.Text            // public E2B host URL (https://{port}-{sandboxId}.e2b.app)
   previewPort      Int?      @map("preview_port")                    // dev server port exposed for the preview
   previewExpiresAt DateTime? @map("preview_expires_at") @db.Timestamptz() // when the reaper kills the sandbox
+  previewError     String?   @map("preview_error") @db.Text          // failure reason when previewStatus='failed' (install/dev/static log tail)
   output        String?   @db.Text
   turnsUsed     Int?      @map("turns_used")
   tokensUsed    Int?      @map("tokens_used")
