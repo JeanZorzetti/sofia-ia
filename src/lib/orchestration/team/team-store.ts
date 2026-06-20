@@ -15,6 +15,9 @@ import type {
 import {
   appendTaskEvent, taskCreatedEvent, taskEventFromUpdate, type TaskHistoryEvent,
 } from './task-history'
+// S6: resolve persisted JSONB attachments → MessageRow.attachments with the local
+// path the worker materializes (so buildUserSteeringBlock can surface it).
+import { resolveAttachments } from './team-attachments'
 
 export interface LoadedRun {
   runId: string
@@ -298,10 +301,16 @@ export function createPrismaTeamStore(): TeamStore {
         where: { runId },
         orderBy: { createdAt: 'asc' },
       })
-      return rows.map(m => ({
-        id: m.id, fromMemberId: m.fromMemberId, toMemberId: m.toMemberId,
-        summary: m.summary, content: m.content, kind: m.kind as MessageKind, taskId: m.taskId,
-      }))
+      return rows.map(m => {
+        // S6: only `user` messages carry image attachments today. resolveAttachments
+        // returns [] for null/legacy rows → no `attachments` key → byte-identical.
+        const attachments = resolveAttachments(runId, m.attachments)
+        return {
+          id: m.id, fromMemberId: m.fromMemberId, toMemberId: m.toMemberId,
+          summary: m.summary, content: m.content, kind: m.kind as MessageKind, taskId: m.taskId,
+          ...(attachments.length > 0 ? { attachments } : {}),
+        }
+      })
     },
 
     async addMessage(runId, data) {

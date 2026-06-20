@@ -41,6 +41,10 @@ export class ClaudeCliService {
         // natively (`claude --effort low|medium|high|xhigh|max`); absent/`inherit` → no flag
         // (command byte-identical to legacy). The model-aware clamp already ran at save time.
         effort?: string | null,
+        // Teams V2.2 — S6: per-run image attachment dir. When the run has attachments we
+        // grant the CLI file access to the temp dir via --add-dir so a member can Read the
+        // materialized image (vision). Absent → no flag (command byte-identical to legacy).
+        attachmentDir?: string | null,
     ): Promise<{ content: string; usage?: any }> {
         const tempDir = os.tmpdir();
         const randomId = Math.random().toString(36).substring(2, 15);
@@ -94,6 +98,12 @@ export class ClaudeCliService {
                 // S2.2: append --effort <tier> when the member carries one. Empty for
                 // inherit/unknown so the command stays byte-identical to the legacy spawn.
                 shellCmd += claudeCliEffortFlag(effort);
+
+                // S6: grant Read access to the run's image attachment dir (vision). Only
+                // appended when present → command byte-identical to legacy without it.
+                if (attachmentDir) {
+                    shellCmd += ` --add-dir "${attachmentDir}"`;
+                }
 
                 console.log(`[Claude CLI] Executing: ${shellCmd.substring(0, 120)}...`);
 

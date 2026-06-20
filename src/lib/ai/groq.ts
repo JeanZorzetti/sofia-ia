@@ -119,7 +119,7 @@ export async function chatWithAgent(
   agentId: string,
   messages: ChatMessage[],
   leadContext?: Record<string, any>,
-  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null; rawText?: boolean; capabilities?: CapabilityPolicy | null; workflow?: string | null; teamSystemPrompt?: string | null }
+  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null; rawText?: boolean; capabilities?: CapabilityPolicy | null; workflow?: string | null; teamSystemPrompt?: string | null; attachmentDir?: string | null }
 ) {
   const { prisma } = await import('@/lib/prisma')
 
@@ -152,6 +152,9 @@ export async function chatWithAgent(
   // `effort` maps to reasoning_effort on reasoning-capable models (applied on the
   // OpenRouter path below); ignored by providers that don't support it.
   const reasoningEffort = options?.effort || null
+  // S6: per-run image attachment dir → Claude CLI `--add-dir` (vision). Null on runs
+  // without attachments (command byte-identical to legacy); ignored by non-CLI providers.
+  const attachmentDir = options?.attachmentDir || null
 
   // Construir prompt do sistema
   let systemPrompt = agent.systemPrompt
@@ -357,6 +360,7 @@ Regras:
           token,
           { capabilities: capabilityPolicy, mcpServers: cliMcpServers },
           reasoningEffort,  // S2.2: per-member effort → CLI --effort flag (null = no flag)
+          attachmentDir,    // S6: per-run image dir → CLI --add-dir flag (null = no flag)
         ),
         { isLimited: (e) => isClaudeRateLimit(String((e as Error)?.message ?? e)) },
       );

@@ -2,6 +2,7 @@
 // Shared types for the Polaris Teams coordination engine.
 
 import type { TaskHistoryEvent } from './task-history'
+import type { MessageAttachment } from './team-attachments'
 
 export type TeamRole = 'lead' | 'worker' | 'reviewer'
 // `clarify` (G6, graph mode only): a Worker that lacks essential info asks the Lead
@@ -90,6 +91,9 @@ export interface MessageRow {
   content: string
   kind: MessageKind
   taskId: string | null
+  /** V2.2 S6: image attachments with their resolved local path (vision). Absent on
+   *  every legacy message → the steering/feed render stays byte-identical. */
+  attachments?: MessageAttachment[]
 }
 
 /** A directive parsed out of the Lead's output. */
@@ -211,6 +215,11 @@ export interface ChatOptions {
    *  forwards `member.workflow` here; `chatWithAgent` concatenates it onto the Agent's
    *  system prompt via `appendMemberWorkflow`. Absent/empty → prompt unchanged (legacy). */
   workflow?: string | null
+  /** V2.2 S6 (item 5b): per-run directory where image attachments are materialized.
+   *  Injected by the chat wrapper (start-team-run) when the run has attachments, so the
+   *  Claude CLI gets `--add-dir <dir>` and a member can Read the image. Null → no flag
+   *  (command byte-identical to legacy). */
+  attachmentDir?: string | null
 }
 
 /** Injectable execution primitive (real impl: chatWithAgent). */

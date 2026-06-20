@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
 import { reconcileStaleRun } from '@/lib/orchestration/team/team-reconcile'
+import { parseAttachments } from '@/lib/orchestration/team/team-attachments'
 
 export const dynamic = 'force-dynamic'
 
@@ -73,6 +74,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               select: {
                 id: true, fromMemberId: true, toMemberId: true,
                 kind: true, summary: true, content: true, taskId: true,
+                attachments: true, // S6: image attachments (vision) for feed render
               },
             }),
             prisma.teamMemberUsage.groupBy({
@@ -121,9 +123,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           // New messages (delta only — see the fetch above)
           if (newMessages.length > 0) {
             for (const m of newMessages) {
+              // S6: surface only {name, mime, key} to the client (it fetches via the
+              // proxy GET by key); [] for legacy messages → field omitted.
+              const atts = parseAttachments(m.attachments).map(a => ({ name: a.name, mime: a.mime, key: a.key }))
               send('message', {
                 id: m.id, fromMemberId: m.fromMemberId, toMemberId: m.toMemberId,
                 kind: m.kind, summary: m.summary, content: m.content.slice(0, 500), taskId: m.taskId,
+                ...(atts.length > 0 ? { attachments: atts } : {}),
               })
             }
             lastMsgCount += newMessages.length

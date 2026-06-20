@@ -4,6 +4,8 @@ import { safeErrorMessage } from '@/lib/api-response'
 import { getAuthFromRequest } from '@/lib/auth'
 import { startTeamRun, TeamRunError } from '@/lib/orchestration/team/start-team-run'
 import { TEAM_RUN_STATUS_BY_CODE } from '@/lib/orchestration/team/team-run-api'
+import { uploadImagesFromForm } from '@/lib/orchestration/team/upload-attachments'
+import type { TeamAttachment } from '@/lib/orchestration/team/team-attachments'
 
 // The coordination loop runs in the background (after the response is flushed).
 export const maxDuration = 300
@@ -15,15 +17,33 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const auth = await getAuthFromRequest(request)
     if (!auth) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     const { id } = await params
-    const body = await request.json()
+
+    // S6: the UI sends multipart/form-data when the mission carries images; the JSON
+    // body stays the path for programmatic callers (no images). Both shapes share fields.
+    let body: Record<string, unknown>
+    let attachments: TeamAttachment[] = []
+    if (request.headers.get('content-type')?.includes('multipart/form-data')) {
+      const form = await request.formData()
+      body = {
+        mission: form.get('mission'),
+        mode: form.get('mode'),
+        repoUrl: form.get('repoUrl'),
+        base: form.get('base'),
+        gitMode: form.get('gitMode'),
+      }
+      attachments = await uploadImagesFromForm(id, form)
+    } else {
+      body = await request.json()
+    }
 
     const result = await startTeamRun(id, {
-      mission: body?.mission,
+      mission: body?.mission as string,
       mode: body?.mode === 'code' ? 'code' : 'chat',
       userId: auth.id,
-      repoUrl: body?.repoUrl,
-      base: body?.base,
-      gitMode: body?.gitMode, // S3.1: sanitized in startTeamRun (only 'direct' | null persists)
+      repoUrl: body?.repoUrl as string | undefined,
+      base: body?.base as string | undefined,
+      gitMode: body?.gitMode as string | undefined, // S3.1: sanitized in startTeamRun (only 'direct' | null persists)
+      attachments,
     })
 
     return NextResponse.json(

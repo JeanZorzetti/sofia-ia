@@ -1343,6 +1343,9 @@ model TeamMessage {
   content      String   @db.Text
   kind         String   @default("message") @db.VarChar(20)
   taskId       String?  @map("task_id") @db.Uuid
+  // V2.2 S6: image/media attachments (vision). Array of { name, mime, size, key }
+  // where `key` is the MinIO object key. Nullable → legacy rows untouched (text-only).
+  attachments  Json?
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
   run        TeamRun     @relation(fields: [runId], references: [id], onDelete: Cascade)

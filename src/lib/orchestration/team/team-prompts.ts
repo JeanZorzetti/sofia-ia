@@ -5,6 +5,7 @@
 
 import type { MemberCtx, TaskRow, MessageRow } from './team-types'
 import type { ChangedFile } from '../../git/repo-lifecycle'
+import { buildAttachmentRefLines } from './team-attachments'
 
 const DIRECTIVE_CONTRACT = `
 Responda SOMENTE com diretivas, uma por linha:
@@ -81,7 +82,14 @@ export const USER_STEERING_HEADING = 'Mensagens do usuário durante a execução
 function buildUserSteeringBlock(messages: MessageRow[]): string[] {
   const steers = messages.filter(m => m.kind === 'user')
   if (steers.length === 0) return []
-  const lines = steers.map(m => `- ${(m.content ?? '').trim()}`).join('\n')
+  // S6: a `user` message may carry image attachments. We append the local-path
+  // reference lines (vision) right under the message bullet. A message with no
+  // attachments renders exactly as in S4 → byte-identical for legacy runs.
+  const lines = steers.map(m => {
+    const bullet = `- ${(m.content ?? '').trim()}`
+    const refs = buildAttachmentRefLines(m.attachments)
+    return refs.length > 0 ? [bullet, ...refs].join('\n') : bullet
+  }).join('\n')
   return [
     '',
     `## ${USER_STEERING_HEADING}\n${lines}\n\nLeve estas instruções em conta no seu próximo planejamento.`,

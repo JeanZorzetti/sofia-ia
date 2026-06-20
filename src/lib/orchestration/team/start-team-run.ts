@@ -4,6 +4,7 @@
 // after() is valid inside any request handler (run route OR cron GET).
 import { after } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { TeamAttachment } from './team-attachments'
 
 export type TeamRunMode = 'chat' | 'code'
 
@@ -23,6 +24,10 @@ export type StartTeamRunInput = {
    *  round-trip. Best-effort: failures are logged, never thrown. Code-runs
    *  (queued, out-of-process) ignore it. */
   onComplete?: (runId: string) => Promise<void>
+  /** S6 (item 5b): image attachments uploaded with the mission. Persisted as an
+   *  initial `kind:'user'` message so the Lead surfaces them in turn 1 (vision).
+   *  Already uploaded to MinIO by the route; this only carries the metadata. */
+  attachments?: TeamAttachment[]
 }
 
 export type StartTeamRunResult = { runId: string; mode: TeamRunMode }
@@ -72,6 +77,20 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
     data: { teamId, mission, status: 'pending', mode, repoUrl, baseBranch, gitMode: input.gitMode === 'direct' ? 'direct' : null },
   })
 
+  // S6 (item 5b): persist mission images as an initial `kind:'user'` message so the
+  // Lead surfaces them in turn 1 (same path as live steering). Chat-runs only — the
+  // vision feature targets chat teams; code-runs go through a separate worker process.
+  if (mode === 'chat' && input.attachments && input.attachments.length > 0) {
+    await prisma.teamMessage.create({
+      data: {
+        runId: run.id,
+        kind: 'user',
+        content: 'Imagens anexadas à missão (para análise visual).',
+        attachments: input.attachments as unknown as object,
+      },
+    })
+  }
+
   if (mode === 'code') {
     // Code-runs go through a DURABLE queue consumed by a separate worker service.
     try {
@@ -100,9 +119,14 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
         // dominant CLI-native sandbox path builds its own prompt — same caveat as S3.1.)
         const { readTeamSystemPrompt } = await import('@/lib/orchestration/team/team-system-prompt')
         const teamSystemPrompt = readTeamSystemPrompt(team.config)
+        // S6: download any mission/steering images to the per-run temp dir and inject its
+        // path into the chat wrapper so every member call gets `--add-dir` (vision). Null
+        // when the run has no attachments → wrapper call byte-identical to legacy.
+        const { materializeRunAttachments } = await import('@/lib/orchestration/team/materialize-attachments')
+        const attachmentDir = await materializeRunAttachments(run.id)
         await runTeamByTopology(run.id, {
           store: createPrismaTeamStore(),
-          chat: withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, { ...opts, teamSystemPrompt })),
+          chat: withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, { ...opts, teamSystemPrompt, attachmentDir })),
         })
         const { dispatchTeamOutputs } = await import('@/lib/orchestration/team/team-outputs')
         await dispatchTeamOutputs(run.id)

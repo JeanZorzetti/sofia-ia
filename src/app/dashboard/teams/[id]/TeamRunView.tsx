@@ -1,7 +1,7 @@
 // src/app/dashboard/teams/[id]/TeamRunView.tsx
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import {
@@ -9,7 +9,7 @@ import {
   ClipboardList, MessageSquare, CheckCircle2, XCircle, History, Sparkles,
   Clock, Coins, Repeat, Network, Terminal as TerminalIcon, MessageCircle, Code2,
   GitBranch, GitPullRequest, ExternalLink, ChevronRight, ChevronDown,
-  ArrowDownLeft, ArrowUpRight, Link2, Maximize2,
+  ArrowDownLeft, ArrowUpRight, Link2, Maximize2, ImagePlus, X,
 } from 'lucide-react'
 
 import { TeamOutputsPanel } from './TeamOutputsPanel'
@@ -29,11 +29,48 @@ const TeamGraphView = dynamic(() => import('./TeamGraphView'), { ssr: false })
 const SandboxTerminal = dynamic(() => import('./SandboxTerminal'), { ssr: false })
 const DiffViewer = dynamic(() => import('./DiffViewer'), { ssr: false })
 
+// S6: image attach constraints (mirror server caps in team-attachments.ts).
+const ACCEPT_IMAGES = 'image/png,image/jpeg,image/webp,image/gif'
+const MAX_IMAGES = 4
+
+// S6: reusable image-attach bar (pick + chips with remove), shared by the mission and
+// live-steering composers. Capped at MAX_IMAGES; the server validates type/size again.
+function ImageAttachBar({ images, setImages, disabled }: { images: File[]; setImages: (f: File[]) => void; disabled?: boolean }) {
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  function onPick(e: ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files ?? [])
+    setImages([...images, ...picked].slice(0, MAX_IMAGES))
+    e.target.value = ''
+  }
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <input ref={inputRef} type="file" accept={ACCEPT_IMAGES} multiple className="hidden" onChange={onPick} disabled={disabled} />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={disabled || images.length >= MAX_IMAGES}
+        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-white/10 bg-white/5 text-xs text-white/60 hover:text-white/90 disabled:opacity-40"
+      >
+        <ImagePlus className="h-3.5 w-3.5" /> Imagem
+      </button>
+      {images.map((f, i) => (
+        <span key={i} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/10 text-[11px] text-white/70 max-w-[180px]">
+          <span className="truncate">{f.name}</span>
+          <button type="button" onClick={() => setImages(images.filter((_, j) => j !== i))} className="text-white/40 hover:text-white/80 shrink-0">
+            <X className="h-3 w-3" />
+          </button>
+        </span>
+      ))}
+    </div>
+  )
+}
+
 interface Member { id: string; role: string; model: string | null; effort: string | null; agent: { id: string; name: string } }
 interface Team { id: string; name: string; members: Member[] }
 interface RunLite { id: string; status: string; mission: string; createdAt: string }
 interface BoardTask { id: string; title: string; status: string; assigneeId: string | null; retryCount: number; reviewNote: string | null; dependsOn: string[]; related: string[]; resultPreview: string; historyEvents: TaskHistoryEvent[] }
-interface Msg { id: string; fromMemberId: string | null; toMemberId: string | null; kind: string; summary: string | null; content: string; taskId: string | null }
+interface MsgAttachment { name: string; mime: string; key: string }
+interface Msg { id: string; fromMemberId: string | null; toMemberId: string | null; kind: string; summary: string | null; content: string; taskId: string | null; attachments?: MsgAttachment[] }
 interface Metrics { turnsUsed: number | null; tokensUsed: number | null; estimatedCost: number | null; durationMs: number | null }
 interface MemberUsageEntry { memberId: string | null; tokens: number }
 interface CommandRun { cmd: string; stdout: string; stderr: string; exitCode: number; ms: number }
@@ -98,6 +135,8 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   const [running, setRunning] = useState(false)
   const [steer, setSteer] = useState('') // S4: live-steering input (message injected mid-run)
   const [steerSending, setSteerSending] = useState(false)
+  const [missionImages, setMissionImages] = useState<File[]>([]) // S6: images attached to the mission
+  const [steerImages, setSteerImages] = useState<File[]>([]) // S6: images attached to a live steering message
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null) // S2.2: task whose history timeline is open
   const [graphOpen, setGraphOpen] = useState(false) // S5: expanded "Visualizar" graph modal open
   const [highlightId, setHighlightId] = useState<string | null>(null) // S3.2: relation-target task flashed on navigation
@@ -202,12 +241,24 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
     if (!mission.trim()) return
     setRunning(true); setStatus('pending')
     try {
-      const res = await fetch(`/api/teams/${teamId}/run`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildRunRequest({ mission, mode, gitMode })),
-      })
+      // S6: send multipart when the mission carries images (chat only); JSON otherwise.
+      const req = buildRunRequest({ mission, mode, gitMode })
+      const useForm = mode === 'chat' && missionImages.length > 0
+      let res: Response
+      if (useForm) {
+        const fd = new FormData()
+        for (const [k, v] of Object.entries(req)) if (v != null) fd.append(k, String(v))
+        for (const f of missionImages) fd.append('images', f)
+        res = await fetch(`/api/teams/${teamId}/run`, { method: 'POST', body: fd })
+      } else {
+        res = await fetch(`/api/teams/${teamId}/run`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(req),
+        })
+      }
       const json = await res.json()
       if (json.success && json.data?.runId) {
+        setMissionImages([])
         setRunId(json.data.runId)
         openStream(json.data.runId, true)
       } else {
@@ -223,15 +274,24 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
   // message back into the feed (~1s), so there's no optimistic insert to dedup.
   async function sendSteer() {
     const text = steer.trim()
-    if (!text || !runId || steerSending) return
+    if ((!text && steerImages.length === 0) || !runId || steerSending) return
     setSteerSending(true)
     try {
-      const res = await fetch(`/api/teams/${teamId}/runs/${runId}/messages`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text }),
-      })
+      // S6: multipart when images are attached; JSON for text-only steering (S4 path).
+      let res: Response
+      if (steerImages.length > 0) {
+        const fd = new FormData()
+        fd.append('content', text)
+        for (const f of steerImages) fd.append('images', f)
+        res = await fetch(`/api/teams/${teamId}/runs/${runId}/messages`, { method: 'POST', body: fd })
+      } else {
+        res = await fetch(`/api/teams/${teamId}/runs/${runId}/messages`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: text }),
+        })
+      }
       const json = await res.json()
-      if (json.success) setSteer('') // keep the text on failure so the user can retry
+      if (json.success) { setSteer(''); setSteerImages([]) } // keep on failure so the user can retry
     } catch { /* network error — keep the text for retry */ }
     finally { setSteerSending(false) }
   }
@@ -372,6 +432,8 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           onChange={e => setMission(e.target.value)}
           disabled={running}
         />
+        {/* S6: attach images to the mission (chat-runs only — vision targets chat teams) */}
+        {mode === 'chat' && <ImageAttachBar images={missionImages} setImages={setMissionImages} disabled={running} />}
         <div className="flex items-center gap-3 flex-wrap">
           <button
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors"
@@ -585,6 +647,21 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
                     <span className="ml-auto uppercase tracking-wider">{isUser ? 'steering' : m.kind}</span>
                   </div>
                   <div className="text-[13px] text-white/80 mt-1 whitespace-pre-wrap break-words">{m.summary || m.content}</div>
+                  {/* S6: render attached images (vision) via the auth'd proxy GET by key. */}
+                  {m.attachments && m.attachments.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {m.attachments.map(a => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <a key={a.key} href={`/api/teams/${teamId}/runs/${runId}/attachment?key=${encodeURIComponent(a.key)}`} target="_blank" rel="noreferrer">
+                          <img
+                            src={`/api/teams/${teamId}/runs/${runId}/attachment?key=${encodeURIComponent(a.key)}`}
+                            alt={a.name}
+                            className="h-24 w-24 object-cover rounded-md border border-white/10 hover:border-white/30 transition-colors"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -592,25 +669,29 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
           {/* S4: live steering composer — only while the run is in flight. Sends a
               message the Lead picks up on its next planning turn (coordinator intacto). */}
           {running && runId && (
-            <div className="mt-3 flex items-center gap-2 border-t border-white/10 pt-3">
-              <input
-                type="text"
-                value={steer}
-                onChange={e => setSteer(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendSteer() } }}
-                placeholder="Enviar instrução ao time durante a execução…"
-                disabled={steerSending}
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 disabled:opacity-50"
-              />
-              <button
-                type="button"
-                onClick={sendSteer}
-                disabled={steerSending || !steer.trim()}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500/90 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                {steerSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                Enviar
-              </button>
+            <div className="mt-3 border-t border-white/10 pt-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={steer}
+                  onChange={e => setSteer(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendSteer() } }}
+                  placeholder="Enviar instrução ao time durante a execução…"
+                  disabled={steerSending}
+                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={sendSteer}
+                  disabled={steerSending || (!steer.trim() && steerImages.length === 0)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-500/90 hover:bg-emerald-500 disabled:opacity-40 text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  {steerSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  Enviar
+                </button>
+              </div>
+              {/* S6: attach images to a live steering message (vision) */}
+              <ImageAttachBar images={steerImages} setImages={setSteerImages} disabled={steerSending} />
             </div>
           )}
         </div>

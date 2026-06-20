@@ -5,6 +5,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getAuthFromRequest } from '@/lib/auth'
+import { uploadImagesFromForm } from '@/lib/orchestration/team/upload-attachments'
+import { materializeRunAttachments } from '@/lib/orchestration/team/materialize-attachments'
+import type { TeamAttachment } from '@/lib/orchestration/team/team-attachments'
 
 const MAX_CONTENT = 2000
 
@@ -28,19 +31,40 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ success: false, error: 'Run não está em andamento' }, { status: 400 })
     }
 
-    const body = await request.json().catch(() => ({}))
-    const raw = typeof body?.content === 'string' ? body.content : ''
+    // S6: multipart when the steering message carries images; JSON otherwise (S4 path).
+    let raw = ''
+    let attachments: TeamAttachment[] = []
+    if (request.headers.get('content-type')?.includes('multipart/form-data')) {
+      const form = await request.formData()
+      raw = typeof form.get('content') === 'string' ? (form.get('content') as string) : ''
+      attachments = await uploadImagesFromForm(runId, form)
+    } else {
+      const body = await request.json().catch(() => ({}))
+      raw = typeof body?.content === 'string' ? body.content : ''
+    }
     const content = raw.trim().slice(0, MAX_CONTENT)
-    if (!content) {
+    // An image-only steering message is valid; require text only when there are no images.
+    if (!content && attachments.length === 0) {
       return NextResponse.json({ success: false, error: 'Mensagem vazia' }, { status: 400 })
     }
 
     // fromMemberId/toMemberId stay null (it's the human, not a roster member) → no
     // member FK to violate even if the roster is edited mid-run.
     const msg = await prisma.teamMessage.create({
-      data: { runId, content, kind: 'user' },
+      data: {
+        runId,
+        content: content || 'Imagem anexada (para análise visual).',
+        kind: 'user',
+        ...(attachments.length > 0 ? { attachments: attachments as unknown as object } : {}),
+      },
       select: { id: true, content: true, kind: true, createdAt: true },
     })
+    // S6: download the new image(s) to the run's local temp dir so the Lead can Read
+    // them next turn (same process as the `after()` coordinator). Best-effort.
+    if (attachments.length > 0) {
+      try { await materializeRunAttachments(runId) }
+      catch (err) { console.error('[Teams S6] materialize after live upload failed:', err) }
+    }
     return NextResponse.json({ success: true, data: msg })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to send message'
