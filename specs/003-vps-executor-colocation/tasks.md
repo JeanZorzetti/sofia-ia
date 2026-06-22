@@ -22,7 +22,7 @@ Projeto único Next.js + worker em `Imob/sofia-next/`. Paths abaixo são relativ
 
 **Purpose**: documentação de configuração que ambas as stories usam.
 
-- [ ] T001 [P] Documentar as novas env vars (`SANDBOX_PROVIDER`, `VPS_RUNS_DIR`, e relembrar `CODE_RUN_CONCURRENCY`) em `.env.example`, com comentário de que `vps-local` exige um volume montado em `VPS_RUNS_DIR`.
+- [x] T001 [P] Documentar as novas env vars (`SANDBOX_PROVIDER`, `VPS_RUNS_DIR`, e relembrar `CODE_RUN_CONCURRENCY`) em `.env.example`, com comentário de que `vps-local` exige um volume montado em `VPS_RUNS_DIR`.
 
 ---
 
@@ -32,7 +32,7 @@ Projeto único Next.js + worker em `Imob/sofia-next/`. Paths abaixo são relativ
 
 **⚠️ CRITICAL**: bloqueia a US1.
 
-- [ ] T002 Adicionar `readonly rootDir?: string` (opcional, additive) à interface `Sandbox` em `src/lib/sandbox/types.ts`, com doc-comment: E2B omite (→ default `/home/user`); VpsLocal retorna `${VPS_RUNS_DIR}/<id>`. **Não** alterar `e2b.ts` (continua sem `rootDir`).
+- [x] T002 Adicionar `readonly rootDir?: string` (opcional, additive) à interface `Sandbox` em `src/lib/sandbox/types.ts`, com doc-comment: E2B omite (→ default `/home/user`); VpsLocal retorna `${VPS_RUNS_DIR}/<id>`. **Não** alterar `e2b.ts` (continua sem `rootDir`).
 
 **Checkpoint**: port pronto — US1 pode começar.
 
@@ -46,11 +46,11 @@ Projeto único Next.js + worker em `Imob/sofia-next/`. Paths abaixo são relativ
 
 ### Implementation for User Story 1
 
-- [ ] T003 [P] [US1] Criar `VpsLocalProvider` em `src/lib/sandbox/vps-local.ts` implementando `SandboxProvider`/`Sandbox`: `create` (uuid + `mkdir -p ${VPS_RUNS_DIR}/<id>`, `rootDir` setado); `exec(cmd,{cwd,env,timeoutMs})` via `node:child_process` (`bash -lc`, env mesclado, timeout real kill→SIGKILL, **nunca lança** em exit≠0); `writeFile` via `node:fs/promises` (mkdir recursivo); `setTimeout` **no-op**; `close` → `rm -rf` idempotente; `connect(id)` → valida existência e reanexa, senão lança erro claro; `getPreviewUrl` → lança `Error('preview self-hosted indisponível (Fase 2)')`. Lazy/sem dep externa nova. (contrato: `contracts/sandbox-provider.md`)
-- [ ] T004 [US1] Registrar `case 'vps-local': return createVpsLocalProvider()` em `getSandboxProvider()` (`src/lib/sandbox/index.ts`); manter o `default` que lança erro claro para provider desconhecido. (depende de T003)
-- [ ] T005 [US1] Em `src/worker/index.ts`, substituir a constante de módulo `const WORKDIR = '/home/user/repo'` por derivação `const workdir = \`${sandbox.rootDir ?? '/home/user'}/repo\`` **após** criar/conectar o sandbox, e propagar `workdir` aos call-sites (`runWithRepo`, `continueWithRepo`, C0, `captureWorkingDiff`, `startRunPreview`). E2B mantém `/home/user/repo` (byte-idêntico). (depende de T002)
-- [ ] T006 [US1] Em `src/worker/index.ts`, adicionar **sweep de boot** que remove diretórios órfãos em `${VPS_RUNS_DIR}/*` (sem run ativo / mais velhos que um limiar); adaptar o cron `src/app/api/cron/reap-preview-sandboxes/route.ts` para também varrer dirs locais quando `SANDBOX_PROVIDER=vps-local`. (FR-012)
-- [ ] T007 [US1] Escrever `scripts/vps-local-verify.ts` (asserts: namespacing por run isola dois runs; `setTimeout` é no-op; `close` faz rm-rf; `connect` reanexa dir existente e lança em dir ausente; `getPreviewUrl` lança) e rodar verde via `npx tsx scripts/vps-local-verify.ts`.
+- [x] T003 [P] [US1] Criar `VpsLocalProvider` em `src/lib/sandbox/vps-local.ts` implementando `SandboxProvider`/`Sandbox`: `create` (uuid + `mkdir -p ${VPS_RUNS_DIR}/<id>`, `rootDir` setado); `exec(cmd,{cwd,env,timeoutMs})` via `node:child_process` (`bash -lc`, env mesclado, timeout real kill→SIGKILL, **nunca lança** em exit≠0); `writeFile` via `node:fs/promises` (mkdir recursivo); `setTimeout` **no-op**; `close` → `rm -rf` idempotente; `connect(id)` → valida existência e reanexa, senão lança erro claro; `getPreviewUrl` → lança `Error('preview self-hosted indisponível (Fase 2)')`. Lazy/sem dep externa nova. (contrato: `contracts/sandbox-provider.md`)
+- [x] T004 [US1] Registrar `case 'vps-local': return createVpsLocalProvider()` em `getSandboxProvider()` (`src/lib/sandbox/index.ts`); manter o `default` que lança erro claro para provider desconhecido. (depende de T003)
+- [x] T005 [US1] Em `src/worker/index.ts`, substituir a constante de módulo `const WORKDIR = '/home/user/repo'` por derivação `const workdir = \`${sandbox.rootDir ?? '/home/user'}/repo\`` **após** criar/conectar o sandbox, e propagar `workdir` aos call-sites (`runWithRepo`, `continueWithRepo`, C0, `captureWorkingDiff`, `startRunPreview`). E2B mantém `/home/user/repo` (byte-idêntico). (depende de T002)
+- [x] T006 [US1] Em `src/worker/index.ts`, adicionar **sweep de boot** que remove diretórios órfãos em `${VPS_RUNS_DIR}/*` (sem run ativo / mais velhos que um limiar); adaptar o cron `src/app/api/cron/reap-preview-sandboxes/route.ts` para também varrer dirs locais quando `SANDBOX_PROVIDER=vps-local`. (FR-012)
+- [x] T007 [US1] Escrever `scripts/vps-local-verify.ts` (asserts: namespacing por run isola dois runs; `setTimeout` é no-op; `close` faz rm-rf; `connect` reanexa dir existente e lança em dir ausente; `getPreviewUrl` lança) e rodar verde via `npx tsx scripts/vps-local-verify.ts`.
 
 **Checkpoint**: US1 funcional — missões rodam no executor self-hosted sem teto.
 
@@ -64,10 +64,10 @@ Projeto único Next.js + worker em `Imob/sofia-next/`. Paths abaixo são relativ
 
 ### Implementation for User Story 2
 
-- [ ] T008 [P] [US2] Criar helper puro `src/lib/orchestration/team/co-location.ts`: `buildColocationContext({role, sandbox, workdir, keyFiles?})` → texto a prepender (lead: árvore capada + `cat` dos `keyFiles`; reviewer: bloco "como verificar" read-only) ou `null`. Reutilizar a filosofia de caps do C2 (`DIFF_MAX_*`). Testável com sandbox fake. (contrato: `contracts/co-location.md`)
-- [ ] T009 [US2] Em `src/lib/orchestration/team/code-agent.ts`, adicionar `resolveMemberRole?` a `CodeChatFnOptions` e, no caminho **não-worker** (sem `taskId`) **com** `workdir`, resolver o papel e prepender `buildColocationContext(...)` na 1ª mensagem `user` ANTES do `injectProtocol`/`baseChat`. Sem workdir / sem dep / role indefinido ⇒ caminho atual byte-idêntico. **Não** tocar `team-coordinator.ts`. (depende de T008)
-- [ ] T010 [US2] Em `src/worker/index.ts`, implementar a impl Prisma de `resolveMemberRole` (lê `TeamMember.role` por `ChatOptions.memberId`; best-effort → `null` em falha) e injetá-la nos **3** call-sites de `createCodeChatFn` (`runWithRepo`, `continueWithRepo`, C0). (depende de T009)
-- [ ] T011 [US2] Escrever `scripts/colocation-verify.ts` (asserts: turno worker = sem enriquecimento; lead = árvore/arquivos injetados; reviewer = bloco de verificação, diff preservado; sem workdir OU sem `resolveMemberRole` = byte-idêntico ao legado) e rodar verde via `npx tsx scripts/colocation-verify.ts`.
+- [x] T008 [P] [US2] Criar helper puro `src/lib/orchestration/team/co-location.ts`: `buildColocationContext({role, sandbox, workdir, keyFiles?})` → texto a prepender (lead: árvore capada + `cat` dos `keyFiles`; reviewer: bloco "como verificar" read-only) ou `null`. Reutilizar a filosofia de caps do C2 (`DIFF_MAX_*`). Testável com sandbox fake. (contrato: `contracts/co-location.md`)
+- [x] T009 [US2] Em `src/lib/orchestration/team/code-agent.ts`, adicionar `resolveMemberRole?` a `CodeChatFnOptions` e, no caminho **não-worker** (sem `taskId`) **com** `workdir`, resolver o papel e prepender `buildColocationContext(...)` na 1ª mensagem `user` ANTES do `injectProtocol`/`baseChat`. Sem workdir / sem dep / role indefinido ⇒ caminho atual byte-idêntico. **Não** tocar `team-coordinator.ts`. (depende de T008)
+- [x] T010 [US2] Em `src/worker/index.ts`, implementar a impl Prisma de `resolveMemberRole` (lê `TeamMember.role` por `ChatOptions.memberId`; best-effort → `null` em falha) e injetá-la nos **3** call-sites de `createCodeChatFn` (`runWithRepo`, `continueWithRepo`, C0). (depende de T009)
+- [x] T011 [US2] Escrever `scripts/colocation-verify.ts` (asserts: turno worker = sem enriquecimento; lead = árvore/arquivos injetados; reviewer = bloco de verificação, diff preservado; sem workdir OU sem `resolveMemberRole` = byte-idêntico ao legado) e rodar verde via `npx tsx scripts/colocation-verify.ts`.
 
 **Checkpoint**: US1 + US2 funcionais e independentes.
 
@@ -81,7 +81,7 @@ Projeto único Next.js + worker em `Imob/sofia-next/`. Paths abaixo são relativ
 
 ### Implementation for User Story 3
 
-- [ ] T012 [US3] Acrescentar ao `scripts/vps-local-verify.ts` (ou um `provider-select-verify.ts`) asserts de seleção: `getSandboxProvider()` resolve `vps-local` para o novo provider e **lança erro claro** para `SANDBOX_PROVIDER` desconhecido (FR-004); rodar os verifies do motor existentes (`c0..c3`) verdes para comprovar `runTeam` intocado (FR-003/Princípio II).
+- [x] T012 [US3] Acrescentar ao `scripts/vps-local-verify.ts` (ou um `provider-select-verify.ts`) asserts de seleção: `getSandboxProvider()` resolve `vps-local` para o novo provider e **lança erro claro** para `SANDBOX_PROVIDER` desconhecido (FR-004); rodar os verifies do motor existentes (`c0..c3`) verdes para comprovar `runTeam` intocado (FR-003/Princípio II).
 
 **Checkpoint**: todas as user stories independentes e verdes.
 
@@ -89,8 +89,8 @@ Projeto único Next.js + worker em `Imob/sofia-next/`. Paths abaixo são relativ
 
 ## Phase N: Polish & Cross-Cutting Concerns
 
-- [ ] T013 [P] Atualizar a nota de infra em `specs/002-teams-dashboard/polaris-team-setup.md`: `SANDBOX_PROVIDER=vps-local`, worker como serviço EasyPanel dedicado, volume em `VPS_RUNS_DIR`, `CODE_RUN_CONCURRENCY` conservador.
-- [ ] T014 [P] Rodar o gate de regressão: `npm run typecheck` + suíte de verifies (`c0..c3`, `vps-local`, `colocation`) toda verde.
+- [x] T013 [P] Atualizar a nota de infra em `specs/002-teams-dashboard/polaris-team-setup.md`: `SANDBOX_PROVIDER=vps-local`, worker como serviço EasyPanel dedicado, volume em `VPS_RUNS_DIR`, `CODE_RUN_CONCURRENCY` conservador.
+- [x] T014 [P] Rodar o gate de regressão: `npm run typecheck` + suíte de verifies (`c0..c3`, `vps-local`, `colocation`) toda verde.
 - [ ] T015 Executar o Cenário D do `quickstart.md` (dogfooding 002 pela própria Polaris) — **gated** no passo 0 operacional (deploy do worker dedicado com segredos), que é manual do usuário. Critério de fechamento: novo commit na `main` de `sofia-ia` com `route.ts` + `page.tsx`, build verde, coordinator inalterado.
 
 ---

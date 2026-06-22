@@ -113,14 +113,25 @@ async function main() {
     ok('sweep respects age threshold + activeIds protection; removes true orphans')
   }
 
-  console.log('factory selection (FR-003)')
+  console.log('factory selection (FR-003 / FR-004)')
   {
     process.env.SANDBOX_PROVIDER = 'vps-local'
     const s = await getSandboxProvider().create()
     assert.ok(s.rootDir?.startsWith(TMP_BASE), 'getSandboxProvider() resolves vps-local to the new provider')
     await s.close()
+    ok('SANDBOX_PROVIDER=vps-local → VpsLocalProvider')
+
+    // E2B stays selectable: the factory returns a provider (API key is only needed at create()).
+    process.env.SANDBOX_PROVIDER = 'e2b'
+    assert.equal(typeof getSandboxProvider().create, 'function', 'e2b still selectable')
+    ok('SANDBOX_PROVIDER=e2b → E2B provider preserved')
+
+    // Unknown provider → clear SYNCHRONOUS throw (FR-004).
+    process.env.SANDBOX_PROVIDER = 'foo'
+    assert.throws(() => getSandboxProvider(), /desconhecido/, 'unknown provider throws clearly')
+    ok('unknown SANDBOX_PROVIDER → clear throw listing supported providers')
+
     delete process.env.SANDBOX_PROVIDER
-    ok('getSandboxProvider() returns VpsLocal for SANDBOX_PROVIDER=vps-local')
   }
 
   await fs.rm(TMP_BASE, { recursive: true, force: true }).catch(() => {})
