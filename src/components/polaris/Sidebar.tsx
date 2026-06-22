@@ -145,18 +145,23 @@ interface UsageData {
   userId?: string
 }
 
-// Visibilidade dirigida por CSS. `expanded` = hover (overlay, via group-hover do
-// Tailwind v4, já restrito a @media (hover: hover)) OU `pinned` (estado React).
-// Conteúdo permanece sempre montado no DOM; só a visibilidade muda — substitui o
-// antigo `{!collapsed && ...}`. A parte `pinned && ...` fica inerte no MVP (US1)
-// e é ligada por US3 (controle de fixar + persistência).
+// Visibilidade dirigida por CSS. `expanded` = hover OU foco de teclado dentro da
+// sidebar (overlay, via group-hover/group-focus-within do Tailwind v4) OU `pinned`
+// (estado React). Conteúdo permanece sempre montado no DOM; só a visibilidade muda
+// — substitui o antigo `{!collapsed && ...}`. A parte `pinned && ...` é ligada por
+// US3 (fixar + persistência); o reveal por menu aberto (US4) entra via `forceExpanded`.
+//
+// `group-focus-within/sb` (US4/T011) expande quando QUALQUER item interno recebe
+// foco de teclado (FR-013), espelhando o gatilho de hover — sem precisar de estado
+// React. O menu de workspace usa portal (foco sai do <aside>), então NÃO dispara
+// focus-within; por isso US4/T013 trata "menu aberto" via estado (forceExpanded).
 //
 // IMPORTANTE: classes COMPLETAS e literais — o scanner do Tailwind v4 não detecta
 // nomes de classe montados dinamicamente (ex.: `group-hover/sb:${x}`).
 const EXPAND = {
-  block: 'hidden group-hover/sb:block',
-  flex: 'hidden group-hover/sb:flex',
-  inline: 'hidden group-hover/sb:inline',
+  block: 'hidden group-hover/sb:block group-focus-within/sb:block',
+  flex: 'hidden group-hover/sb:flex group-focus-within/sb:flex',
+  inline: 'hidden group-hover/sb:inline group-focus-within/sb:inline',
 } as const
 
 // Store externo da preferência "fixada" (US3). Lido via useSyncExternalStore: o
@@ -204,10 +209,19 @@ export function Sidebar() {
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [orgs, setOrgs] = useState<OrgItem[]>([])
   const [activeWorkspace, setActiveWorkspace] = useState<string>('personal')
+  // Menu de workspace aberto (US4/T013). Mantém a sidebar expandida mesmo sem
+  // hover/foco (FR-015) — o dropdown é portaled, então focus-within não o cobre.
+  // Transitório: NUNCA persistido (data-model §invariantes).
+  const [menuOpen, setMenuOpen] = useState(false)
 
   // Alterna fixar/soltar; só `pinned` é persistido (hover/foco/menu são
   // transitórios — data-model §invariantes).
   const togglePinned = () => writePinned(!pinned)
+
+  // Reveal dirigido por estado React (complementa hover/focus-within do CSS):
+  // `pinned` (preferência) ou `menuOpen` (workspace aberto) força a visão expandida.
+  // OBS: só `pinned` altera o footprint (empurra o <main>); `menuOpen` é overlay.
+  const forceExpanded = pinned || menuOpen
 
   useEffect(() => {
     fetch('/api/user/usage')
@@ -247,8 +261,9 @@ export function Sidebar() {
       */}
       <aside
         data-pinned={pinned}
+        data-menu-open={menuOpen}
         className={cn(
-          'group/sb relative hidden h-full shrink-0 lg:block w-20 transition-[width] duration-300 ease-out',
+          'group/sb sidebar-root relative hidden h-full shrink-0 lg:block w-20 transition-[width] duration-300 ease-out',
           pinned && 'w-64'
         )}
       >
@@ -260,14 +275,19 @@ export function Sidebar() {
         */}
         <div
           className={cn(
-            'absolute inset-y-0 left-0 z-[60] flex w-20 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar transition-[width] duration-300 ease-out group-hover/sb:w-64',
-            pinned ? 'w-64' : 'group-hover/sb:shadow-2xl group-hover/sb:shadow-black/50'
+            'absolute inset-y-0 left-0 z-[60] flex w-20 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar transition-[width] duration-300 ease-out group-hover/sb:w-64 group-focus-within/sb:w-64',
+            pinned
+              ? 'w-64'
+              : 'group-hover/sb:shadow-2xl group-hover/sb:shadow-black/50 group-focus-within/sb:shadow-2xl group-focus-within/sb:shadow-black/50',
+            // Menu de workspace aberto (US4/T013): overlay expandido (w-64 + sombra)
+            // SEM virar in-flow — não empurra o <main> (só `pinned` empurra).
+            !pinned && menuOpen && 'w-64 shadow-2xl shadow-black/50'
           )}
         >
           <div className="flex flex-1 flex-col gap-2 p-3 overflow-hidden">
             {/* Workspace Selector — visível apenas quando expandida */}
-            <div className={cn('mb-1', EXPAND.block, pinned && 'block')}>
-              <DropdownMenu>
+            <div className={cn('mb-1', EXPAND.block, forceExpanded && 'block')}>
+              <DropdownMenu onOpenChange={setMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-sidebar-accent/30 transition-colors group">
                     <div className="h-6 w-6 rounded bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
@@ -326,7 +346,7 @@ export function Sidebar() {
             {/* Eyebrow "Menu" + controle Fixar/Soltar — apenas expandida.
                 O botão de fixar alterna `pinned` (persistido) → rail vira footprint
                 in-flow w-64 que empurra o <main> (T010, ligado na fundação). */}
-            <div className={cn('mb-1 px-1 items-center justify-between', EXPAND.flex, pinned && 'flex')}>
+            <div className={cn('mb-1 px-1 items-center justify-between', EXPAND.flex, forceExpanded && 'flex')}>
               <div className="text-[10px] font-semibold text-foreground-tertiary uppercase tracking-widest">
                 Menu
               </div>
@@ -358,7 +378,7 @@ export function Sidebar() {
                         className={cn(
                           'px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-foreground-tertiary',
                           EXPAND.block,
-                          pinned && 'block'
+                          forceExpanded && 'block'
                         )}
                       >
                         {section.label}
@@ -367,8 +387,8 @@ export function Sidebar() {
                         <div
                           className={cn(
                             'mx-3 my-1.5 border-t border-sidebar-border/50',
-                            'block group-hover/sb:hidden',
-                            pinned && 'hidden'
+                            'block group-hover/sb:hidden group-focus-within/sb:hidden',
+                            forceExpanded && 'hidden'
                           )}
                         />
                       )}
@@ -389,15 +409,15 @@ export function Sidebar() {
                             href={item.href}
                             className={cn(
                               'hover-scale flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-all',
-                              'justify-center px-0 group-hover/sb:justify-start group-hover/sb:px-3',
-                              pinned && 'justify-start px-3',
+                              'justify-center px-0 group-hover/sb:justify-start group-hover/sb:px-3 group-focus-within/sb:justify-start group-focus-within/sb:px-3',
+                              forceExpanded && 'justify-start px-3',
                               isActive
                                 ? 'bg-sidebar-accent text-white'
                                 : 'text-foreground-secondary hover:bg-sidebar-accent/50 hover:text-foreground'
                             )}
                           >
                             <Icon className="h-[18px] w-[18px] flex-shrink-0" />
-                            <span className={cn('truncate', EXPAND.block, pinned && 'block')}>
+                            <span className={cn('truncate', EXPAND.block, forceExpanded && 'block')}>
                               {item.label}
                             </span>
                             {item.badge === 'principal' && (
@@ -405,7 +425,7 @@ export function Sidebar() {
                                 className={cn(
                                   'ml-auto rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide bg-gradient-to-r from-purple-500/25 to-blue-500/25 text-purple-200 border border-purple-400/30',
                                   EXPAND.inline,
-                                  pinned && 'inline'
+                                  forceExpanded && 'inline'
                                 )}
                               >
                                 Principal
@@ -416,7 +436,7 @@ export function Sidebar() {
                                 className={cn(
                                   'ml-auto items-center text-purple-400/70',
                                   EXPAND.flex,
-                                  pinned && 'flex'
+                                  forceExpanded && 'flex'
                                 )}
                               >
                                 <Users2 className="h-3.5 w-3.5" />
@@ -435,7 +455,7 @@ export function Sidebar() {
           </div>
 
           {/* Cartões do rodapé — visíveis apenas quando expandida */}
-          <div className={cn('border-t border-sidebar-border p-3', EXPAND.block, pinned && 'block')}>
+          <div className={cn('border-t border-sidebar-border p-3', EXPAND.block, forceExpanded && 'block')}>
             <div className="glass-card rounded-lg p-3 space-y-3">
               {usage ? (
                 <>

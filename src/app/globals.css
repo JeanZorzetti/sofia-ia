@@ -302,6 +302,20 @@ h3 { font-size: 1.25rem; font-weight: 500; letter-spacing: -0.025em; line-height
 .sidebar-scroll:focus-within::-webkit-scrollbar-thumb { background: hsl(var(--border)); }
 .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: hsl(var(--foreground-tertiary)); }
 
+/* Movimento reduzido — sidebar (US4 / FR-014). Sob `prefers-reduced-motion:
+   reduce`, anula as transições de largura/opacidade da sidebar (grow rail<->expandida
+   por hover/foco/fixar, fade dos rótulos) e a transição de cor do scrollbar. Escopado
+   a `.sidebar-root` (raiz do <aside>) para não afetar o resto da UI. O estado final é
+   idêntico — só a animação some. */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-root,
+  .sidebar-root * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
 /* Hover utilities */
 .hover-scale {
   transition: transform var(--transition-duration) var(--transition-smooth);
