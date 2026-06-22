@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   MessageSquare,
-  MessageCircle,
   Bot,
   Workflow,
   CreditCard,
@@ -22,7 +21,6 @@ import {
   Terminal,
   Layers,
   Key,
-  Gift,
   Building2,
   ChevronDown,
   Plus,
@@ -522,33 +520,6 @@ export function Sidebar() {
                 </div>
               )}
             </div>
-
-            {/* Affiliate referral card */}
-            <Link
-              href={usage?.userId ? `/afiliados?ref=${usage.userId}` : '/afiliados'}
-              target="_blank"
-              className="mt-3 flex items-center gap-2.5 rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-2.5 hover:bg-green-500/20 transition-colors group"
-            >
-              <Gift className="h-4 w-4 text-green-400 flex-shrink-0" />
-              <div>
-                <div className="text-xs font-semibold text-green-400 leading-tight">Indique e Ganhe</div>
-                <div className="text-[10px] text-green-400/60 leading-tight">20–40% de comissão recorrente</div>
-              </div>
-            </Link>
-
-            {/* Talk to founder */}
-            <a
-              href="https://wa.me/5562983443919"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 flex items-center gap-2.5 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 px-3 py-2.5 hover:bg-[#25D366]/20 transition-colors"
-            >
-              <MessageCircle className="h-4 w-4 text-[#25D366] flex-shrink-0" />
-              <div>
-                <div className="text-xs font-semibold text-[#25D366] leading-tight">Falar com o Fundador</div>
-                <div className="text-[10px] text-[#25D366]/60 leading-tight">Suporte direto via WhatsApp</div>
-              </div>
-            </a>
           </div>
         </div>
       </aside>

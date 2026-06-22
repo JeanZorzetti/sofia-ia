@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import {
-  ArrowLeft, Plus, Users, RefreshCw, MoreVertical,
-  CheckCircle, XCircle, AlertCircle, Building2, Mail, Palette, Save
+  ArrowLeft, ArrowRight, Plus, Users, RefreshCw, MoreVertical,
+  CheckCircle, XCircle, AlertCircle, Building2, Mail, Palette, Save, Gift
 } from 'lucide-react'
 
 interface WhitelabelTenant {
@@ -47,6 +47,7 @@ export default function WhitelabelDashboardPage() {
   const [actionMenu, setActionMenu] = useState<string | null>(null)
   const [activating, setActivating] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [userId, setUserId] = useState('')
   const [showBranding, setShowBranding] = useState(false)
   const [branding, setBranding] = useState({ platformName: '', logoUrl: '', primaryColor: '', customDomain: '' })
   const [brandingSaving, setBrandingSaving] = useState(false)
@@ -76,6 +77,7 @@ export default function WhitelabelDashboardPage() {
       if (meRes.ok) {
         const meData = await meRes.json()
         setIsAdmin(meData.data?.role === 'admin')
+        setUserId(meData.data?.id || '')
       }
     } finally {
       setLoading(false)
@@ -213,6 +215,22 @@ export default function WhitelabelDashboardPage() {
             <Plus className="w-4 h-4" /> Novo Cliente
           </button>
         </div>
+
+        {/* Programa de afiliados — Indique e Ganhe */}
+        <Link
+          href={userId ? `/afiliados?ref=${userId}` : '/afiliados'}
+          target="_blank"
+          className="mb-8 flex items-center gap-4 rounded-xl bg-green-500/10 border border-green-500/20 px-5 py-4 hover:bg-green-500/20 transition-colors group"
+        >
+          <div className="h-11 w-11 rounded-lg bg-green-500/15 flex items-center justify-center flex-shrink-0">
+            <Gift className="h-5 w-5 text-green-400" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-semibold text-green-400 leading-tight">Indique e Ganhe</div>
+            <div className="text-xs text-green-400/60 leading-tight">20–40% de comissão recorrente por cada indicação</div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-green-400/60 flex-shrink-0 transition-transform group-hover:translate-x-0.5" />
+        </Link>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
