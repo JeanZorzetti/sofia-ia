@@ -289,7 +289,7 @@ export function Sidebar() {
             </div>
 
             {/* Scrollable nav area */}
-            <nav className="flex flex-col gap-3 flex-1 overflow-y-auto scrollbar-none pr-0.5">
+            <nav className="flex flex-col gap-3 flex-1 overflow-y-auto sidebar-scroll pr-0.5">
               {menuSections.map((section, si) => (
                 <div key={si} className="flex flex-col gap-0.5">
                   {/* Rótulo da seção (expandida) ou divisor (rail) */}

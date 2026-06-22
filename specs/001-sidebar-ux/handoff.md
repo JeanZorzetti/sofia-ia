@@ -1,46 +1,47 @@
 # Handoff — Sidebar UX (001-sidebar-ux)
 
-**Sessão**: 2026-06-22 (impl) · **Status**: ✅ MVP (US1) implementado, branch + commit feitos · **Próximo passo**: validar US1 em dev/prod, depois US2 (T006–T007)
+**Sessão**: 2026-06-22 (impl US2) · **Status**: ✅ US1 (rail+hover) + ✅ US2 (scrollbar) implementadas e commitadas na `main` · **Próximo passo**: validar US1+US2 em dev/prod, depois US3 (T008–T010)
 
 ## O que foi feito nesta sessão
 
-Implementei o **MVP da feature = User Story 1** seguindo `tasks.md` (T001→T005) e **parei no checkpoint da US1**. US2/US3/US4 **NÃO** foram tocadas.
+Implementei a **User Story 2 (barra de rolagem fina auto-hide)** seguindo `tasks.md` (T006→T007) e **parei no checkpoint da US2**. US3/US4 **NÃO** foram tocadas. US2 é independente (só `globals.css` + 1 troca de className), então não dependeu da Foundational.
 
-- **T001 (Setup)**: baseline revisado (sem código). Pontos de alteração confirmados: estado `collapsed` + gating `{!collapsed && …}` em `Sidebar.tsx`; utilities `scrollbar-none`/`.custom-scrollbar` em `globals.css` (esta NÃO mexida — é US2).
-- **T002 (Foundational)**: removido o boolean `collapsed`/`setCollapsed`; entrou `pinned` (`const [pinned] = useState(false)`) + `expanded` derivado **via CSS**. Todo o conteúdo (workspace, seções, itens, badges, footer) agora fica **sempre montado** no DOM; só a visibilidade muda.
-- **T003 (Foundational)**: `<aside>` virou **footprint do rail** (`w-20`, `relative`, `shrink-0`, `hidden lg:block`) contendo um **painel interno absoluto** (`inset-y-0 left-0`, `bg-sidebar`, `border-r`, `overflow-hidden`) que cresce `w-20`→`w-64`. Footprint só muda para `w-64` quando `pinned` (inerte no MVP). Bg/borda migraram do `<aside>` para o painel.
-- **T004 (US1)**: expansão por **hover via `group/sb` + `group-hover/sb:w-64`** (Tailwind v4 já restringe variantes hover a `@media (hover: hover)`). Footprint não muda no hover → **zero layout shift** no `<main>` (FR-003/SC-003). Painel ganha sombra no hover (`group-hover/sb:shadow-2xl`).
-- **T005 (US1)**: rótulos, eyebrow "Menu", labels de seção, badges, workspace selector e cartões do rodapé condicionados a `expanded` por CSS (constante `EXPAND` + ramo `pinned && …`), substituindo `{!collapsed && …}`. Rail = só ícones centralizados + **tooltip por ícone** (Radix, `side="right"`) + **destaque de rota ativa** em ambos os estados. Dividers entre seções aparecem só no rail.
+- **T006 [US2]**: criei a utility `.sidebar-scroll` em [src/app/globals.css](../../src/app/globals.css) (logo após `.custom-scrollbar`). Comportamento conforme o contrato (`contracts/sidebar-ui-contract.md` §4):
+  - **WebKit**: `::-webkit-scrollbar { width: 6px }`, track **transparente** (overlay, sem gutter visível), thumb **transparente em repouso** → `hsl(var(--border))` em `:hover`/`:focus-within` do `<nav>` → `hsl(var(--foreground-tertiary))` ao passar o mouse **sobre o próprio thumb** (mesma escala do `.custom-scrollbar` legado).
+  - **Firefox**: `scrollbar-width: thin` + `scrollbar-color: transparent transparent` em repouso → `hsl(var(--border)) transparent` em `:hover`/`:focus-within`.
+- **T007 [US2]**: troquei `scrollbar-none` → `sidebar-scroll` no `<nav>` (área rolável do menu) em [src/components/polaris/Sidebar.tsx:292](../../src/components/polaris/Sidebar.tsx#L292). Nenhuma outra mudança no componente.
 
 ### Gate de build (T015) — resultado
-`npm run db:generate` ✅ · `npm run typecheck` ✅ · `npm run build`: **compilou em 47s + TypeScript OK + 319/319 páginas estáticas geradas** ✅. A única falha é o passo final de cópia do `output: standalone` (`copyfile … errno -4094`) = **problema conhecido do OneDrive** (ver MEMORY `onedrive_node_modules_corruption`), **ambiental, não-código**. Gate real = CI/EasyPanel (constituição V).
+`npm run db:generate` ✅ · `npm run typecheck` ✅ (`typecheck passed`) · `npm run build`: **✓ Compiled successfully in 37.1s + TypeScript OK + 319/319 páginas estáticas geradas** ✅. A única falha é o passo final de cópia do `output: standalone` (`copyfile … source-map-support/register.js … errno -4094`) = **problema conhecido do OneDrive** (MEMORY `onedrive_node_modules_corruption`), **ambiental, não-código**. Os 62 warnings `Unknown at rule: @property` no CSS são **pré-existentes** (lib de motion), não vêm da minha utility. Gate real = CI/EasyPanel (constituição V).
 
-## Decisões / desvios em relação ao plano (importante)
+## Decisões / desvios em relação ao plano
 
-1. **Empilhamento (z-index) — DESVIO do plano.** O plano previa o painel em `z-40` assumindo que ele só sobrepõe o `<main>`. Mas a **Navbar é `sticky top-0 z-50`**: com `z-40`, o topo do painel expandido (workspace selector) ficaria ATRÁS dela. Corrigido: **painel `z-[60]`** (sobrepõe a navbar no hover — cobre transitoriamente o logo "POLARIS", comportamento padrão de sidebar overlay) e **`DropdownMenuContent` do workspace em `z-[70]`** (fica acima do painel). Sem conflito com modais/command-palette: o overlay só extrapola o footprint durante o hover (mouse na sidebar → modal não está aberto); quando `pinned` (US3), footprint vira `w-64` in-flow e o painel não invade a área central.
-2. **Toggle Chevron removido.** O botão antigo alternava `collapsed` (que deixou de existir). No MVP a expansão é 100% hover, então o botão saiu. **US3/T008 vai ADICIONAR** o controle de fixar/soltar (o texto da T008 diz "substituir o Chevron" — agora é "adicionar"; sem impacto funcional).
-3. **`pinned` inerte no MVP.** `const [pinned] = useState(false)` sem setter (evita warning de var não usada). Toda a fiação `pinned` (footprint `w-64`, `pinned && 'block/flex/inline/…'`) já está pronta e correta, só **inativa** até US3 ligar o controle (T008) + persistência localStorage (T009).
-4. **Tooltip "Powered by Teams" removido** dos badges `teams`. Motivo: agora cada item é envolto por um Radix Tooltip (rótulo no rail, FR-005); aninhar outro Tooltip dentro do trigger quebraria. O ícone do badge permanece; só a dica foi descartada. (Reavaliar em polish se desejado.)
-5. **Tailwind dinâmico evitado.** Classes hover/expand são **literais completas** (constante `EXPAND` = `'hidden group-hover/sb:block'` etc.). NUNCA montar classe por template (`group-hover/sb:${x}`) — o scanner do Tailwind v4 não detecta e a utility não é gerada.
+1. **Overlay sem reservar largura — interpretação pragmática.** `overflow: overlay` é não-padrão/removido do Chrome, então "overlay" foi obtido com **track transparente + thumb transparente em repouso**: quando NÃO há transbordo, o browser não desenha scrollbar nenhuma (FR-012 ✓); quando HÁ transbordo, o WebKit reserva 6px **constantes** (track invisível) e só a **cor do thumb** muda no hover/focus — logo o indicador "aparece/some" **sem deslocar itens horizontalmente** (FR-011 ✓, o invariante testável do quickstart cenário 2 passo 3). 6px é negligível e consistente entre rail e expandido.
+2. **Sem `transition` no thumb.** `::-webkit-scrollbar-thumb` não anima `background` de forma confiável entre browsers (e o Chrome ignora); mantive sem transição, igual ao `.custom-scrollbar` legado, pra não prometer animação que não acontece. O auto-hide é por troca de cor em `:hover`/`:focus-within`. (Reduced-motion = T012/US4, fora deste escopo.)
+3. **Classes literais (Tailwind v4).** `sidebar-scroll` é classe CSS custom em `globals.css` (não utility Tailwind dinâmica) — sem risco de scanner não detectar.
+
+## Commit desta sessão
+
+- **Commit focado**: incluí só `src/app/globals.css` + `src/components/polaris/Sidebar.tsx` + este `specs/001-sidebar-ux/handoff.md`. Pushed direto na **`main`** (US1 já estava na main, commit `2f6977b`).
+- **FORA do commit (de propósito, idem sessão anterior)**: `.specify/`, `.claude/skills/`, bloco SPECKIT do `CLAUDE.md`, notas de sessão em `docs/**`, `public/logos/kit/**` e as deleções `public/logo*.svg` (scaffolding spec-kit / pré-existentes de outra sessão). Tratar separadamente se quiser versioná-los.
 
 ## Próximos passos (em ordem)
 
-1. **Validar US1** (quickstart cenário 1): `next dev --webpack` (Turbopack quebra no Windows+OneDrive) → carregar `/dashboard`, conferir rail, hover expandindo SEM mover o `<main>`, recolher ao sair, tooltips + rota ativa no rail. Conferir o overlay sobre a navbar no hover (z-index) visualmente.
-2. **US2 — Barra de rolagem (T006–T007)**, independente (só `globals.css` + 1 troca de className): criar `.sidebar-scroll` (6px, auto-hide via `:hover`/`:focus-within`, overlay) e trocar `scrollbar-none`→`sidebar-scroll` no `<nav>`.
-3. **US3 — Fixar + persistência (T008–T010)**: ADICIONAR controle de pin (alterna `pinned`, `aria-label`), persistir em `localStorage["sofia_sidebar_pinned"]` (ler após mount → sem hydration mismatch), ligar footprint in-flow. A fiação `pinned` no componente já existe (só trocar `useState(false)` por `[pinned, setPinned]` e plugar o botão + efeito).
-4. **US4 — a11y/robustez (T011–T013)**: `focus-within` (teclado), guarda `prefers-reduced-motion` (T012, `globals.css`), manter expandida com workspace dropdown aberto (`onOpenChange` → `data-menu-open`). Reavaliar aqui: (a) gate explícito `@media (hover:hover)` se o do Tailwind v4 não bastar; (b) suprimir tooltip de item quando expandido (hoje aparece redundante após o delay do Radix).
-5. **Polish (T014–T017)**: não-regressão; **revalidar stacking do overlay vs navbar/modais** (T014, dado o desvio z-index); rodar quickstart 1–4 em dev; **E2E autenticado em prod** `polarisia.com.br` (gate constituição V).
+1. **Validar US1+US2** (quickstart cenários 1 e 2): `next dev --webpack` (Turbopack quebra no Windows+OneDrive) → `/dashboard`. **US2**: reduzir altura da janela até o menu transbordar; conferir indicador fino discreto aparecendo no hover/scroll e sumindo fora de uso; **itens NÃO deslocam** quando o indicador surge; janela alta → sem indicador. Testar no rail E expandido.
+2. **US3 — Fixar + persistência (T008–T010)**: ADICIONAR controle de pin (alterna `pinned`, `aria-label`, tooltip "Fixar/Soltar menu"), persistir em `localStorage["sofia_sidebar_pinned"]` (ler após mount → sem hydration mismatch), ligar footprint in-flow `w-64` (empurra `<main>`). **A fiação `pinned` no componente JÁ EXISTE** (só trocar `useState(false)` por `[pinned, setPinned]` + plugar o botão + `useEffect` de persistência).
+3. **US4 — a11y/robustez (T011–T013)**: `focus-within` (teclado), guarda `prefers-reduced-motion` (T012, `globals.css` — englobaria também a sidebar e, se quiser, a transição de cor do scroll), manter expandida com workspace dropdown aberto (`onOpenChange` → `data-menu-open`). Reavaliar: (a) gate explícito `@media (hover:hover)` se o do Tailwind v4 não bastar; (b) suprimir tooltip de item quando expandido.
+4. **Polish (T014–T017)**: não-regressão; **revalidar stacking do overlay vs navbar/modais** (T014, dado o desvio z-index da US1); rodar quickstart 1–4 em dev; **E2E autenticado em prod** `polarisia.com.br` (gate constituição V).
 
-## Pendências / fora do escopo deste commit
+## Pendências / fora do escopo
 
-- **Commit focado**: incluí só `src/components/polaris/Sidebar.tsx` + `specs/001-sidebar-ux/**` (spec + este handoff). Ficaram FORA (não relacionados a esta feature / scaffolding a decidir): `.specify/`, `.claude/skills/` (framework spec-kit), bloco SPECKIT do `CLAUDE.md`, notas de sessão em `docs/**`, `public/logos/kit/**` e as deleções `public/logo*.svg` (pré-existentes de outra sessão). Tratar separadamente se quiser versioná-los.
-- Branch criada: `001-sidebar-ux` (a partir de `main`).
+- **E2E real da US2** depende de viewport com transbordo de menu — só dá pra validar de verdade no browser (dev ou prod). Local nesta máquina (Win+OneDrive) é indicativo.
+- Branch: trabalho indo direto na `main` (US1 e US2 já lá).
 
 ## Gotchas para a próxima sessão
 
-- **OneDrive errno -4094 no `next build`**: o build COMPILA e gera páginas; só a cópia do `standalone` falha local. Não é regressão — validar de verdade no EasyPanel.
+- **OneDrive errno -4094 no `next build`**: o build COMPILA e gera as 319 páginas; só a cópia do `standalone` falha local. Não é regressão — validar de verdade no EasyPanel.
+- **PowerShell perde cwd** entre chamadas → o `Set-Location` para `Imob\sofia-next` é necessário em cada comando (a working dir default do harness é a raiz `ROI Labs`, não o subprojeto). `npm run` falha com "Missing script" se rodar da raiz.
 - **Hook agent-context QUEBRADO** neste ambiente (ConvertFrom-Yaml ausente + path com espaços). Atualizações do bloco SPECKIT no `CLAUDE.md` são manuais.
-- **PowerShell perde cwd** entre chamadas → usar caminho ABSOLUTO em scripts `.specify/...`.
 - Coordinator (`runTeam`) e schema: **intocados** — feature 100% frontend (sem rota/migração).
 - Sidebar é `hidden lg:block` (desktop-only); hover sob `@media (hover: hover)`.
-- Tailwind v4: classes precisam ser **literais** no source (sem construção dinâmica de nome de classe).
+- Tailwind v4: classes precisam ser **literais** no source. `.sidebar-scroll`/`.custom-scrollbar` são CSS custom em `globals.css`, fora do scanner — sem esse risco.
