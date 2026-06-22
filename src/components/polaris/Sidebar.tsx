@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
@@ -36,6 +36,8 @@ import {
   Code2,
   Cpu,
   Users2,
+  Pin,
+  PinOff,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -157,15 +159,55 @@ const EXPAND = {
   inline: 'hidden group-hover/sb:inline',
 } as const
 
+// Store externo da preferência "fixada" (US3). Lido via useSyncExternalStore: o
+// server snapshot é sempre `false` (= rail), e o client snapshot vem do
+// localStorage — React reconcilia após a hidratação, sem mismatch e sem chamar
+// setState dentro de um effect (data-model: "leitura após mount").
+const PIN_KEY = 'sofia_sidebar_pinned'
+const pinListeners = new Set<() => void>()
+
+function subscribePinned(callback: () => void) {
+  if (typeof window === 'undefined') return () => {}
+  pinListeners.add(callback)
+  // `storage` cobre mudança em OUTRA aba; a própria aba notifica via writePinned.
+  window.addEventListener('storage', callback)
+  return () => {
+    pinListeners.delete(callback)
+    window.removeEventListener('storage', callback)
+  }
+}
+function getPinnedSnapshot() {
+  try {
+    return localStorage.getItem(PIN_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+function getPinnedServerSnapshot() {
+  return false
+}
+// Persiste apenas `pinned` ('1'/'0') e notifica os assinantes da própria aba
+// (o evento `storage` não dispara para quem fez a escrita).
+function writePinned(next: boolean) {
+  try {
+    localStorage.setItem(PIN_KEY, next ? '1' : '0')
+  } catch { /* ignore */ }
+  pinListeners.forEach((cb) => cb())
+}
+
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  // Preferência de sidebar fixada (US3 liga o controle + persistência). No MVP
-  // (US1) permanece `false`: a expansão é exclusivamente por hover (CSS).
-  const [pinned] = useState(false)
+  // Preferência de sidebar fixada (US3). Default `false` no servidor (rail) e
+  // valor real do localStorage no cliente — sem hydration mismatch (ver store).
+  const pinned = useSyncExternalStore(subscribePinned, getPinnedSnapshot, getPinnedServerSnapshot)
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [orgs, setOrgs] = useState<OrgItem[]>([])
   const [activeWorkspace, setActiveWorkspace] = useState<string>('personal')
+
+  // Alterna fixar/soltar; só `pinned` é persistido (hover/foco/menu são
+  // transitórios — data-model §invariantes).
+  const togglePinned = () => writePinned(!pinned)
 
   useEffect(() => {
     fetch('/api/user/usage')
@@ -281,11 +323,28 @@ export function Sidebar() {
               </DropdownMenu>
             </div>
 
-            {/* Eyebrow "Menu" — apenas expandida */}
-            <div className={cn('mb-1 px-1', EXPAND.block, pinned && 'block')}>
+            {/* Eyebrow "Menu" + controle Fixar/Soltar — apenas expandida.
+                O botão de fixar alterna `pinned` (persistido) → rail vira footprint
+                in-flow w-64 que empurra o <main> (T010, ligado na fundação). */}
+            <div className={cn('mb-1 px-1 items-center justify-between', EXPAND.flex, pinned && 'flex')}>
               <div className="text-[10px] font-semibold text-foreground-tertiary uppercase tracking-widest">
                 Menu
               </div>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={togglePinned}
+                    aria-label={pinned ? 'Soltar menu' : 'Fixar menu'}
+                    aria-pressed={pinned}
+                    title={pinned ? 'Soltar menu' : 'Fixar menu'}
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-foreground-tertiary hover:bg-sidebar-accent/50 hover:text-foreground transition-colors"
+                  >
+                    {pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right">{pinned ? 'Soltar menu' : 'Fixar menu'}</TooltipContent>
+              </Tooltip>
             </div>
 
             {/* Scrollable nav area */}
