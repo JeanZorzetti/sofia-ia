@@ -23,6 +23,7 @@ import { withUsageTracking } from '@/lib/orchestration/team/member-usage-recorde
 import { chatWithAgent } from '@/lib/ai/groq'
 import { primaryClaudeToken, loadClaudeTokens } from '@/lib/ai/claude-token-pool'
 import { getSandboxProvider } from '@/lib/sandbox'
+import { sweepVpsRunDirs } from '@/lib/sandbox/vps-local'
 import type { Sandbox } from '@/lib/sandbox/types'
 import { startSandboxHeartbeat } from '@/lib/sandbox/heartbeat'
 import { setupRepo, commitAndPush, openPullRequest, buildPrBody, captureWorkingDiff } from '@/lib/git/repo-lifecycle'
@@ -32,8 +33,10 @@ import { detectPreviewPlan, deriveProjectDir, readPreviewOverride, startPreviewS
 
 const concurrency = Number(process.env.CODE_RUN_CONCURRENCY ?? 2)
 
-// Absolute path inside the E2B sandbox where the repo is cloned (home of the default user).
-const WORKDIR = '/home/user/repo'
+// The repo workdir is derived PER RUN from `sandbox.rootDir` (003 — VPS executor):
+// E2B omits rootDir → legacy '/home/user/repo' (byte-identical); VpsLocal →
+// '${VPS_RUNS_DIR}/<id>/repo'. Computed after the sandbox is created/connected and
+// threaded into the run helpers — no module-level WORKDIR constant anymore.
 const AUTHOR_NAME = process.env.GIT_AUTHOR_NAME ?? 'Polaris Teams'
 const AUTHOR_EMAIL = process.env.GIT_AUTHOR_EMAIL ?? 'polaris@polarisia.com.br'
 
@@ -91,7 +94,7 @@ function buildPrTitle(mission: string): string {
 
 /** C1 git lifecycle around runTeam. Throws only for setup failures (so the job is
  *  marked failed); teardown failures are recorded but don't crash the job. */
-async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, baseBranch: string | null, gitMode: string | null): Promise<void> {
+async function runWithRepo(sandbox: Sandbox, workdir: string, runId: string, repoUrl: string, baseBranch: string | null, gitMode: string | null): Promise<void> {
   const token = process.env.GITHUB_TOKEN
   if (!token) {
     await failRun(runId, 'GITHUB_TOKEN não configurada no worker — code-runs com repositório precisam dela')
@@ -108,7 +111,7 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
   let effectiveBase = base
   try {
     const setup = await setupRepo(sandbox, {
-      repoUrl, token, branch: plan.branch, base, workdir: WORKDIR, authorName: AUTHOR_NAME, authorEmail: AUTHOR_EMAIL,
+      repoUrl, token, branch: plan.branch, base, workdir, authorName: AUTHOR_NAME, authorEmail: AUTHOR_EMAIL,
     })
     effectiveBase = setup.base
   } catch (e) {
@@ -126,11 +129,11 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
   // Share ONE store so the code-agent can stream partial artifacts mid-loop (C2.1).
   // C3: inject getTaskDiff so the reviewer sees the real working-tree diff (vs base).
   const store = createPrismaTeamStore()
-  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId) }))
+  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId) }))
   await runTeamByTopology(runId, {
     store,
     chat: codeChat,
-    getTaskDiff: () => captureWorkingDiff(sandbox, { workdir: WORKDIR, base: effectiveBase }),
+    getTaskDiff: () => captureWorkingDiff(sandbox, { workdir, base: effectiveBase }),
   })
 
   // TEARDOWN — commit/push/PR only if the run completed and produced a diff.
@@ -141,7 +144,7 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
 
   try {
     const result = await commitAndPush(sandbox, {
-      repoUrl, token, branch, base: effectiveBase, workdir: WORKDIR, message: finished.output || finished.mission,
+      repoUrl, token, branch, base: effectiveBase, workdir, message: finished.output || finished.mission,
     })
     if (!result.hasChanges) {
       await prisma.teamRun
@@ -192,7 +195,7 @@ async function runWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, bas
  *  caller skips close()). Returns true when the preview went live (→ keep-alive). Any
  *  failure here is swallowed: the run already delivered its diff/PR. The sandbox's
  *  extended timeout is the hard cost ceiling even if the reaper never runs. */
-async function startRunPreview(sandbox: Sandbox, runId: string): Promise<boolean> {
+async function startRunPreview(sandbox: Sandbox, workdir: string, runId: string): Promise<boolean> {
   const run = await prisma.teamRun.findUnique({
     where: { id: runId },
     select: { status: true, changedFiles: true, team: { select: { config: true } } },
@@ -203,7 +206,7 @@ async function startRunPreview(sandbox: Sandbox, runId: string): Promise<boolean
     // The site may live in a subdir (agents often scaffold into e.g. `teste 2/`); derive it
     // from the run's changed files. The dir may contain spaces — exec `cwd` handles that.
     const projectDir = deriveProjectDir(run.changedFiles as Array<{ path: string }> | null)
-    const previewWorkdir = projectDir ? `${WORKDIR}/${projectDir}` : WORKDIR
+    const previewWorkdir = projectDir ? `${workdir}/${projectDir}` : workdir
     const pkg = await sandbox.exec('cat package.json', { cwd: previewWorkdir, timeoutMs: 8_000 })
     const idx = await sandbox.exec('test -f index.html && echo yes || echo no', { cwd: previewWorkdir, timeoutMs: 8_000 })
     const plan = detectPreviewPlan(
@@ -238,7 +241,7 @@ async function startRunPreview(sandbox: Sandbox, runId: string): Promise<boolean
  *  parent's committed work and a running preview. SKIP the clone — run the team in the
  *  existing workdir and commit the incremental diff to the SAME branch (the PR, if any,
  *  auto-updates on push; no new PR is opened). Coordinator INTACT. */
-async function continueWithRepo(sandbox: Sandbox, runId: string, repoUrl: string, branch: string, base: string): Promise<void> {
+async function continueWithRepo(sandbox: Sandbox, workdir: string, runId: string, repoUrl: string, branch: string, base: string): Promise<void> {
   const token = process.env.GITHUB_TOKEN
   if (!token) {
     await failRun(runId, 'GITHUB_TOKEN não configurada no worker — code-runs com repositório precisam dela')
@@ -247,18 +250,18 @@ async function continueWithRepo(sandbox: Sandbox, runId: string, repoUrl: string
   await prisma.teamRun.update({ where: { id: runId }, data: { sandboxId: sandbox.id } }).catch(() => {})
 
   const store = createPrismaTeamStore()
-  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: WORKDIR, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId) }))
+  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId) }))
   await runTeamByTopology(runId, {
     store,
     chat: codeChat,
-    getTaskDiff: () => captureWorkingDiff(sandbox, { workdir: WORKDIR, base }),
+    getTaskDiff: () => captureWorkingDiff(sandbox, { workdir, base }),
   })
 
   const finished = await prisma.teamRun.findUnique({ where: { id: runId }, select: { status: true, output: true, mission: true } })
   if (finished?.status !== 'completed') return
   try {
     const result = await commitAndPush(sandbox, {
-      repoUrl, token, branch, base, workdir: WORKDIR, message: finished.output || finished.mission,
+      repoUrl, token, branch, base, workdir, message: finished.output || finished.mission,
     })
     await prisma.teamRun.update({
       where: { id: runId },
@@ -297,6 +300,10 @@ const worker = new Worker<CodeRunJob>(
     } else {
       sandbox = await getSandboxProvider().create({ timeoutMs: SANDBOX_TIMEOUT_MS, templateId: SANDBOX_TEMPLATE })
     }
+    // Per-run repo workdir (003): E2B → '/home/user/repo' (byte-identical); VpsLocal →
+    // '${VPS_RUNS_DIR}/<id>/repo'. The C0 (no-repo) path instead runs in `sandbox.rootDir`
+    // itself (undefined for E2B → legacy sandbox cwd; the isolated run dir for VpsLocal).
+    const workdir = `${sandbox.rootDir ?? '/home/user'}/repo`
     // Keep the sandbox alive for the WHOLE run. The sandbox is born with a fixed lifetime
     // (SANDBOX_TIMEOUT_MS); a run that outlasts it would get the sandbox killed mid-flight
     // and the git teardown would fail with "Sandbox is probably not running anymore". The
@@ -309,16 +316,18 @@ const worker = new Worker<CodeRunJob>(
     let keepAlive = false
     try {
       if (isContinuation) {
-        await continueWithRepo(sandbox, runId, run!.repoUrl!, run!.branch || run!.baseBranch || 'main', run!.baseBranch || 'main')
+        await continueWithRepo(sandbox, workdir, runId, run!.repoUrl!, run!.branch || run!.baseBranch || 'main', run!.baseBranch || 'main')
       } else if (run?.repoUrl) {
-        await runWithRepo(sandbox, runId, run.repoUrl, run.baseBranch, run.gitMode)
+        await runWithRepo(sandbox, workdir, runId, run.repoUrl, run.baseBranch, run.gitMode)
       } else {
-        // C0 path: no repo — just run shell in a sandbox.
+        // C0 path: no repo — just run shell in a sandbox. Use the sandbox root as cwd
+        // (undefined for E2B → legacy default; the isolated run dir for VpsLocal so the
+        // agent never runs in the worker's own process cwd).
         await prisma.teamRun
           .update({ where: { id: runId }, data: { sandboxId: sandbox.id } })
           .catch(() => {}) // best-effort metadata write
         const store = createPrismaTeamStore()
-        const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId) }))
+        const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: sandbox.rootDir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId) }))
         await runTeamByTopology(runId, { store, chat: codeChat })
       }
       await dispatchTeamOutputs(runId)
@@ -327,7 +336,7 @@ const worker = new Worker<CodeRunJob>(
       heartbeat.stop()
       // Preview only makes sense for a repo-bound project (something to serve).
       if (run?.repoUrl && run.previewEnabled) {
-        keepAlive = await startRunPreview(sandbox, runId)
+        keepAlive = await startRunPreview(sandbox, workdir, runId)
       }
     } finally {
       heartbeat.stop() // idempotent — also covers the error path
@@ -346,3 +355,23 @@ worker.on('failed', (job: Job<CodeRunJob> | undefined, err: Error) =>
 
 console.log(`[worker] code-run worker online (queue=${CODE_RUN_QUEUE}, concurrency=${concurrency})`)
 console.log(`[worker] claude token pool: ${loadClaudeTokens().length} conta(s) carregada(s) (>=2 habilita failover)`)
+
+// Boot sweep (003 — FR-012): when running the self-hosted executor, remove run dirs
+// left behind by a crashed/redeployed worker. Protects the dirs of runs the DB still
+// considers active (long missions), and only touches dirs older than the age threshold.
+// Best-effort: a failure here never blocks the worker from coming online.
+if ((process.env.SANDBOX_PROVIDER ?? 'e2b').toLowerCase() === 'vps-local') {
+  void (async () => {
+    try {
+      const activeRuns = await prisma.teamRun.findMany({
+        where: { status: { in: ['pending', 'running'] }, sandboxId: { not: null } },
+        select: { sandboxId: true },
+      })
+      const activeIds = new Set(activeRuns.map(r => r.sandboxId).filter((id): id is string => !!id))
+      const swept = await sweepVpsRunDirs({ activeIds })
+      if (swept.length > 0) console.log(`[worker] boot sweep removeu ${swept.length} dir(s) órfão(s) em VPS_RUNS_DIR`)
+    } catch (e) {
+      console.error('[worker] boot sweep falhou (ignorado):', (e as Error)?.message ?? e)
+    }
+  })()
+}

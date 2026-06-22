@@ -25,6 +25,11 @@ export interface ExecOptions {
 export interface Sandbox {
   /** Provider-assigned id (for logging / debugging). */
   readonly id: string
+  /** OPTIONAL per-run root on the executor's filesystem. E2B omits it (each VM is
+   *  already isolated → caller defaults to `/home/user`). VpsLocal returns
+   *  `${VPS_RUNS_DIR}/<id>`, giving per-run isolation on the worker's shared FS.
+   *  Absent ⇒ legacy path is byte-identical (`sandbox.rootDir ?? '/home/user'`). */
+  readonly rootDir?: string
   /** Run a shell command; never throws on non-zero exit — returns exitCode instead. */
   exec(cmd: string, opts?: ExecOptions): Promise<CommandResult>
   /** Write a file inside the sandbox (used to hand large prompts to in-sandbox CLIs

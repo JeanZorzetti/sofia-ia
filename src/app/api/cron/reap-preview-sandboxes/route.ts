@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma'
 import { safeErrorMessage } from '@/lib/api-response'
 import { verifyCronAuth } from '@/lib/authz'
 import { killPreviewSandbox } from '@/lib/orchestration/team/preview-lifecycle'
+import { sweepVpsRunDirs } from '@/lib/sandbox/vps-local'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,7 +37,23 @@ export async function GET(request: NextRequest) {
       results.push({ runId: run.id, status: 'expired' })
     }
 
-    return NextResponse.json({ processed: expired.length, results, timestamp: now.toISOString() })
+    // 003 — FR-012: when the self-hosted executor is active, also sweep orphan run dirs
+    // under VPS_RUNS_DIR. Protects dirs of runs still active in the DB (long missions);
+    // only removes dirs older than the age threshold. Best-effort (never throws).
+    let sweptDirs: string[] = []
+    if ((process.env.SANDBOX_PROVIDER ?? 'e2b').toLowerCase() === 'vps-local') {
+      const activeRuns = await prisma.teamRun.findMany({
+        where: { status: { in: ['pending', 'running'] }, sandboxId: { not: null } },
+        select: { sandboxId: true },
+      })
+      const activeIds = new Set(activeRuns.map(r => r.sandboxId).filter((id): id is string => !!id))
+      sweptDirs = await sweepVpsRunDirs({ activeIds })
+      if (sweptDirs.length > 0) {
+        console.log(`[cron/reap-preview-sandboxes] swept ${sweptDirs.length} orphan run dir(s)`)
+      }
+    }
+
+    return NextResponse.json({ processed: expired.length, results, sweptDirs: sweptDirs.length, timestamp: now.toISOString() })
   } catch (error) {
     console.error('[cron/reap-preview-sandboxes] Fatal error:', error)
     return NextResponse.json({ error: 'Internal server error', details: safeErrorMessage(error) }, { status: 500 })
