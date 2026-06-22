@@ -15,8 +15,6 @@ import {
   BarChart3,
   Plug,
   LayoutTemplate,
-  ChevronLeft,
-  ChevronRight,
   Settings,
   FlaskConical,
   Activity,
@@ -40,7 +38,6 @@ import {
   Users2,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
-import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   DropdownMenu,
@@ -146,10 +143,26 @@ interface UsageData {
   userId?: string
 }
 
+// Visibilidade dirigida por CSS. `expanded` = hover (overlay, via group-hover do
+// Tailwind v4, já restrito a @media (hover: hover)) OU `pinned` (estado React).
+// Conteúdo permanece sempre montado no DOM; só a visibilidade muda — substitui o
+// antigo `{!collapsed && ...}`. A parte `pinned && ...` fica inerte no MVP (US1)
+// e é ligada por US3 (controle de fixar + persistência).
+//
+// IMPORTANTE: classes COMPLETAS e literais — o scanner do Tailwind v4 não detecta
+// nomes de classe montados dinamicamente (ex.: `group-hover/sb:${x}`).
+const EXPAND = {
+  block: 'hidden group-hover/sb:block',
+  flex: 'hidden group-hover/sb:flex',
+  inline: 'hidden group-hover/sb:inline',
+} as const
+
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const [collapsed, setCollapsed] = useState(false)
+  // Preferência de sidebar fixada (US3 liga o controle + persistência). No MVP
+  // (US1) permanece `false`: a expansão é exclusivamente por hover (CSS).
+  const [pinned] = useState(false)
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [orgs, setOrgs] = useState<OrgItem[]>([])
   const [activeWorkspace, setActiveWorkspace] = useState<string>('personal')
@@ -185,163 +198,185 @@ export function Sidebar() {
 
   return (
     <TooltipProvider>
-      <aside className={cn(
-        "hidden h-full flex-col border-r border-sidebar-border bg-sidebar lg:flex transition-all duration-300",
-        collapsed ? "w-20" : "w-64"
-      )}>
-        <div className="flex flex-1 flex-col gap-2 p-3 overflow-hidden">
-          {/* Workspace Selector */}
-          {!collapsed && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-sidebar-accent/30 transition-colors mb-1 group">
-                  <div className="h-6 w-6 rounded bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
-                    {activeWorkspace === 'personal' ? (
-                      <User className="h-3.5 w-3.5 text-white" />
-                    ) : (
-                      <Building2 className="h-3.5 w-3.5 text-white" />
-                    )}
-                  </div>
-                  <span className="text-sm font-medium text-foreground flex-1 text-left truncate">
-                    {currentWorkspaceName}
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 text-foreground-tertiary flex-shrink-0" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56">
-                <DropdownMenuLabel className="text-xs text-foreground-tertiary uppercase tracking-wide">
-                  Workspace
-                </DropdownMenuLabel>
-                <DropdownMenuItem
-                  onClick={() => handleWorkspaceChange('personal')}
-                  className={cn(activeWorkspace === 'personal' && 'bg-sidebar-accent/50')}
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Pessoal
-                </DropdownMenuItem>
-                {orgs.length > 0 && (
-                  <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="text-xs text-foreground-tertiary uppercase tracking-wide">
-                      Organizações
-                    </DropdownMenuLabel>
-                    {orgs.map((org) => (
-                      <DropdownMenuItem
-                        key={org.slug}
-                        onClick={() => handleWorkspaceChange(org.slug)}
-                        className={cn(activeWorkspace === org.slug && 'bg-sidebar-accent/50')}
-                      >
-                        <Building2 className="h-4 w-4 mr-2" />
-                        <span className="truncate">{org.name}</span>
-                      </DropdownMenuItem>
-                    ))}
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/dashboard/settings/team" className="flex items-center">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nova Organização
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+      {/*
+        Footprint do rail no fluxo flex: w-20 (rail) ou w-64 (fixado, empurra o
+        <main>). O painel interno absoluto cresce sobre o conteúdo no hover SEM
+        alterar este footprint → zero layout shift (FR-003/SC-003).
+      */}
+      <aside
+        data-pinned={pinned}
+        className={cn(
+          'group/sb relative hidden h-full shrink-0 lg:block w-20 transition-[width] duration-300 ease-out',
+          pinned && 'w-64'
+        )}
+      >
+        {/*
+          z-[60] coloca o painel ACIMA da Navbar (sticky z-50): no hover o painel
+          cresce sobre a faixa da navbar; sem isso o topo do painel (workspace
+          selector) ficaria escondido atrás dela. O dropdown de workspace usa
+          z-[70] para ficar acima do painel.
+        */}
+        <div
+          className={cn(
+            'absolute inset-y-0 left-0 z-[60] flex w-20 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar transition-[width] duration-300 ease-out group-hover/sb:w-64',
+            pinned ? 'w-64' : 'group-hover/sb:shadow-2xl group-hover/sb:shadow-black/50'
           )}
-
-          <div className="flex items-center justify-between mb-1">
-            {!collapsed && <div className="text-[10px] font-semibold text-foreground-tertiary uppercase tracking-widest px-1">Menu</div>}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCollapsed(!collapsed)}
-                  className={cn("h-7 w-7 p-0", collapsed && "mx-auto")}
-                >
-                  {collapsed ? (
-                    <ChevronRight className="h-4 w-4" />
-                  ) : (
-                    <ChevronLeft className="h-4 w-4" />
+        >
+          <div className="flex flex-1 flex-col gap-2 p-3 overflow-hidden">
+            {/* Workspace Selector — visível apenas quando expandida */}
+            <div className={cn('mb-1', EXPAND.block, pinned && 'block')}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-sidebar-accent/30 transition-colors group">
+                    <div className="h-6 w-6 rounded bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center flex-shrink-0">
+                      {activeWorkspace === 'personal' ? (
+                        <User className="h-3.5 w-3.5 text-white" />
+                      ) : (
+                        <Building2 className="h-3.5 w-3.5 text-white" />
+                      )}
+                    </div>
+                    <span className="text-sm font-medium text-foreground flex-1 text-left truncate">
+                      {currentWorkspaceName}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 text-foreground-tertiary flex-shrink-0" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-56 z-[70]">
+                  <DropdownMenuLabel className="text-xs text-foreground-tertiary uppercase tracking-wide">
+                    Workspace
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onClick={() => handleWorkspaceChange('personal')}
+                    className={cn(activeWorkspace === 'personal' && 'bg-sidebar-accent/50')}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Pessoal
+                  </DropdownMenuItem>
+                  {orgs.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="text-xs text-foreground-tertiary uppercase tracking-wide">
+                        Organizações
+                      </DropdownMenuLabel>
+                      {orgs.map((org) => (
+                        <DropdownMenuItem
+                          key={org.slug}
+                          onClick={() => handleWorkspaceChange(org.slug)}
+                          className={cn(activeWorkspace === org.slug && 'bg-sidebar-accent/50')}
+                        >
+                          <Building2 className="h-4 w-4 mr-2" />
+                          <span className="truncate">{org.name}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </>
                   )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                {collapsed ? 'Expandir menu' : 'Recolher menu'}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
-          {/* Scrollable nav area */}
-          <nav className="flex flex-col gap-3 flex-1 overflow-y-auto scrollbar-none pr-0.5">
-            {menuSections.map((section, si) => (
-              <div key={si} className="flex flex-col gap-0.5">
-                {/* Section label (expanded) or divider (collapsed) */}
-                {section.label && !collapsed && (
-                  <div className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-foreground-tertiary">
-                    {section.label}
-                  </div>
-                )}
-                {section.label && collapsed && si > 0 && (
-                  <div className="mx-3 border-t border-sidebar-border/50 my-1.5" />
-                )}
-
-                {section.items.map((item) => {
-                  const isActive =
-                    item.href === '/dashboard'
-                      ? pathname === '/dashboard'
-                      : pathname === item.href || pathname.startsWith(item.href + '/')
-                  const Icon = item.icon
-
-                  const linkElement = (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={cn(
-                        'hover-scale flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
-                        isActive
-                          ? 'bg-sidebar-accent text-white'
-                          : 'text-foreground-secondary hover:bg-sidebar-accent/50 hover:text-foreground',
-                        collapsed && 'justify-center px-0'
-                      )}
-                    >
-                      <Icon className="h-4.5 w-4.5 flex-shrink-0 h-[18px] w-[18px]" />
-                      {!collapsed && <span className="truncate">{item.label}</span>}
-                      {!collapsed && item.badge === 'principal' && (
-                        <span className="ml-auto rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide bg-gradient-to-r from-purple-500/25 to-blue-500/25 text-purple-200 border border-purple-400/30">
-                          Principal
-                        </span>
-                      )}
-                      {!collapsed && item.badge === 'teams' && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="ml-auto flex items-center text-purple-400/70">
-                              <Users2 className="h-3.5 w-3.5" />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="right">Powered by Teams</TooltipContent>
-                        </Tooltip>
-                      )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/settings/team" className="flex items-center">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Nova Organização
                     </Link>
-                  )
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
-                  if (collapsed) {
+            {/* Eyebrow "Menu" — apenas expandida */}
+            <div className={cn('mb-1 px-1', EXPAND.block, pinned && 'block')}>
+              <div className="text-[10px] font-semibold text-foreground-tertiary uppercase tracking-widest">
+                Menu
+              </div>
+            </div>
+
+            {/* Scrollable nav area */}
+            <nav className="flex flex-col gap-3 flex-1 overflow-y-auto scrollbar-none pr-0.5">
+              {menuSections.map((section, si) => (
+                <div key={si} className="flex flex-col gap-0.5">
+                  {/* Rótulo da seção (expandida) ou divisor (rail) */}
+                  {section.label && (
+                    <>
+                      <div
+                        className={cn(
+                          'px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-foreground-tertiary',
+                          EXPAND.block,
+                          pinned && 'block'
+                        )}
+                      >
+                        {section.label}
+                      </div>
+                      {si > 0 && (
+                        <div
+                          className={cn(
+                            'mx-3 my-1.5 border-t border-sidebar-border/50',
+                            'block group-hover/sb:hidden',
+                            pinned && 'hidden'
+                          )}
+                        />
+                      )}
+                    </>
+                  )}
+
+                  {section.items.map((item) => {
+                    const isActive =
+                      item.href === '/dashboard'
+                        ? pathname === '/dashboard'
+                        : pathname === item.href || pathname.startsWith(item.href + '/')
+                    const Icon = item.icon
+
                     return (
                       <Tooltip key={item.href}>
-                        <TooltipTrigger asChild>{linkElement}</TooltipTrigger>
+                        <TooltipTrigger asChild>
+                          <Link
+                            href={item.href}
+                            className={cn(
+                              'hover-scale flex items-center gap-3 rounded-lg py-2 text-sm font-medium transition-all',
+                              'justify-center px-0 group-hover/sb:justify-start group-hover/sb:px-3',
+                              pinned && 'justify-start px-3',
+                              isActive
+                                ? 'bg-sidebar-accent text-white'
+                                : 'text-foreground-secondary hover:bg-sidebar-accent/50 hover:text-foreground'
+                            )}
+                          >
+                            <Icon className="h-[18px] w-[18px] flex-shrink-0" />
+                            <span className={cn('truncate', EXPAND.block, pinned && 'block')}>
+                              {item.label}
+                            </span>
+                            {item.badge === 'principal' && (
+                              <span
+                                className={cn(
+                                  'ml-auto rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide bg-gradient-to-r from-purple-500/25 to-blue-500/25 text-purple-200 border border-purple-400/30',
+                                  EXPAND.inline,
+                                  pinned && 'inline'
+                                )}
+                              >
+                                Principal
+                              </span>
+                            )}
+                            {item.badge === 'teams' && (
+                              <span
+                                className={cn(
+                                  'ml-auto items-center text-purple-400/70',
+                                  EXPAND.flex,
+                                  pinned && 'flex'
+                                )}
+                              >
+                                <Users2 className="h-3.5 w-3.5" />
+                              </span>
+                            )}
+                          </Link>
+                        </TooltipTrigger>
+                        {/* Dica no rail (FR-005/SC-004). Quando expandida, o rótulo já está visível. */}
                         <TooltipContent side="right">{item.label}</TooltipContent>
                       </Tooltip>
                     )
-                  }
+                  })}
+                </div>
+              ))}
+            </nav>
+          </div>
 
-                  return linkElement
-                })}
-              </div>
-            ))}
-          </nav>
-        </div>
-
-        {!collapsed && (
-          <div className="border-t border-sidebar-border p-3">
+          {/* Cartões do rodapé — visíveis apenas quando expandida */}
+          <div className={cn('border-t border-sidebar-border p-3', EXPAND.block, pinned && 'block')}>
             <div className="glass-card rounded-lg p-3 space-y-3">
               {usage ? (
                 <>
@@ -436,7 +471,7 @@ export function Sidebar() {
               </div>
             </a>
           </div>
-        )}
+        </div>
       </aside>
     </TooltipProvider>
   )
