@@ -6,11 +6,12 @@
 // Pure except for the injected `sandbox` + `baseChat`, so it is fully unit-testable
 // with a fake sandbox and a scripted chat function.
 
-import type { ChatFn, ChatMessageInput, ChatResult, CommandRun } from './team-types'
+import type { ChatFn, ChatMessageInput, ChatResult, CommandRun, TeamRole } from './team-types'
 import type { TeamStore } from './team-store'
 import type { Sandbox } from '../../sandbox/types'
 import type { CliMcpServerDescriptor } from '../../ai/cli-tool-flags'
 import { parseCodeActions } from './code-protocol'
+import { buildColocationContext } from './co-location'
 import { providerOf } from '../../ai/model-availability'
 import { runClaudeInSandbox } from './sandbox-cli-agent'
 import { withClaudeTokenFailover, hasClaudeTokenPool, ClaudeRateLimitError } from '../../ai/claude-token-pool'
@@ -74,9 +75,15 @@ export interface CodeChatFnOptions {
    *  this module pure/testable. Called before each Option B worker turn (idempotent), so
    *  it picks up mission + live-steering images alike. Absent → no images (legacy). */
   syncAttachments?: () => Promise<string | null>
+  /** 003 US2 — co-location: resolve the turn member's role (Prisma impl injected by the
+   *  worker) so a NON-worker turn (lead/reviewer) of a code-run WITH a repo workdir gets
+   *  a real repo snapshot / verification hint prepended to its first message. Best-effort:
+   *  any failure → null → no enrichment. Absent dep ⇒ legacy behavior for ALL turns
+   *  (byte-identical), which is what the c0..c3 verifies rely on. */
+  resolveMemberRole?: (opts: { agentId: string; memberId?: string | null }) => Promise<TeamRole | null>
 }
 
-const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store' | 'claudeToken' | 'resolveMcpServers' | 'syncAttachments'> = {
+const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store' | 'claudeToken' | 'resolveMcpServers' | 'syncAttachments' | 'resolveMemberRole'> = {
   maxSteps: 8,
   perCommandTimeoutMs: 120_000,
   maxOutputChars: 4_000,
@@ -111,6 +118,16 @@ function injectProtocol(messages: ChatMessageInput[], withRepoContext: boolean):
   return working
 }
 
+/** Prepend `text` to the first user message (copying the array — never mutates the
+ *  input), so the co-location context lands BEFORE injectProtocol runs (003 US2). */
+function prependToFirstUser(messages: ChatMessageInput[], text: string): ChatMessageInput[] {
+  const working = messages.map(m => ({ ...m }))
+  const firstUser = working.find(m => m.role === 'user')
+  if (firstUser) firstUser.content = `${text}\n\n---\n\n${firstUser.content}`
+  else working.unshift({ role: 'user', content: text })
+  return working
+}
+
 /**
  * Build a ChatFn that runs an agentic shell loop inside `sandbox`, delegating each
  * LLM turn to `baseChat`. Returns the member's final message plus the executed
@@ -122,7 +139,7 @@ export function createCodeChatFn(
   options: CodeChatFnOptions = {},
 ): ChatFn {
   const { maxSteps, perCommandTimeoutMs, maxOutputChars } = { ...DEFAULTS, ...options }
-  const { workdir, store, claudeToken, resolveMcpServers, syncAttachments } = options
+  const { workdir, store, claudeToken, resolveMcpServers, syncAttachments, resolveMemberRole } = options
 
   return async (agentId, messages, leadContext, chatOptions) => {
     // ── Option B: native Claude CLI inside the sandbox ──
@@ -158,7 +175,22 @@ export function createCodeChatFn(
       return result
     }
 
-    const working = injectProtocol(messages, Boolean(workdir))
+    // ── 003 US2: co-locate lead/reviewer with the real repo ──
+    // A NON-worker turn (no taskId) of a code-run WITH a repo workdir: resolve the
+    // member's role and, for lead/reviewer, prepend a real repo snapshot / verification
+    // hint to the first user message — BEFORE injectProtocol. Best-effort: a missing dep,
+    // no workdir, a worker turn, an undefined role, or any failure ⇒ messages untouched
+    // (legacy/byte-identical — the c0..c3 verifies inject no resolveMemberRole).
+    let enriched = messages
+    if (!chatOptions?.taskId && workdir && resolveMemberRole) {
+      const role = await resolveMemberRole({ agentId, memberId: chatOptions?.memberId }).catch(() => null)
+      if (role === 'lead' || role === 'reviewer') {
+        const ctx = await buildColocationContext({ role, sandbox, workdir }).catch(() => null)
+        if (ctx) enriched = prependToFirstUser(messages, ctx)
+      }
+    }
+
+    const working = injectProtocol(enriched, Boolean(workdir))
     const commands: CommandRun[] = []
     let totalTokens = 0
     let lastModel = chatOptions?.model ?? ''

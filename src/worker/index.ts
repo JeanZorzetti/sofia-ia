@@ -17,6 +17,7 @@ import type { CodeRunJob } from '@/lib/queue/code-run-queue'
 import { runTeamByTopology } from '@/lib/orchestration/team/team-executor'
 import { createPrismaTeamStore } from '@/lib/orchestration/team/team-store'
 import { createCodeChatFn } from '@/lib/orchestration/team/code-agent'
+import type { TeamRole } from '@/lib/orchestration/team/team-types'
 import { materializeRunAttachmentsToSandbox } from '@/lib/orchestration/team/materialize-attachments'
 import { toCliMcpDescriptor, type CliMcpServerDescriptor } from '@/lib/ai/cli-tool-flags'
 import { withUsageTracking } from '@/lib/orchestration/team/member-usage-recorder'
@@ -73,6 +74,21 @@ async function resolveAgentMcpServers(agentId: string): Promise<CliMcpServerDesc
     return []
   }
 }
+// 003 US2 (co-location): DB-backed role resolver injected into the code-agent so a
+// NON-worker turn (lead/reviewer) of a code-run can be co-located with the real repo
+// (a snapshot for the lead; a verify hint for the reviewer). Best-effort: any miss/
+// failure → null → no enrichment (the run is never blocked by it).
+async function resolveMemberRole({ memberId }: { agentId: string; memberId?: string | null }): Promise<TeamRole | null> {
+  if (!memberId) return null
+  try {
+    const m = await prisma.teamMember.findUnique({ where: { id: memberId }, select: { role: true } })
+    const role = m?.role
+    return role === 'lead' || role === 'worker' || role === 'reviewer' ? role : null
+  } catch {
+    return null
+  }
+}
+
 // Custom E2B template (with claude/git/node pre-installed); undefined → provider base.
 const SANDBOX_TEMPLATE = process.env.SANDBOX_TEMPLATE || undefined
 
@@ -129,7 +145,7 @@ async function runWithRepo(sandbox: Sandbox, workdir: string, runId: string, rep
   // Share ONE store so the code-agent can stream partial artifacts mid-loop (C2.1).
   // C3: inject getTaskDiff so the reviewer sees the real working-tree diff (vs base).
   const store = createPrismaTeamStore()
-  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId) }))
+  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole }))
   await runTeamByTopology(runId, {
     store,
     chat: codeChat,
@@ -250,7 +266,7 @@ async function continueWithRepo(sandbox: Sandbox, workdir: string, runId: string
   await prisma.teamRun.update({ where: { id: runId }, data: { sandboxId: sandbox.id } }).catch(() => {})
 
   const store = createPrismaTeamStore()
-  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId) }))
+  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole }))
   await runTeamByTopology(runId, {
     store,
     chat: codeChat,
@@ -327,7 +343,7 @@ const worker = new Worker<CodeRunJob>(
           .update({ where: { id: runId }, data: { sandboxId: sandbox.id } })
           .catch(() => {}) // best-effort metadata write
         const store = createPrismaTeamStore()
-        const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: sandbox.rootDir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId) }))
+        const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: sandbox.rootDir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole }))
         await runTeamByTopology(runId, { store, chat: codeChat })
       }
       await dispatchTeamOutputs(runId)
