@@ -5,6 +5,20 @@ import { TTL } from '@/lib/cache';
 import { prisma } from '@/lib/prisma';
 import { getAuthFromRequest } from '@/lib/auth';
 
+const MODEL_RATES: Record<string, number> = {
+  'llama-3.3-70b-versatile': 0.59,
+  'llama-3.1-8b-instant': 0.08,
+  'llama-3.1-70b-versatile': 0.59,
+  'mixtral-8x7b-32768': 0.24,
+  'gemma2-9b-it': 0.20,
+  'gemma-7b-it': 0.07,
+};
+
+function memberCost(model: string | null | undefined, tokens: number): number {
+  const rate = model ? (MODEL_RATES[model] ?? 0.5) : 0.5;
+  return (tokens / 1_000_000) * rate;
+}
+
 interface PeriodFilter {
   startDate: Date;
   endDate: Date;
@@ -80,6 +94,37 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   });
 
   const runIds = runs.map(r => r.id);
+
+  // byMember — aggregate TeamMemberUsage by member for runs in scope
+  const memberUsageRecords = runIds.length > 0
+    ? await prisma.teamMemberUsage.findMany({
+        where: { runId: { in: runIds } },
+        select: {
+          memberId: true,
+          model: true,
+          tokens: true,
+          member: {
+            select: {
+              agent: { select: { name: true } },
+            },
+          },
+        },
+      })
+    : [];
+
+  const memberAgg = new Map<string, { name: string; tokens: number; cost: number }>();
+  for (const u of memberUsageRecords) {
+    if (!u.memberId) continue;
+    const name = u.member?.agent?.name ?? 'Desconhecido';
+    const prev = memberAgg.get(u.memberId) ?? { name, tokens: 0, cost: 0 };
+    prev.tokens += u.tokens;
+    prev.cost += memberCost(u.model, u.tokens);
+    memberAgg.set(u.memberId, prev);
+  }
+
+  const byMember = Array.from(memberAgg.entries())
+    .map(([memberId, data]) => ({ memberId, ...data }))
+    .sort((a, b) => b.tokens - a.tokens);
 
   // Done tasks for those runs (for count + timeline grouping)
   const doneTasks = runIds.length > 0
@@ -174,7 +219,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
     },
     recentRuns,
     timeline,
-    byMember: [],
+    byMember,
   });
 }
 

@@ -7,12 +7,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import dynamic from 'next/dynamic'
-import { CheckCircle, XCircle, Users, Play, ListChecks } from 'lucide-react'
+import { CheckCircle, XCircle, Users, Play, ListChecks, Clock, DollarSign, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { OnboardingWizard } from '@/components/dashboard/onboarding-wizard'
 
-// recharts is heavy + DOM-only → code-split, load client-side on demand.
-const DashboardActivityChart = dynamic(() => import('./DashboardActivityChart'), {
+const TeamsActivityChart = dynamic(() => import('./teams/TeamsActivityChart'), {
   ssr: false,
   loading: () => <div className="h-[300px] w-full animate-pulse rounded-lg bg-white/5" />,
 })
@@ -30,9 +29,62 @@ interface TeamsOverview {
   totalCost?: number
 }
 
+interface RecentRun {
+  id: string
+  teamId: string
+  teamName: string
+  status: string
+  startedAt: string
+  durationMs: number | null
+}
+
+interface TimelinePoint {
+  date: string
+  runs: number
+  tasks: number
+  cost: number
+}
+
+function statusBadgeVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (status === 'completed') return 'default'
+  if (status === 'failed' || status === 'rate_limited' || status === 'cancelled') return 'destructive'
+  return 'secondary'
+}
+
+function statusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    completed: 'Concluída',
+    failed: 'Falhou',
+    running: 'Em execução',
+    pending: 'Pendente',
+    rate_limited: 'Rate limit',
+    cancelled: 'Cancelada',
+  }
+  return labels[status] ?? status
+}
+
+function formatDuration(ms: number | null): string {
+  if (!ms) return '—'
+  const s = Math.round(ms / 1000)
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  return `${m}m ${s % 60}s`
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 export default function DashboardPage() {
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('7d')
   const [overview, setOverview] = useState<TeamsOverview | null>(null)
+  const [recentRuns, setRecentRuns] = useState<RecentRun[]>([])
+  const [timeline, setTimeline] = useState<TimelinePoint[]>([])
   const [error, setError] = useState(false)
   const [loading, setLoading] = useState(true)
   const [retryCount, setRetryCount] = useState(0)
@@ -47,17 +99,14 @@ export default function DashboardPage() {
       const parsedUser = JSON.parse(user)
       setUserId(parsedUser.id)
 
-      // Check onboarding status from API (authoritative source)
       fetch('/api/auth/profile')
         .then((r) => r.json())
         .then((data) => {
           if (data.success && data.user?.onboardingCompleted === false) {
-            // Redirect to dedicated onboarding page
             window.location.href = '/onboarding'
           }
         })
         .catch(() => {
-          // Fallback: check localStorage
           const onboardingCompleted = localStorage.getItem('onboarding_completed')
           if (!onboardingCompleted) {
             setTimeout(() => setShowOnboarding(true), 1000)
@@ -79,6 +128,8 @@ export default function DashboardPage() {
         if (response.ok) {
           const data = await response.json()
           setOverview(data.overview)
+          setRecentRuns(data.recentRuns ?? [])
+          setTimeline(data.timeline ?? [])
         } else {
           setError(true)
         }
@@ -122,6 +173,17 @@ export default function DashboardPage() {
                   </div>
                   <Skeleton className="h-10 w-10 rounded-full" />
                 </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="glass-card">
+              <CardContent className="pt-6">
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-8 w-20" />
               </CardContent>
             </Card>
           ))}
@@ -231,15 +293,14 @@ export default function DashboardPage() {
         </Card>
       ) : (
         <>
+          {/* Row 1 — primary metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="glass-card hover-scale">
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-sm text-white/60">Teams Ativos</p>
-                    <p className="text-3xl font-bold text-white mt-2">
-                      {overview.teams}
-                    </p>
+                    <p className="text-3xl font-bold text-white mt-2">{overview.teams}</p>
                   </div>
                   <Users className="h-12 w-12 text-cyan-400" />
                 </div>
@@ -251,9 +312,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-sm text-white/60">Execuções no Período</p>
-                    <p className="text-3xl font-bold text-white mt-2">
-                      {overview.runsTotal}
-                    </p>
+                    <p className="text-3xl font-bold text-white mt-2">{overview.runsTotal}</p>
                   </div>
                   <Play className="h-12 w-12 text-blue-400" />
                 </div>
@@ -266,9 +325,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-sm text-white/60">Taxa de Sucesso</p>
-                    <p className="text-3xl font-bold text-white mt-2">
-                      {`${overview.successRate}%`}
-                    </p>
+                    <p className="text-3xl font-bold text-white mt-2">{`${overview.successRate}%`}</p>
                   </div>
                   <CheckCircle className="h-12 w-12 text-green-400" />
                 </div>
@@ -281,9 +338,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-2">
                   <div>
                     <p className="text-sm text-white/60">Tasks Executadas</p>
-                    <p className="text-3xl font-bold text-white mt-2">
-                      {overview.tasksExecuted}
-                    </p>
+                    <p className="text-3xl font-bold text-white mt-2">{overview.tasksExecuted}</p>
                   </div>
                   <ListChecks className="h-12 w-12 text-purple-400" />
                 </div>
@@ -291,19 +346,112 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-white">Atividade no Período</CardTitle>
-              <Link href="/dashboard/teams">
-                <Button variant="ghost" size="sm">
-                  Ver Teams
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent>
-              <DashboardActivityChart data={[]} />
-            </CardContent>
-          </Card>
+          {/* Row 2 — rich metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="glass-card hover-scale">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-white/60">Tokens Totais</p>
+                    <p className="text-2xl font-bold text-white mt-2">
+                      {overview.totalTokens != null
+                        ? overview.totalTokens.toLocaleString('pt-BR')
+                        : '—'}
+                    </p>
+                  </div>
+                  <Zap className="h-10 w-10 text-yellow-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-card hover-scale">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-white/60">Custo Total</p>
+                    <p className="text-2xl font-bold text-white mt-2">
+                      {overview.totalCost != null
+                        ? `$${Number(overview.totalCost).toFixed(4)}`
+                        : '—'}
+                    </p>
+                  </div>
+                  <DollarSign className="h-10 w-10 text-emerald-400" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="glass-card hover-scale">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-white/60">Duração Média</p>
+                    <p className="text-2xl font-bold text-white mt-2">
+                      {formatDuration(overview.avgDurationMs ?? null)}
+                    </p>
+                  </div>
+                  <Clock className="h-10 w-10 text-orange-400" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Row 3 — chart + recent runs */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card className="glass-card">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-white">Atividade no Período</CardTitle>
+                <Link href="/dashboard/teams">
+                  <Button variant="ghost" size="sm">
+                    Ver Teams
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent>
+                <TeamsActivityChart data={timeline} />
+              </CardContent>
+            </Card>
+
+            <Card className="glass-card">
+              <CardHeader>
+                <CardTitle className="text-white">Execuções Recentes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentRuns.length === 0 ? (
+                  <p className="text-white/40 text-sm text-center py-8">
+                    Nenhuma execução no período.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {recentRuns.map((run) => (
+                      <Link
+                        key={run.id}
+                        href={`/dashboard/teams/${run.teamId}`}
+                        className="flex items-center justify-between rounded-lg p-3 bg-white/5 hover:bg-white/10 transition-colors"
+                      >
+                        <div className="flex flex-col gap-0.5 min-w-0">
+                          <span className="text-sm font-medium text-white truncate">
+                            {run.teamName}
+                          </span>
+                          <span className="text-xs text-white/40">
+                            {formatDate(run.startedAt)}
+                            {run.durationMs != null && (
+                              <> · {formatDuration(run.durationMs)}</>
+                            )}
+                          </span>
+                        </div>
+                        <Badge
+                          variant={statusBadgeVariant(run.status)}
+                          className="ml-3 shrink-0 text-xs"
+                        >
+                          {statusLabel(run.status)}
+                        </Badge>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </>
       )}
 
