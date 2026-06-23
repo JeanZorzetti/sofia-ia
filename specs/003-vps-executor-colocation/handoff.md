@@ -6,7 +6,22 @@
 
 - `eee71ca` — **US1** (T001–T007): `VpsLocalProvider` + port `rootDir` + workdir por run + sweep + `vps-local-verify`.
 - `ca5de78` — **US2** (T008–T011): co-localização lead/reviewer (`co-location.ts` + `code-agent` + dep no worker + `colocation-verify`).
-- `<este>` — **US3 + Polish** (T012–T014): asserts de seleção FR-004 no `vps-local-verify`, nota de infra na 002, gate de regressão.
+- `c7038bc` — **US3 + Polish** (T012–T014): asserts de seleção FR-004 no `vps-local-verify`, nota de infra na 002, gate de regressão.
+- `<follow-up>` — **co-located CLI lead/reviewer** (pós-ciclo): os 3 agentes podem ser claude-cli (subscription).
+
+## Follow-up (pós-ciclo, 2026-06-22): TODOS os agentes em claude-cli
+
+**Problema:** subscription (claude-cli) é muito mais barato que API paga, mas Lead/Reviewer em claude-cli faziam **local-spawn no `/app`** (`groq.ts:317`, `cwd=process.cwd()`) → liam a árvore intocada → `@REJECT` em loop. `vps-local` por si só NÃO consertava (cwd continuava `/app`).
+
+**Fix (coordinator intocado, byte-idêntico fora do gatilho):**
+- `ChatOptions.claudeCliCwd?` (novo, opcional) em `team-types.ts`.
+- `code-agent.ts`: em turno **não-worker** (sem `taskId`) com **`sandbox.rootDir`** (vps-local) + `workdir`, seta `claudeCliCwd = workdir`. Worker / E2B (sem rootDir) / sem workdir ⇒ unset.
+- `groq.ts` (rota claude-cli): usa `claudeCliCwd` como `cwd` do `ClaudeCliService.generate`; quando setado, **força read-only** passando `capabilities: capabilityPolicy ?? {}` — no contexto `chat-run`, qualquer policy vira read-only (`--permission-mode plan`, bloqueia Write/Edit/**Bash**) → o lead/reviewer **não suja o diff** do worker.
+- `scripts/colocated-cli-verify.ts` (6 asserts) + docs `polaris-team-setup.md` repontadas (3 agentes claude-cli com vps-local).
+
+**Decisão:** reviewer roda read-only **estático** (lê a árvore real + o diff do C3), **sem Bash** — rodar `npm test`/`build` escreveria arquivos e corromperia o diff. É a troca certa: melhor que ler `/app`, sem risco ao diff.
+
+**Não mexeu** em `cli-tool-flags.ts`/`claude-cli-service.ts` (o read-only do `chat-run` já existia). Gate: colocated-cli(6)+c0..c3+vps-local(10)+colocation(11)+typecheck verdes. Ver [[polaris_teams_use_claude_cli]].
 
 ## O que cada fatia entregou
 

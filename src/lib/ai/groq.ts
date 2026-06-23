@@ -119,7 +119,7 @@ export async function chatWithAgent(
   agentId: string,
   messages: ChatMessage[],
   leadContext?: Record<string, any>,
-  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null; rawText?: boolean; capabilities?: CapabilityPolicy | null; workflow?: string | null; teamSystemPrompt?: string | null; attachmentDir?: string | null }
+  options?: { useVectorSearch?: boolean; model?: string | null; effort?: string | null; rawText?: boolean; capabilities?: CapabilityPolicy | null; workflow?: string | null; teamSystemPrompt?: string | null; attachmentDir?: string | null; claudeCliCwd?: string | null }
 ) {
   const { prisma } = await import('@/lib/prisma')
 
@@ -313,8 +313,15 @@ Regras:
     try {
       const { ClaudeCliService } = await import('@/services/claude-cli-service');
 
-      // Capture working directory from config, defaulting to process.cwd()
-      const workingDirectory = (agent.config as any)?.workingDirectory || process.cwd();
+      // Capture working directory from config, defaulting to process.cwd().
+      // 003 follow-up: a co-located NON-worker turn (vps-local) passes the run dir via
+      // `claudeCliCwd` so lead/reviewer run IN the real repo (not /app). When set, FORCE
+      // read-only (chat-run posture: a `{}` policy already demotes the CLI to Read/Grep +
+      // `--permission-mode plan`, blocking Write/Edit/Bash) so the review never taints the
+      // worker's diff. Unset → legacy cwd + the member's own (possibly null) policy.
+      const claudeCliCwd = options?.claudeCliCwd || null;
+      const workingDirectory = claudeCliCwd || (agent.config as any)?.workingDirectory || process.cwd();
+      const cliCapabilities = claudeCliCwd ? (capabilityPolicy ?? {}) : capabilityPolicy;
 
       // Build the full prompt including system prompt and history
       // Since CLI is one-shot with -p, we need to pass context.
@@ -358,7 +365,7 @@ Regras:
           systemPrompt,
           cliModelId || undefined,  // Pass model ID (undefined = CLI default)
           token,
-          { capabilities: capabilityPolicy, mcpServers: cliMcpServers },
+          { capabilities: cliCapabilities, mcpServers: cliMcpServers },
           reasoningEffort,  // S2.2: per-member effort → CLI --effort flag (null = no flag)
           attachmentDir,    // S6: per-run image dir → CLI --add-dir flag (null = no flag)
         ),

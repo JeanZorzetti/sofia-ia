@@ -75,13 +75,17 @@ Diretrizes do time **não chegam** ao CLI-no-sandbox — servem só para briefar
 
 ## 1. Agentes (criar 3 em `/dashboard/agents`)
 
-> ⚠️ **REGRA DE OURO (descoberta na prática): SÓ o WORKER pode ser `claude-*`.** Apenas o turno do
-> worker (com `taskId`) roda no sandbox; **Lead e Reviewer rodam o CLI no HOST `/app`**. Se o **Reviewer**
-> for `claude-*`, ele lê o `/app` intocado e **rejeita o trabalho real do worker** → loop infinito (foi o
-> que aconteceu). Portanto: **Lead e Reviewer = modelo de chat NÃO-claude** (ex.: `llama-3.3-70b-versatile`/Groq);
-> **Worker = `claude-*`** (ele é o único que edita dentro do sandbox).
+> ✅ **COM `vps-local` (003 + follow-up co-located CLI): OS 3 AGENTES PODEM SER `claude-*` (subscription).**
+> O fix faz Lead/Reviewer rodarem o Claude CLI **no diretório do run** (`/runs/<id>/repo`), **read-only**
+> (`--permission-mode plan`, sem Write/Edit/Bash → não suja o diff), em vez do `/app`. Logo o Reviewer
+> enxerga o trabalho REAL do worker e **não cai mais no loop de rejeição**. Use **subscription nos três**
+> (claude-cli) — muito mais barato que API paga.
+>
+> ⚠️ **Histórico (só vale p/ E2B):** no E2B o repo é remoto; aí o Lead/Reviewer claude-cli rodam no `/app`
+> intocado e rejeitam tudo → loop. **Nesse caso** a regra antiga vale (Lead/Reviewer = chat NÃO-claude, ex.
+> `llama-3.3-70b-versatile`/Groq, ou Claude via OpenRouter pago). Com `vps-local` está resolvido.
 
-### Agente 1 — `Arquiteto Polaris`  ·  role no time: **lead**  ·  model: `llama-3.3-70b-versatile` (Groq — NÃO claude)
+### Agente 1 — `Arquiteto Polaris`  ·  role no time: **lead**  ·  model: `claude-opus-4-8` (claude-cli/subscription — com `vps-local` planeja read-only no run dir real)
 System prompt:
 ```
 Você é o LEAD/arquiteto. Você ORQUESTRA — não codifica você mesmo.
@@ -125,7 +129,7 @@ Para cada tarefa atribuída:
 Ao terminar, responda com um resumo do que mudou (arquivos + decisões).
 ```
 
-### Agente 3 — `Revisor de Código`  ·  role no time: **reviewer**  ·  model: `llama-3.3-70b-versatile` (Groq — NÃO claude; senão lê o /app intocado e rejeita tudo)
+### Agente 3 — `Revisor de Código`  ·  role no time: **reviewer**  ·  model: `claude-sonnet-4-6` (claude-cli/subscription — com `vps-local` revisa read-only no run dir real; sem mais loop do /app)
 System prompt:
 ```
 Você é o REVIEWER. Você recebe o DIFF git real das mudanças. Avalie criticamente contra os critérios de aceite do spec e os não-negociáveis do time.
@@ -189,7 +193,7 @@ Leia spec.md, plan.md, data-model.md, contracts/teams-overview.md e o CLAUDE.md 
 
 ## Passo-a-passo
 1. **(Infra)** Confirmar/subir o worker no EasyPanel + setar os segredos do item 0. Sem isso o run fica `pending` para sempre.
-2. **(Agentes)** Criar os 3 agentes do item 1 (atenção aos models — Worker = `claude-opus-4-8`).
+2. **(Agentes)** Criar os 3 agentes do item 1. Com `vps-local`, **os 3 em `claude-*` (subscription)** — Worker edita no sandbox; Lead/Reviewer rodam read-only no run dir real.
 3. **(Team)** Criar o Team do item 5 (repo binding + topologia + system prompt + 3 membros nos papéis lead/worker/reviewer).
 4. **(Run)** Disparar em `code` + `direct` com a missão do item 6.
 5. **(Acompanhar)** Ver o board (Lead → @TASK → Worker → Reviewer → @DONE) + terminal/diff ao vivo na tela do run.

@@ -220,6 +220,12 @@ export interface ChatOptions {
    *  Claude CLI gets `--add-dir <dir>` and a member can Read the image. Null → no flag
    *  (command byte-identical to legacy). */
   attachmentDir?: string | null
+  /** 003 follow-up (co-located CLI): for a NON-worker turn (lead/reviewer/consolidation)
+   *  whose repo is co-located on THIS host (vps-local → the run dir lives on the worker FS),
+   *  run the member's Claude CLI local-spawn in THIS dir (read-only) instead of the worker's
+   *  own `/app`. Set by the code-agent only when `sandbox.rootDir` is present; absent → the
+   *  CLI keeps `process.cwd()` (legacy / E2B), byte-identical. */
+  claudeCliCwd?: string | null
 }
 
 /** Injectable execution primitive (real impl: chatWithAgent). */

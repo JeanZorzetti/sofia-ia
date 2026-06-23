@@ -199,7 +199,14 @@ export function createCodeChatFn(
     // Code-runs always want plain text (@RUN/@DONE) — never the provider's own
     // filesystem tools / code-block writing (those would touch the worker FS, not
     // the sandbox). Force rawText regardless of the member's model/provider.
-    const codeChatOptions = { ...chatOptions, rawText: true }
+    //
+    // 003 follow-up (co-located CLI): a NON-worker turn (no taskId) whose repo lives on
+    // THIS host (vps-local → sandbox.rootDir set) runs its Claude CLI local-spawn in the
+    // run dir (read-only, enforced in groq.ts) instead of the worker's /app — so the
+    // lead/reviewer see the REAL tree the worker produced and stop the /app reject loop,
+    // all on subscription. E2B (no rootDir) / worker turns ⇒ unset → legacy cwd.
+    const claudeCliCwd = (!chatOptions?.taskId && sandbox.rootDir && workdir) ? workdir : undefined
+    const codeChatOptions = { ...chatOptions, rawText: true, claudeCliCwd }
 
     for (let step = 0; step < maxSteps; step++) {
       const out = await baseChat(agentId, working, leadContext, codeChatOptions)
