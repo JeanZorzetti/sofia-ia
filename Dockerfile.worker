@@ -24,7 +24,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # code-runs whose member model is `claude-*` spawn this CLI on the worker host.
 # Auth via CLAUDE_CODE_OAUTH_TOKEN env (set it on the EasyPanel worker service);
 # do NOT set ANTHROPIC_API_KEY (that switches the CLI to pay-per-token billing).
-RUN apk add --no-cache git ripgrep libstdc++ libgcc && \
+#
+# `bash` is REQUIRED for SANDBOX_PROVIDER=vps-local (003): VpsLocalProvider.exec runs
+# `bash -lc <cmd>`, and alpine ships only busybox sh by default → without it the git
+# clone fails with `spawn bash ENOENT` (exit 127). E2B's image already had bash.
+RUN apk add --no-cache bash git ripgrep libstdc++ libgcc && \
     npm i -g @anthropic-ai/claude-code
 ENV USE_BUILTIN_RIPGREP=0
 ENV CLAUDE_CONFIG_DIR=/tmp/.claude
