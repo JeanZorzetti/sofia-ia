@@ -1,5 +1,5 @@
 import Groq from 'groq-sdk'
-import { withClaudeTokenFailover, isClaudeRateLimit } from '@/lib/ai/claude-token-pool'
+import { withClaudeTokenFailover, isClaudeRateLimit, ClaudeRateLimitError } from '@/lib/ai/claude-token-pool'
 // type-only: Teams V2 (S1.1) per-member capability policy. A pure type import — no
 // runtime dependency on the orchestration layer (team-types.ts has none of its own).
 import type { CapabilityPolicy } from '@/lib/orchestration/team/team-types'
@@ -380,6 +380,13 @@ Regras:
       };
     } catch (error) {
       console.error('Claude CLI error:', error);
+      // 008-team-run-resilience: esgotamento do pool NÃO pode virar a "resposta" do agente.
+      // Re-lançar para o coordinator classificar como rate_limited (team-board.isRateLimit
+      // reconhece ClaudeRateLimitError) e o withRateLimitCapture gravar o reset. Demais erros
+      // mantêm o caminho legado (retornam a mensagem de erro).
+      if (error instanceof ClaudeRateLimitError || isClaudeRateLimit(error instanceof Error ? error.message : String(error))) {
+        throw error;
+      }
       return {
         message: `Erro na execução do Claude CLI: ${error instanceof Error ? error.message : 'Desconhecido'}`,
         model: agent.model,
@@ -424,6 +431,10 @@ Regras:
       };
     } catch (error) {
       console.error('Opencode CLI error:', error);
+      // 008: idem claude-cli — esgotamento re-lança (não vira resposta); demais erros legado.
+      if (error instanceof ClaudeRateLimitError || isClaudeRateLimit(error instanceof Error ? error.message : String(error))) {
+        throw error;
+      }
       return {
         message: `Erro na execução do Opencode CLI: ${error instanceof Error ? error.message : 'Desconhecido'}`,
         model: agent.model,

@@ -181,6 +181,9 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
         const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
         const { chatWithAgent } = await import('@/lib/ai/groq')
         const { withUsageTracking } = await import('@/lib/orchestration/team/member-usage-recorder')
+        // 008-team-run-resilience: captura o reset (UTC) e re-lança em esgotamento → o run
+        // termina rate_limited (não completed falso). Wrapper externo; coordinator intocado.
+        const { withRateLimitCapture } = await import('@/lib/orchestration/team/team-resilience')
         // S3 (Teams V2.2 — item 3): resolve the team-wide system prompt ONCE and bake it
         // into the chat wrapper, so every member call inherits it WITHOUT touching the
         // coordinator (it's a team-level constant, not per-member). Null → byte-identical
@@ -195,7 +198,7 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
         const attachmentDir = await materializeRunAttachments(run.id)
         await runTeamByTopology(run.id, {
           store: createPrismaTeamStore(),
-          chat: withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, { ...opts, teamSystemPrompt, attachmentDir })),
+          chat: withRateLimitCapture(withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, { ...opts, teamSystemPrompt, attachmentDir }))),
         })
         const { dispatchTeamOutputs } = await import('@/lib/orchestration/team/team-outputs')
         await dispatchTeamOutputs(run.id)

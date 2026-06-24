@@ -1307,6 +1307,10 @@ model TeamRun {
   estimatedCost Float?    @map("estimated_cost")
   durationMs    Int?      @map("duration_ms")
   error         String?   @db.Text
+  // 008-team-run-resilience: quando status='rate_limited' por esgotamento do pool, o
+  // horário (UTC) em que a janela reseta (parseResetAt, gravado por withRateLimitCapture).
+  // null = reset desconhecido (o cron de auto-resume não o retoma). Indexado p/ a varredura.
+  resetAt       DateTime? @map("reset_at") @db.Timestamptz()
   startedAt     DateTime  @default(now()) @map("started_at") @db.Timestamptz()
   completedAt   DateTime? @map("completed_at") @db.Timestamptz()
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
@@ -1318,6 +1322,7 @@ model TeamRun {
 
   @@index([teamId])
   @@index([status])
+  @@index([status, resetAt]) // 008: cron resume-blocked-teams filtra rate_limited + resetAt<=now
   @@index([startedAt(sort: Desc)])
   @@index([parentRunId])
   @@map("team_runs")

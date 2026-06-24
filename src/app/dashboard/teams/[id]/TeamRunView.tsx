@@ -116,7 +116,7 @@ const STATUS_BADGE: Record<string, string> = {
 }
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Na fila', running: 'Executando', completed: 'Concluído',
-  failed: 'Falhou', rate_limited: 'Rate limit', cancelled: 'Cancelado',
+  failed: 'Falhou', rate_limited: 'Bloqueado por limite', cancelled: 'Cancelado',
 }
 
 export default function TeamRunView({ teamId }: { teamId: string }) {
@@ -270,6 +270,21 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
       }
     } catch {
       setStatus('failed'); setRunning(false)
+    }
+  }
+
+  // 008-team-run-resilience: retoma um run bloqueado por limite — reusa as tarefas já
+  // concluídas (o coordinator relê o board) e re-abre o stream no mesmo runId.
+  async function resumeRun() {
+    if (!runId || running) return
+    setRunning(true); setStatus('pending')
+    try {
+      const res = await fetch(`/api/teams/${teamId}/runs/${runId}/resume`, { method: 'POST' })
+      const json = await res.json()
+      if (res.ok) openStream(runId, true)
+      else { setStatus(json.error ?? 'rate_limited'); setRunning(false) }
+    } catch {
+      setRunning(false)
     }
   }
 
@@ -491,6 +506,16 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
             <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_BADGE[status] ?? 'bg-white/10 text-white/60'}`}>
               {STATUS_LABEL[status] ?? status}
             </span>
+          )}
+          {/* 008: retomar um run bloqueado por limite (reusa o trabalho já feito) */}
+          {status === 'rate_limited' && runId && !running && (
+            <button
+              type="button"
+              onClick={resumeRun}
+              className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition-colors"
+            >
+              <Repeat className="h-3 w-3" /> Retomar
+            </button>
           )}
           <div className="flex items-center gap-3 ml-auto text-xs text-white/40">
             {metrics.turnsUsed != null && <span className="inline-flex items-center gap-1"><Repeat className="h-3 w-3" />{metrics.turnsUsed} turnos</span>}
