@@ -117,3 +117,64 @@ export const createTeamSchema = z.object({
 })
 
 export const updateTeamSchema = createTeamSchema
+
+// --- Companies (005-agentic-companies) --------------------------------------
+// Validação de input das rotas de Empresa. A validação de DOMÍNIO (regra de ouro
+// da RACI, 1:1 cargo↔agente, roster por fase) continua nos helpers puros
+// (validateRaci, createCompanyFromNiche, buildPhaseRoster); aqui só os tipos básicos.
+
+const typologySchema = z.enum(['generalist', 'specialist', 'hybrid'])
+const raciValueSchema = z.enum(['R', 'A', 'C', 'I'])
+
+export const createCompanySchema = z.object({
+  name: z.string().min(1, 'name é obrigatório'),
+  niche: z.string().min(1, 'niche é obrigatório'),
+  typology: typologySchema.optional(),
+  description: z.string().nullish(),
+})
+
+export const patchCompanySchema = z.object({
+  name: z.string().min(1).optional(),
+  typology: typologySchema.optional(),
+  description: z.string().nullish(),
+})
+
+export const cloneCompanySchema = z.object({
+  name: z.string().min(1, 'name é obrigatório'),
+})
+
+// FR-005: adicionar/remover cargos além do template do nicho.
+const addRoleSchema = z.object({
+  key: z.string().min(1),
+  title: z.string().min(1),
+  layer: z.enum(['strategic', 'tactical', 'operational']),
+  department: z.string().nullish(),
+})
+export const putRolesSchema = z.object({
+  add: z.array(addRoleSchema).optional(),
+  removeKeys: z.array(z.string()).optional(),
+})
+
+export const staffRoleSchema = z.object({
+  agentId: z.string().min(1, 'agentId é obrigatório'),
+})
+
+// RACI: { [phaseKey]: { [roleKey]: 'R'|'A'|'C'|'I' } } — regra de ouro validada por validateRaci.
+export const putRaciSchema = z.object({
+  raci: z.record(z.string(), z.record(z.string(), raciValueSchema)),
+})
+
+// SOPs por cargo (FR-011) — persistido em Company.config.sops.
+export const putSopsSchema = z.object({
+  sops: z.record(z.string(), z.string()),
+})
+
+// Infra: só a flag sandbox por cargo é escrita in-company (MCP é leitura+deep-link, C2).
+export const putInfrastructureSchema = z.record(
+  z.string(),
+  z.object({ sandbox: z.boolean().optional() })
+)
+
+export const runCompanySchema = z.object({
+  mission: z.string().min(1, 'mission é obrigatória'),
+})

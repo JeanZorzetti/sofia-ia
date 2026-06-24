@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   MessageSquare,
-  Bot,
   Workflow,
   CreditCard,
   Inbox,
@@ -90,7 +89,7 @@ const menuSections: MenuSection[] = [
     // Capacidades que os agentes de um time usam (era "Plataforma").
     label: 'Capacidades',
     items: [
-      { href: '/dashboard/agents',       label: 'Agentes de IA', icon: Bot },
+      { href: '/dashboard/agents',       label: 'Empresas',      icon: Building2 },
       { href: '/dashboard/skills',       label: 'Skills',        icon: Sparkles },
       { href: '/dashboard/mcp',          label: 'MCP Servers',   icon: Network },
       { href: '/dashboard/knowledge',    label: 'Knowledge Base', icon: Database },

@@ -46,6 +46,7 @@ model User {
   approvedScheduledPosts       ThreadsScheduledPost[] @relation("ScheduledPostApprover")
   threadsCampaigns             ThreadsCampaign[]
   whatsappAccounts             WhatsAppAccount[]
+  companies                    Company[]
 
   @@map("users")
 }
@@ -226,6 +227,9 @@ model Agent {
   agentMcpServers AgentMcpServer[]
   teamMemberships TeamMember[]
   whatsappAccounts WhatsAppAccount[]
+  // 005-agentic-companies: optional back-relation for the org-chart slot this agent fills.
+  // Opposite side of CompanyRole.agentId (@unique → 1:1). Optional → no read-side change to Agent.
+  companyRole     CompanyRole?
 
   @@index([status])
   @@index([createdBy])
@@ -1388,4 +1392,99 @@ model TeamMemberUsage {
   @@index([runId])
   @@index([memberId])
   @@map("team_member_usage")
+}
+
+// =============================================================================
+// 005-agentic-companies — Empresas Agênticas
+// A camada de organização sobre os Agentes: organograma (CompanyRole), governança
+// (RACI Json), processo (SDLC = constantes de código) e execução (CompanyRun →
+// um TeamRun por fase via runTeamAndWait; coordinator INTOCADO).
+// =============================================================================
+
+// A Empresa: organização agêntica de primeira classe, instanciável por nicho.
+// RACI + infra/SOPs como Json tipado (matriz pequena ~13×7; validação app-level).
+model Company {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(255)
+  niche       String   @db.VarChar(100) // chave do blueprint semente (ex.: software_house)
+  typology    String   @default("hybrid") @db.VarChar(20) // generalist | specialist | hybrid
+  description String?  @db.Text
+  raci        Json     @default("{}") // { [phaseKey]: { [roleKey]: 'R'|'A'|'C'|'I' } } — validado por validateRaci
+  config      Json     @default("{}") // { sops?: { [roleKey]: string }, infrastructure?: { [roleKey]: { sandbox?: boolean } } }
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  creator User          @relation(fields: [createdBy], references: [id])
+  roles   CompanyRole[]
+  runs    CompanyRun[]
+
+  @@index([createdBy])
+  @@index([niche])
+  @@map("companies")
+}
+
+// A vaga do organograma. Encaixe 1:1 via @unique em agentId (Postgres permite múltiplos NULL).
+model CompanyRole {
+  id         String   @id @default(uuid()) @db.Uuid
+  companyId  String   @map("company_id") @db.Uuid
+  key        String   @db.VarChar(50) // chave estável p/ a RACI (ex.: backend)
+  title      String   @db.VarChar(255)
+  layer      String   @db.VarChar(20) // strategic | tactical | operational
+  department String?  @db.VarChar(100)
+  agentId    String?  @unique @map("agent_id") @db.Uuid // nullable = vaga vazia; @unique = 1:1 (FR-003a)
+  position   Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  agent   Agent?  @relation(fields: [agentId], references: [id], onDelete: SetNull) // agente deletado → cargo volta a vago
+
+  @@unique([companyId, key])
+  @@index([companyId])
+  @@map("company_roles")
+}
+
+// A execução da empresa (percorre as 7 fases do SDLC sequencialmente).
+model CompanyRun {
+  id           String    @id @default(uuid()) @db.Uuid
+  companyId    String    @map("company_id") @db.Uuid
+  mission      String    @db.Text
+  status       String    @default("pending") @db.VarChar(20) // pending | running | completed | failed | blocked
+  currentPhase String?   @map("current_phase") @db.VarChar(30)
+  output       String?   @db.Text
+  error        String?   @db.Text
+  createdBy    String    @map("created_by") @db.Uuid
+  startedAt    DateTime? @map("started_at") @db.Timestamptz()
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz()
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  company   Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  phaseRuns CompanyPhaseRun[]
+
+  @@index([companyId])
+  @@index([status])
+  @@map("company_runs")
+}
+
+// Liga cada fase do SDLC ao TeamRun subjacente (criado via runTeamAndWait).
+// teamRunId referencia TeamRun.id SEM FK formal (evita acoplar o schema de Times;
+// o TeamRun é lido sob demanda). Times de fase nascem status:'internal' → fora da UI.
+model CompanyPhaseRun {
+  id             String    @id @default(uuid()) @db.Uuid
+  companyRunId   String    @map("company_run_id") @db.Uuid
+  phase          String    @db.VarChar(30) // key da fase do SDLC
+  position       Int       @default(0) // ordem 0..6
+  status         String    @default("pending") @db.VarChar(20) // pending | running | completed | failed | skipped | blocked
+  teamRunId      String?   @map("team_run_id") @db.Uuid // o TeamRun real da fase (lookup read-side, sem FK)
+  inputArtifact  String?   @map("input_artifact") @db.Text // saída da fase anterior (encadeamento N→N+1)
+  outputArtifact String?   @map("output_artifact") @db.Text // resultado da fase (= TeamRun.output)
+  error          String?   @db.Text
+  startedAt      DateTime? @map("started_at") @db.Timestamptz()
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  companyRun CompanyRun @relation(fields: [companyRunId], references: [id], onDelete: Cascade)
+
+  @@index([companyRunId])
+  @@map("company_phase_runs")
 }

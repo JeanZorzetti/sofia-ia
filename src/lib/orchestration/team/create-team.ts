@@ -10,6 +10,13 @@ export interface CreateTeamInput {
   config?: Record<string, unknown>
   members?: RosterInput[]
   userId: string
+  /**
+   * 005-agentic-companies (fix I1): status do Team na criação. Ausente → default `'active'`
+   * (byte-idêntico ao legado). Os Times de FASE da execução de Empresa nascem `'internal'`
+   * → automaticamente fora da listagem `/api/teams` (que filtra `status:'active'`), sem
+   * nenhuma alteração read-side. Caller-only; o coordinator (`runTeam`) permanece INTOCADO.
+   */
+  status?: string
 }
 
 /**
@@ -38,6 +45,8 @@ export async function createTeamWithRoster(input: CreateTeamInput) {
       name: input.name.trim(),
       description: input.description ?? null,
       config: (input.config ?? {}) as object,
+      // I1: status opcional; omitido → o default do schema ('active') vale (legado intacto).
+      ...(input.status ? { status: input.status } : {}),
       createdBy: input.userId,
       members: {
         create: members.map((m, i) => ({
