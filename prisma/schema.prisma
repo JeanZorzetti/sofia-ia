@@ -1453,6 +1453,10 @@ model CompanyRun {
   currentPhase String?   @map("current_phase") @db.VarChar(30)
   output       String?   @db.Text
   error        String?   @db.Text
+  // 007-company-run-resilience: quando status='blocked' por esgotamento do pool Claude,
+  // o horário (UTC) em que a janela reseta (parseResetAt do output do CLI). null = reset
+  // desconhecido (bloqueia, mas o cron de auto-resume não o retoma). Indexado p/ a varredura.
+  resetAt      DateTime? @map("reset_at") @db.Timestamptz()
   createdBy    String    @map("created_by") @db.Uuid
   startedAt    DateTime? @map("started_at") @db.Timestamptz()
   completedAt  DateTime? @map("completed_at") @db.Timestamptz()
@@ -1463,6 +1467,7 @@ model CompanyRun {
 
   @@index([companyId])
   @@index([status])
+  @@index([status, resetAt]) // 007: cron resume-blocked-companies filtra blocked + resetAt<=now
   @@map("company_runs")
 }
 
@@ -1479,6 +1484,9 @@ model CompanyPhaseRun {
   inputArtifact  String?   @map("input_artifact") @db.Text // saída da fase anterior (encadeamento N→N+1)
   outputArtifact String?   @map("output_artifact") @db.Text // resultado da fase (= TeamRun.output)
   error          String?   @db.Text
+  // 007-company-run-resilience: proxy de consumo da fase, independente do token-count que
+  // subconta o claude-cli. Shape: { turns, durationMs, byModel, weightedUnits, blocked }.
+  usage          Json?
   startedAt      DateTime? @map("started_at") @db.Timestamptz()
   completedAt    DateTime? @map("completed_at") @db.Timestamptz()
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
