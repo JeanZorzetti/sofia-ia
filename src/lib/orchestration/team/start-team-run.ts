@@ -261,7 +261,23 @@ export async function runTeamAndWait(teamId: string, input: RunTeamAndWaitInput)
     data: { teamId, mission, status: 'pending', mode: 'chat' },
   })
 
-  // Run the coordinator INLINE (same deps as startTeamRun's chat branch, no after()).
+  return executeTeamRunInline(run.id)
+}
+
+/**
+ * Run the coordinator INLINE on an ALREADY-EXISTING TeamRun (no create, no after()).
+ * Same deps as startTeamRun's chat branch. Used by callers that own the run lifecycle
+ * themselves (e.g. the squad WIP=1 queue, which creates + claims the run before executing
+ * it — calling runTeamAndWait there would create a SECOND run). Coordinator stays INTACT.
+ */
+export async function executeTeamRunInline(runId: string): Promise<RunTeamAndWaitResult> {
+  const run = await prisma.teamRun.findUnique({
+    where: { id: runId },
+    include: { team: { include: { members: true } } },
+  })
+  if (!run) throw new TeamRunError('not_found', `Run não encontrada: ${runId}`)
+  const team = run.team
+
   // Routes through the topology dispatcher so graph-topology teams use runTeamGraph.
   const { runTeamByTopology } = await import('@/lib/orchestration/team/team-executor')
   const { createPrismaTeamStore } = await import('@/lib/orchestration/team/team-store')
@@ -276,12 +292,12 @@ export async function runTeamAndWait(teamId: string, input: RunTeamAndWaitInput)
     chat: withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, { ...opts, teamSystemPrompt })),
   })
 
-  // Output webhooks (SP2) fire for engine runs too — best-effort, never fails the node.
+  // Output webhooks (SP2) fire for engine runs too — best-effort, never fails the caller.
   try {
     const { dispatchTeamOutputs } = await import('@/lib/orchestration/team/team-outputs')
     await dispatchTeamOutputs(run.id)
   } catch (err) {
-    console.error('[Teams] dispatchTeamOutputs (runTeamAndWait) failed:', err)
+    console.error('[Teams] dispatchTeamOutputs (executeTeamRunInline) failed:', err)
   }
 
   const finished = await prisma.teamRun.findUnique({

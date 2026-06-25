@@ -98,15 +98,17 @@ export async function dispatchSquadQueue(): Promise<void> {
   if (!next) return
 
   try {
-    const { runTeamAndWait } = await import('@/lib/orchestration/team/start-team-run')
-    const result = await runTeamAndWait(next.teamId, { mission: next.mission })
+    // Executa O PRÓPRIO run da fila (já criado + claimed). Usar runTeamAndWait aqui
+    // criaria um SEGUNDO TeamRun (duplicação) — o coordinator roda sobre next.id.
+    const { executeTeamRunInline } = await import('@/lib/orchestration/team/start-team-run')
+    const result = await executeTeamRunInline(next.id)
 
     const exhausted = result.status === 'rate_limited' || (result.status === 'completed' && isClaudeRateLimit(result.output))
     if (exhausted) {
       console.log(`[squad-queue] Pool esgotado durante run ${next.id}`)
     }
   } catch (err) {
-    console.error(`[squad-queue] runTeamAndWait falhou para ${next.id}:`, err)
+    console.error(`[squad-queue] executeTeamRunInline falhou para ${next.id}:`, err)
     await prisma.teamRun.update({
       where: { id: next.id },
       data: { status: 'failed', error: err instanceof Error ? err.message : 'Erro inesperado' },
