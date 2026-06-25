@@ -28,7 +28,9 @@ function squadRunWhere(status: string) {
 async function claimNextRun(): Promise<{ id: string; teamId: string; mission: string } | null> {
   return prisma.$transaction(async (tx) => {
     // Lock exclusivo — bloqueia até que outra instância que tenha o lock termine.
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(${SQUAD_QUEUE_LOCK}::bigint)`
+    // pg_advisory_xact_lock retorna `void`; usar $executeRaw (retorna contagem) e NÃO
+    // $queryRaw, que tenta desserializar a coluna void e lança P2010.
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(${SQUAD_QUEUE_LOCK}::bigint)`
 
     // Re-check WIP=1 sob o lock.
     const running = await tx.teamRun.findFirst({ where: squadRunWhere('running'), select: { id: true } })
