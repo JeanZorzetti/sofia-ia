@@ -3,11 +3,14 @@
 // Contrato público:
 //   enqueueSquadRun(squadId, mission) → TeamRun.id
 //   dispatchSquadQueue()              → void
+//   cancelSquadRun(runId, auth)       → encerra um run (pending/running) do dono
 //
 // Princípio II: nunca edita o coordinator (runTeam/team-executor).
 // Integra resiliência 008: pausa se há rate_limited com resetAt futuro.
 import { prisma } from '@/lib/prisma'
 import { isClaudeRateLimit } from '@/lib/ai/claude-token-pool'
+import { ownerId } from '@/lib/authz'
+import type { JWTPayload } from '@/lib/auth'
 
 // Chave de advisory lock fixada para a fila de squad-runs (valor arbitrário único).
 const SQUAD_QUEUE_LOCK = BigInt(1_299_009)
@@ -141,4 +144,33 @@ export async function getSquadQueueState(): Promise<QueueState> {
       runId: r.id, squadId: r.teamId, companyId: r.team.companyId, position: i, createdAt: r.createdAt.toISOString(),
     })),
   }
+}
+
+export type CancelSquadRunResult =
+  | { ok: true }
+  | { ok: false; status: number; error: string }
+
+/**
+ * Encerra um squad-run. Escopado ao dono (Company.createdBy == ownerId) → IDOR vira 404.
+ * Só cancela runs em andamento (pending/running/rate_limited); finalizados → 400.
+ * Após cancelar, dispara o dispatcher para drenar o próximo da fila (libera o slot WIP=1).
+ */
+export async function cancelSquadRun(runId: string, auth: JWTPayload): Promise<CancelSquadRunResult> {
+  const run = await prisma.teamRun.findFirst({
+    where: {
+      id: runId,
+      team: { companyId: { not: null }, company: { createdBy: ownerId(auth) } },
+    },
+    select: { id: true, status: true },
+  })
+  if (!run) return { ok: false, status: 404, error: 'Run not found' }
+  if (run.status !== 'pending' && run.status !== 'running' && run.status !== 'rate_limited') {
+    return { ok: false, status: 400, error: 'Run já finalizado — não pode ser encerrado' }
+  }
+
+  await prisma.teamRun.update({
+    where: { id: runId },
+    data: { status: 'cancelled', completedAt: new Date(), error: 'Encerrado pelo usuário' },
+  })
+  return { ok: true }
 }

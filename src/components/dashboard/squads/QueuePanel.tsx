@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Loader2, Play, Clock, RefreshCw } from 'lucide-react'
+import { Loader2, Play, Clock, RefreshCw, X } from 'lucide-react'
 import type { QueueState } from '@/lib/companies/squad-queue'
 
 interface Props {
@@ -27,6 +27,7 @@ export function QueuePanel({ companyId, pollIntervalMs = 5000 }: Props) {
   const [state, setState] = useState<QueueState | null>(null)
   const [loading, setLoading] = useState(true)
   const [lastFetch, setLastFetch] = useState<Date | null>(null)
+  const [cancelling, setCancelling] = useState<string | null>(null)
 
   const fetch_ = useCallback(async (silent = false) => {
     if (!silent) setLoading(true)
@@ -41,6 +42,16 @@ export function QueuePanel({ companyId, pollIntervalMs = 5000 }: Props) {
       if (!silent) setLoading(false)
     }
   }, [])
+
+  const cancelRun = useCallback(async (runId: string) => {
+    setCancelling(runId)
+    try {
+      await fetch(`/api/squad-runs/${runId}`, { method: 'DELETE' })
+      await fetch_(true)
+    } catch { /* silent */ } finally {
+      setCancelling(null)
+    }
+  }, [fetch_])
 
   useEffect(() => {
     fetch_()
@@ -89,6 +100,14 @@ export function QueuePanel({ companyId, pollIntervalMs = 5000 }: Props) {
             <Badge variant="outline" className="text-green-600 border-green-500/50">
               {formatRelative(companyRunning.startedAt)}
             </Badge>
+            <Button
+              variant="ghost" size="sm"
+              className="h-7 text-red-600 hover:text-red-700 hover:bg-red-500/10"
+              disabled={cancelling === companyRunning.runId}
+              onClick={() => cancelRun(companyRunning.runId)}
+            >
+              {cancelling === companyRunning.runId ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <><X className="h-3.5 w-3.5 mr-1" />Encerrar</>}
+            </Button>
           </div>
         ) : globalRunning ? (
           <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 px-4 py-3 flex items-center gap-3">
@@ -121,6 +140,15 @@ export function QueuePanel({ companyId, pollIntervalMs = 5000 }: Props) {
                 <span className="flex-1 truncate text-xs text-muted-foreground">Run {r.runId.slice(-8)}</span>
                 <Badge variant="secondary">#{r.position + 1} na fila</Badge>
                 <span className="text-xs text-muted-foreground">{formatRelative(r.createdAt)}</span>
+                <Button
+                  variant="ghost" size="icon"
+                  className="h-6 w-6 text-red-600 hover:text-red-700 hover:bg-red-500/10"
+                  disabled={cancelling === r.runId}
+                  onClick={() => cancelRun(r.runId)}
+                  title="Encerrar run"
+                >
+                  {cancelling === r.runId ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+                </Button>
               </div>
             ))}
           </div>
