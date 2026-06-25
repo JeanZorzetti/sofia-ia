@@ -89,7 +89,8 @@ const menuSections: MenuSection[] = [
     // Capacidades que os agentes de um time usam (era "Plataforma").
     label: 'Capacidades',
     items: [
-      { href: '/dashboard/agents',       label: 'Empresas',      icon: Building2 },
+      { href: '/dashboard/empresas',     label: 'Empresas',      icon: Building2 },
+      { href: '/dashboard/agents',       label: 'Agentes',       icon: Users2 },
       { href: '/dashboard/skills',       label: 'Skills',        icon: Sparkles },
       { href: '/dashboard/mcp',          label: 'MCP Servers',   icon: Network },
       { href: '/dashboard/knowledge',    label: 'Knowledge Base', icon: Database },

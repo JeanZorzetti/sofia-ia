@@ -19,7 +19,8 @@ Plataforma de IA agentica (orquestracao multi-agente). O usuario cria agentes e 
 
 ## Features (do cerne ao periferico)
 1. **Teams** (CERNE) — orquestracao multi-agente: lead -> workers -> reviewer, git no worker (modo PR ou direto), agendamento (cron via `ScheduledTeamRun`), API publica (v1), templates de time, output webhooks. Coordinator = `runTeam` (INTOCADO; ver regra acima).
-2. **Agents** — criacao/config de agentes: plugins, skills, MCP servers, knowledge base (RAG), memoria, delegacao, selecao de modelo/provider.
+   - **Squads por Case de Uso** (009): Squad = Team com `companyId != null && status='active'`. Fila global WIP=1 via `pg_advisory_xact_lock` (src/lib/companies/squad-queue.ts). Rotas: `POST /api/companies/[id]/squads`, `POST .../run` (enfileira + `after(dispatchSquadQueue)`), `GET /api/squad-runs/queue`. Blueprints por nicho em `squad-blueprint.ts`; seed idempotente em `POST .../squads/seed`. UI: `/dashboard/empresas` (galeria) + `/dashboard/empresas/[companyId]` (squads, fila, organização).
+2. **Agents** — criacao/config de agentes: plugins, skills, MCP servers, knowledge base (RAG), memoria, delegacao, selecao de modelo/provider. Pool catalog: `/dashboard/agents`.
 3. **Skills / MCP / Models** — tooling dos agentes (skills, servidores MCP + tools, providers de IA).
 4. **Workflows** — automacao visual (flow-canvas; node `action_team` executa um Team inline).
 5. **Knowledge / Files** — base de conhecimento + embeddings (RAG).

@@ -1225,18 +1225,23 @@ model Team {
   config      Json     @default("{}")
   status      String   @default("active") @db.VarChar(20)
   createdBy   String   @map("created_by") @db.Uuid
+  // 009-usecase-squads: null = Time avulso (legado byte-idêntico); setado = squad de uma empresa.
+  // use case e squadKey vivem em config Json: { useCase?, squadKey? }
+  companyId   String?  @map("company_id") @db.Uuid
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  creator User         @relation(fields: [createdBy], references: [id])
-  members TeamMember[]
-  runs    TeamRun[]
+  creator  User         @relation(fields: [createdBy], references: [id])
+  company  Company?     @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  members  TeamMember[]
+  runs     TeamRun[]
   scheduledTeamRuns ScheduledTeamRun[]
   threadsCampaigns  ThreadsCampaign[]
   conversations     Conversation[]
 
   @@index([createdBy])
   @@index([status])
+  @@index([companyId])
   @@map("teams")
 }
 
@@ -1423,6 +1428,7 @@ model Company {
   creator User          @relation(fields: [createdBy], references: [id])
   roles   CompanyRole[]
   runs    CompanyRun[]
+  teams   Team[]
 
   @@index([createdBy])
   @@index([niche])

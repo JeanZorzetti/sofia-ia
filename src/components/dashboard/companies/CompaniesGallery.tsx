@@ -15,7 +15,14 @@ import { CompanyCard, type CompanySummary } from './CompanyCard'
 
 interface Niche { niche: string; label: string; roleCount: number }
 
-export function CompaniesGallery() {
+interface Props {
+  // 009-usecase-squads: base path para o detalhe da empresa.
+  // /agents → '/dashboard/agents/empresa'  (legado)
+  // /empresas → '/dashboard/empresas'       (novo)
+  empresasBasePath?: string
+}
+
+export function CompaniesGallery({ empresasBasePath = '/dashboard/agents/empresa' }: Props) {
   const router = useRouter()
   const [companies, setCompanies] = useState<CompanySummary[]>([])
   const [niches, setNiches] = useState<Niche[]>([])
@@ -53,7 +60,7 @@ export function CompaniesGallery() {
       const data = await res.json()
       if (data.success) {
         setOpen(false); setName('')
-        router.push(`/dashboard/agents/empresa/${data.data.id}`)
+        router.push(`${empresasBasePath}/${data.data.id}`)
       } else {
         setError(data.error || 'Falha ao criar empresa')
       }
@@ -87,7 +94,7 @@ export function CompaniesGallery() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {companies.map(c => <CompanyCard key={c.id} company={c} onNavigate={(id) => router.push(`/dashboard/agents/empresa/${id}`)} />)}
+          {companies.map(c => <CompanyCard key={c.id} company={c} onNavigate={(id) => router.push(`${empresasBasePath}/${id}`)} />)}
         </div>
       )}
 

@@ -178,3 +178,28 @@ export const putInfrastructureSchema = z.record(
 export const runCompanySchema = z.object({
   mission: z.string().min(1, 'mission é obrigatória'),
 })
+
+// --- Squads (009-usecase-squads) --------------------------------------------
+// Validação de input das rotas de Squad. Validação de domínio (1 lead, agentes
+// do dono, teto de membros) continua nos helpers de squad-store; aqui só tipos.
+
+const squadMemberSchema = z.object({
+  agentId: z.string().uuid('agentId deve ser UUID'),
+  role: z.enum(['lead', 'worker', 'reviewer'], { message: 'role deve ser lead, worker ou reviewer' }),
+})
+
+export const createSquadSchema = z.object({
+  name: z.string().min(1, 'name é obrigatório'),
+  useCase: z.string().min(1, 'useCase é obrigatório'),
+  members: z.array(squadMemberSchema).min(1, 'members não pode ser vazio'),
+})
+
+export const patchSquadSchema = z.object({
+  name: z.string().min(1).optional(),
+  useCase: z.string().min(1).optional(),
+  members: z.array(squadMemberSchema).optional(),
+})
+
+export const runSquadSchema = z.object({
+  mission: z.string().min(1, 'mission é obrigatória'),
+})
