@@ -81,9 +81,18 @@ export interface CodeChatFnOptions {
    *  any failure → null → no enrichment. Absent dep ⇒ legacy behavior for ALL turns
    *  (byte-identical), which is what the c0..c3 verifies rely on. */
   resolveMemberRole?: (opts: { agentId: string; memberId?: string | null }) => Promise<TeamRole | null>
+  /** Resolve the agent's OWN configured model (DB-backed, injected by the worker) so a
+   *  WORKER execution turn whose member carries NO model override (member.model = null —
+   *  the squad/blueprint roster default) still routes to the in-sandbox Claude CLI when
+   *  the agent itself is claude-*. Without this, a null member override made the Option B
+   *  gate fall back to the legacy @RUN/host path → the worker edited /app instead of the
+   *  cloned repo → the reviewer (reading the repo) correctly saw "nothing changed".
+   *  Best-effort: absent dep / any failure → null → today's exact behavior (member.model
+   *  alone decides), so the optionb-verify A–D cases stay byte-identical. */
+  resolveAgentModel?: (agentId: string) => Promise<string | null>
 }
 
-const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store' | 'claudeToken' | 'resolveMcpServers' | 'syncAttachments' | 'resolveMemberRole'> = {
+const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store' | 'claudeToken' | 'resolveMcpServers' | 'syncAttachments' | 'resolveMemberRole' | 'resolveAgentModel'> = {
   maxSteps: 8,
   perCommandTimeoutMs: 120_000,
   maxOutputChars: 4_000,
@@ -139,7 +148,7 @@ export function createCodeChatFn(
   options: CodeChatFnOptions = {},
 ): ChatFn {
   const { maxSteps, perCommandTimeoutMs, maxOutputChars } = { ...DEFAULTS, ...options }
-  const { workdir, store, claudeToken, resolveMcpServers, syncAttachments, resolveMemberRole } = options
+  const { workdir, store, claudeToken, resolveMcpServers, syncAttachments, resolveMemberRole, resolveAgentModel } = options
 
   return async (agentId, messages, leadContext, chatOptions) => {
     // ── Option B: native Claude CLI inside the sandbox ──
@@ -147,7 +156,16 @@ export function createCodeChatFn(
     // it natively in the sandbox (it edits the repo with its own tools) instead of the
     // @RUN text proxy, which the autonomous CLI ignores (it would edit the worker FS).
     // Lead/reviewer/consolidation turns have no taskId → unaffected (stay text-only).
-    const cliModel = chatOptions?.model
+    //
+    // Effective model = member override (chatOptions.model) FALLING BACK to the agent's
+    // own model when the override is null (squad/blueprint rosters don't set member.model
+    // → it was null → the gate missed claude-* workers → they ran on the host /app and the
+    // repo stayed unedited). Only resolved for a worker turn with no override, and only
+    // when the resolver is injected → all other paths byte-identical.
+    let cliModel = chatOptions?.model
+    if (!cliModel && chatOptions?.taskId && resolveAgentModel) {
+      cliModel = await resolveAgentModel(agentId).catch(() => null)
+    }
     if ((hasClaudeTokenPool() || claudeToken) && chatOptions?.taskId && cliModel && providerOf(cliModel) === 'claude-cli') {
       const firstUser = messages.find(m => m.role === 'user')
       const taskText = firstUser?.content ?? messages.map(m => m.content).join('\n\n')

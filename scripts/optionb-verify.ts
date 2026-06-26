@@ -130,6 +130,53 @@ async function main() {
     assert.equal(sbx.writes.length, 0)
     ok('worker + claude-* without token → @RUN fallback')
   }
+  {
+    // E (regression fix): worker turn with NO member model override (member.model = null —
+    // the squad/blueprint roster default) but the agent IS claude-* via resolveAgentModel →
+    // MUST still run claude IN the sandbox (not the host /app path that loses the repo edits).
+    const sbx = fakeSandbox(SAMPLE_STREAM)
+    const chat = scriptedChat(['NUNCA CHAMADO'])
+    const codeChat = createCodeChatFn(sbx, chat, {
+      workdir: '/home/user/repo', claudeToken: 'tok-123',
+      resolveAgentModel: async () => 'claude-sonnet-4-6',
+    })
+    const res = await codeChat('w1', [{ role: 'user', content: 'crie f.txt' }], undefined, { model: null, taskId: 't1' })
+
+    assert.equal(chat.n, 0, 'baseChat NOT used — resolved agent model routes to sandbox')
+    assert.ok(sbx.execCalls[0]?.cmd.includes('claude --print'), 'runs claude in sandbox via agent model')
+    assert.ok(sbx.execCalls[0]?.cmd.includes('--model claude-sonnet-4-6'), 'uses the resolved agent model')
+    assert.equal(res.message, 'Criei o arquivo f.txt')
+    ok('worker + null override + claude-* agent → in-sandbox (regression fix)')
+  }
+  {
+    // E2: the fallback is OPT-IN — without resolveAgentModel a null override stays on the
+    // legacy @RUN proxy (byte-identical to pre-fix), so nothing changes for existing callers.
+    const sbx = fakeSandbox(SAMPLE_STREAM)
+    const chat = scriptedChat(['proxy'])
+    const codeChat = createCodeChatFn(sbx, chat, { workdir: '/home/user/repo', claudeToken: 'tok-123' })
+    await codeChat('w1', [{ role: 'user', content: 'x' }], undefined, { model: null, taskId: 't1' })
+
+    assert.equal(chat.n, 1, 'no resolver → null override stays on @RUN proxy')
+    assert.equal(sbx.writes.length, 0)
+    ok('worker + null override + NO resolver → @RUN proxy (legacy, opt-in)')
+  }
+  {
+    // E3: a non-worker turn (no taskId) never triggers the agent-model resolution → the
+    // reviewer/lead stay on the read-only co-located text path even with the resolver present.
+    const sbx = fakeSandbox(SAMPLE_STREAM)
+    const chat = scriptedChat(['@APPROVE'])
+    let resolverCalls = 0
+    const codeChat = createCodeChatFn(sbx, chat, {
+      workdir: '/home/user/repo', claudeToken: 'tok-123',
+      resolveAgentModel: async () => { resolverCalls++; return 'claude-sonnet-4-6' },
+    })
+    const res = await codeChat('rev', [{ role: 'user', content: 'revise' }], undefined, { model: null })
+
+    assert.equal(resolverCalls, 0, 'no taskId → agent-model resolver NOT called')
+    assert.equal(sbx.writes.length, 0, 'reviewer never runs claude in sandbox')
+    assert.equal(res.message, '@APPROVE')
+    ok('non-worker turn → resolver skipped, reviewer stays read-only')
+  }
 
   console.log(`\n✅ all ${passed} assertions passed`)
 }

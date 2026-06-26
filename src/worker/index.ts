@@ -89,6 +89,21 @@ async function resolveMemberRole({ memberId }: { agentId: string; memberId?: str
   }
 }
 
+// DB-backed resolver for the AGENT's own configured model, injected into the code-agent so a
+// WORKER turn whose member carries NO model override (member.model = null — squad/blueprint
+// rosters never set it) still routes to the in-sandbox Claude CLI when the agent is claude-*.
+// Without it the null override made the worker run on the host /app, so its edits never landed
+// in the cloned repo and the reviewer correctly reported "nothing changed". Best-effort: any
+// miss/failure → null → the member override alone decides (legacy behavior).
+async function resolveAgentModel(agentId: string): Promise<string | null> {
+  try {
+    const a = await prisma.agent.findUnique({ where: { id: agentId }, select: { model: true } })
+    return a?.model ?? null
+  } catch {
+    return null
+  }
+}
+
 // Custom E2B template (with claude/git/node pre-installed); undefined → provider base.
 const SANDBOX_TEMPLATE = process.env.SANDBOX_TEMPLATE || undefined
 
@@ -145,7 +160,7 @@ async function runWithRepo(sandbox: Sandbox, workdir: string, runId: string, rep
   // Share ONE store so the code-agent can stream partial artifacts mid-loop (C2.1).
   // C3: inject getTaskDiff so the reviewer sees the real working-tree diff (vs base).
   const store = createPrismaTeamStore()
-  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole }))
+  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole, resolveAgentModel }))
   await runTeamByTopology(runId, {
     store,
     chat: codeChat,
@@ -266,7 +281,7 @@ async function continueWithRepo(sandbox: Sandbox, workdir: string, runId: string
   await prisma.teamRun.update({ where: { id: runId }, data: { sandboxId: sandbox.id } }).catch(() => {})
 
   const store = createPrismaTeamStore()
-  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole }))
+  const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole, resolveAgentModel }))
   await runTeamByTopology(runId, {
     store,
     chat: codeChat,
@@ -343,7 +358,7 @@ const worker = new Worker<CodeRunJob>(
           .update({ where: { id: runId }, data: { sandboxId: sandbox.id } })
           .catch(() => {}) // best-effort metadata write
         const store = createPrismaTeamStore()
-        const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: sandbox.rootDir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole }))
+        const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: sandbox.rootDir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole, resolveAgentModel }))
         await runTeamByTopology(runId, { store, chat: codeChat })
       }
       await dispatchTeamOutputs(runId)
