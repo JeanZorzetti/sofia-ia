@@ -9,7 +9,7 @@ import {
   ClipboardList, MessageSquare, CheckCircle2, XCircle, History, Sparkles,
   Clock, Coins, Repeat, Network, Terminal as TerminalIcon, MessageCircle, Code2,
   GitBranch, GitPullRequest, ExternalLink, ChevronRight, ChevronDown,
-  ArrowDownLeft, ArrowUpRight, Link2, Maximize2, ImagePlus, X, MonitorPlay,
+  ArrowDownLeft, ArrowUpRight, Link2, Maximize2, ImagePlus, X, MonitorPlay, FileDiff,
 } from 'lucide-react'
 
 import { TeamOutputsPanel } from './TeamOutputsPanel'
@@ -77,8 +77,10 @@ interface Msg { id: string; fromMemberId: string | null; toMemberId: string | nu
 interface Metrics { turnsUsed: number | null; tokensUsed: number | null; estimatedCost: number | null; durationMs: number | null }
 interface MemberUsageEntry { memberId: string | null; tokens: number }
 interface CommandRun { cmd: string; stdout: string; stderr: string; exitCode: number; ms: number }
-interface TerminalTask { taskId: string; title: string; artifacts: { commands: CommandRun[] } }
 interface ChangedFile { path: string; status: string; patch?: string; truncated?: boolean; binary?: boolean }
+// 010: artifacts now carries scopedDiff (diff isolated to this task's worker turn).
+// Prefer it over reviewDiff (global working-tree diff) when both are present.
+interface TerminalTask { taskId: string; title: string; artifacts: { commands: CommandRun[]; scopedDiff?: ChangedFile[]; reviewDiff?: ChangedFile[] } }
 interface Delivery { repoUrl: string | null; branch: string | null; prUrl: string | null; commitSha: string | null; changedFiles: ChangedFile[] }
 
 const EMPTY_DELIVERY: Delivery = { repoUrl: null, branch: null, prUrl: null, commitSha: null, changedFiles: [] }
@@ -640,6 +642,26 @@ export default function TeamRunView({ teamId }: { teamId: string }) {
 
       {/* Terminal (code-runs only): per-task sandbox command transcripts — xterm.js (C2) */}
       {terminal.length > 0 && <SandboxTerminal tasks={terminal} />}
+
+      {/* 010: per-task diffs — scopedDiff (isolated to this task's turn) preferred over
+          reviewDiff (global). Only shown when at least one task has a diff with patches. */}
+      {terminal.some(t => (t.artifacts.scopedDiff ?? t.artifacts.reviewDiff)?.some(f => f.patch)) && (
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4 space-y-4">
+          <h2 className="font-semibold text-white text-sm flex items-center gap-2">
+            <FileDiff className="h-4 w-4 text-purple-400" /> Diffs por tarefa
+          </h2>
+          {terminal.map(t => {
+            const files = t.artifacts.scopedDiff ?? t.artifacts.reviewDiff ?? []
+            if (!files.some(f => f.patch)) return null
+            return (
+              <div key={t.taskId} className="space-y-2">
+                <div className="text-[12px] font-medium text-white/60">{t.title}</div>
+                <DiffViewer changedFiles={files} />
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {/* Code delivery (code-runs bound to a repo — Sub-projeto C C1): branch + PR + changed files */}
       {(delivery.branch || delivery.prUrl || delivery.changedFiles.length > 0) && (
