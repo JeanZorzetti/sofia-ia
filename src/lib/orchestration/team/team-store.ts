@@ -104,6 +104,13 @@ function coerceHistory(raw: unknown): TaskHistoryEvent[] | undefined {
   return Array.isArray(raw) ? (raw as TaskHistoryEvent[]) : undefined
 }
 
+/** Coerce the `artifacts` Json column into `CodeArtifacts`. NULL/absent (legacy task or
+ *  chat-run) → undefined, so callers can safely fall back to the global diff. */
+function coerceArtifacts(raw: unknown): CodeArtifacts | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined
+  return raw as CodeArtifacts
+}
+
 export interface TeamStore {
   loadRun(runId: string): Promise<LoadedRun | null>
   getRunStatus(runId: string): Promise<RunStatus | null>
@@ -200,6 +207,9 @@ export function createPrismaTeamStore(): TeamStore {
         retryCount: t.retryCount, position: t.position, dependsOn: t.dependsOn,
         related: t.related,
         historyEvents: coerceHistory(t.historyEvents),
+        // 010: surface artifacts (includes scopedDiff) so buildReviewPrompt can
+        // prefer the scoped diff over the global reviewDiff. Absent on legacy tasks.
+        artifacts: coerceArtifacts(t.artifacts),
       }))
     },
 

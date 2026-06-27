@@ -52,6 +52,26 @@ describe('buildReviewPrompt', () => {
     expect(out).toContain('@APPROVE')
     expect(out).toContain('@REJECT')
   })
+
+  // T005 — 010: scopedDiff takes precedence; without it, output is byte-identical to legacy
+  it('uses scopedDiff when present (010)', () => {
+    const scoped = [{ path: 'src/only-this.ts', status: 'M', patch: '-old\n+new' }]
+    const global = [{ path: 'src/other.ts', status: 'M', patch: '-x\n+y' }]
+    const taskWithArtifacts = { ...task, status: 'review' as const, result: 'ok', artifacts: { commands: [], scopedDiff: scoped } }
+    const out = buildReviewPrompt(taskWithArtifacts, global)
+    expect(out).toContain('src/only-this.ts')
+    expect(out).not.toContain('src/other.ts')
+  })
+
+  it('falls back to global diff when scopedDiff absent (byte-identical legacy, 010)', () => {
+    const global = [{ path: 'src/other.ts', status: 'M', patch: '-x\n+y' }]
+    const taskNoScoped = { ...task, status: 'review' as const, result: 'ok' }
+    const outWith = buildReviewPrompt(taskNoScoped, global)
+    const outLegacy = buildReviewPrompt({ ...taskNoScoped, artifacts: { commands: [], reviewDiff: global } }, global)
+    // Both paths should show the global file
+    expect(outWith).toContain('src/other.ts')
+    expect(outLegacy).toContain('src/other.ts')
+  })
 })
 
 describe('buildConsolidationPrompt', () => {

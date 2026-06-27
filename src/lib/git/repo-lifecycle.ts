@@ -273,6 +273,34 @@ export function attachDiffs(changedFiles: ChangedFile[], fullPatch: string, caps
 }
 
 /**
+ * Capture the diff between two git tree-ish objects (010 — scoped diff per task).
+ * `before` and `after` are SHA1 tree objects produced by `git write-tree`.
+ * Returns the delta as `ChangedFile[]` with per-file patches, capped by `caps`.
+ *
+ * Best-effort: any failure (non-zero exit, exception) returns `[]` so a snapshot
+ * problem never blocks the review. Pure-ish — unit-tested with a fake sandbox.
+ */
+export async function captureTreeDiff(
+  sandbox: Sandbox,
+  opts: { workdir: string; before: string; after: string; caps?: DiffCaps },
+): Promise<ChangedFile[]> {
+  const wd = shQuote(opts.workdir)
+  const before = shQuote(opts.before)
+  const after = shQuote(opts.after)
+  try {
+    const nameStatus = await sandbox.exec(`git -C ${wd} diff --name-status ${before} ${after}`)
+    if (nameStatus.exitCode !== 0) return []
+    const changedFiles = parseChangedFiles(nameStatus.stdout)
+    if (changedFiles.length === 0) return []
+    const full = await sandbox.exec(`git -C ${wd} diff ${before} ${after}`)
+    if (full.exitCode !== 0) return changedFiles
+    return attachDiffs(changedFiles, full.stdout, opts.caps ?? DEFAULT_DIFF_CAPS)
+  } catch {
+    return []
+  }
+}
+
+/**
  * Capture the WORKING-TREE diff against the base, per file, capped (C3).
  * Used to feed the reviewer the real changes mid-run — BEFORE any commit, so it
  * diffs `<base>` (the cloned base branch, e.g. `main`/`master`), NOT

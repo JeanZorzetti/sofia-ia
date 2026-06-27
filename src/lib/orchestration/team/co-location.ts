@@ -33,7 +33,8 @@ planejar tarefas que referenciem arquivos que EXISTEM de fato, não suposições
 
 const REVIEWER_HINT = `
 CONTEXTO — você revisa um code-run com o REPOSITÓRIO real disponível no diretório de trabalho.
-Além do diff que você recebeu, você PODE verificar o trabalho rodando comandos read-only contra o repo vivo:
+O diff que você recebeu contém SOMENTE as mudanças da tarefa DESTA revisão (não de outras tarefas do mesmo run).
+Além do diff, você PODE verificar o trabalho rodando comandos read-only contra o repo vivo:
 - @RUN npm test               (ou o script de teste do projeto)
 - @RUN npm run build          (para confirmar que compila)
 - @RUN grep -rn "<termo>" .   (para conferir que algo foi de fato aplicado)

@@ -80,6 +80,10 @@ export interface TaskRow {
    *  on legacy tasks. The coordinator never reads it — the store writes it from each
    *  transition and S2.2 renders it in TeamRunView. */
   historyEvents?: TaskHistoryEvent[] | null
+  /** 010: code-run side-channel artifacts. Optional so legacy tasks and in-memory test
+   *  stores stay valid (absent → no diff to show). `scopedDiff` takes precedence over
+   *  `reviewDiff` when the reviewer evaluates this task (buildReviewPrompt). */
+  artifacts?: CodeArtifacts
 }
 
 /** Message as the coordinator sees it. */
@@ -173,10 +177,14 @@ export interface ReviewDiffFile {
  *    a code-agent ChatResult.
  *  - `reviewDiff`: the per-file working-tree diff shown to the reviewer (C3),
  *    written separately at review time (see UpdateTaskInput, which accepts a
- *    Partial<CodeArtifacts> so a reviewDiff-only write doesn't require commands). */
+ *    Partial<CodeArtifacts> so a reviewDiff-only write doesn't require commands).
+ *  - `scopedDiff`: diff isolated to THIS worker's turn (010 — delta TREE_BEFORE→TREE_AFTER).
+ *    Takes precedence over `reviewDiff` when the reviewer evaluates this task. Absent on
+ *    legacy tasks and chat-runs (reviewer falls back to `reviewDiff`). */
 export interface CodeArtifacts {
   commands: CommandRun[]
   reviewDiff?: ReviewDiffFile[]
+  scopedDiff?: ReviewDiffFile[]
 }
 
 export interface ChatResult {

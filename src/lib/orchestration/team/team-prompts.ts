@@ -170,7 +170,10 @@ export function renderDiffForReview(files: ChangedFile[]): string {
 }
 
 export function buildReviewPrompt(task: TaskRow, diff?: ChangedFile[]): string {
-  const rendered = renderDiffForReview(diff ?? [])
+  // 010: scopedDiff (isolated to this worker's turn) takes precedence over the
+  // global diff; falls back to `diff` param for legacy runs / chat-runs (byte-identical).
+  const effectiveDiff = (task.artifacts?.scopedDiff as ChangedFile[] | undefined) ?? diff ?? []
+  const rendered = renderDiffForReview(effectiveDiff)
   // The diff block is purely ADDITIVE: with no diff the output is byte-identical
   // to the pre-C3 prompt (chat-runs / C0 unchanged).
   const diffSection = rendered

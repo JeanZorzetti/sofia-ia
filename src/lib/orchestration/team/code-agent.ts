@@ -15,6 +15,7 @@ import { buildColocationContext } from './co-location'
 import { providerOf } from '../../ai/model-availability'
 import { runClaudeInSandbox } from './sandbox-cli-agent'
 import { withClaudeTokenFailover, hasClaudeTokenPool, ClaudeRateLimitError } from '../../ai/claude-token-pool'
+import { captureTreeDiff, shQuote } from '../../git/repo-lifecycle'
 
 const CODE_PROTOCOL_PROMPT = `
 Você está num SANDBOX Linux isolado e efêmero, com shell. Para EXECUTAR algo, responda com diretivas (uma por linha):
@@ -98,6 +99,21 @@ const DEFAULTS: Omit<Required<CodeChatFnOptions>, 'workdir' | 'store' | 'claudeT
   maxOutputChars: 4_000,
 }
 
+/** Take a git tree snapshot of `workdir` (010 — scoped diff). Best-effort: returns null
+ *  on any failure so a broken git state never crashes the worker turn. */
+async function snapshotTree(sandbox: Sandbox, workdir: string): Promise<string | null> {
+  try {
+    const wd = shQuote(workdir)
+    const add = await sandbox.exec(`git -C ${wd} add -A`)
+    if (add.exitCode !== 0) return null
+    const wt = await sandbox.exec(`git -C ${wd} write-tree`)
+    if (wt.exitCode !== 0) return null
+    return wt.stdout.trim() || null
+  } catch {
+    return null
+  }
+}
+
 function truncate(s: string, max: number): string {
   if (s.length <= max) return s
   return `${s.slice(0, max)}\n…[+${s.length - max} chars truncados]`
@@ -151,6 +167,10 @@ export function createCodeChatFn(
   const { workdir, store, claudeToken, resolveMcpServers, syncAttachments, resolveMemberRole, resolveAgentModel } = options
 
   return async (agentId, messages, leadContext, chatOptions) => {
+    // ── 010: snapshot TREE_BEFORE for scoped diff (worker turn with repo only) ──
+    const isWorkerTurn = Boolean(chatOptions?.taskId && workdir)
+    const treeBefore = isWorkerTurn ? await snapshotTree(sandbox, workdir!) : null
+
     // ── Option B: native Claude CLI inside the sandbox ──
     // A WORKER execution turn (taskId present) whose member runs the Claude CLI: run
     // it natively in the sandbox (it edits the repo with its own tools) instead of the
@@ -189,6 +209,17 @@ export function createCodeChatFn(
       // C2.1 live stream: persist the reconstructed command log so the terminal shows it.
       if (store && result.artifacts) {
         try { await store.updateTask(chatOptions.taskId, { artifacts: { commands: result.artifacts.commands } }) } catch { /* live-stream only */ }
+      }
+      // 010: capture TREE_AFTER and attach scopedDiff to artifacts so the coordinator
+      // persists it via its existing updateTask({ artifacts: out.artifacts }) write.
+      if (treeBefore && workdir) {
+        try {
+          const treeAfter = await snapshotTree(sandbox, workdir)
+          if (treeAfter) {
+            const scopedDiff = await captureTreeDiff(sandbox, { workdir, before: treeBefore, after: treeAfter })
+            return { ...result, artifacts: { ...(result.artifacts ?? { commands: [] }), scopedDiff } }
+          }
+        } catch { /* best-effort — return original result */ }
       }
       return result
     }
@@ -263,11 +294,20 @@ export function createCodeChatFn(
       if (step === maxSteps - 1) finalMessage = out.message.trim()
     }
 
+    // 010: capture TREE_AFTER and attach scopedDiff for the legacy @RUN path.
+    let scopedDiff: Awaited<ReturnType<typeof captureTreeDiff>> | undefined
+    if (treeBefore && workdir) {
+      try {
+        const treeAfter = await snapshotTree(sandbox, workdir)
+        if (treeAfter) scopedDiff = await captureTreeDiff(sandbox, { workdir, before: treeBefore, after: treeAfter })
+      } catch { /* best-effort */ }
+    }
+
     return {
       message: finalMessage,
       model: lastModel,
       usage: { total_tokens: totalTokens },
-      artifacts: { commands },
+      artifacts: scopedDiff !== undefined ? { commands, scopedDiff } : { commands },
     }
   }
 }

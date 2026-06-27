@@ -5,7 +5,7 @@ import assert from 'node:assert/strict'
 import { captureWorkingDiff, type ChangedFile } from '../src/lib/git/repo-lifecycle'
 import { buildReviewPrompt, renderDiffForReview } from '../src/lib/orchestration/team/team-prompts'
 import { runTeam } from '../src/lib/orchestration/team/team-coordinator'
-import type { ChatFn, ChatResult, TaskRow, MessageRow, TaskStatus } from '../src/lib/orchestration/team/team-types'
+import type { ChatFn, ChatResult, TaskRow, MessageRow, TaskStatus, CodeArtifacts } from '../src/lib/orchestration/team/team-types'
 import type { TeamStore, LoadedRun, CreateTaskInput, UpdateTaskInput, AddMessageInput } from '../src/lib/orchestration/team/team-store'
 import type { Sandbox, CommandResult, ExecOptions } from '../src/lib/sandbox/types'
 
@@ -208,7 +208,7 @@ function makeStore(): TeamStore & { tasksById: Map<string, TaskRow & { artifacts
       if (data.retryCount !== undefined) t.retryCount = data.retryCount
       if (data.artifacts !== undefined) {
         const prev = (t.artifacts && typeof t.artifacts === 'object' ? t.artifacts : {}) as Record<string, unknown>
-        t.artifacts = { ...prev, ...data.artifacts }
+        t.artifacts = { ...prev, ...data.artifacts } as CodeArtifacts
       }
     },
     async listMessages() { return messages },

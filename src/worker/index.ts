@@ -28,6 +28,7 @@ import { sweepVpsRunDirs } from '@/lib/sandbox/vps-local'
 import type { Sandbox } from '@/lib/sandbox/types'
 import { startSandboxHeartbeat } from '@/lib/sandbox/heartbeat'
 import { setupRepo, commitAndPush, openPullRequest, buildPrBody, captureWorkingDiff } from '@/lib/git/repo-lifecycle'
+import { withReviewerSerialization } from '@/lib/orchestration/team/serialize-store'
 import { planGitDelivery } from '@/lib/git/git-delivery-plan'
 import { dispatchTeamOutputs } from '@/lib/orchestration/team/team-outputs'
 import { detectPreviewPlan, deriveProjectDir, readPreviewOverride, startPreviewServer, PREVIEW_TTL_MS, PREVIEW_SANDBOX_MARGIN_MS } from '@/lib/orchestration/team/preview-server'
@@ -159,7 +160,9 @@ async function runWithRepo(sandbox: Sandbox, workdir: string, runId: string, rep
   // EXECUTION — agents edit files inside the repo dir; coordinator unchanged.
   // Share ONE store so the code-agent can stream partial artifacts mid-loop (C2.1).
   // C3: inject getTaskDiff so the reviewer sees the real working-tree diff (vs base).
-  const store = createPrismaTeamStore()
+  // 010: wrap with serialization decorator so workers run one at a time when there
+  // is a reviewer (ensures snapshot before/after is attributable to a single worker).
+  const store = withReviewerSerialization(createPrismaTeamStore())
   const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole, resolveAgentModel }))
   await runTeamByTopology(runId, {
     store,
@@ -280,7 +283,8 @@ async function continueWithRepo(sandbox: Sandbox, workdir: string, runId: string
   }
   await prisma.teamRun.update({ where: { id: runId }, data: { sandboxId: sandbox.id } }).catch(() => {})
 
-  const store = createPrismaTeamStore()
+  // 010: same serialization decorator as runWithRepo (scoped diff requires 1 worker at a time).
+  const store = withReviewerSerialization(createPrismaTeamStore())
   const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole, resolveAgentModel }))
   await runTeamByTopology(runId, {
     store,
