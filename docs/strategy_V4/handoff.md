@@ -17,10 +17,11 @@
 
 ## Próximos passos (em ordem)
 
-1. Jean valida os 3 docs (especialmente: H1 candidata, modelo comercial §5, nomear ou não concorrentes na seção comparativa).
-2. `speckit-specify` da nova home usando `03-home-sites.md` como insumo (escopo: home nova + `/plataforma` + form de intake, nada além).
-3. Definir preços da Fase 0 antes de publicar a home (CTA promete brief → precisa de resposta comercial pronta).
-4. Preparar o case estetia como prova (screenshot, métricas de performance/SEO).
+1. ~~Jean valida os 3 docs~~ **VALIDADO 2026-07-07.** Decisão adicional na validação: **BYOS** — usuário não precisa de API paga; adiciona token da própria assinatura Claude (`claude setup-token`) em campo exclusivo por conta, com instruções na UI (registrado no §4/§5 do 03; spec própria criada).
+2. Spec BYOS (campos por usuário + injeção no executor) → clarify/plan/tasks/implement.
+3. `speckit-specify` da nova home usando `03-home-sites.md` como insumo (escopo: home nova + `/plataforma` + form de intake, nada além).
+4. Definir preços da Fase 0 antes de publicar a home (CTA promete brief → precisa de resposta comercial pronta).
+5. Preparar o case estetia como prova (screenshot, métricas de performance/SEO).
 
 ## Pendências / decisões em aberto
 

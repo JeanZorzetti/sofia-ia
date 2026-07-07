@@ -53,13 +53,15 @@ Metadados/SEO da home mudam junto (title, description, schema `Service` em vez d
 - **Fase 0 — imediata (só home + formulário):** a home nova vende o resultado; intake vira brief; um squad interno roda com humano no loop; entrega concierge. Nenhuma feature nova no produto além da landing + form. Volume limitado pelo pool de contas claude-cli — e isso é ok: concierge é margem, prova e aprendizado.
 - **Fase 1 — produtizar o pipeline:** blueprint "site squad" formalizado (blueprints por nicho já existem — 009), preview URL por run, fluxo de aprovação do cliente, checklist de QA (SEO/perf/a11y) como gate do reviewer.
 - **Fase 2 — self-service:** cliente acompanha o run no dashboard (UI já existe), solicita alterações que viram novas tasks. Só depois de Fase 0/1 provarem demanda.
+  - **Pré-requisito (decisão Jean 07-07): BYOS — Bring Your Own Subscription.** O usuário NÃO precisa de token de API paga: adiciona o token da própria assinatura mensal do Claude (gerado com `claude setup-token` — caminho oficial do CLI), em campo exclusivo por conta de usuário, criptografado, com instruções passo a passo na UI. Runs daquele usuário usam a assinatura dele em vez do pool da plataforma. Vira spec própria (executor por injeção, coordinator intocado).
 
-**Restrições reais a respeitar:** custo por run = rate limit do pool claude-cli (escalar = somar contas — `docs/Claude/POLARIS-TOKEN-POOL.md`); não prometer prazo que o pool não sustenta; seção comparativa cita apenas fatos publicados com fonte (risco jurídico ≈ zero se factual e sourced).
+**Restrições reais a respeitar:** custo por run = rate limit do pool claude-cli (escalar = somar contas — `docs/Claude/POLARIS-TOKEN-POOL.md`); **BYOS dissolve essa restrição no self-service** (cada usuário traz a própria capacidade); não prometer prazo que o pool não sustenta na fase concierge; seção comparativa cita apenas fatos publicados com fonte (risco jurídico ≈ zero se factual e sourced).
 
 ## 5. Modelo comercial (proposta, decidir antes da Fase 0)
 
 - **Site entregue:** preço fechado por escopo (landing / site institucional / site + blog), pago por entrega — o anti-"créditos".
 - **Manutenção/evolução:** assinatura mensal opcional (alterações viram tasks de squad).
+- **Self-service (Fase 2):** usuário conecta a própria assinatura Claude (BYOS) — a mensalidade cobre a plataforma, não tokens de IA. Mensagem: "sem créditos, sem API paga: use a assinatura Claude que você já tem".
 - Billing atual (Mercado Pago) já suporta; não é bloqueio.
 
 ## 6. O que NÃO fazer
