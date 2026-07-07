@@ -8,6 +8,12 @@
 
 **Input**: User description: "BYOS — Bring Your Own Subscription: permitir que cada usuário da Polaris use a própria assinatura mensal do Claude em vez de tokens de API paga. O usuário adiciona o token OAuth da assinatura (gerado com `claude setup-token`, caminho oficial do Claude CLI) em um campo exclusivo da SUA conta de usuário, armazenado criptografado; a UI mostra instruções passo a passo de como gerar o token. Quando um Team/Squad run daquele usuário executa, o executor usa o token do usuário em vez do pool da plataforma (CLAUDE_CODE_OAUTH_TOKENS); se o usuário não tiver token cadastrado, comportamento atual (pool) permanece byte-idêntico. Restrições: coordinator runTeam INTOCADO; token nunca exposto em logs nem retornado em GET (write-only, mostrar só prefixo/últimos dígitos); suportar remover/rotacionar o token."
 
+## Clarifications
+
+### Session 2026-07-07
+
+- Q: No cadastro, verificar ativamente que o token funciona (chamada de teste) ou só validar formato? → A: Verificação ativa no cadastro — o sistema executa uma chamada de teste mínima com o token e só salva se funcionar (feedback imediato na tela). Vale também para rotação.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Cadastrar o token da própria assinatura e rodar com ela (Priority: P1)
@@ -21,9 +27,10 @@ Um usuário da Polaris que já paga a assinatura mensal do Claude abre as config
 **Acceptance Scenarios**:
 
 1. **Given** um usuário autenticado sem token cadastrado, **When** ele acessa a página de configurações da conta, **Then** vê o campo de token com instruções passo a passo de como gerá-lo (incluindo o comando oficial `claude setup-token` e o aviso de tratar o token como senha).
-2. **Given** o usuário colou um token com formato válido, **When** salva, **Then** o sistema confirma o cadastro e passa a exibir apenas a forma mascarada (prefixo + últimos 4 caracteres) com a data de cadastro.
-3. **Given** um usuário com token cadastrado, **When** dispara um run de Team ou Squad, **Then** todos os membros do run que executam via Claude CLI usam o token daquele usuário.
-4. **Given** um usuário com token cadastrado, **When** consulta qualquer tela ou endpoint da plataforma, **Then** o valor completo do token nunca é retornado (write-only).
+2. **Given** o usuário colou um token com formato válido, **When** salva, **Then** o sistema verifica ativamente o token com uma chamada de teste mínima e, só se funcionar, confirma o cadastro e passa a exibir apenas a forma mascarada (prefixo + últimos 4 caracteres) com a data de cadastro.
+3. **Given** o usuário colou um token com formato válido porém revogado/expirado, **When** salva, **Then** o cadastro é rejeitado na hora com mensagem clara de que o token não foi aceito (nada é salvo).
+4. **Given** um usuário com token cadastrado, **When** dispara um run de Team ou Squad, **Then** todos os membros do run que executam via Claude CLI usam o token daquele usuário.
+5. **Given** um usuário com token cadastrado, **When** consulta qualquer tela ou endpoint da plataforma, **Then** o valor completo do token nunca é retornado (write-only).
 
 ---
 
@@ -52,7 +59,7 @@ O usuário pode substituir o token por um novo (rotação) ou removê-lo. Após 
 
 **Acceptance Scenarios**:
 
-1. **Given** um usuário com token cadastrado, **When** cola um novo token e salva, **Then** o novo substitui o antigo (a máscara exibida muda) e os próximos runs usam o novo.
+1. **Given** um usuário com token cadastrado, **When** cola um novo token e salva, **Then** o novo passa pela mesma verificação ativa e, se aceito, substitui o antigo (a máscara exibida muda) e os próximos runs usam o novo; se rejeitado, o antigo permanece intacto.
 2. **Given** um usuário com token cadastrado, **When** remove o token, **Then** o valor é apagado definitivamente e os próximos runs voltam ao pool da plataforma.
 3. **Given** cadastro, rotação ou remoção de token, **When** a ação é concluída, **Then** um registro de auditoria é criado (quem, quando, qual ação — nunca o valor).
 
@@ -68,7 +75,7 @@ Quando o token do usuário falha (inválido, revogado, expirado) ou atinge o rat
 
 **Acceptance Scenarios**:
 
-1. **Given** um usuário com token inválido ou revogado, **When** dispara um run, **Then** o run falha com mensagem clara indicando que o token da assinatura não foi aceito e onde corrigi-lo — sem fallback silencioso para o pool.
+1. **Given** um usuário cujo token foi revogado/expirou **após** o cadastro (a verificação ativa barra tokens já mortos no cadastro), **When** dispara um run, **Then** o run falha com mensagem clara indicando que o token da assinatura não foi aceito e onde corrigi-lo — sem fallback silencioso para o pool.
 2. **Given** um run em execução com o token do usuário, **When** a assinatura dele atinge rate limit, **Then** o run entra no fluxo de resiliência já existente (estado de bloqueio/rate-limited com retomada), atribuído ao token do usuário e comunicado como tal.
 
 ---
@@ -79,6 +86,7 @@ Quando o token do usuário falha (inválido, revogado, expirado) ou atinge o rat
 - Runs agendados (cron) e disparos via API pública pertencem a um usuário → usam o token do dono do agendamento/da API key, com as mesmas regras.
 - Admin impersonando um usuário → não consegue ver o valor do token (a máscara sim); ações de cadastro/remoção durante impersonação ficam auditadas como impersonação.
 - Token colado com espaços/quebras de linha acidentais → sistema normaliza ou rejeita com mensagem clara de formato.
+- Verificação ativa falha por indisponibilidade temporária (não por token inválido) → a mensagem distingue "não foi possível verificar agora, tente novamente" de "token rejeitado"; nada é salvo em nenhum dos casos.
 - Usuário pertence a uma Organização → o token continua sendo pessoal (por conta de usuário), não da organização; membros não herdam token de outros membros.
 - Exports, backups e payloads de webhook → nunca incluem o valor do token.
 
@@ -97,7 +105,7 @@ Quando o token do usuário falha (inválido, revogado, expirado) ou atinge o rat
 - **FR-009**: Rate limit da assinatura do usuário DEVE reaproveitar o fluxo de resiliência existente (bloqueio/rate-limited com retomada), identificando que a limitação é da credencial do usuário.
 - **FR-010**: Cadastro, rotação e remoção do token DEVEM gerar registro de auditoria (usuário, ação, timestamp — nunca o valor).
 - **FR-011**: O token de um usuário NUNCA pode ser usado em runs de outro usuário (isolamento por conta, mesmo dentro da mesma Organização/Whitelabel).
-- **FR-012**: O sistema DEVE validar o formato do token no cadastro e rejeitar entradas malformadas com mensagem clara.
+- **FR-012**: No cadastro e na rotação, o sistema DEVE validar o formato do token E verificar ativamente que ele funciona (chamada de teste mínima); o token só é salvo se a verificação passar, com feedback imediato na tela. Entradas malformadas ou tokens rejeitados produzem mensagem clara e nada é salvo.
 
 ### Key Entities
 
@@ -112,6 +120,7 @@ Quando o token do usuário falha (inválido, revogado, expirado) ou atinge o rat
 - **SC-003**: O valor do token é irrecuperável pela plataforma após o cadastro: nenhuma tela, endpoint, log ou export o expõe (verificado por revisão dos pontos de saída).
 - **SC-004**: Em caso de token inválido, 100% dos runs afetados terminam com mensagem que aponta a causa e o local de correção (nada de falha silenciosa).
 - **SC-005**: Runs de usuários BYOS não consomem o pool da plataforma — custo marginal de IA desses runs para a Polaris = zero.
+- **SC-006**: 100% dos tokens salvos passaram por verificação ativa no momento do cadastro/rotação — nenhum run falha por token que já estava morto quando foi cadastrado.
 
 ## Assumptions
 
