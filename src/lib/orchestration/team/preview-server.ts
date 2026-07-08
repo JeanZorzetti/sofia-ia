@@ -112,12 +112,25 @@ export function readPreviewOverride(teamConfig: unknown): PreviewOverride {
 const delay = (ms: number) => new Promise<void>(r => setTimeout(r, ms))
 const tail = (s: string, n = 1200) => (s.length > n ? s.slice(-n) : s)
 
-/** HTTP status of a port inside the sandbox, '000' when nothing answers. */
+/** HTTP status of a port inside the sandbox, '000' when nothing answers. Uses node
+ *  (guaranteed in any sandbox running JS + the alpine worker) instead of curl, which is
+ *  NOT installed in the worker image — the curl probe always returned '000' (false negative,
+ *  so a healthy server read as "não respondeu"). */
 async function probePort(sandbox: Sandbox, workdir: string, port: number): Promise<string> {
+  const js = `const h=require("http");const q=h.get("http://localhost:${port}",r=>{process.stdout.write(String(r.statusCode));r.destroy();process.exit(0)});q.on("error",()=>{process.stdout.write("000");process.exit(0)});q.setTimeout(2500,()=>{process.stdout.write("000");q.destroy();process.exit(0)})`
   const r = await sandbox
-    .exec(`curl -s -o /dev/null -m 3 -w "%{http_code}" http://localhost:${port}`, { cwd: workdir, timeoutMs: 8_000 })
+    .exec(`node -e '${js}'`, { cwd: workdir, timeoutMs: 8_000 })
     .catch(() => null)
   return (r?.stdout || '').trim() || '000'
+}
+
+/** Best-effort: free a fixed preview port so the newest run's server can bind it
+ *  (vps-local shares one port across runs). Never throws. */
+async function killPort(sandbox: Sandbox, workdir: string, port: number): Promise<void> {
+  await sandbox
+    .exec(`fuser -k ${port}/tcp 2>/dev/null; pkill -f polaris-static-server 2>/dev/null; true`, { cwd: workdir, timeoutMs: 8_000 })
+    .catch(() => null)
+  await delay(1_000)
 }
 
 /** Single-quote a path for safe embedding in a shell command (handles spaces, e.g. `teste 2`). */
@@ -148,16 +161,20 @@ export interface StartPreviewResult {
  */
 export async function startPreviewServer(
   sandbox: Sandbox,
-  opts: { workdir: string; plan: PreviewPlan; installTimeoutMs?: number; readyTimeoutMs?: number },
+  opts: { workdir: string; plan: PreviewPlan; installTimeoutMs?: number; readyTimeoutMs?: number; replacePort?: boolean },
 ): Promise<StartPreviewResult> {
   const { workdir, plan } = opts
   const installTimeoutMs = opts.installTimeoutMs ?? 5 * 60_000
   const readyTimeoutMs = opts.readyTimeoutMs ?? 90_000
 
-  // Continuation: the dev/static server from the previous run is likely still bound on this
-  // port (the sandbox is reused). Reuse it — files are already updated (HMR for dev; the
-  // static server reads per-request) — so we skip install + a duplicate server.
-  if ((await probePort(sandbox, workdir, plan.port)) !== '000') {
+  if (opts.replacePort) {
+    // Fixed-port mode (vps-local): a stale server from a previous run may hold the shared
+    // port and serve the WRONG content — kill it so this run's server binds fresh.
+    await killPort(sandbox, workdir, plan.port)
+  } else if ((await probePort(sandbox, workdir, plan.port)) !== '000') {
+    // Continuation: the dev/static server from the previous run is likely still bound on this
+    // port (the sandbox is reused). Reuse it — files are already updated (HMR for dev; the
+    // static server reads per-request) — so we skip install + a duplicate server.
     return { url: await sandbox.getPreviewUrl(plan.port), port: plan.port }
   }
 

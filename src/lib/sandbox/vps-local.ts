@@ -89,8 +89,15 @@ class VpsLocalSandbox implements ISandbox {
     await fs.writeFile(filePath, content)
   }
 
+  // Lazy preview: the run's server binds the FIXED VPS_PREVIEW_PORT (forced by the worker),
+  // and one public subdomain (VPS_PREVIEW_URL) is mapped to it in EasyPanel. The dynamic port
+  // is ignored — one preview at a time. Unset → clear error (preview stays optional).
   async getPreviewUrl(_port: number): Promise<string> {
-    throw new Error('preview self-hosted indisponível (Fase 2)')
+    const base = process.env.VPS_PREVIEW_URL
+    if (!base) {
+      throw new Error('preview self-hosted indisponível: configure VPS_PREVIEW_URL (subdomínio público → worker:VPS_PREVIEW_PORT)')
+    }
+    return base.replace(/\/+$/, '')
   }
 
   // No-op: removes the ~1h ceiling. The heartbeat keeps calling this harmlessly.

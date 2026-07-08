@@ -244,12 +244,19 @@ async function startRunPreview(sandbox: Sandbox, workdir: string, runId: string)
     const previewWorkdir = projectDir ? `${workdir}/${projectDir}` : workdir
     const pkg = await sandbox.exec('cat package.json', { cwd: previewWorkdir, timeoutMs: 8_000 })
     const idx = await sandbox.exec('test -f index.html && echo yes || echo no', { cwd: previewWorkdir, timeoutMs: 8_000 })
+    // vps-local preview (lazy): one fixed port mapped to one public subdomain (VPS_PREVIEW_URL),
+    // so the server MUST bind VPS_PREVIEW_PORT and the previous run's server on it is replaced.
+    // Unset (e.g. E2B) → dynamic per-provider port + reuse, exactly as before.
+    const fixedPort = Number(process.env.VPS_PREVIEW_PORT) || undefined
+    const override = fixedPort
+      ? { ...readPreviewOverride(run.team?.config), port: fixedPort }
+      : readPreviewOverride(run.team?.config)
     const plan = detectPreviewPlan(
       pkg.exitCode === 0 ? pkg.stdout : null,
       idx.stdout.trim() === 'yes',
-      readPreviewOverride(run.team?.config),
+      override,
     )
-    const { url, port } = await startPreviewServer(sandbox, { workdir: previewWorkdir, plan })
+    const { url, port } = await startPreviewServer(sandbox, { workdir: previewWorkdir, plan, replacePort: !!fixedPort })
     await sandbox.setTimeout(PREVIEW_TTL_MS + PREVIEW_SANDBOX_MARGIN_MS).catch(() => {})
     await prisma.teamRun.update({
       where: { id: runId },
