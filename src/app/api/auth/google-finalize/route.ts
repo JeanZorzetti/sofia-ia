@@ -3,6 +3,12 @@ import { getToken } from 'next-auth/jwt'
 import { prisma } from '@/lib/prisma'
 import { signToken } from '@/lib/auth'
 
+// Redirects MUST come from the configured public URL: behind the EasyPanel proxy
+// `request.url`'s host is the container's internal bind (0.0.0.0:3000), so
+// `new URL('/dashboard', request.url)` sent users to https://0.0.0.0:3000/dashboard.
+// Same base pattern as /api/auth/sso/google/callback.
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://polarisia.com.br'
+
 // GET /api/auth/google-finalize
 // Chamado após OAuth do Google completar.
 // Lê o JWT do NextAuth → emite nosso sofia_token → redireciona para /dashboard
@@ -14,7 +20,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (!nextAuthToken?.dbUserId) {
-      return NextResponse.redirect(new URL('/login?error=oauth_failed', request.url))
+      return NextResponse.redirect(`${APP_URL}/login?error=oauth_failed`)
     }
 
     // Captura referral do cookie se for novo user
@@ -25,7 +31,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (!user || user.status !== 'active') {
-      return NextResponse.redirect(new URL('/login?error=account_inactive', request.url))
+      return NextResponse.redirect(`${APP_URL}/login?error=account_inactive`)
     }
 
     // Se vier referral cookie e user ainda não tem referredBy, salva
@@ -44,7 +50,7 @@ export async function GET(request: NextRequest) {
       role: user.role,
     })
 
-    const response = NextResponse.redirect(new URL('/dashboard', request.url))
+    const response = NextResponse.redirect(`${APP_URL}/dashboard`)
     response.cookies.set('sofia_token', polarisToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -56,6 +62,6 @@ export async function GET(request: NextRequest) {
     return response
   } catch (error) {
     console.error('[google-finalize] Error:', error)
-    return NextResponse.redirect(new URL('/login?error=server_error', request.url))
+    return NextResponse.redirect(`${APP_URL}/login?error=server_error`)
   }
 }
