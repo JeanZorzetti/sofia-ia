@@ -45,6 +45,10 @@ export class ClaudeCliService {
         // grant the CLI file access to the temp dir via --add-dir so a member can Read the
         // materialized image (vision). Absent → no flag (command byte-identical to legacy).
         attachmentDir?: string | null,
+        // 011-byos: kill deadline for the spawn. Defaults to the legacy 20 min (existing
+        // callers byte-identical); token verification passes a short one so a hung CLI
+        // doesn't stall the settings PUT.
+        timeoutMs: number = 20 * 60 * 1000,
     ): Promise<{ content: string; usage?: any }> {
         const tempDir = os.tmpdir();
         const randomId = Math.random().toString(36).substring(2, 15);
@@ -178,8 +182,8 @@ export class ClaudeCliService {
                 setTimeout(() => {
                     child.kill();
                     cleanup();
-                    reject(new Error('Claude CLI timed out after 20 minutes'));
-                }, 20 * 60 * 1000);
+                    reject(new Error(`Claude CLI timed out after ${Math.round(timeoutMs / 1000)}s`));
+                }, timeoutMs);
 
             } catch (err: any) {
                 cleanup();

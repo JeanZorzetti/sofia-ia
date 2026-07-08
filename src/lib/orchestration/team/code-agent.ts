@@ -15,6 +15,7 @@ import { buildColocationContext } from './co-location'
 import { providerOf } from '../../ai/model-availability'
 import { runClaudeInSandbox } from './sandbox-cli-agent'
 import { withClaudeTokenFailover, hasClaudeTokenPool, ClaudeRateLimitError } from '../../ai/claude-token-pool'
+import { currentClaudeTokenOverride } from '../../ai/claude-token-override'
 import { captureTreeDiff, shQuote } from '../../git/repo-lifecycle'
 
 const CODE_PROTOCOL_PROMPT = `
@@ -186,7 +187,10 @@ export function createCodeChatFn(
     if (!cliModel && chatOptions?.taskId && resolveAgentModel) {
       cliModel = await resolveAgentModel(agentId).catch(() => null)
     }
-    if ((hasClaudeTokenPool() || claudeToken) && chatOptions?.taskId && cliModel && providerOf(cliModel) === 'claude-cli') {
+    // 011-byos: the run owner's token (via ALS) also enables the native path — a user
+    // with a token must run natively even when the platform pool is empty.
+    const tokenOverride = currentClaudeTokenOverride()
+    if ((hasClaudeTokenPool() || claudeToken || tokenOverride) && chatOptions?.taskId && cliModel && providerOf(cliModel) === 'claude-cli') {
       const firstUser = messages.find(m => m.role === 'user')
       const taskText = firstUser?.content ?? messages.map(m => m.content).join('\n\n')
       const prompt = workdir ? `${CLI_REPO_PREAMBLE}\n\n---\n\n${taskText}` : taskText
@@ -197,15 +201,29 @@ export function createCodeChatFn(
       // S6: sync the run's images into the sandbox (idempotent) and grant the CLI read
       // access via --add-dir. Null when the run has no attachments → command unchanged.
       const addDir = syncAttachments ? await syncAttachments().catch(() => null) : null
-      // Token-pool failover: a rate-limited account throws ClaudeRateLimitError → retry
-      // the SAME task with the next account. Pool empty → single attempt with claudeToken.
-      const result = await withClaudeTokenFailover(
-        (token) => runClaudeInSandbox(sandbox, {
-          workdir, model: cliModel, prompt, token: token ?? '',
-          capabilities: chatOptions?.capabilities, mcpServers, addDir,
-        }),
-        { isLimited: (e) => e instanceof ClaudeRateLimitError, fallbackToken: claudeToken },
-      )
+      // 011-byos: with a per-run owner override, use THAT token (single attempt, no pool,
+      // no failover). A rate limit still throws ClaudeRateLimitError → resiliência 007/008,
+      // tagged as the user's own subscription. Override absent → token-pool failover exactly
+      // as before: a rate-limited account throws → retry the SAME task with the next account;
+      // pool empty → single attempt with claudeToken.
+      const runOne = (token: string) => runClaudeInSandbox(sandbox, {
+        workdir, model: cliModel, prompt, token,
+        capabilities: chatOptions?.capabilities, mcpServers, addDir,
+      })
+      let result
+      if (tokenOverride) {
+        try {
+          result = await runOne(tokenOverride)
+        } catch (e) {
+          if (e instanceof ClaudeRateLimitError) throw new ClaudeRateLimitError(`${e.message} (assinatura Claude do usuário)`)
+          throw e
+        }
+      } else {
+        result = await withClaudeTokenFailover(
+          (token) => runOne(token ?? ''),
+          { isLimited: (e) => e instanceof ClaudeRateLimitError, fallbackToken: claudeToken },
+        )
+      }
       // C2.1 live stream: persist the reconstructed command log so the terminal shows it.
       if (store && result.artifacts) {
         try { await store.updateTask(chatOptions.taskId, { artifacts: { commands: result.artifacts.commands } }) } catch { /* live-stream only */ }

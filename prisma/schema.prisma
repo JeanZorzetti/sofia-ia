@@ -47,8 +47,27 @@ model User {
   threadsCampaigns             ThreadsCampaign[]
   whatsappAccounts             WhatsAppAccount[]
   companies                    Company[]
+  claudeToken                  UserClaudeToken?
 
   @@map("users")
+}
+
+// BYOS (011): a user's own Claude subscription OAuth token. 1:1 with User. The
+// ciphertext (iv.tag.data from src/lib/crypto.ts) is NEVER selected on read paths
+// — only `mask` + timestamps are surfaced (FR-003 write-only).
+model UserClaudeToken {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @unique @map("user_id") @db.Uuid
+  encryptedToken String    @map("encrypted_token") @db.Text
+  mask           String    @db.VarChar(32)
+  lastVerifiedAt DateTime  @map("last_verified_at") @db.Timestamptz()
+  lastUsedAt     DateTime? @map("last_used_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_claude_tokens")
 }
 
 model Lead {

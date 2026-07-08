@@ -4,6 +4,7 @@
 // after() is valid inside any request handler (run route OR cron GET).
 import { after } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { runWithOwnerClaudeToken } from '@/lib/settings/claude-token-service'
 import type { TeamAttachment } from './team-attachments'
 
 export type TeamRunMode = 'chat' | 'code'
@@ -196,10 +197,12 @@ export async function startTeamRun(teamId: string, input: StartTeamRunInput): Pr
         // when the run has no attachments → wrapper call byte-identical to legacy.
         const { materializeRunAttachments } = await import('@/lib/orchestration/team/materialize-attachments')
         const attachmentDir = await materializeRunAttachments(run.id)
-        await runTeamByTopology(run.id, {
+        // 011-byos: run under the triggering owner's Claude token when they have one
+        // (set INSIDE after() — ALS doesn't cross the after() boundary). None → byte-identical.
+        await runWithOwnerClaudeToken(input.userId, () => runTeamByTopology(run.id, {
           store: createPrismaTeamStore(),
           chat: withRateLimitCapture(withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, { ...opts, teamSystemPrompt, attachmentDir }))),
-        })
+        }))
         const { dispatchTeamOutputs } = await import('@/lib/orchestration/team/team-outputs')
         await dispatchTeamOutputs(run.id)
         if (input.onComplete) {
@@ -287,10 +290,12 @@ export async function executeTeamRunInline(runId: string): Promise<RunTeamAndWai
   // chat branch — baked into the wrapper, coordinator untouched. Null → legacy call.
   const { readTeamSystemPrompt } = await import('@/lib/orchestration/team/team-system-prompt')
   const teamSystemPrompt = readTeamSystemPrompt(team.config)
-  await runTeamByTopology(run.id, {
+  // 011-byos: covers Companies (runTeamAndWait), Workflows action_team, and the squad
+  // WIP=1 queue (all converge here). Owner = Team.createdBy. None → byte-identical.
+  await runWithOwnerClaudeToken(team.createdBy, () => runTeamByTopology(run.id, {
     store: createPrismaTeamStore(),
     chat: withUsageTracking((agentId, messages, ctx, opts) => chatWithAgent(agentId, messages as never, ctx, { ...opts, teamSystemPrompt })),
-  })
+  }))
 
   // Output webhooks (SP2) fire for engine runs too — best-effort, never fails the caller.
   try {

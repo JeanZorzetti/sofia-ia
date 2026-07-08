@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk'
 import { withClaudeTokenFailover, isClaudeRateLimit, ClaudeRateLimitError } from '@/lib/ai/claude-token-pool'
+import { currentClaudeTokenOverride } from '@/lib/ai/claude-token-override'
 // type-only: Teams V2 (S1.1) per-member capability policy. A pure type import — no
 // runtime dependency on the orchestration layer (team-types.ts has none of its own).
 import type { CapabilityPolicy } from '@/lib/orchestration/team/team-types'
@@ -356,21 +357,40 @@ Regras:
       }));
 
       // We now pass system prompt separately to handle large prompts via file.
-      // Token-pool failover: if a subscription hits its limit, retry the SAME call
-      // with the next available account. Pool empty → one ambient attempt (back-compat).
-      const response = await withClaudeTokenFailover(
-        (token) => ClaudeCliService.generate(
-          cliPrompt,
-          workingDirectory,
-          systemPrompt,
-          cliModelId || undefined,  // Pass model ID (undefined = CLI default)
-          token,
-          { capabilities: cliCapabilities, mcpServers: cliMcpServers },
-          reasoningEffort,  // S2.2: per-member effort → CLI --effort flag (null = no flag)
-          attachmentDir,    // S6: per-run image dir → CLI --add-dir flag (null = no flag)
-        ),
-        { isLimited: (e) => isClaudeRateLimit(String((e as Error)?.message ?? e)) },
+      const generateWith = (token: string | undefined) => ClaudeCliService.generate(
+        cliPrompt,
+        workingDirectory,
+        systemPrompt,
+        cliModelId || undefined,  // Pass model ID (undefined = CLI default)
+        token,
+        { capabilities: cliCapabilities, mcpServers: cliMcpServers },
+        reasoningEffort,  // S2.2: per-member effort → CLI --effort flag (null = no flag)
+        attachmentDir,    // S6: per-run image dir → CLI --add-dir flag (null = no flag)
       );
+      // 011-byos: with a per-run owner override, run once with THAT token — no pool, no
+      // failover. Rate limit → ClaudeRateLimitError (→ resiliência 007/008), tagged as the
+      // user's subscription; auth failure (the verified token later died) → actionable run
+      // error pointing to /dashboard/settings/claude. Override absent → token-pool failover
+      // exactly as before (rate-limited account → retry with the next; pool empty → one attempt).
+      const tokenOverride = currentClaudeTokenOverride();
+      let response;
+      if (tokenOverride) {
+        try {
+          response = await generateWith(tokenOverride);
+        } catch (e) {
+          const msg = String((e as Error)?.message ?? e);
+          if (isClaudeRateLimit(msg)) throw new ClaudeRateLimitError(`${msg} (assinatura Claude do usuário)`);
+          throw new Error(`Seu token da assinatura Claude não foi aceito — atualize em /dashboard/settings/claude. (${msg})`);
+        }
+        if (!response.content?.trim()) {
+          throw new Error('Seu token da assinatura Claude não foi aceito — atualize em /dashboard/settings/claude.');
+        }
+      } else {
+        response = await withClaudeTokenFailover(
+          (token) => generateWith(token),
+          { isLimited: (e) => isClaudeRateLimit(String((e as Error)?.message ?? e)) },
+        );
+      }
 
       return {
         message: response.content,

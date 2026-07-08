@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Settings, Users, Building2, Key, Shield, Lock, Palette, Webhook, Gift, Copy, CheckCircle } from 'lucide-react';
+import { Settings, Users, Building2, Key, Shield, Lock, Palette, Webhook, Gift, Copy, CheckCircle, KeyRound } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function SettingsPage() {
@@ -43,6 +43,13 @@ export default function SettingsPage() {
       icon: Key,
       href: '/dashboard/settings/api-keys',
       color: 'text-yellow-500',
+    },
+    {
+      title: 'Assinatura Claude',
+      description: 'Rode seus times com a sua própria assinatura Claude (BYOS)',
+      icon: KeyRound,
+      href: '/dashboard/settings/claude',
+      color: 'text-orange-400',
     },
     {
       title: 'Logs de Auditoria',

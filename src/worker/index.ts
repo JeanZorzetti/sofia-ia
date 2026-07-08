@@ -23,6 +23,7 @@ import { toCliMcpDescriptor, type CliMcpServerDescriptor } from '@/lib/ai/cli-to
 import { withUsageTracking } from '@/lib/orchestration/team/member-usage-recorder'
 import { chatWithAgent } from '@/lib/ai/groq'
 import { primaryClaudeToken, loadClaudeTokens } from '@/lib/ai/claude-token-pool'
+import { runWithOwnerClaudeToken } from '@/lib/settings/claude-token-service'
 import { getSandboxProvider } from '@/lib/sandbox'
 import { sweepVpsRunDirs } from '@/lib/sandbox/vps-local'
 import type { Sandbox } from '@/lib/sandbox/types'
@@ -318,7 +319,7 @@ const worker = new Worker<CodeRunJob>(
     const { runId } = job.data
     console.log(`[worker] starting code-run ${runId}`)
     const run = await prisma.teamRun.findUnique({
-      where: { id: runId }, select: { repoUrl: true, baseBranch: true, gitMode: true, previewEnabled: true, parentRunId: true, branch: true, sandboxId: true },
+      where: { id: runId }, select: { repoUrl: true, baseBranch: true, gitMode: true, previewEnabled: true, parentRunId: true, branch: true, sandboxId: true, team: { select: { createdBy: true } } },
     })
     // Continuation reuses the parent's still-alive sandbox (no clone). If the reconnect fails
     // (TTL elapsed between submit and pickup), fail clearly — the UI gates the follow-up on a
@@ -350,21 +351,26 @@ const worker = new Worker<CodeRunJob>(
     })
     let keepAlive = false
     try {
-      if (isContinuation) {
-        await continueWithRepo(sandbox, workdir, runId, run!.repoUrl!, run!.branch || run!.baseBranch || 'main', run!.baseBranch || 'main')
-      } else if (run?.repoUrl) {
-        await runWithRepo(sandbox, workdir, runId, run.repoUrl, run.baseBranch, run.gitMode)
-      } else {
-        // C0 path: no repo — just run shell in a sandbox. Use the sandbox root as cwd
-        // (undefined for E2B → legacy default; the isolated run dir for VpsLocal so the
-        // agent never runs in the worker's own process cwd).
-        await prisma.teamRun
-          .update({ where: { id: runId }, data: { sandboxId: sandbox.id } })
-          .catch(() => {}) // best-effort metadata write
-        const store = createPrismaTeamStore()
-        const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: sandbox.rootDir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole, resolveAgentModel }))
-        await runTeamByTopology(runId, { store, chat: codeChat })
-      }
+      // 011-byos: run the whole team execution under the OWNER's Claude token (if any),
+      // so the in-sandbox CLI + local-spawn use their subscription. No token → runs
+      // directly (pool path byte-identical). dispatchTeamOutputs/preview need no override.
+      await runWithOwnerClaudeToken(run?.team?.createdBy, async () => {
+        if (isContinuation) {
+          await continueWithRepo(sandbox, workdir, runId, run!.repoUrl!, run!.branch || run!.baseBranch || 'main', run!.baseBranch || 'main')
+        } else if (run?.repoUrl) {
+          await runWithRepo(sandbox, workdir, runId, run.repoUrl, run.baseBranch, run.gitMode)
+        } else {
+          // C0 path: no repo — just run shell in a sandbox. Use the sandbox root as cwd
+          // (undefined for E2B → legacy default; the isolated run dir for VpsLocal so the
+          // agent never runs in the worker's own process cwd).
+          await prisma.teamRun
+            .update({ where: { id: runId }, data: { sandboxId: sandbox.id } })
+            .catch(() => {}) // best-effort metadata write
+          const store = createPrismaTeamStore()
+          const codeChat = withUsageTracking(createCodeChatFn(sandbox, baseChat, { workdir: sandbox.rootDir, store, claudeToken: CLAUDE_OAUTH_TOKEN, resolveMcpServers: resolveAgentMcpServers, syncAttachments: () => materializeRunAttachmentsToSandbox(sandbox, runId), resolveMemberRole, resolveAgentModel }))
+          await runTeamByTopology(runId, { store, chat: codeChat })
+        }
+      })
       await dispatchTeamOutputs(runId)
       // Work delivered — stop the heartbeat so the preview (if any) governs the sandbox
       // lifetime via its own setTimeout; otherwise the sandbox is torn down below.

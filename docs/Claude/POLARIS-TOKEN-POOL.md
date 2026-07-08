@@ -68,3 +68,24 @@ Redeploy os dois serviços.
   EasyPanel.
 - Todas as 3 no limite ao mesmo tempo → a run falha com "Todas as N conta(s) Claude no limite"
   (esperado; só o reset das janelas resolve). Adicionar uma 4ª conta = só acrescentar o token na lista.
+
+## BYOS — token da assinatura Claude por usuário (011)
+
+Cada usuário pode cadastrar o token da própria assinatura Claude em
+`/dashboard/settings/claude` (`claude setup-token`). Quando cadastrado, os runs de
+Team/Squad/Company **daquele dono** usam o token dele em vez do pool da plataforma.
+
+- **Precedência:** override do usuário **vence** o pool. Sem token cadastrado → o pool
+  continua byte-idêntico (Constituição II).
+- **Sem fallback:** override presente = **1 tentativa** com o token do usuário. Rate limit →
+  `ClaudeRateLimitError` (resiliência 007/008, `rate_limited` + `resetAt`); erro de auth → o run
+  falha com mensagem apontando `/dashboard/settings/claude`. **Nunca** cai no pool (decisão de custo).
+- **Mecanismo:** `runWithClaudeToken` (AsyncLocalStorage, `src/lib/ai/claude-token-override.ts`)
+  envolvido nos entrypoints (worker, `startTeamRun`, `executeTeamRunInline`); os 2 call sites do pool
+  (`code-agent.ts`, `groq.ts`) leem `currentClaudeTokenOverride()`. Coordinator INTOCADO.
+- **Armazenamento:** tabela `user_claude_tokens` (1:1 com `users`, cascade), token criptografado
+  (AES-256-GCM via `src/lib/crypto.ts`), write-only (GET só devolve máscara + datas).
+- **Verificação:**
+  ```bash
+  npx tsx scripts/claude-override-verify.ts   # sem override → failover intacto; com → 1 tentativa; limite → ClaudeRateLimitError
+  ```
