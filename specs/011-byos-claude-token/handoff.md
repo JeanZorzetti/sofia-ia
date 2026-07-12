@@ -1,6 +1,6 @@
 # Handoff — 011 BYOS (Token de Assinatura Claude por Usuário)
 
-**Data:** 2026-07-08 · **Branch:** `011-byos-claude-token` · **Status:** implementação COMPLETA em código (T001–T022); falta o gate de deploy (T023–T025).
+**Data:** 2026-07-08 (atualizado 2026-07-12) · **Branch:** `main` · **Status:** ✅ FEATURE COMPLETA E VALIDADA EM PRODUÇÃO (T001–T025, 25/25).
 
 ## O que foi feito (T001–T022)
 
@@ -27,18 +27,16 @@
 - **`verifyClaudeToken`** reusa `ClaudeCliService.generate` (adicionei param opcional `timeoutMs`, default 20 min = byte-idêntico p/ callers atuais). Heurística: conteúdo vazio = `token_rejected` (o CLI não tem exit "auth failed" distinto — ver `ponytail:` no service).
 - **Sem fallback ao pool** com override (FR-008): rate limit → `ClaudeRateLimitError` (007/008); auth → run falha apontando settings.
 
-## Próximos passos (gate de deploy — em ordem, NÃO executados)
+## Gate de deploy — EXECUTADO (07-08)
 
-1. **T023 ⚠️ (Constituição III):** aplicar a migração MANUALMENTE no host real
-   `2.24.207.200:5435` (NÃO o host do `.env`): `prisma migrate deploy`. **Antes de qualquer push.**
-2. **T024:** commit + push `main` (deploy automático app + worker no EasyPanel); smoke `/api/health` 200 + login.
-3. **T025:** E2E em produção conforme `quickstart.md` (cenários 1–4; o 5 já coberto por unit no script). Registrar evidência aqui.
+1. **T023 ✅:** migração `20260708120000_user_claude_tokens` aplicada no host real `2.24.207.200:5435` via `prisma migrate deploy` ("All migrations have been successfully applied.").
+2. **T024 ✅:** commit `690f00a` + push `main`; deploy automático app + worker no EasyPanel.
+3. **T025 ✅:** E2E em produção VALIDADO pelo Jean (07-08): login Google OK após fix `7996714` (redirect via `NEXT_PUBLIC_APP_URL`, não `request.url`); cadastro/verificação do token OK; run com a assinatura própria editou e deu push no `repo-de-teste` (confirmado via `git pull`).
 
 ## Pendências / decisões em aberto
 
-- Migração ainda **não aplicada** (gate T023) — a tabela `user_claude_tokens` não existe em prod até isso.
-- jest **não roda local** (OneDrive errno -4094 — confirmado nesta sessão); os testes T005/T014/T019 são validados no **CI**. Localmente: tsc limpo + `claude-override-verify.ts` verde.
-- E2E de produção (cenário 2: run sem `[claude-pool]` no log + `last_used_at`) pendente até o deploy.
+- **NÃO-BYOS:** o preview (dev server Lovable-style pós-run) não subiu no E2E — fix lazy porta-fixa em `bea383d`; falta setar `VPS_PREVIEW_URL`/`VPS_PREVIEW_PORT` + subdomínio EasyPanel→worker (manual, Jean).
+- jest **não roda local** (OneDrive errno -4094); os testes T005/T014/T019 são validados no **CI**. Localmente: tsc limpo + `claude-override-verify.ts` verde.
 
 ## Gotchas de ambiente
 

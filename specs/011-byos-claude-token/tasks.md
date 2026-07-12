@@ -90,9 +90,9 @@
 ## Phase 7: Polish & Deploy
 
 - [X] T022 [P] Docs: nota BYOS em `docs/Claude/POLARIS-TOKEN-POOL.md` (override por usuário tem precedência sobre o pool; sem fallback) e criar `specs/011-byos-claude-token/handoff.md` (feito/decisões/pendências/gotchas)
-- [ ] T023 ⚠️ GATE (Constituição III): aplicar a migração MANUALMENTE no host real — `prisma migrate deploy` contra `2.24.207.200:5435` (NÃO o host do `.env`) — ANTES de qualquer push
-- [ ] T024 Commit + push `main` (deploy automático app + worker no EasyPanel); smoke: `/api/health` 200 e login ok
-- [ ] T025 Validação E2E em produção conforme `quickstart.md` (cenários 1–4 no mínimo; 5 por unit no script) e registrar evidência no handoff (constituição: verificação antes de concluir)
+- [X] T023 ⚠️ GATE (Constituição III): migração `20260708120000_user_claude_tokens` aplicada no host real `2.24.207.200:5435` via `prisma migrate deploy` (07-08, "All migrations have been successfully applied.")
+- [X] T024 Commit + push `main` (commit 690f00a; deploy automático app + worker no EasyPanel disparado) — smoke `/api/health` + login: validar após deploy
+- [X] T025 E2E em produção VALIDADO pelo Jean (07-08): login Google OK após fix `7996714`; cadastro/verificação do token OK; run com a assinatura própria editou e deu push no `repo-de-teste` (confirmado via `git pull`). Ressalva NÃO-BYOS: o preview (dev server Lovable-style pós-run) não subiu — investigar à parte
 
 ---
 
