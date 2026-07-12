@@ -1,0 +1,14 @@
+{
+  "name": "polaris-e2b-template",
+  "private": true,
+  "type": "module",
+  "description": "Build da Code Factory sandbox template (E2B v2). npm install && npm run build",
+  "scripts": {
+    "build": "tsx build.prod.ts",
+    "build:dev": "tsx build.dev.ts"
+  },
+  "devDependencies": {
+    "e2b": "latest",
+    "tsx": "latest"
+  }
+}

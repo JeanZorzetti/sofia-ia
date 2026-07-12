@@ -8,24 +8,29 @@ no 1º teste) e mantém cada turno bem abaixo do timeout por-turno de 15 min.
 - E2B CLI: `npm i -g @e2b/cli`
 - Login: `e2b auth login` (precisa da conta E2B; a mesma `E2B_API_KEY` do worker).
 
-## Build (caminho recomendado — canônico)
+## Build (v2 — o build v1 foi DESCONTINUADO e hard-falha)
+
+O CLI agora exige o build system v2 (`e2b template build` v1 só imprime o aviso e sai com erro).
+
+### Recomendado: deixar o `migrate` converter este Dockerfile
 ```bash
-# scaffold oficial (garante a base correta para sua versão do SDK)
 cd e2b
-e2b template init           # gera e2b.Dockerfile + e2b.toml
-# edite o e2b.Dockerfile gerado e ADICIONE estas duas camadas ao final:
-#   RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates && rm -rf /var/lib/apt/lists/*
-#   RUN npm install -g @anthropic-ai/claude-code
-e2b template build --name polaris-code-factory
+e2b template migrate     # gera template.ts + build.dev.ts + build.prod.ts (lê este e2b.Dockerfile)
+# rode o script de build que ele gerar — o migrate imprime o comando exato. Em geral:
+npx tsx build.prod.ts
+```
+> ⚠️ A API v2 varia por versão do CLI/SDK. Se o comando exato não estiver claro, cole a
+> saída do `migrate` pro Claude que ele te dá o próximo passo.
+
+### Fallback: build via SDK (`build-template.ts` deste diretório)
+Use se o `migrate` reclamar (ex.: falta `e2b.toml`):
+```bash
+cd e2b
+npm i e2b            # o SDK `e2b` NÃO está no node_modules local (é optional-dep do projeto)
+E2B_API_KEY=<sua_key> npx tsx build-template.ts
 ```
 
-## Build (alternativo — usando o Dockerfile já versionado aqui)
-```bash
-cd e2b
-e2b template build --name polaris-code-factory --dockerfile e2b.Dockerfile
-```
-> Se o `FROM e2bdev/code-interpreter:latest` não bater com a base atual do E2B (que já
-> traz Node), troque pelo que o `e2b template init` usar e mantenha os dois `RUN`.
+Em qualquer caminho, o **nome do template é `polaris-code-factory`** → é esse o valor de `SANDBOX_TEMPLATE`.
 
 ## Depois do build
 1. O build imprime um **template id**. Copie-o.

@@ -1,4 +1,4 @@
-<#
+﻿<#
   Ralph — loop autônomo de execução de tasks do Spec Kit (Polaris IA).
   Padrão "Ralph" (Geoffrey Huntley) adaptado ao frankbria/ralph-claude-code,
   com as 3 amarras da constituição da Polaris embutidas.

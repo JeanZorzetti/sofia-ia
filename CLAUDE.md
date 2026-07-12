@@ -107,5 +107,5 @@ Atendimento via WhatsApp Business Cloud API (oficial Meta), multi-tenant. Gotcha
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/005-agentic-companies/plan.md
+at specs/011-byos-claude-token/plan.md
 <!-- SPECKIT END -->

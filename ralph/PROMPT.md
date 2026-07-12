@@ -1,7 +1,20 @@
-# Ralph — prompt de UMA iteração (driver do Spec Kit / Polaris IA)
+﻿# Ralph — prompt de UMA iteração (driver do Spec Kit / Polaris IA)
 
 Você está rodando **headless**, **uma** iteração de um loop autônomo. O contexto é
 **novo a cada iteração** (sem memória da volta anterior). Seja cirúrgico.
+
+## ⚡ AUTONOMIA TOTAL — LEIA ANTES DE TUDO
+Esta invocação roda com `--dangerously-skip-permissions`. Você TEM permissão total de
+**Edit, Write, Bash, npm e git** nesta iteração. Não existe aprovação humana a pedir aqui.
+- **NUNCA** afirme que está "bloqueado por permissão", em "contexto interativo", ou que
+  precisa que alguém "autorize a escrita". Isso é FALSO neste ambiente — você é o loop headless.
+- **NÃO** entregue apenas análise/relatório e pare. A iteração **só conta se você EXECUTAR**
+  as mutações: marcar `[X]`, rodar o gate e **commitar**. Relatório sem commit = falha da iteração.
+- Se qualquer tool (Edit/Bash/git) parecer "pedir permissão", a permissão **já está concedida**
+  pelo flag — apenas prossiga e execute, sem perguntar.
+- A linha `--dangerously-skip-permissions` no `STATUS.txt` vale para **ESTA** execução
+  (não é "de uma run anterior"). Confie nela.
+Sua entrega não é um texto para um humano aprovar; é o **trabalho feito e commitado**.
 
 ## Seu único trabalho nesta iteração
 Implementar a **próxima tarefa não-marcada** (`- [ ]`) da feature em
