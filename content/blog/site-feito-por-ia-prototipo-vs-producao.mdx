@@ -1,0 +1,149 @@
+---
+title: "Site feito por IA: por que o protótipo trava nos 70% (e o que falta para chegar em produção)"
+slug: "site-feito-por-ia-prototipo-vs-producao"
+description: "Builders de IA entregam um site em minutos e travam nos 30% finais. Veja as falhas documentadas (créditos em loop, RLS quebrado, SPA que o Google não indexa) e o que um site de produção precisa ter."
+date: "2026-07-12"
+author: "Equipe Polaris IA"
+tags: ["site feito por ia", "vibe coding", "lovable alternativa", "prototipo vs producao", "seo para ia", "agentes ia desenvolvimento"]
+readTime: "9 min"
+---
+
+**Você gera um site em 4 minutos com um prompt. Ele fica lindo. E aí você tenta colocar no ar de verdade — e descobre que a parte fácil já acabou.** O padrão se repete tanto que virou frase pronta entre quem usa os builders de IA: *"chega a 70% do caminho; os 30% finais são briga"*.
+
+Este artigo não é sobre "IA não presta para fazer site". A IA faz — nós construímos sites com agentes todos os dias. É sobre **por que a arquitetura dos builders de prompt trava exatamente onde o negócio começa**, e o que muda quando o site sai de um pipeline pensado para produção.
+
+---
+
+## O sintoma: o site existe, mas não funciona como ativo
+
+Um site de negócio precisa de quatro coisas ao mesmo tempo:
+
+1. **Aparecer** — no Google e, cada vez mais, nas respostas de ChatGPT, Perplexity e Gemini.
+2. **Não quebrar** — mudança nova não pode derrubar o que já funcionava.
+3. **Ser seu** — código, domínio, dados. Sem depender da sobrevivência de uma plataforma.
+4. **Ter custo previsível** — o preço do site não pode depender de quantas vezes a IA errou.
+
+O protótipo gerado por prompt costuma entregar zero dos quatro. Não por incompetência do modelo: por **decisão de arquitetura** de quem construiu a ferramenta.
+
+---
+
+## As quatro falhas documentadas (com fonte)
+
+Não são impressões nossas. São queixas públicas, recorrentes, das plataformas mais populares.
+
+### 1. O loop de crédito: consertar um bug quebra outro — e você paga por tentativa
+
+A reclamação nº 1 em avaliações do G2 sobre a Lovable é o custo imprevisível de créditos: a IA conserta uma coisa, quebra outra, e **cada tentativa consome saldo pago**. Usuários no Trustpilot descrevem a experiência como "menos engenharia, mais aposta: nunca saber o que o próximo prompt vai quebrar".
+
+Na Base44 o padrão se repete, com um agravante relatado no fórum: a IA pede confirmação a cada passo — e cada confirmação queima crédito.
+
+O problema estrutural: **é um modelo solo iterando às cegas**. Ninguém revisa o que ele fez. Quem escreve o código é quem aprova o código.
+
+### 2. Segurança: a falha não é do seu site, é da plataforma-mãe
+
+Aqui o assunto deixa de ser produtividade.
+
+- **Lovable**: uma análise divulgada pelo *The Register* encontrou **170 de 1.645 apps públicos (10,3%) com falhas críticas de Row Level Security** — expondo e-mails, telefones, dados de pagamento e chaves de API. Um único app comprometido em fevereiro/2026 vazou dados de 18 mil usuários.
+- **Base44**: a Wiz demonstrou um **bypass total de autenticação** — qualquer app da plataforma podia ser tomado usando apenas o `app_id`, que não é secreto, em endpoints não documentados.
+
+O ponto que quase ninguém tira daí: **você não foi hackeado; a plataforma foi.** Quando seu site roda *dentro* de um backend compartilhado, você herda o risco de todos os outros inquilinos. A discussão no Hacker News resumiu melhor do que qualquer análise: *"vibe coding democratizou o deploy sem democratizar a responsabilidade."*
+
+### 3. SEO: o Google recebe uma página em branco
+
+Essa é a mais silenciosa — e a mais cara para quem depende de tráfego.
+
+Boa parte dos apps gerados sai como **SPA React 100% client-side**. O crawler pede o HTML e recebe um shell praticamente vazio: o conteúdo só existe depois que o JavaScript roda. Resultado prático: indexação ruim ou inexistente. É por isso que existe um mercado inteiro de serviços de prerender resolvendo esse sintoma.
+
+E o problema piorou: **as respostas de IA generativa são ainda menos tolerantes que o Google**. Um crawler de LLM que não encontra HTML estruturado simplesmente não te cita. Você fica invisível nas duas frentes de descoberta ao mesmo tempo.
+
+> Se o site é seu canal de aquisição, um SPA sem SSR não é um site — é um app bonito que ninguém acha.
+
+### 4. Portabilidade: o código sai, mas o caminho é torto
+
+"Você pode exportar" e "o repositório é seu desde o primeiro commit" são coisas diferentes. Na prática, migrar um app gerado por prompt para uma stack de produção é descrito por quem tentou como *messy and time-consuming*: o export existe, mas o código chega com dívida técnica acumulada em velocidade recorde.
+
+---
+
+## O que separa protótipo de produção
+
+| Dimensão | Protótipo por prompt | Site de produção |
+|----------|----------------------|------------------|
+| **Revisão** | O mesmo modelo escreve e aprova | Revisor separado, mudança a mudança |
+| **Renderização** | SPA client-side (HTML vazio) | SSR/SSG com HTML real, sitemap, schema.org |
+| **Segurança** | Backend compartilhado da plataforma | Site próprio, sem multi-tenancy herdada |
+| **Custo** | Por tentativa (créditos) | Por entrega |
+| **Código** | Export indireto, dívida acumulada | Repositório git seu, desde o commit 1 |
+| **Design** | Template com "cara de IA" | Design system definido por projeto |
+| **Descoberta em IA** | Invisível para crawlers de LLM | Otimizado para citação (GEO/AEO) |
+
+---
+
+## A correção estrutural: separar quem escreve de quem aprova
+
+A causa raiz do "conserta um, quebra outro" é organizacional, não técnica. **Um agente solo não tem contraditório.** Ele gera, se autoavalia com o mesmo viés que usou para gerar, e declara pronto.
+
+É exatamente assim que times humanos evitam o problema — e é o que a arquitetura de [times de agentes](/blog/o-que-e-orquestracao-de-agentes-ia) reproduz:
+
+- **Líder técnico** — recebe o brief e quebra em tarefas objetivas.
+- **Desenvolvedores** — implementam uma tarefa cada, em paralelo, num repositório git de verdade.
+- **Revisor** — julga **cada tarefa pelo próprio diff**, isolado. Aprova ou devolve.
+
+A palavra que faz o trabalho ali é *isolado*. Se o revisor avalia o diff acumulado, ele reprova a task 5 por causa de um erro da task 2 — e o time entra em cascata de rejeição. Revisão só funciona quando cada mudança é julgada pelo que ela de fato mudou. É a diferença entre um time e um modelo conversando sozinho. (Comparamos as duas abordagens em detalhe em [multi-agente vs single-agente](/blog/multi-agente-vs-single-agente).)
+
+O efeito colateral desse desenho é comercial: **se o retrabalho é problema de quem entrega, não faz sentido cobrar por tentativa.** O modelo de créditos existe porque o loop de bug é do cliente. Elimine o loop e o preço volta a ser por entrega.
+
+---
+
+## O checklist do que "produção" quer dizer, na prática
+
+Antes de aceitar um site — feito por IA, por agência ou por você mesmo — confira:
+
+- [ ] **HTML no view-source.** Desative o JavaScript e recarregue. Se a página some, o Google e o ChatGPT também não a veem.
+- [ ] **Sitemap + robots.txt + schema.org** presentes e válidos.
+- [ ] **Repositório git seu**, com histórico, não um zip exportado.
+- [ ] **Deploy no seu domínio**, não num subdomínio da plataforma.
+- [ ] **Sem backend compartilhado** com apps de terceiros.
+- [ ] **Core Web Vitals** medidos em produção (local mente; veja o [checklist de SEO técnico](/blog/checklist-seo-tecnico-saas-2026)).
+- [ ] **[llms.txt](/blog/o-que-e-llms-txt-otimizar-sites-ia-generativa)** e conteúdo estruturado para citação em IA generativa.
+- [ ] **Um humano no loop** na entrega — alguém que responde quando quebra.
+
+Se sete dos oito falham, você não tem um site. Tem uma demo hospedada.
+
+---
+
+## FAQ
+
+**A IA consegue fazer um site de produção?**
+Sim — desde que o pipeline tenha revisão. O gargalo nunca foi a capacidade do modelo de escrever código; foi a ausência de um segundo agente com autoridade para reprovar o primeiro. Ferramenta de prompt único gera protótipo; time de agentes com revisor entrega produção.
+
+**Por que o site que a IA fez não aparece no Google?**
+Quase sempre porque ele é uma SPA client-side: o crawler recebe um HTML praticamente vazio e o conteúdo só aparece depois que o JavaScript executa. A correção é renderização no servidor (SSR/SSG) — não é um ajuste de meta tag.
+
+**Vibe coding é inseguro?**
+A prática não é o problema; a plataforma compartilhada é. Os incidentes públicos de 2026 (RLS quebrado na Lovable, bypass de autenticação na Base44) atingiram apps de usuários que não escreveram uma linha de código insegura. Site próprio, sem backend multi-tenant herdado, remove essa classe inteira de risco.
+
+**Dá para migrar um protótipo que já existe?**
+Dá, e é o cenário mais comum. O protótipo vira o brief: ele já define escopo, layout e conteúdo. O que se refaz é a fundação — renderização, estrutura de dados, SEO e o repositório.
+
+**Quanto custa?**
+Por entrega, não por prompt. O modelo de crédito só faz sentido quando o cliente paga pelo erro da IA. Se a revisão é responsabilidade de quem constrói, o retrabalho também é.
+
+---
+
+## Conclusão
+
+Os builders de IA acertaram uma coisa importante: **o primeiro rascunho de um site não deveria custar semanas.** Não custa mais.
+
+O que eles não resolveram é o resto — e o resto é o site. Um único modelo escrevendo, aprovando a si mesmo e cobrando por tentativa não é uma equipe de engenharia; é um estagiário brilhante sem revisor, com acesso ao cartão de crédito.
+
+A saída não é voltar a fazer tudo à mão. É dar à IA a estrutura que times de software levaram décadas para descobrir que precisavam: **alguém que revisa antes de subir.**
+
+**Próximos passos:**
+- [Como funciona um time de agentes de IA](/blog/o-que-e-orquestracao-de-agentes-ia)
+- [Multi-agente vs single-agente: quando cada um faz sentido](/blog/multi-agente-vs-single-agente)
+- [Checklist de SEO técnico para SaaS em 2026](/blog/checklist-seo-tecnico-saas-2026)
+- [Criar seu time de agentes na Polaris](/register)
+
+---
+
+*Fontes públicas citadas: The Register (falhas de RLS em apps Lovable), Wiz (bypass de autenticação na Base44), G2 e Trustpilot (custo de créditos e qualidade de código), Hacker News (discussões sobre ambos os incidentes).*
