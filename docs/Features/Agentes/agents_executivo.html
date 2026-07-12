@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentes de IA — Guia Executivo · Polaris IA</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #111113;
+      --surface2: #18181b;
+      --surface3: #1f1f23;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-tertiary: #71717a;
+      --indigo: #6366f1;
+      --violet: #8b5cf6;
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      --amber: #f59e0b;
+      --sky: #0ea5e9;
+      --pink: #ec4899;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── SIDEBAR NAV ─── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 240px;
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      z-index: 100;
+      padding: 28px 0 40px;
+    }
+
+    .sidebar-logo {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .sidebar-logo-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .sidebar-logo-sub {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    .sidebar-section {
+      padding: 6px 20px 2px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-top: 12px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 7px 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+      line-height: 1.4;
+    }
+
+    .sidebar a:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      border-left-color: var(--indigo);
+    }
+
+    /* ─── MAIN ─── */
+    .main {
+      margin-left: 240px;
+      min-height: 100vh;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      padding: 80px 64px 72px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 60% -20%, rgba(99,102,241,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 90% 90%, rgba(139,92,246,0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid rgba(99,102,241,0.3);
+      background: rgba(99,102,241,0.07);
+      color: #818cf8;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 28px;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #6366f1;
+      box-shadow: 0 0 8px #6366f1;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #fff 40%, #a5b4fc 75%, #c4b5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      max-width: 640px;
+    }
+
+    .hero-sub {
+      font-size: 17px;
+      color: var(--text-secondary);
+      max-width: 580px;
+      line-height: 1.65;
+      margin-bottom: 40px;
+    }
+
+    .hero-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .hero-pill {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .hero-pill-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ─── CONTENT ─── */
+    .content {
+      max-width: 860px;
+      padding: 64px 64px 120px;
+    }
+
+    /* ─── SECTION ─── */
+    .section {
+      margin-bottom: 72px;
+      scroll-margin-top: 32px;
+    }
+
+    .section-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--indigo);
+      margin-bottom: 10px;
+    }
+
+    .section > h2 {
+      font-size: 26px;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+
+    .section > p, .section > ul, .section > ol {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .section > ul, .section > ol {
+      padding-left: 20px;
+    }
+
+    .section > ul li, .section > ol li {
+      margin-bottom: 8px;
+    }
+
+    strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* ─── CALLOUT ─── */
+    .callout {
+      background: rgba(99,102,241,0.06);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-left: 3px solid var(--indigo);
+      border-radius: 8px;
+      padding: 16px 20px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin: 20px 0;
+    }
+
+    .callout strong { color: #a5b4fc; }
+
+    /* ─── FLOW DIAGRAM ─── */
+    .flow {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin: 24px 0;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13px;
+      line-height: 2;
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      color: var(--text-secondary);
+    }
+
+    .flow-step + .flow-step {
+      margin-top: 2px;
+    }
+
+    .flow-arrow {
+      color: var(--text-tertiary);
+      padding: 0 0 0 16px;
+      font-size: 16px;
+    }
+
+    .flow-label {
+      display: inline-block;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.2);
+      color: #818cf8;
+      padding: 1px 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+      font-family: inherit;
+    }
+
+    /* ─── CARDS GRID ─── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover { border-color: rgba(99,102,241,0.3); }
+
+    .card-icon {
+      font-size: 22px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 650;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    /* ─── TABLE ─── */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 20px 0;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      background: var(--surface2);
+    }
+
+    th {
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 16px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    td:first-child { color: var(--text); font-weight: 500; }
+
+    /* ─── FLOW SECTION (fluxos) ─── */
+    .flow-block {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin: 16px 0 24px;
+    }
+
+    .flow-block-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .flow-block-subtitle {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-bottom: 20px;
+    }
+
+    .flow-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .flow-item {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .flow-item-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+      width: 32px;
+    }
+
+    .flow-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.25);
+      color: #818cf8;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .flow-line {
+      width: 1px;
+      flex: 1;
+      min-height: 24px;
+      background: rgba(99,102,241,0.15);
+      margin: 3px 0;
+    }
+
+    .flow-item-right {
+      padding-bottom: 20px;
+    }
+
+    .flow-item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .flow-item-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .flow-audience {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-top: 16px;
+    }
+
+    /* ─── VERTICAL CARDS ─── */
+    .vertical {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-bottom: 16px;
+    }
+
+    .vertical-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .vertical-icon {
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .vertical-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .vertical-sub {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .vertical-agents {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .vertical-agent {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .vertical-agent::before {
+      content: '→';
+      color: var(--indigo);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .vertical-agent strong { color: var(--text); }
+
+    .vertical-result {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .vertical-result strong { color: var(--emerald); }
+
+    /* ─── METRIC CARDS ─── */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .metric-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .metric-before {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+
+    .metric-arrow {
+      font-size: 22px;
+      margin: 4px 0;
+    }
+
+    .metric-after {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--emerald);
+    }
+
+    .metric-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    /* ─── FAQ ─── */
+    .faq-item {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 0;
+    }
+
+    .faq-item:last-child { border-bottom: none; }
+
+    .faq-q {
+      font-size: 15px;
+      font-weight: 650;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .faq-a {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* ─── LIMITATION BLOCK ─── */
+    .limit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .limit-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .limit-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .limit-label.human { color: var(--emerald); }
+    .limit-label.agent { color: var(--indigo); }
+
+    .limit-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .limit-list li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .limit-list li::before {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .limit-list.agent-list li::before { content: '✓'; color: var(--indigo); font-weight: 700; }
+    .limit-list.human-list li::before { content: '✓'; color: var(--emerald); font-weight: 700; }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 48px 0;
+    }
+
+    /* ─── FOOTER ─── */
+    .page-footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 64px;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-left: 240px;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main, .page-footer { margin-left: 0; }
+      .hero, .content { padding-left: 24px; padding-right: 24px; }
+      .limit-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ SIDEBAR ══ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-name">Polaris IA</div>
+    <div class="sidebar-logo-sub">Agentes de IA — Guia Executivo</div>
+  </div>
+
+  <div class="sidebar-section">Fundamentos</div>
+  <a href="#o-que-e">O que é um Agente</a>
+  <a href="#como-funciona">Como Funciona</a>
+  <a href="#para-que-serve">Para que Serve</a>
+  <a href="#como-usar">Como Usar</a>
+
+  <div class="sidebar-section">Operação</div>
+  <a href="#fluxos">Fluxos de Uso</a>
+  <a href="#templates">Templates</a>
+  <a href="#capacidades">Capacidades Avançadas</a>
+
+  <div class="sidebar-section">Aplicação</div>
+  <a href="#casos-de-uso">Casos de Uso</a>
+  <a href="#verticais-nicho">Verticais por Nicho</a>
+  <a href="#verticais-caso">Verticais por Caso de Uso</a>
+
+  <div class="sidebar-section">Resultado</div>
+  <a href="#metricas">Métricas de Impacto</a>
+  <a href="#limites">O que Não Substitui</a>
+  <a href="#faq">Perguntas Frequentes</a>
+</nav>
+
+<!-- ═══════════════════════════════ MAIN ══ -->
+<div class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">Guia Executivo · Maio 2026</div>
+    <h1>Agentes de IA</h1>
+    <p class="hero-sub">
+      Funcionários digitais que trabalham 24h por dia, sem escalar custo, sem errar por cansaço e sem precisar de treinamento repetido — prontos para atender, qualificar, analisar e executar.
+    </p>
+    <div class="hero-pills">
+      <div class="hero-pill"><span class="hero-pill-dot" style="background:#6366f1"></span> Atendimento 24/7</div>
+      <div class="hero-pill"><span class="hero-pill-dot" style="background:#8b5cf6"></span> Qualificação automática</div>
+      <div class="hero-pill"><span class="hero-pill-dot" style="background:#06b6d4"></span> Multi-canal</div>
+      <div class="hero-pill"><span class="hero-pill-dot" style="background:#10b981"></span> Memória persistente</div>
+      <div class="hero-pill"><span class="hero-pill-dot" style="background:#f59e0b"></span> Times de agentes</div>
+      <div class="hero-pill"><span class="hero-pill-dot" style="background:#f43f5e"></span> A/B Testing</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ─── O QUE É ─── -->
+    <div class="section" id="o-que-e">
+      <div class="section-eyebrow">Fundamentos</div>
+      <h2>O que é um Agente de IA</h2>
+      <p>
+        Um agente é um <strong>funcionário digital</strong> que trabalha 24 horas por dia, 7 dias por semana, sem escalar, sem errar por cansaço e sem precisar de treinamento repetido.
+      </p>
+      <p>
+        Ele tem nome, personalidade, especialidade e memória. Sabe o que você vende, como você quer ser representado e o que fazer em cada situação. Atende no WhatsApp, no Instagram, no site — ao mesmo tempo, em quantas conversas forem necessárias.
+      </p>
+      <div class="callout">
+        <strong>Diferença fundamental:</strong> um agente não é um chatbot de respostas prontas. Ele entende contexto, adapta a linguagem, consulta informações atualizadas e toma decisões — como um funcionário treinado, não como um script.
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── COMO FUNCIONA ─── -->
+    <div class="section" id="como-funciona">
+      <div class="section-eyebrow">Fundamentos</div>
+      <h2>Como Funciona</h2>
+      <p>Quando um cliente envia uma mensagem, o agente executa um ciclo completo em segundos:</p>
+
+      <div class="flow-block" style="margin-top:24px">
+        <div class="flow-steps">
+          <div class="flow-item">
+            <div class="flow-item-left">
+              <div class="flow-num">1</div>
+              <div class="flow-line"></div>
+            </div>
+            <div class="flow-item-right">
+              <div class="flow-item-name">Lê o contexto</div>
+              <div class="flow-item-desc">Histórico da conversa, perfil do cliente, memórias anteriores</div>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left">
+              <div class="flow-num">2</div>
+              <div class="flow-line"></div>
+            </div>
+            <div class="flow-item-right">
+              <div class="flow-item-name">Consulta o conhecimento</div>
+              <div class="flow-item-desc">Busca informações relevantes na base de documentos vinculada</div>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left">
+              <div class="flow-num">3</div>
+              <div class="flow-line"></div>
+            </div>
+            <div class="flow-item-right">
+              <div class="flow-item-name">Decide a ação</div>
+              <div class="flow-item-desc">Responde diretamente, aciona uma ferramenta, agenda algo ou transfere para outro agente</div>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left">
+              <div class="flow-num">4</div>
+              <div class="flow-line"></div>
+            </div>
+            <div class="flow-item-right">
+              <div class="flow-item-name">Responde</div>
+              <div class="flow-item-desc">Com a personalidade, tom e limitações que você definiu</div>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left">
+              <div class="flow-num">5</div>
+            </div>
+            <div class="flow-item-right">
+              <div class="flow-item-name">Lembra</div>
+              <div class="flow-item-desc">Registra informações relevantes para o próximo contato</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p>Tudo isso acontece em segundos. Sem filas, sem horário comercial.</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── PARA QUE SERVE ─── -->
+    <div class="section" id="para-que-serve">
+      <div class="section-eyebrow">Fundamentos</div>
+      <h2>Para que Serve</h2>
+      <p>Um agente resolve qualquer tarefa que hoje depende de uma pessoa repetindo o mesmo processo várias vezes. Três grandes blocos de valor:</p>
+
+      <div class="cards" style="margin-top:24px">
+        <div class="card">
+          <span class="card-icon">🕐</span>
+          <div class="card-title">Atendimento que não para</div>
+          <div class="card-desc">O agente recebe, qualifica e responde leads no momento em que chegam — independente de horário, volume ou disponibilidade da equipe. Um lead às 23h de sábado recebe atenção imediata.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">⚙️</span>
+          <div class="card-title">Processos que rodam sozinhos</div>
+          <div class="card-desc">Pesquisa de mercado, geração de relatórios, análise de documentos, envio de propostas, atualização de CRM — tarefas que consomem horas podem ser delegadas a um agente que executa em minutos.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">📈</span>
+          <div class="card-title">Escala sem custo proporcional</div>
+          <div class="card-desc">Dobrar o volume de atendimento não exige contratar o dobro de pessoas. O mesmo agente que atende 10 conversas atende 1.000.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── COMO USAR ─── -->
+    <div class="section" id="como-usar">
+      <div class="section-eyebrow">Fundamentos</div>
+      <h2>Como Usar</h2>
+
+      <div class="flow-block">
+        <div class="flow-steps">
+          <div class="flow-item">
+            <div class="flow-item-left">
+              <div class="flow-num" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.25);color:#34d399">1</div>
+              <div class="flow-line" style="background:rgba(16,185,129,0.15)"></div>
+            </div>
+            <div class="flow-item-right">
+              <div class="flow-item-name">Criar o agente</div>
+              <div class="flow-item-desc">Dê um nome e escreva (ou gere via IA) a instrução de personalidade: quem ele é, o que sabe fazer, como deve falar, o que nunca deve dizer.</div>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left">
+              <div class="flow-num" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.25);color:#34d399">2</div>
+              <div class="flow-line" style="background:rgba(16,185,129,0.15)"></div>
+            </div>
+            <div class="flow-item-right">
+              <div class="flow-item-name">Dar conhecimento</div>
+              <div class="flow-item-desc">Faça upload dos documentos que o agente precisa saber: catálogo de produtos, tabela de preços, scripts de venda, política de atendimento, FAQ.</div>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left">
+              <div class="flow-num" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.25);color:#34d399">3</div>
+              <div class="flow-line" style="background:rgba(16,185,129,0.15)"></div>
+            </div>
+            <div class="flow-item-right">
+              <div class="flow-item-name">Equipar com habilidades</div>
+              <div class="flow-item-desc">Habilite as skills: pesquisar na web, consultar CRM, agendar no Google Calendar, buscar status de pedidos, enviar propostas. Cada habilidade é um botão que você liga ou desliga.</div>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left">
+              <div class="flow-num" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.25);color:#34d399">4</div>
+              <div class="flow-line" style="background:rgba(16,185,129,0.15)"></div>
+            </div>
+            <div class="flow-item-right">
+              <div class="flow-item-name">Conectar ao canal</div>
+              <div class="flow-item-desc">Vincule ao WhatsApp, Instagram, site ou Telegram. Toda mensagem que chegar naquele canal vai direto para o agente.</div>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left">
+              <div class="flow-num" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.25);color:#34d399">5</div>
+            </div>
+            <div class="flow-item-right">
+              <div class="flow-item-name">Testar e publicar</div>
+              <div class="flow-item-desc">Use o testador interno para simular conversas antes de ir ao ar. Quando estiver satisfeito, ative o agente.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Tempo de setup:</strong> do zero à produção, menos de 30 minutos para casos de uso padrão.
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── FLUXOS ─── -->
+    <div class="section" id="fluxos">
+      <div class="section-eyebrow">Operação</div>
+      <h2>Fluxos de Uso</h2>
+
+      <!-- Fluxo 1 -->
+      <div class="flow-block">
+        <div class="flow-block-title">
+          <span style="font-size:20px">🎯</span> Atendimento e Qualificação de Leads
+        </div>
+        <div class="flow-block-subtitle">Nunca mais um lead sem resposta imediata</div>
+        <div class="flow-steps">
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">1</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Lead envia mensagem no WhatsApp</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">2</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Agente Recepcionista cumprimenta e inicia qualificação</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">3</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Coleta: nome, interesse, orçamento, urgência</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">4</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Pontua o lead automaticamente (score de qualificação)</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">5</div><div class="flow-line"></div></div>
+            <div class="flow-item-right">
+              <div class="flow-item-name">Lead quente → Agente de Vendas &nbsp;|&nbsp; Lead frio → conteúdo + follow-up</div>
+            </div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">6</div></div>
+            <div class="flow-item-right"><div class="flow-item-name">CRM atualizado automaticamente</div></div>
+          </div>
+        </div>
+        <div class="flow-audience">🏢 Imobiliárias, clínicas, escolas, empresas de serviços</div>
+      </div>
+
+      <!-- Fluxo 2 -->
+      <div class="flow-block">
+        <div class="flow-block-title">
+          <span style="font-size:20px">🛟</span> Suporte e Resolução de Dúvidas
+        </div>
+        <div class="flow-block-subtitle">Resolve sem humano. Escala com contexto quando necessário.</div>
+        <div class="flow-steps">
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">1</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Cliente abre conversa com dúvida ou problema</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">2</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Agente identifica o tipo de solicitação</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">3</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Consulta base de conhecimento (FAQ, manuais, políticas)</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">4</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Resolve diretamente se possível</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">5</div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Não resolveu → transfere para humano com contexto completo já em mãos</div></div>
+          </div>
+        </div>
+        <div class="flow-audience">🛒 E-commerce, SaaS, empresas com alto volume de suporte</div>
+      </div>
+
+      <!-- Fluxo 3 -->
+      <div class="flow-block">
+        <div class="flow-block-title">
+          <span style="font-size:20px">🔗</span> Pipeline de Análise com Múltiplos Agentes
+        </div>
+        <div class="flow-block-subtitle">Cada agente faz o que sabe melhor. O resultado de um alimenta o próximo.</div>
+        <div class="flow-steps">
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">1</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Input chega (documento, dado, solicitação)</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">2</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Agente Analisador — extrai informações relevantes</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">3</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Agente Pesquisador — complementa com dados externos</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">4</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Agente Redator — transforma em relatório estruturado</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">5</div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Resultado enviado automaticamente por e-mail / Slack / webhook</div></div>
+          </div>
+        </div>
+        <div class="flow-audience">📊 Consultorias, times de marketing, operações</div>
+      </div>
+
+      <!-- Fluxo 4 -->
+      <div class="flow-block">
+        <div class="flow-block-title">
+          <span style="font-size:20px">⏱️</span> Operação Agendada Autônoma
+        </div>
+        <div class="flow-block-subtitle">Relatório na mesa antes do café da manhã — sem ninguém montar na mão.</div>
+        <div class="flow-steps">
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">1</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Todo dia às 07h30 — orquestração dispara automaticamente</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">2</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Agente coleta leads gerados nas últimas 24h</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">3</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Agente analisa e prioriza por score de qualificação</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">4</div><div class="flow-line"></div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Agente redige resumo executivo</div></div>
+          </div>
+          <div class="flow-item">
+            <div class="flow-item-left"><div class="flow-num">5</div></div>
+            <div class="flow-item-right"><div class="flow-item-name">Relatório entregue no Slack antes do início do expediente</div></div>
+          </div>
+        </div>
+        <div class="flow-audience">📋 Times de vendas, gestores, diretores comerciais</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── TEMPLATES ─── -->
+    <div class="section" id="templates">
+      <div class="section-eyebrow">Operação</div>
+      <h2>Templates de Agentes</h2>
+      <p>Agentes pré-configurados para os casos de uso mais comuns. Selecione, personalize os dados da sua empresa e ative.</p>
+
+      <div class="table-wrap" style="margin-top:24px">
+        <table>
+          <thead>
+            <tr>
+              <th>Template</th>
+              <th>O que faz</th>
+              <th>Canal ideal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Recepcionista Digital</td><td>Primeiro contato, boas-vindas, triagem inicial</td><td>WhatsApp, Web</td></tr>
+            <tr><td>Qualificador de Leads</td><td>Coleta dados e pontua intenção de compra</td><td>WhatsApp, Instagram</td></tr>
+            <tr><td>Consultor de Produtos</td><td>Apresenta catálogo e tira dúvidas técnicas</td><td>Web, WhatsApp</td></tr>
+            <tr><td>Agendador</td><td>Marca consultas e reuniões via Google Calendar</td><td>WhatsApp</td></tr>
+            <tr><td>Suporte Nível 1</td><td>Resolve dúvidas frequentes com base no FAQ</td><td>Web, WhatsApp</td></tr>
+            <tr><td>SDR Digital</td><td>Qualifica, aquece e passa o lead para o closer humano</td><td>WhatsApp</td></tr>
+            <tr><td>Analisador de Documentos</td><td>Lê contratos, propostas e extratos e resume</td><td>Dashboard</td></tr>
+            <tr><td>Gerador de Relatórios</td><td>Produz relatórios a partir de dados internos</td><td>Dashboard, Slack</td></tr>
+            <tr><td>Gestor de Conteúdo</td><td>Planeja e produz posts para redes sociais</td><td>Threads</td></tr>
+            <tr><td>Assistente Financeiro</td><td>Responde sobre faturas, pagamentos e status</td><td>WhatsApp, Web</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── CAPACIDADES AVANÇADAS ─── -->
+    <div class="section" id="capacidades">
+      <div class="section-eyebrow">Operação</div>
+      <h2>Capacidades Avançadas</h2>
+
+      <div class="cards">
+        <div class="card">
+          <span class="card-icon">🧠</span>
+          <div class="card-title">Memória — o agente lembra do cliente</div>
+          <div class="card-desc">Com memória ativada, o agente reconhece clientes que voltam. Sabe o que foram buscar antes, em que etapa estão, quais objeções levantaram. Cada conversa começa de onde a anterior parou.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">🔗</span>
+          <div class="card-title">Times de agentes — orquestração</div>
+          <div class="card-desc">Quando uma tarefa é complexa demais para um único agente, você monta um time. Cada agente faz o que sabe melhor, e o resultado de um alimenta o próximo. Como uma linha de produção — mas de conhecimento.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">🧪</span>
+          <div class="card-title">A/B Testing — qual agente converte mais</div>
+          <div class="card-desc">Teste dois agentes com o mesmo público. A plataforma divide o tráfego, mede os resultados e aponta o vencedor. Você para de adivinhar e começa a decidir com dados.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">💡</span>
+          <div class="card-title">Modo cognitivo — raciocínio avançado</div>
+          <div class="card-desc">Para problemas que exigem análise aprofundada, o agente opera em modo cognitivo: divide o problema em partes, refina a abordagem e sintetiza uma resposta mais precisa. Ideal para consultorias e diagnósticos.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">↗️</span>
+          <div class="card-title">Delegação entre agentes</div>
+          <div class="card-desc">Um agente generalista pode transferir a conversa para um especialista automaticamente — quando o lead mostra intenção de compra, quando o tema muda, ou quando a complexidade aumenta.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">🔌</span>
+          <div class="card-title">Conexão com qualquer sistema</div>
+          <div class="card-desc">Via MCP (Model Context Protocol), o agente se conecta a qualquer ferramenta externa — CRM, banco de dados, Slack, Stripe, GitHub — e usa essas ferramentas como se fossem habilidades nativas.</div>
+        </div>
+      </div>
+
+      <p style="margin-top:20px">Três modos de trabalho em time:</p>
+      <div class="table-wrap" style="margin-top:12px">
+        <table>
+          <thead>
+            <tr><th>Modo</th><th>Como funciona</th><th>Quando usar</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Sequencial</td><td>Um agente por vez; cada um herda o output do anterior</td><td>Pipelines de análise e produção em etapas</td></tr>
+            <tr><td>Paralelo</td><td>Todos trabalham ao mesmo tempo no mesmo problema</td><td>Pesquisa que precisa de múltiplas perspectivas simultâneas</td></tr>
+            <tr><td>Consenso</td><td>Múltiplos agentes respondem; a resposta mais convergente vence</td><td>Decisões que exigem alta confiabilidade</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── CASOS DE USO ─── -->
+    <div class="section" id="casos-de-uso">
+      <div class="section-eyebrow">Aplicação</div>
+      <h2>Casos de Uso</h2>
+
+      <div class="cards">
+        <div class="card">
+          <span class="card-icon">⚡</span>
+          <div class="card-title">Atendimento ininterrupto</div>
+          <div class="card-desc">300 mensagens por dia, 100% com resposta imediata. Os casos que precisam de humano chegam já qualificados.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">🎯</span>
+          <div class="card-title">Qualificação automática de leads</div>
+          <div class="card-desc">Em vez de um vendedor gastar 20 min por lead, o agente faz a triagem em 2. O vendedor entra apenas quando o lead já está quente.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">🚀</span>
+          <div class="card-title">Onboarding de clientes</div>
+          <div class="card-desc">Guia o processo de ativação, responde perguntas, envia tutoriais e notifica quando o cliente trava — sem ocupar o time de CS.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">✍️</span>
+          <div class="card-title">Geração de conteúdo em escala</div>
+          <div class="card-desc">Uma agência com 20 clientes pode ter um agente especializado por nicho, cada um produzindo com a voz certa — sem retrabalho.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">🔍</span>
+          <div class="card-title">Inteligência de mercado</div>
+          <div class="card-desc">Briefing completo de concorrentes, tendências ou oportunidades em minutos — não dias.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">📊</span>
+          <div class="card-title">Relatórios automáticos</div>
+          <div class="card-desc">Todo início de semana, o agente coleta, analisa e entrega o resumo no Slack. Ninguém lembra, ninguém monta na mão.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">🔄</span>
+          <div class="card-title">Atualização de CRM</div>
+          <div class="card-desc">O agente coleta informações durante a conversa e atualiza HubSpot ou Salesforce em tempo real. O CRM deixa de depender da disciplina do vendedor.</div>
+        </div>
+        <div class="card">
+          <span class="card-icon">📝</span>
+          <div class="card-title">Análise de documentos</div>
+          <div class="card-desc">Contratos, propostas e extratos enviados pelo cliente são lidos, resumidos e sinalizados em segundos.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── VERTICAIS POR NICHO ─── -->
+    <div class="section" id="verticais-nicho">
+      <div class="section-eyebrow">Aplicação</div>
+      <h2>Verticais por Nicho</h2>
+
+      <div class="vertical">
+        <div class="vertical-header">
+          <div class="vertical-icon" style="background:rgba(99,102,241,0.1)">🏢</div>
+          <div class="vertical-title">Imobiliário</div>
+        </div>
+        <p class="vertical-sub">Mercado de alto volume de leads e alto custo por perda. Um lead que não é atendido em 5 minutos vai para a concorrência.</p>
+        <div class="vertical-agents">
+          <div class="vertical-agent"><strong>Recepcionista 24h</strong> — recebe leads de portais (Zap, OLX) e responde imediatamente</div>
+          <div class="vertical-agent"><strong>Qualificador</strong> — identifica tipo de imóvel, faixa de preço, localização e urgência</div>
+          <div class="vertical-agent"><strong>Consultor de Portfólio</strong> — apresenta imóveis relevantes com base no perfil do lead</div>
+          <div class="vertical-agent"><strong>Agendador de Visitas</strong> — marca diretamente no calendário do corretor</div>
+          <div class="vertical-agent"><strong>Pós-venda</strong> — acompanha assinatura, documentação e entrega das chaves</div>
+        </div>
+        <div class="vertical-result"><strong>Resultado esperado:</strong> 40–60% de redução no tempo de resposta inicial, aumento de conversão de leads para visita.</div>
+      </div>
+
+      <div class="vertical">
+        <div class="vertical-header">
+          <div class="vertical-icon" style="background:rgba(16,185,129,0.1)">🏥</div>
+          <div class="vertical-title">Clínicas e Saúde</div>
+        </div>
+        <p class="vertical-sub">Volume de agendamentos, dúvidas sobre procedimentos e confirmação de consultas consomem horas da recepção.</p>
+        <div class="vertical-agents">
+          <div class="vertical-agent"><strong>Recepcionista Digital</strong> — agenda, cancela e reagenda consultas pelo WhatsApp</div>
+          <div class="vertical-agent"><strong>Triagem</strong> — coleta sintomas e direciona para o especialista correto</div>
+          <div class="vertical-agent"><strong>Orientador Pré-consulta</strong> — envia preparativos, exames necessários e confirmações</div>
+          <div class="vertical-agent"><strong>Pós-consulta</strong> — coleta feedback, envia prescrições e lembra de retorno</div>
+        </div>
+        <div class="vertical-result"><strong>Resultado esperado:</strong> liberação de 60–80% do tempo da recepção para tarefas que exigem presença humana.</div>
+      </div>
+
+      <div class="vertical">
+        <div class="vertical-header">
+          <div class="vertical-icon" style="background:rgba(245,158,11,0.1)">🎓</div>
+          <div class="vertical-title">Educação</div>
+        </div>
+        <p class="vertical-sub">Escolas e cursos lidam com muitas dúvidas repetitivas — matrículas, mensalidades, grade curricular, calendário.</p>
+        <div class="vertical-agents">
+          <div class="vertical-agent"><strong>Atendente de Matrículas</strong> — explica o processo e coleta dados</div>
+          <div class="vertical-agent"><strong>Consultor de Cursos</strong> — apresenta grade, metodologia e diferenciais</div>
+          <div class="vertical-agent"><strong>Suporte Financeiro</strong> — responde sobre boletos, parcelamentos e bolsas</div>
+          <div class="vertical-agent"><strong>Assistente do Aluno</strong> — tira dúvidas sobre conteúdo, prazos e materiais</div>
+        </div>
+        <div class="vertical-result"><strong>Resultado esperado:</strong> redução de 70% nas ligações para a secretaria, aumento na taxa de conversão de matrículas.</div>
+      </div>
+
+      <div class="vertical">
+        <div class="vertical-header">
+          <div class="vertical-icon" style="background:rgba(244,63,94,0.1)">🛒</div>
+          <div class="vertical-title">E-commerce e Varejo</div>
+        </div>
+        <p class="vertical-sub">Alto volume de perguntas sobre produtos, status de pedido, trocas e devoluções.</p>
+        <div class="vertical-agents">
+          <div class="vertical-agent"><strong>Consultor de Produtos</strong> — tira dúvidas técnicas e ajuda na escolha</div>
+          <div class="vertical-agent"><strong>Rastreador de Pedidos</strong> — integra com a plataforma e informa status em tempo real</div>
+          <div class="vertical-agent"><strong>Assistente de Trocas</strong> — guia o processo de devolução e troca</div>
+          <div class="vertical-agent"><strong>Recuperador de Carrinho</strong> — aborda clientes que abandonaram o carrinho</div>
+        </div>
+        <div class="vertical-result"><strong>Resultado esperado:</strong> NPS mais alto, redução de tickets de suporte, aumento de conversão.</div>
+      </div>
+
+      <div class="vertical">
+        <div class="vertical-header">
+          <div class="vertical-icon" style="background:rgba(6,182,212,0.1)">⚖️</div>
+          <div class="vertical-title">Jurídico e Consultoria</div>
+        </div>
+        <p class="vertical-sub">Escritórios recebem consultas iniciais que poderiam ser triadas antes de chegar ao advogado sênior.</p>
+        <div class="vertical-agents">
+          <div class="vertical-agent"><strong>Triagem Jurídica</strong> — identifica a área do direito e urgência</div>
+          <div class="vertical-agent"><strong>Analisador de Documentos</strong> — lê contratos e resume cláusulas relevantes</div>
+          <div class="vertical-agent"><strong>Assistente de Pesquisa</strong> — busca jurisprudência e legislação</div>
+          <div class="vertical-agent"><strong>Gerador de Minutas</strong> — produz rascunhos de documentos padrão</div>
+        </div>
+        <div class="vertical-result"><strong>Resultado esperado:</strong> sêniors focados em casos complexos, aumento de capacidade sem aumento de headcount.</div>
+      </div>
+
+      <div class="vertical">
+        <div class="vertical-header">
+          <div class="vertical-icon" style="background:rgba(236,72,153,0.1)">📣</div>
+          <div class="vertical-title">Agências de Marketing</div>
+        </div>
+        <p class="vertical-sub">Produção de conteúdo em escala para múltiplos clientes é o maior gargalo de agências.</p>
+        <div class="vertical-agents">
+          <div class="vertical-agent"><strong>Estrategista de Conteúdo</strong> — define pautas, calendário e ângulos por nicho</div>
+          <div class="vertical-agent"><strong>Redator</strong> — produz copies, posts, e-mails e artigos com a voz do cliente</div>
+          <div class="vertical-agent"><strong>Analista de Métricas</strong> — interpreta dados de campanha e sugere ajustes</div>
+          <div class="vertical-agent"><strong>Gerente de Projetos</strong> — consolida briefings, prazos e entregas</div>
+        </div>
+        <div class="vertical-result"><strong>Resultado esperado:</strong> aumento de 3–5x na capacidade de produção sem contratações.</div>
+      </div>
+
+      <div class="vertical">
+        <div class="vertical-header">
+          <div class="vertical-icon" style="background:rgba(16,185,129,0.1)">💰</div>
+          <div class="vertical-title">Financeiro e Seguros</div>
+        </div>
+        <p class="vertical-sub">Clientes têm dúvidas frequentes sobre produtos financeiros, status de apólice e simulações.</p>
+        <div class="vertical-agents">
+          <div class="vertical-agent"><strong>Simulador</strong> — faz cálculos de financiamento, rentabilidade e seguro</div>
+          <div class="vertical-agent"><strong>Atendente de Sinistros</strong> — coleta informações e abre o processo</div>
+          <div class="vertical-agent"><strong>Educador Financeiro</strong> — explica produtos com linguagem acessível</div>
+          <div class="vertical-agent"><strong>Qualificador de Investidores</strong> — identifica perfil e risco antes de encaminhar ao assessor</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── VERTICAIS POR CASO DE USO ─── -->
+    <div class="section" id="verticais-caso">
+      <div class="section-eyebrow">Aplicação</div>
+      <h2>Verticais por Caso de Uso</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Caso de uso</th>
+              <th>Problema</th>
+              <th>Solução</th>
+              <th>Métrica de sucesso</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Geração e Qualificação de Leads</td>
+              <td>Leads chegam em volume, equipe não atende rápido o suficiente</td>
+              <td>Agente de primeiro contato ativo 24h que qualifica, pontua e prioriza</td>
+              <td>Tempo de primeiro contato &lt; 1 minuto</td>
+            </tr>
+            <tr>
+              <td>Suporte e Retenção</td>
+              <td>Clientes pedem suporte, ficam sem resposta e cancelam</td>
+              <td>Agente de suporte com base de conhecimento resolve 70–80% sem humano</td>
+              <td>Taxa de resolução no primeiro contato, NPS</td>
+            </tr>
+            <tr>
+              <td>Automação de Processos</td>
+              <td>Tarefas repetitivas consomem horas toda semana</td>
+              <td>Orquestração agendada que executa o processo automaticamente</td>
+              <td>Horas de trabalho manual economizadas/mês</td>
+            </tr>
+            <tr>
+              <td>Produção de Conteúdo</td>
+              <td>Criar conteúdo consistente em volume suficiente para múltiplos canais</td>
+              <td>Pipeline de agentes (estrategista → redator → revisor) entrega conteúdo pronto</td>
+              <td>Volume de peças/semana, tempo de produção</td>
+            </tr>
+            <tr>
+              <td>Inteligência e Pesquisa</td>
+              <td>Decisões lentas por falta de dados consolidados</td>
+              <td>Agente de pesquisa que coleta, analisa e entrega sob demanda</td>
+              <td>Tempo entre solicitação e entrega do relatório</td>
+            </tr>
+            <tr>
+              <td>Onboarding de Clientes</td>
+              <td>Novos clientes travam no processo de ativação</td>
+              <td>Agente de onboarding guia passo a passo e detecta travamentos</td>
+              <td>Taxa de ativação no primeiro mês</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── MÉTRICAS ─── -->
+    <div class="section" id="metricas">
+      <div class="section-eyebrow">Resultado</div>
+      <h2>Métricas de Impacto</h2>
+
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="metric-before">Tempo de primeiro atendimento</div>
+          <div class="metric-arrow">⬇️</div>
+          <div class="metric-after">De horas para segundos</div>
+          <div class="metric-label">Resposta imediata, independente do horário</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-before">Custo por atendimento</div>
+          <div class="metric-arrow">⬇️</div>
+          <div class="metric-after">Redução de 60–80%</div>
+          <div class="metric-label">vs. atendimento humano equivalente</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-before">Capacidade da equipe</div>
+          <div class="metric-arrow">⬆️</div>
+          <div class="metric-after">3–5x mais clientes</div>
+          <div class="metric-label">Mesma equipe, volume muito maior</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-before">Horas em tarefas repetitivas</div>
+          <div class="metric-arrow">⬇️</div>
+          <div class="metric-after">Redução de 70–90%</div>
+          <div class="metric-label">Equipe focada no que gera valor</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-before">Tempo de produção de conteúdo</div>
+          <div class="metric-arrow">⬇️</div>
+          <div class="metric-after">De dias para horas</div>
+          <div class="metric-label">Pipeline de agentes em série</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-before">Satisfação do cliente (NPS)</div>
+          <div class="metric-arrow">⬆️</div>
+          <div class="metric-after">Resposta consistente e imediata</div>
+          <div class="metric-label">Sem variação de humor ou cansaço</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── O QUE NÃO SUBSTITUI ─── -->
+    <div class="section" id="limites">
+      <div class="section-eyebrow">Resultado</div>
+      <h2>O que os Agentes Não Substituem</h2>
+      <p>Agentes são ferramentas de amplificação, não de substituição total. O modelo certo é: <strong>agentes cuidam do volume, humanos cuidam do valor.</strong></p>
+
+      <div class="limit-grid" style="margin-top:24px">
+        <div class="limit-card">
+          <div class="limit-label agent">Agentes fazem bem</div>
+          <ul class="limit-list agent-list">
+            <li>Responder em escala sem fadiga</li>
+            <li>Executar processos repetitivos com consistência</li>
+            <li>Qualificar e triar volume alto de contatos</li>
+            <li>Coletar, organizar e resumir informações</li>
+            <li>Estar disponível 24h/7 dias sem custo adicional</li>
+            <li>Integrar sistemas e atualizar dados automaticamente</li>
+          </ul>
+        </div>
+        <div class="limit-card">
+          <div class="limit-label human">Humanos fazem melhor</div>
+          <ul class="limit-list human-list">
+            <li>Negociações complexas com empatia e criatividade</li>
+            <li>Decisões estratégicas com alto risco ou ambiguidade</li>
+            <li>Relacionamentos de alto valor que exigem presença</li>
+            <li>Situações de crise com julgamento ético contextual</li>
+            <li>Criação de estratégia e visão de longo prazo</li>
+            <li>Gestão de pessoas e cultura organizacional</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ─── FAQ ─── -->
+    <div class="section" id="faq">
+      <div class="section-eyebrow">Resultado</div>
+      <h2>Perguntas Frequentes</h2>
+
+      <div style="margin-top:8px">
+        <div class="faq-item">
+          <div class="faq-q">O agente pode errar?</div>
+          <div class="faq-a">Pode, como qualquer sistema de IA. Por isso a plataforma tem handoff humano — quando o agente não sabe ou não tem confiança suficiente, ele transfere a conversa com o contexto completo preservado.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">O agente precisa de treinamento constante?</div>
+          <div class="faq-a">Não. Você atualiza a base de conhecimento quando seu produto ou processo muda. O agente se adapta automaticamente às novas informações — sem sessões de retraining.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Quantos agentes posso ter?</div>
+          <div class="faq-a">No plano Pro e Business, ilimitados. Você pode ter um agente para cada produto, canal ou etapa do funil — sem custo adicional por agente criado.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">O agente funciona em português?</div>
+          <div class="faq-a">Sim. Ele entende e responde em português com naturalidade. Também suporta outros idiomas automaticamente, adaptando-se ao idioma que o cliente usar.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Posso ver o que o agente está respondendo?</div>
+          <div class="faq-a">Sim. Todas as conversas ficam registradas no painel, com histórico completo e possibilidade de intervenção humana a qualquer momento.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">E se o cliente quiser falar com uma pessoa?</div>
+          <div class="faq-a">O agente reconhece esse pedido e transfere a conversa para um membro da equipe, com todo o histórico da interação preservado. O atendente humano retoma sem precisar pedir as informações de novo.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Quanto tempo leva para colocar um agente no ar?</div>
+          <div class="faq-a">Para casos de uso padrão com templates, menos de 30 minutos do zero à produção. Agentes mais complexos com base de conhecimento extensa e integrações customizadas podem levar algumas horas de setup.</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div class="page-footer">
+  Polaris IA · polarisia.com.br · ROI Labs · Maio 2026 · Guia Executivo — Agentes de IA
+</div>
+
+</body>
+</html>

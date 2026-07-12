@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polaris IA — O que você para de fazer</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #111113;
+      --surface2: #18181b;
+      --surface3: #1f1f23;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.12);
+      --text: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-tertiary: #71717a;
+      --indigo: #6366f1;
+      --violet: #8b5cf6;
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      --amber: #f59e0b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 240px;
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      z-index: 100;
+      padding: 28px 0 40px;
+    }
+
+    .sidebar-logo {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .sidebar-logo-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .sidebar-logo-sub {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    .sidebar-section {
+      padding: 6px 20px 2px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-top: 12px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 7px 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+      line-height: 1.4;
+    }
+
+    .sidebar a:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.04);
+      border-left-color: var(--indigo);
+    }
+
+    /* ─── MAIN ─── */
+    .main { margin-left: 240px; min-height: 100vh; }
+
+    /* ─── HERO ─── */
+    .hero {
+      padding: 80px 64px 72px;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 60% -20%, rgba(99,102,241,0.14) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 90% 90%, rgba(139,92,246,0.07) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid rgba(99,102,241,0.3);
+      background: rgba(99,102,241,0.07);
+      color: #818cf8;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 28px;
+    }
+
+    .hero-badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #6366f1;
+      box-shadow: 0 0 8px #6366f1;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 4vw, 54px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #fff 40%, #a5b4fc 75%, #c4b5fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      max-width: 680px;
+    }
+
+    .hero-sub {
+      font-size: 17px;
+      color: var(--text-secondary);
+      max-width: 580px;
+      line-height: 1.65;
+    }
+
+    /* ─── CONTENT ─── */
+    .content {
+      max-width: 900px;
+      padding: 64px 64px 120px;
+    }
+
+    /* ─── SECTION ─── */
+    .section {
+      margin-bottom: 80px;
+      scroll-margin-top: 32px;
+    }
+
+    .section-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--indigo);
+      margin-bottom: 10px;
+    }
+
+    .section > h2 {
+      font-size: 28px;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 10px;
+    }
+
+    .section-tagline {
+      font-size: 16px;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+      max-width: 640px;
+    }
+
+    /* ─── VALOR BLOCK (problema → como → resultado) ─── */
+    .valor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .valor-cell {
+      background: var(--surface2);
+      padding: 24px;
+    }
+
+    .valor-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .valor-label.problema { color: var(--rose); }
+    .valor-label.solucao  { color: var(--indigo); }
+    .valor-label.resultado{ color: var(--emerald); }
+
+    .valor-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .valor-text strong { color: var(--text); font-weight: 600; }
+
+    /* ─── FEATURE ROW (grande item de valor) ─── */
+    .feature-row {
+      display: flex;
+      gap: 32px;
+      padding: 32px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: flex-start;
+    }
+
+    .feature-row:last-child { border-bottom: none; }
+
+    .feature-row-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .feature-row-body { flex: 1; }
+
+    .feature-row-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .feature-row-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .feature-row-result {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--emerald);
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.18);
+      padding: 4px 12px;
+      border-radius: 999px;
+    }
+
+    .feature-row-result::before { content: '↑'; }
+
+    /* ─── COMPARATIVO ANTES / DEPOIS ─── */
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin: 24px 0;
+    }
+
+    .compare-col {
+      background: var(--surface2);
+      padding: 24px 28px;
+    }
+
+    .compare-col-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .compare-col-label.antes { color: var(--rose); }
+    .compare-col-label.depois { color: var(--emerald); }
+
+    .compare-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .compare-list li {
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      line-height: 1.45;
+    }
+
+    .compare-list.antes li::before {
+      content: '✕';
+      color: var(--rose);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .compare-list.depois li::before {
+      content: '✓';
+      color: var(--emerald);
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    /* ─── NÚMERO GRANDE ─── */
+    .numbers-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin: 24px 0;
+    }
+
+    .number-cell {
+      background: var(--surface2);
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    .number-value {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff, #a5b4fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .number-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      line-height: 1.4;
+    }
+
+    /* ─── CALLOUT ─── */
+    .callout {
+      background: rgba(99,102,241,0.06);
+      border: 1px solid rgba(99,102,241,0.18);
+      border-left: 3px solid var(--indigo);
+      border-radius: 8px;
+      padding: 16px 20px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin: 24px 0;
+      line-height: 1.6;
+    }
+
+    .callout strong { color: #a5b4fc; }
+
+    /* ─── NICHO CARDS ─── */
+    .nicho-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .nicho-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+      transition: border-color 0.2s;
+    }
+
+    .nicho-card:hover { border-color: rgba(99,102,241,0.3); }
+
+    .nicho-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .nicho-icon { font-size: 20px; }
+
+    .nicho-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .nicho-pains {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .nicho-pains li {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 6px;
+      line-height: 1.4;
+    }
+
+    .nicho-pains li::before {
+      content: '→';
+      color: var(--indigo);
+      flex-shrink: 0;
+    }
+
+    .nicho-result {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--emerald);
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ─── DIVIDER ─── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 56px 0;
+    }
+
+    /* ─── TABLE ─── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin: 20px 0;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead { background: var(--surface2); }
+
+    th {
+      text-align: left;
+      padding: 11px 16px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 16px;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    td:first-child { color: var(--text); font-weight: 500; }
+
+    /* ─── FOOTER ─── */
+    .page-footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 64px;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-left: 240px;
+    }
+
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+    @media (max-width: 860px) {
+      .sidebar { display: none; }
+      .main, .page-footer { margin-left: 0; }
+      .hero, .content { padding-left: 24px; padding-right: 24px; }
+      .compare { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════ SIDEBAR ══ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-name">Polaris IA</div>
+    <div class="sidebar-logo-sub">Visão de Valor · Maio 2026</div>
+  </div>
+
+  <div class="sidebar-section">Problemas que resolve</div>
+  <a href="#atendimento">Atendimento sem escala</a>
+  <a href="#leads">Leads sem resposta</a>
+  <a href="#processos">Processos manuais</a>
+  <a href="#decisao">Decisões no escuro</a>
+  <a href="#conteudo">Conteúdo que não sai</a>
+
+  <div class="sidebar-section">Como resolve</div>
+  <a href="#agentes">Agentes que trabalham</a>
+  <a href="#orquestracao">Times de agentes</a>
+  <a href="#workflows">Automação visual</a>
+  <a href="#integrações">Conectado ao seu stack</a>
+
+  <div class="sidebar-section">Para quem</div>
+  <a href="#nichos">Por nicho</a>
+  <a href="#planos">Por tamanho de operação</a>
+  <a href="#roi">Retorno esperado</a>
+</nav>
+
+<!-- ══════════════════════ MAIN ══ -->
+<div class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">Visão de Valor · Maio 2026</div>
+    <h1>O que você para de fazer quando usa a Polaris IA</h1>
+    <p class="hero-sub">
+      Não é uma lista de features. É o que muda no dia a dia da sua operação — o que some da sua mesa, o que para de depender de pessoa e o que começa a acontecer sozinho.
+    </p>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════ 1. ATENDIMENTO ══════ -->
+    <div class="section" id="atendimento">
+      <div class="section-eyebrow">Problema 1</div>
+      <h2>Atendimento que não escala</h2>
+      <p class="section-tagline">Você cresce, o volume de mensagens triplica, mas a equipe não acompanha. Resultado: leads sem resposta, clientes insatisfeitos e time sobrecarregado.</p>
+
+      <div class="compare">
+        <div class="compare-col">
+          <div class="compare-col-label antes">Hoje</div>
+          <ul class="compare-list antes">
+            <li>Lead chega fora do horário — resposta só amanhã</li>
+            <li>Atendente responde 30 conversas ao mesmo tempo e perde qualidade</li>
+            <li>Informações repetidas cliente a cliente, do zero</li>
+            <li>Humano gasta 80% do tempo em perguntas que nunca mudam</li>
+            <li>Crescer = contratar mais gente</li>
+          </ul>
+        </div>
+        <div class="compare-col">
+          <div class="compare-col-label depois">Com Polaris IA</div>
+          <ul class="compare-list depois">
+            <li>100% das mensagens respondidas em segundos, qualquer horário</li>
+            <li>Um agente atende 1.000 conversas simultâneas com a mesma qualidade</li>
+            <li>Contexto e histórico do cliente carregados automaticamente</li>
+            <li>Humano entra apenas quando há valor real: negociação, decisão, relacionamento</li>
+            <li>Crescer = ativar mais agentes, não contratar</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="numbers-row">
+        <div class="number-cell">
+          <div class="number-value">&lt;10s</div>
+          <div class="number-label">Tempo médio de primeira resposta</div>
+        </div>
+        <div class="number-cell">
+          <div class="number-value">24/7</div>
+          <div class="number-label">Disponibilidade sem custo adicional</div>
+        </div>
+        <div class="number-cell">
+          <div class="number-value">−70%</div>
+          <div class="number-label">Custo por atendimento</div>
+        </div>
+        <div class="number-cell">
+          <div class="number-value">∞</div>
+          <div class="number-label">Conversas simultâneas</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════ 2. LEADS ══════ -->
+    <div class="section" id="leads">
+      <div class="section-eyebrow">Problema 2</div>
+      <h2>Leads que morrem antes de chegar ao vendedor</h2>
+      <p class="section-tagline">Você investe em tráfego, o lead chega — e espera. Enquanto espera, vai à concorrência. O que chegou ao seu vendedor já não é o mesmo lead de 5 minutos atrás.</p>
+
+      <div class="compare">
+        <div class="compare-col">
+          <div class="compare-col-label antes">Hoje</div>
+          <ul class="compare-list antes">
+            <li>Vendedor passa 20 min por lead descobrindo se vale a pena</li>
+            <li>Lead frio e lead quente chegam ao time da mesma forma</li>
+            <li>Sem resposta nas primeiras horas = lead perdido</li>
+            <li>CRM desatualizado porque vendedor esquece de preencher</li>
+            <li>Ninguém sabe de onde vieram os melhores leads</li>
+          </ul>
+        </div>
+        <div class="compare-col">
+          <div class="compare-col-label depois">Com Polaris IA</div>
+          <ul class="compare-list depois">
+            <li>Agente qualifica em 2 min: interesse, orçamento, urgência, canal</li>
+            <li>Vendedor só recebe leads com score acima do threshold definido</li>
+            <li>Primeiro contato em segundos, mesmo que o lead chegue à 1h da manhã</li>
+            <li>CRM atualizado automaticamente após cada interação</li>
+            <li>Origem, comportamento e score de cada lead rastreados</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>O agente não substitui o vendedor.</strong> Ele garante que o vendedor só fala com quem já decidiu que quer comprar — ou está muito perto disso.
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════ 3. PROCESSOS ══════ -->
+    <div class="section" id="processos">
+      <div class="section-eyebrow">Problema 3</div>
+      <h2>Processos que dependem de alguém lembrar de fazer</h2>
+      <p class="section-tagline">Toda empresa tem tarefas que consomem horas toda semana e que, se alguém falhar, param ou atrasam tudo. Relatórios, atualizações, coletas de dados, envios recorrentes.</p>
+
+      <div class="feature-row">
+        <div class="feature-row-icon" style="background:rgba(99,102,241,0.1)">⚙️</div>
+        <div class="feature-row-body">
+          <div class="feature-row-title">Workflows automáticos, sem código</div>
+          <div class="feature-row-desc">Você monta o processo uma vez no editor visual — quais etapas, em que ordem, com quais condições — e ele roda sozinho. Toda semana, todo dia, toda hora. Sem depender de ninguém lembrar.</div>
+          <div class="feature-row-result">Libera horas de trabalho repetitivo toda semana</div>
+        </div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-row-icon" style="background:rgba(139,92,246,0.1)">🔗</div>
+        <div class="feature-row-body">
+          <div class="feature-row-title">Times de agentes em pipeline</div>
+          <div class="feature-row-desc">Processos complexos viram pipelines: Agente 1 coleta, Agente 2 analisa, Agente 3 formata e entrega. O output de cada etapa alimenta a próxima. Você define o processo, a IA executa.</div>
+          <div class="feature-row-result">Processos de horas executados em minutos</div>
+        </div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-row-icon" style="background:rgba(245,158,11,0.1)">⏱️</div>
+        <div class="feature-row-body">
+          <div class="feature-row-title">Agendamento automático</div>
+          <div class="feature-row-desc">Relatório toda segunda às 07h30. Coleta de dados toda sexta às 18h. Verificação de status todo dia às 9h. Você programa uma vez e esquece — o sistema executa, você recebe o resultado.</div>
+          <div class="feature-row-result">Zero tarefas recorrentes manuais</div>
+        </div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-row-icon" style="background:rgba(6,182,212,0.1)">📤</div>
+        <div class="feature-row-body">
+          <div class="feature-row-title">Resultado entregue onde você já trabalha</div>
+          <div class="feature-row-desc">Ao terminar, o resultado vai direto para onde a equipe já está: Slack, Discord, e-mail, ou qualquer sistema via webhook. Ninguém precisa entrar no painel para ver o que aconteceu.</div>
+          <div class="feature-row-result">Resultado no Slack antes do café da manhã</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════ 4. DECISÃO ══════ -->
+    <div class="section" id="decisao">
+      <div class="section-eyebrow">Problema 4</div>
+      <h2>Decisões tomadas sem dados — ou com dados atrasados</h2>
+      <p class="section-tagline">O gestor quer saber o que está acontecendo. A resposta vem dois dias depois, em uma planilha que já está desatualizada. Decisão baseada em achismo.</p>
+
+      <div class="compare">
+        <div class="compare-col">
+          <div class="compare-col-label antes">Hoje</div>
+          <ul class="compare-list antes">
+            <li>Relatório consolidado demora 1–2 dias para ficar pronto</li>
+            <li>Cada área tem sua planilha, ninguém fala a mesma língua</li>
+            <li>Não dá pra saber qual agente ou vendedor está performando melhor</li>
+            <li>NPS coletado uma vez por ano, se der</li>
+            <li>Analytics de campanha interpretado só pelo analista</li>
+          </ul>
+        </div>
+        <div class="compare-col">
+          <div class="compare-col-label depois">Com Polaris IA</div>
+          <ul class="compare-list depois">
+            <li>Dashboard em tempo real: conversas, leads, conversão, custo</li>
+            <li>Consultas em linguagem natural — "quantos leads quentes essa semana?"</li>
+            <li>Cada agente tem sua performance rastreada individualmente</li>
+            <li>NPS coletado automaticamente após cada atendimento</li>
+            <li>A/B test entre agentes aponta o vencedor com dados reais de produção</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>A/B Testing de agentes:</strong> você testa dois abordagens com o mesmo público e 10% / 90% do tráfego. A plataforma mede, compara e aponta o vencedor. Sem achismo, sem "eu acho que esse funciona melhor."
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════ 5. CONTEÚDO ══════ -->
+    <div class="section" id="conteudo">
+      <div class="section-eyebrow">Problema 5</div>
+      <h2>Conteúdo que fica parado na fila de aprovação</h2>
+      <p class="section-tagline">A estratégia existe. O calendário editorial existe. O conteúdo não sai porque produzir é lento, revisar é lento e publicar é manual.</p>
+
+      <div class="feature-row">
+        <div class="feature-row-icon" style="background:rgba(236,72,153,0.1)">✍️</div>
+        <div class="feature-row-body">
+          <div class="feature-row-title">Pipeline estrategista → redator → revisor</div>
+          <div class="feature-row-desc">Três agentes especializados em série: o primeiro define ângulo e abordagem, o segundo escreve, o terceiro revisa tom e consistência de marca. Você recebe a peça pronta para aprovação — não um rascunho para editar do zero.</div>
+          <div class="feature-row-result">3–5x mais conteúdo com o mesmo time</div>
+        </div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-row-icon" style="background:rgba(16,185,129,0.1)">📅</div>
+        <div class="feature-row-body">
+          <div class="feature-row-title">Calendário e publicação integrados</div>
+          <div class="feature-row-desc">Campanhas organizadas em sequência, posts agendados com data e horário, publicação no Threads sem sair da plataforma. O que estava em N planilhas e ferramentas diferentes fica em um lugar só.</div>
+          <div class="feature-row-result">Calendário editorial que executa sozinho</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════ COMO RESOLVE: AGENTES ══════ -->
+    <div class="section" id="agentes">
+      <div class="section-eyebrow">Como resolve</div>
+      <h2>Agentes que trabalham em vez de você</h2>
+      <p class="section-tagline">Um agente tem personalidade, conhecimento, memória e habilidades. Não responde de script — entende, decide e age.</p>
+
+      <div class="valor-grid">
+        <div class="valor-cell">
+          <div class="valor-label problema">Sem Polaris IA</div>
+          <div class="valor-text">Você escreve um FAQ enorme. O atendente lê (ou não). O cliente pergunta algo fora do FAQ. A resposta varia de acordo com quem atende.</div>
+        </div>
+        <div class="valor-cell">
+          <div class="valor-label solucao">Com agente</div>
+          <div class="valor-text">Você faz upload do FAQ, manual, tabela de preços e catálogo. O agente <strong>lê tudo</strong>, busca o trecho certo e responde com a linguagem da sua marca — sempre, para todos os clientes.</div>
+        </div>
+        <div class="valor-cell">
+          <div class="valor-label resultado">Resultado</div>
+          <div class="valor-text"><strong>Consistência sem supervisão.</strong> A qualidade do atendimento não depende mais de quem está de plantão.</div>
+        </div>
+      </div>
+
+      <div class="valor-grid" style="margin-top:12px">
+        <div class="valor-cell">
+          <div class="valor-label problema">Sem memória</div>
+          <div class="valor-text">Cliente volta depois de 3 dias. Precisa explicar tudo de novo. "Você me disse semana passada que..." — o agente não sabe.</div>
+        </div>
+        <div class="valor-cell">
+          <div class="valor-label solucao">Com memória ativada</div>
+          <div class="valor-text">O agente lembra: nome, o que buscou antes, objeções que levantou, em que etapa do funil está. A conversa começa de onde parou.</div>
+        </div>
+        <div class="valor-cell">
+          <div class="valor-label resultado">Resultado</div>
+          <div class="valor-text"><strong>Experiência de cliente que parece humana</strong> — sem nenhum humano precisar lembrar de nada.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════ ORQUESTRAÇÃO ══════ -->
+    <div class="section" id="orquestracao">
+      <div class="section-eyebrow">Como resolve</div>
+      <h2>Times de agentes para tarefas que um agente só não daria conta</h2>
+      <p class="section-tagline">Alguns processos são complexos demais para um único agente. A orquestração monta o time certo para cada tarefa.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tarefa</th>
+              <th>Agente 1</th>
+              <th>Agente 2</th>
+              <th>Agente 3</th>
+              <th>Você recebe</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Relatório semanal de vendas</td>
+              <td>Coleta dados do CRM</td>
+              <td>Analisa tendências</td>
+              <td>Redige o resumo</td>
+              <td>Relatório no Slack às 07h30</td>
+            </tr>
+            <tr>
+              <td>Pesquisa de concorrência</td>
+              <td>Rastreia sites e redes</td>
+              <td>Identifica mudanças relevantes</td>
+              <td>Formata o briefing</td>
+              <td>Briefing pronto em 8 minutos</td>
+            </tr>
+            <tr>
+              <td>Qualificação em lote</td>
+              <td>Lê lista de leads</td>
+              <td>Pontua cada um por critério</td>
+              <td>Prioriza e categoriza</td>
+              <td>Lista rankeada para o time</td>
+            </tr>
+            <tr>
+              <td>Produção de conteúdo</td>
+              <td>Define pauta e ângulo</td>
+              <td>Escreve o texto</td>
+              <td>Revisa tom e marca</td>
+              <td>Peça pronta para publicar</td>
+            </tr>
+            <tr>
+              <td>Análise de contrato</td>
+              <td>Lê e extrai cláusulas</td>
+              <td>Compara com template padrão</td>
+              <td>Sinaliza riscos e divergências</td>
+              <td>Resumo com alertas em minutos</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout">
+        <strong>Magic Create:</strong> descreva o que você quer em texto e a IA monta a orquestração completa — agentes, sequência e condições. Você ajusta se quiser, ou roda direto.
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════ WORKFLOWS ══════ -->
+    <div class="section" id="workflows">
+      <div class="section-eyebrow">Como resolve</div>
+      <h2>Automação visual para quem não quer depender de dev</h2>
+      <p class="section-tagline">O flow builder funciona como um fluxograma que você já conhece — exceto que esse executa de verdade.</p>
+
+      <div class="compare">
+        <div class="compare-col">
+          <div class="compare-col-label antes">Sem automação</div>
+          <ul class="compare-list antes">
+            <li>Alguém roda o processo manualmente toda vez</li>
+            <li>Se a pessoa faltar, o processo para</li>
+            <li>Erro humano em alguma etapa vira problema para o cliente</li>
+            <li>Não tem histórico de quem fez o quê e quando</li>
+          </ul>
+        </div>
+        <div class="compare-col">
+          <div class="compare-col-label depois">Com Workflows</div>
+          <ul class="compare-list depois">
+            <li>Processo roda no horário definido, sem intervenção</li>
+            <li>Se falhar, tenta de novo automaticamente com backoff</li>
+            <li>Log completo de cada execução, cada etapa, cada resultado</li>
+            <li>Versões salvas — você volta à versão anterior se precisar</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════ INTEGRAÇÕES ══════ -->
+    <div class="section" id="integrações">
+      <div class="section-eyebrow">Como resolve</div>
+      <h2>Conectado ao stack que você já usa</h2>
+      <p class="section-tagline">Não exige que você mude de ferramenta. A Polaris IA se encaixa no que já existe.</p>
+
+      <div class="feature-row">
+        <div class="feature-row-icon" style="background:rgba(245,158,11,0.1)">🔌</div>
+        <div class="feature-row-body">
+          <div class="feature-row-title">CRM não precisa mais depender do vendedor para se atualizar</div>
+          <div class="feature-row-desc">O agente conversa com o cliente e, em paralelo, atualiza HubSpot ou Salesforce com os dados coletados. Nome, telefone, interesse, score, estágio — tudo registrado automaticamente, sem o vendedor precisar lembrar de fazer.</div>
+          <div class="feature-row-result">CRM sempre atualizado, sem disciplina</div>
+        </div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-row-icon" style="background:rgba(16,185,129,0.1)">📁</div>
+        <div class="feature-row-body">
+          <div class="feature-row-title">Google Drive vira base de conhecimento do agente</div>
+          <div class="feature-row-desc">Você já tem seus documentos no Drive. O agente sincroniza, indexa e passa a consultar automaticamente. Quando o cliente perguntar algo, o agente busca a resposta no material que você já produziu.</div>
+          <div class="feature-row-result">Documentação existente transformada em conhecimento ativo</div>
+        </div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-row-icon" style="background:rgba(6,182,212,0.1)">📅</div>
+        <div class="feature-row-body">
+          <div class="feature-row-title">Agendamentos direto no Google Calendar</div>
+          <div class="feature-row-desc">O agente verifica a disponibilidade, propõe horários e confirma a reunião — tudo dentro do WhatsApp, sem o cliente precisar acessar nenhum link externo.</div>
+          <div class="feature-row-result">Agenda cheia sem secretária</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════ NICHOS ══════ -->
+    <div class="section" id="nichos">
+      <div class="section-eyebrow">Para quem</div>
+      <h2>O que muda em cada mercado</h2>
+      <p class="section-tagline">O problema de escala é o mesmo em todos os nichos. O que muda é onde ele dói mais.</p>
+
+      <div class="nicho-grid">
+        <div class="nicho-card">
+          <div class="nicho-header">
+            <span class="nicho-icon">🏢</span>
+            <div class="nicho-title">Imobiliário</div>
+          </div>
+          <ul class="nicho-pains">
+            <li>Lead do portal sem resposta em 5 min vai para o concorrente</li>
+            <li>Corretor perde tempo com leads que nunca iam comprar</li>
+            <li>Agenda de visitas preenchida na mão</li>
+          </ul>
+          <div class="nicho-result">Resposta imediata 24h + leads qualificados antes de chegar ao corretor</div>
+        </div>
+
+        <div class="nicho-card">
+          <div class="nicho-header">
+            <span class="nicho-icon">🏥</span>
+            <div class="nicho-title">Clínicas e Saúde</div>
+          </div>
+          <ul class="nicho-pains">
+            <li>Recepção sobrecarregada com agendamentos e dúvidas repetitivas</li>
+            <li>Confirmações de consulta feitas manualmente</li>
+            <li>Pós-consulta sem acompanhamento por falta de tempo</li>
+          </ul>
+          <div class="nicho-result">Recepção libera 60–80% do tempo para o que exige presença humana</div>
+        </div>
+
+        <div class="nicho-card">
+          <div class="nicho-header">
+            <span class="nicho-icon">🎓</span>
+            <div class="nicho-title">Educação</div>
+          </div>
+          <ul class="nicho-pains">
+            <li>Secretaria responde as mesmas 10 dúvidas o dia todo</li>
+            <li>Matrículas perdidas por demora no contato</li>
+            <li>Alunos sem suporte fora do horário comercial</li>
+          </ul>
+          <div class="nicho-result">−70% nas ligações para a secretaria, mais matrículas convertidas</div>
+        </div>
+
+        <div class="nicho-card">
+          <div class="nicho-header">
+            <span class="nicho-icon">🛒</span>
+            <div class="nicho-title">E-commerce</div>
+          </div>
+          <ul class="nicho-pains">
+            <li>Volume de tickets de suporte cresce com as vendas</li>
+            <li>Carrinho abandonado sem abordagem automática</li>
+            <li>Trocas e devoluções viram gargalo operacional</li>
+          </ul>
+          <div class="nicho-result">Suporte escalável sem contratar, mais recuperação de carrinho</div>
+        </div>
+
+        <div class="nicho-card">
+          <div class="nicho-header">
+            <span class="nicho-icon">📣</span>
+            <div class="nicho-title">Agências</div>
+          </div>
+          <ul class="nicho-pains">
+            <li>Escalar clientes sem escalar headcount é impossível</li>
+            <li>Produção de conteúdo em lote vira gargalo</li>
+            <li>Relatórios para clientes montados na mão toda semana</li>
+          </ul>
+          <div class="nicho-result">3–5x mais capacidade de produção sem novas contratações</div>
+        </div>
+
+        <div class="nicho-card">
+          <div class="nicho-header">
+            <span class="nicho-icon">⚖️</span>
+            <div class="nicho-title">Jurídico</div>
+          </div>
+          <ul class="nicho-pains">
+            <li>Sênior gasta tempo com triagem que poderia ser automatizada</li>
+            <li>Análise de contrato consome horas por documento</li>
+            <li>Pesquisa de jurisprudência feita manualmente</li>
+          </ul>
+          <div class="nicho-result">Sêniors só em casos complexos, capacidade aumenta sem headcount</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════ PLANOS ══════ -->
+    <div class="section" id="planos">
+      <div class="section-eyebrow">Para quem</div>
+      <h2>Por tamanho de operação</h2>
+      <p class="section-tagline">A plataforma cresce com você. O que muda entre planos não é o que você pode fazer — é o volume e o nível de controle.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Perfil</th>
+              <th>O que importa</th>
+              <th>Plano</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Solopreneur / Pequeno negócio</td>
+              <td>Um agente no WhatsApp que atende enquanto você trabalha em outra coisa</td>
+              <td>Free → Pro</td>
+            </tr>
+            <tr>
+              <td>Time de vendas (5–30 pessoas)</td>
+              <td>Qualificação automática, CRM integrado, analytics de performance por agente</td>
+              <td>Pro</td>
+            </tr>
+            <tr>
+              <td>Operação multicanal (30+ pessoas)</td>
+              <td>Múltiplos agentes por canal, orquestrações, A/B testing, relatórios automáticos</td>
+              <td>Pro → Business</td>
+            </tr>
+            <tr>
+              <td>Agência / Revendedor</td>
+              <td>Whitelabel com a própria marca, gestão de múltiplos clientes no mesmo painel</td>
+              <td>Business</td>
+            </tr>
+            <tr>
+              <td>Enterprise</td>
+              <td>SSO, audit trail, compliance, API irrestrita, SLA dedicado</td>
+              <td>Business</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ══════ ROI ══════ -->
+    <div class="section" id="roi">
+      <div class="section-eyebrow">Para quem</div>
+      <h2>O retorno que você pode esperar</h2>
+      <p class="section-tagline">Números conservadores, baseados em benchmarks de uso em produção.</p>
+
+      <div class="numbers-row">
+        <div class="number-cell">
+          <div class="number-value">−60%</div>
+          <div class="number-label">Custo por atendimento vs. equipe humana equivalente</div>
+        </div>
+        <div class="number-cell">
+          <div class="number-value">3–5×</div>
+          <div class="number-label">Aumento de capacidade sem novas contratações</div>
+        </div>
+        <div class="number-cell">
+          <div class="number-value">−80%</div>
+          <div class="number-label">Tempo em tarefas repetitivas por semana</div>
+        </div>
+        <div class="number-cell">
+          <div class="number-value">&lt;30m</div>
+          <div class="number-label">Do zero à produção no primeiro agente</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>A pergunta certa não é "quanto custa a Polaris IA".</strong> É "quanto está custando não ter — em leads perdidos, horas gastas em tarefas repetitivas e oportunidades que chegaram fora do horário."
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div class="page-footer">
+  Polaris IA · polarisia.com.br · ROI Labs · Maio 2026
+</div>
+
+</body>
+</html>

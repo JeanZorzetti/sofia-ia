@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Polaris Teams · Grafo — Resumo Executivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --space:#0a0e1a;
+    --surface:#111729;
+    --surface-2:#161d33;
+    --line:#243049;
+    --line-soft:#1a2236;
+    --star:#eef2fb;
+    --mist:#9aa7c2;
+    --faint:#6b7795;
+    --cyan:#22d3ee;
+    --violet:#a78bfa;
+    --emerald:#34d399;
+    --amber:#fbbf24;
+    --blue:#60a5fa;
+    --rose:#fb7185;
+    --maxw:1080px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 700px at 75% -8%, rgba(34,211,238,.10), transparent 60%),
+      radial-gradient(1000px 600px at 10% 6%, rgba(167,139,250,.10), transparent 55%),
+      var(--space);
+    color:var(--star);
+    font-family:'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    font-size:17px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 28px;}
+
+  h1,h2,h3,.eyebrow,.mono,.gnode-label{font-family:'Space Grotesk', system-ui, sans-serif;}
+  .mono,code,.tag,.glos-term{font-family:'IBM Plex Mono', monospace;}
+
+  .eyebrow{
+    font-size:12.5px; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--cyan); font-weight:600; margin:0 0 18px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .eyebrow::before{content:""; width:26px; height:1px; background:var(--cyan); opacity:.7;}
+
+  a{color:var(--cyan); text-decoration:none;}
+
+  /* ---------- HERO ---------- */
+  .hero{position:relative; padding:96px 0 60px; overflow:hidden;}
+  .hero-grid{position:absolute; inset:0; z-index:0; opacity:.5;
+    -webkit-mask-image:linear-gradient(180deg, #000 35%, transparent 92%);
+            mask-image:linear-gradient(180deg, #000 35%, transparent 92%);}
+  .hero .wrap{position:relative; z-index:1;}
+  .hero h1{
+    font-size:clamp(40px, 7.2vw, 78px);
+    line-height:1.02; font-weight:600; letter-spacing:-.02em;
+    margin:0 0 22px; max-width:16ch;
+  }
+  .hero h1 .accent{
+    background:linear-gradient(92deg, var(--cyan), var(--violet));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .lede{font-size:clamp(18px,2.2vw,22px); color:var(--mist); max-width:60ch; margin:0;}
+  .meta-row{display:flex; flex-wrap:wrap; gap:10px; margin-top:34px;}
+  .tag{
+    font-size:12px; letter-spacing:.04em; color:var(--mist);
+    border:1px solid var(--line); background:rgba(255,255,255,.02);
+    padding:7px 13px; border-radius:999px;
+  }
+  .tag b{color:var(--star); font-weight:500;}
+
+  /* ---------- THESIS DIAGRAM (antes -> depois) ---------- */
+  .thesis{display:grid; grid-template-columns:1fr auto 1fr; gap:18px; align-items:center;
+    margin-top:54px; padding:30px; border:1px solid var(--line); border-radius:18px;
+    background:linear-gradient(180deg, rgba(22,29,51,.6), rgba(17,23,41,.3));}
+  .thesis-cell{text-align:center;}
+  .thesis-cell .cap{font-size:12.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--faint); margin:0 0 14px;}
+  .thesis-cell .name{font-family:'Space Grotesk'; font-size:18px; margin:14px 0 0; font-weight:600;}
+  .thesis-cell .sub{font-size:13.5px; color:var(--mist); margin:4px 0 0;}
+  .thesis-arrow{color:var(--faint); font-size:30px; line-height:1; padding:0 4px;}
+
+  /* ---------- SECTIONS ---------- */
+  .section{padding:64px 0; border-top:1px solid var(--line-soft);}
+  .section h2{font-size:clamp(26px,3.6vw,38px); font-weight:600; letter-spacing:-.015em; margin:0 0 18px; line-height:1.1;}
+  .section .intro{color:var(--mist); max-width:64ch; margin:0 0 38px; font-size:18px;}
+
+  /* TL;DR */
+  .tldr{
+    border:1px solid var(--line); border-radius:18px; padding:34px 36px;
+    background:
+      radial-gradient(600px 200px at 100% 0%, rgba(34,211,238,.07), transparent 70%),
+      var(--surface);
+  }
+  .tldr p{margin:0 0 16px; font-size:19px; line-height:1.7;}
+  .tldr p:last-child{margin-bottom:0;}
+  .tldr strong{color:var(--star); font-weight:600;}
+  .hl-cyan{color:var(--cyan); font-weight:600;}
+  .hl-violet{color:var(--violet); font-weight:600;}
+
+  /* before/after columns */
+  .compare{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .col{border:1px solid var(--line); border-radius:16px; padding:26px 26px 28px; background:var(--surface);}
+  .col.old{border-color:#3a2a30;}
+  .col.new{border-color:#1d3f44; background:linear-gradient(180deg, rgba(34,211,238,.05), var(--surface));}
+  .col h3{margin:0 0 6px; font-size:20px; display:flex; align-items:center; gap:10px;}
+  .col .kicker{font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); margin:0 0 16px;}
+  .col ul{margin:0; padding:0; list-style:none;}
+  .col li{position:relative; padding:9px 0 9px 26px; font-size:15.5px; color:var(--mist); border-bottom:1px solid var(--line-soft);}
+  .col li:last-child{border-bottom:none;}
+  .col.old li::before{content:"—"; position:absolute; left:0; color:var(--rose); font-weight:700;}
+  .col.new li::before{content:"+"; position:absolute; left:0; color:var(--emerald); font-weight:700;}
+
+  /* capabilities */
+  .caps{display:grid; grid-template-columns:repeat(3,1fr); gap:20px;}
+  .cap-card{border:1px solid var(--line); border-radius:16px; padding:28px 24px; background:var(--surface); position:relative; overflow:hidden;}
+  .cap-card::after{content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--c);}
+  .cap-num{font-family:'IBM Plex Mono'; font-size:13px; color:var(--faint); letter-spacing:.1em;}
+  .cap-card h3{font-size:21px; margin:14px 0 10px; font-weight:600;}
+  .cap-card p{margin:0; color:var(--mist); font-size:15.5px;}
+  .cap-card .real{margin-top:16px; font-size:12.5px; color:var(--faint); font-family:'IBM Plex Mono'; border-top:1px solid var(--line-soft); padding-top:12px;}
+
+  /* analogy */
+  .analogy{display:grid; grid-template-columns:1.1fr .9fr; gap:36px; align-items:center;}
+  .analogy blockquote{margin:0; font-size:21px; line-height:1.55; color:var(--star); font-weight:400;}
+  .analogy blockquote .q{color:var(--violet); font-family:'Space Grotesk'; font-weight:600;}
+  .analogy .note{margin-top:20px; color:var(--mist); font-size:16px;}
+
+  /* how it works diagram panel */
+  .diagram-panel{border:1px solid var(--line); border-radius:18px; padding:28px; background:var(--surface); }
+  .legend{display:flex; flex-wrap:wrap; gap:16px 22px; margin-top:22px; padding-top:22px; border-top:1px solid var(--line-soft);}
+  .legend span{display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--mist); font-family:'IBM Plex Mono';}
+  .dot{width:11px; height:11px; border-radius:50%; display:inline-block; box-shadow:0 0 10px -1px currentColor;}
+
+  /* timeline */
+  .timeline{position:relative; margin-top:10px;}
+  .timeline::before{content:""; position:absolute; left:19px; top:8px; bottom:8px; width:2px;
+    background:linear-gradient(180deg, var(--cyan), var(--violet), var(--emerald));}
+  .step{position:relative; padding:0 0 30px 64px;}
+  .step:last-child{padding-bottom:0;}
+  .step .node{position:absolute; left:0; top:0; width:40px; height:40px; border-radius:50%;
+    display:grid; place-items:center; font-family:'IBM Plex Mono'; font-size:12px; font-weight:500;
+    background:var(--surface-2); border:1px solid var(--line); color:var(--star); z-index:1;}
+  .step.done .node{border-color:var(--emerald); color:var(--emerald); box-shadow:0 0 0 4px rgba(52,211,153,.08);}
+  .step h3{margin:6px 0 6px; font-size:19px; font-weight:600;}
+  .step h3 .what{color:var(--mist); font-weight:400; font-size:16px;}
+  .step p{margin:0; color:var(--mist); font-size:15.5px; max-width:68ch;}
+  .step .chk{color:var(--emerald); font-size:13px; font-family:'IBM Plex Mono'; margin-left:8px;}
+
+  /* principles */
+  .principles{display:grid; grid-template-columns:repeat(2,1fr); gap:18px;}
+  .prin{border:1px solid var(--line); border-left:3px solid var(--cyan); border-radius:0 12px 12px 0; padding:22px 24px; background:var(--surface);}
+  .prin h3{margin:0 0 8px; font-size:17px; font-weight:600;}
+  .prin p{margin:0; color:var(--mist); font-size:15px;}
+  .prin:nth-child(2){border-left-color:var(--violet);}
+  .prin:nth-child(3){border-left-color:var(--emerald);}
+  .prin:nth-child(4){border-left-color:var(--amber);}
+
+  /* status */
+  .status-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .status-card{border:1px solid var(--line); border-radius:16px; padding:26px; background:var(--surface);}
+  .status-card.done{background:linear-gradient(180deg, rgba(52,211,153,.07), var(--surface)); border-color:#1d4438;}
+  .status-card.next{background:linear-gradient(180deg, rgba(251,191,36,.06), var(--surface)); border-color:#3e3520;}
+  .status-card h3{margin:0 0 14px; font-size:18px; display:flex; align-items:center; gap:10px;}
+  .status-card ul{margin:0; padding-left:20px; color:var(--mist); font-size:15.5px;}
+  .status-card li{margin-bottom:9px;}
+  .pill{font-size:11px; font-family:'IBM Plex Mono'; padding:4px 10px; border-radius:999px; letter-spacing:.05em;}
+  .pill.ok{background:rgba(52,211,153,.14); color:var(--emerald);}
+  .pill.wait{background:rgba(251,191,36,.14); color:var(--amber);}
+
+  /* glossary */
+  .glos{display:grid; grid-template-columns:1fr 1fr; gap:10px 36px;}
+  .glos-item{display:grid; grid-template-columns:auto 1fr; gap:14px; padding:13px 0; border-bottom:1px solid var(--line-soft); align-items:baseline;}
+  .glos-term{color:var(--cyan); font-size:14px; white-space:nowrap;}
+  .glos-def{color:var(--mist); font-size:14.5px;}
+
+  footer{border-top:1px solid var(--line-soft); padding:40px 0 70px; color:var(--faint); font-size:13.5px;}
+  footer .wrap{display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; align-items:center;}
+  footer .mono{font-size:12.5px;}
+
+  /* svg flow animation */
+  .flow{stroke-dasharray:5 9; animation:dash 1.4s linear infinite;}
+  @keyframes dash{to{stroke-dashoffset:-28;}}
+  .pulse{animation:pulse 2.6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:.55;} 50%{opacity:1;}}
+
+  @media (max-width:880px){
+    .thesis{grid-template-columns:1fr; gap:24px;}
+    .thesis-arrow{transform:rotate(90deg);}
+    .caps,.compare,.principles,.status-grid,.glos,.analogy{grid-template-columns:1fr;}
+    .analogy{gap:24px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .flow,.pulse{animation:none;}
+    html{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <svg class="hero-grid" viewBox="0 0 1200 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <radialGradient id="g-node" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#fff" stop-opacity=".9"/>
+        <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <!-- constellation edges -->
+    <g stroke="#2a3a5a" stroke-width="1" fill="none" opacity=".8">
+      <line x1="170" y1="120" x2="360" y2="220"/>
+      <line x1="360" y1="220" x2="540" y2="120"/>
+      <line x1="360" y1="220" x2="560" y2="320"/>
+      <line x1="540" y1="120" x2="740" y2="180"/>
+      <line x1="560" y1="320" x2="760" y2="360"/>
+      <line x1="740" y1="180" x2="940" y2="120"/>
+      <line x1="740" y1="180" x2="760" y2="360"/>
+      <line x1="940" y1="120" x2="1060" y2="260"/>
+      <line x1="760" y1="360" x2="1000" y2="430"/>
+    </g>
+    <!-- the handoff edge, animated cyan -->
+    <line x1="360" y1="220" x2="540" y2="120" stroke="#22d3ee" stroke-width="2" class="flow" opacity=".9"/>
+    <!-- stars (status colors) -->
+    <g>
+      <circle cx="170" cy="120" r="5" fill="#60a5fa"/>
+      <circle cx="360" cy="220" r="7" fill="#a78bfa" class="pulse"/>
+      <circle cx="540" cy="120" r="5" fill="#22d3ee"/>
+      <circle cx="560" cy="320" r="5" fill="#34d399"/>
+      <circle cx="740" cy="180" r="7" fill="#fbbf24" class="pulse"/>
+      <circle cx="760" cy="360" r="5" fill="#60a5fa"/>
+      <circle cx="940" cy="120" r="5" fill="#34d399"/>
+      <circle cx="1060" cy="260" r="4" fill="#a78bfa"/>
+      <circle cx="1000" cy="430" r="4" fill="#34d399"/>
+    </g>
+  </svg>
+
+  <div class="wrap">
+    <p class="eyebrow">Polaris Teams · Programa "Grafo"</p>
+    <h1>De uma fila rígida a uma <span class="accent">constelação</span> de agentes que trabalham juntos</h1>
+    <p class="lede">Como demos aos times de IA da Polaris a forma de trabalhar de uma equipe de verdade — com dependências, trabalho em paralelo e a capacidade de perguntar quando algo não está claro.</p>
+
+    <div class="meta-row">
+      <span class="tag"><b>8 entregas</b> &nbsp;G0 → G6</span>
+      <span class="tag"><b>Status:</b> roadmap completo</span>
+      <span class="tag"><b>Risco:</b> zero regressão (modo opcional)</span>
+      <span class="tag">Resumo executivo · não técnico</span>
+    </div>
+
+    <!-- thesis: antes vs depois -->
+    <div class="thesis">
+      <div class="thesis-cell">
+        <p class="cap">Antes · modo Linear</p>
+        <svg viewBox="0 0 260 70" width="100%" height="70" aria-hidden="true">
+          <line x1="30" y1="35" x2="230" y2="35" stroke="#3a2a30" stroke-width="2"/>
+          <circle cx="30" cy="35" r="7" fill="#6b7795"/>
+          <circle cx="80" cy="35" r="7" fill="#6b7795"/>
+          <circle cx="130" cy="35" r="7" fill="#6b7795"/>
+          <circle cx="180" cy="35" r="7" fill="#6b7795"/>
+          <circle cx="230" cy="35" r="7" fill="#6b7795"/>
+        </svg>
+        <p class="name">Uma esteira</p>
+        <p class="sub">Tarefa por tarefa, sempre na mesma ordem.</p>
+      </div>
+      <div class="thesis-arrow">→</div>
+      <div class="thesis-cell">
+        <p class="cap">Agora · modo Grafo</p>
+        <svg viewBox="0 0 260 70" width="100%" height="70" aria-hidden="true">
+          <g stroke="#1d3f44" stroke-width="2" fill="none">
+            <line x1="40" y1="20" x2="130" y2="35"/>
+            <line x1="40" y1="50" x2="130" y2="35"/>
+            <line x1="130" y1="35" x2="210" y2="18"/>
+            <line x1="130" y1="35" x2="210" y2="52"/>
+          </g>
+          <circle cx="40" cy="20" r="7" fill="#60a5fa"/>
+          <circle cx="40" cy="50" r="7" fill="#34d399"/>
+          <circle cx="130" cy="35" r="8" fill="#a78bfa"/>
+          <circle cx="210" cy="18" r="7" fill="#fbbf24"/>
+          <circle cx="210" cy="52" r="7" fill="#22d3ee"/>
+        </svg>
+        <p class="name">Uma constelação</p>
+        <p class="sub">Caminhos que se ramificam, em paralelo.</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ===================== TL;DR ===================== -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Em uma página</p>
+    <h2>O que foi feito, em poucas palavras</h2>
+    <div class="tldr">
+      <p>A Polaris já tinha <strong>Times</strong>: grupos de agentes de IA — um <strong>Líder</strong>, alguns <strong>Trabalhadores</strong> e um <strong>Revisor</strong> — que executam uma missão juntos. Até agora, eles trabalhavam numa <strong>fila rígida</strong>: o Líder planejava, cada Trabalhador fazia sua parte um de cada vez, o Revisor conferia, e pronto.</p>
+      <p>O programa <span class="hl-cyan">"Grafo"</span> deu a esses times uma forma muito mais inteligente de trabalhar — como uma equipe de verdade. Agora as tarefas podem <strong>depender umas das outras</strong>, várias podem acontecer <strong>ao mesmo tempo</strong>, e um agente pode <strong>parar e pedir esclarecimento</strong> quando algo não está claro, em vez de adivinhar.</p>
+      <p>Tudo isso foi entregue <span class="hl-violet">sem mexer no modo antigo</span>. O grafo é um modo <strong>opcional</strong>, ligado por um botão na tela. Quem não liga continua exatamente como antes — risco zero para o que já funcionava.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== O PROBLEMA ===================== -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">O ponto de partida</p>
+    <h2>Por que a "fila" era um limite</h2>
+    <p class="intro">Imagine uma linha de montagem com uma única esteira. Cada tarefa espera a anterior terminar — mesmo quando uma não tem nada a ver com a outra. Se a do meio trava, todas atrás dela ficam paradas. Era assim o modo antigo.</p>
+
+    <div class="compare">
+      <div class="col old">
+        <p class="kicker">Modo Linear — como era</p>
+        <h3>A esteira</h3>
+        <ul>
+          <li>Ordem fixa de fases: planejar → executar um a um → revisar → fechar.</li>
+          <li>Sem dependências: o sistema não sabia que "B só pode começar depois de A".</li>
+          <li>Sem paralelismo: tarefas independentes ainda esperavam na fila.</li>
+          <li>Sem como pedir ajuda: faltou informação, o agente chutava.</li>
+        </ul>
+      </div>
+      <div class="col new">
+        <p class="kicker">Modo Grafo — como ficou</p>
+        <h3>O canteiro de obras</h3>
+        <ul>
+          <li>O sistema decide a cada momento o próximo passo certo de cada tarefa.</li>
+          <li>Uma tarefa diz "só começo depois daquela" — e a ordem é respeitada sozinha.</li>
+          <li>Tarefas independentes acontecem ao mesmo tempo, com um teto ajustável.</li>
+          <li>Sem informação? O agente pergunta ao Líder antes de seguir.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== AS 3 CAPACIDADES ===================== -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">A virada</p>
+    <h2>Três capacidades que a fila não tinha</h2>
+    <p class="intro">O grafo é robusto por causa de três coisas que andam juntas. São elas que transformam "uma esteira" em "uma equipe".</p>
+
+    <div class="caps">
+      <div class="cap-card" style="--c:var(--cyan)">
+        <span class="cap-num">01</span>
+        <h3>O mapa de dependências</h3>
+        <p>Uma tarefa pode declarar "só começo depois daquela". O sistema monta o mapa e respeita a ordem certa automaticamente — o acabamento só começa quando a parede está pronta.</p>
+        <p class="real">no jargão técnico: <b>DAG / grafo de dependências</b></p>
+      </div>
+      <div class="cap-card" style="--c:var(--emerald)">
+        <span class="cap-num">02</span>
+        <h3>Várias mãos ao mesmo tempo</h3>
+        <p>Tarefas que não dependem uma da outra rodam em paralelo, com um limite configurável de quantas acontecem juntas. O time entrega a missão mais rápido.</p>
+        <p class="real">no jargão técnico: <b>paralelismo / fan-out</b></p>
+      </div>
+      <div class="cap-card" style="--c:var(--violet)">
+        <span class="cap-num">03</span>
+        <h3>Decisão na hora</h3>
+        <p>Em vez de uma ordem fixa, o sistema olha o quadro e decide tarefa por tarefa: executar, revisar, esperar, refazer ou pedir esclarecimento. Inclusive perguntar quando falta informação.</p>
+        <p class="real">no jargão técnico: <b>roteamento dinâmico / state machine</b></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ANALOGIA ===================== -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">A ideia em uma imagem</p>
+    <h2>De esteira de fábrica a canteiro de obras</h2>
+    <div class="analogy">
+      <blockquote>
+        Numa esteira, tudo é uma fila. Num <span class="q">canteiro bem gerido</span>, o encanamento e a parte elétrica andam em paralelo, o acabamento espera a parede ficar pronta, e se a planta está ambígua, o pedreiro <span class="q">pergunta ao mestre de obras</span> em vez de adivinhar.
+      </blockquote>
+      <div>
+        <p class="note">O "grafo" transformou o time de agentes de <strong>esteira</strong> em <strong>canteiro</strong>: o Líder é o mestre de obras, os Trabalhadores tocam frentes em paralelo, o Revisor faz a vistoria — e ninguém fica parado à toa nem chuta quando tem dúvida.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== COMO FUNCIONA (DIAGRAMA) ===================== -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Como funciona, ao vivo</p>
+    <h2>O mapa do time em tempo real</h2>
+    <p class="intro">Além do motor que coordena o trabalho, o time agora tem um <strong>mapa visual</strong>. Cada tarefa vira um ponto colorido pelo seu estado; as setas mostram o que depende do quê; e uma luz percorre a linha quando o trabalho passa de um agente para outro.</p>
+
+    <div class="diagram-panel">
+      <svg viewBox="0 0 760 360" width="100%" role="img" aria-label="Diagrama de um time em modo grafo: Líder no topo, Trabalhadores em paralelo no meio, Revisor embaixo, com tarefas coloridas por status e setas de dependência.">
+        <defs>
+          <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+            <path d="M0,0 L7,3 L0,6 Z" fill="#3a4a6a"/>
+          </marker>
+          <marker id="arrow-cyan" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+            <path d="M0,0 L7,3 L0,6 Z" fill="#22d3ee"/>
+          </marker>
+        </defs>
+
+        <!-- ownership lines lead -> workers -->
+        <g stroke="#243049" stroke-width="1.5" fill="none">
+          <line x1="380" y1="78" x2="180" y2="160"/>
+          <line x1="380" y1="78" x2="380" y2="160"/>
+          <line x1="380" y1="78" x2="580" y2="160"/>
+          <!-- workers -> reviewer -->
+          <line x1="180" y1="200" x2="380" y2="290"/>
+          <line x1="380" y1="200" x2="380" y2="290"/>
+          <line x1="580" y1="200" x2="380" y2="290"/>
+        </g>
+
+        <!-- the handoff (lead -> worker), animated cyan -->
+        <line x1="380" y1="78" x2="580" y2="160" stroke="#22d3ee" stroke-width="2.5" class="flow" marker-end="url(#arrow-cyan)"/>
+
+        <!-- dependency arrow between two tasks -->
+        <path d="M150,250 C120,250 120,250 150,250" />
+        <line x1="120" y1="250" x2="245" y2="250" stroke="#a78bfa" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arrow)"/>
+
+        <!-- LEAD -->
+        <g>
+          <rect x="320" y="42" width="120" height="36" rx="9" fill="#161d33" stroke="#a78bfa"/>
+          <text x="380" y="65" text-anchor="middle" fill="#eef2fb" font-family="Space Grotesk" font-size="15" font-weight="600">Líder</text>
+        </g>
+
+        <!-- WORKERS -->
+        <g font-family="Space Grotesk" font-size="13" font-weight="500" fill="#cdd6ea">
+          <rect x="120" y="160" width="120" height="40" rx="9" fill="#161d33" stroke="#243049"/>
+          <text x="180" y="184" text-anchor="middle">Trabalhador A</text>
+          <rect x="320" y="160" width="120" height="40" rx="9" fill="#161d33" stroke="#243049"/>
+          <text x="380" y="184" text-anchor="middle">Trabalhador B</text>
+          <rect x="520" y="160" width="120" height="40" rx="9" fill="#161d33" stroke="#22d3ee"/>
+          <text x="580" y="184" text-anchor="middle">Trabalhador C</text>
+        </g>
+
+        <!-- REVIEWER -->
+        <g>
+          <rect x="318" y="290" width="124" height="36" rx="9" fill="#161d33" stroke="#34d399"/>
+          <text x="380" y="313" text-anchor="middle" fill="#eef2fb" font-family="Space Grotesk" font-size="15" font-weight="600">Revisor</text>
+        </g>
+
+        <!-- TASK NODES (orbiting workers), colored by status -->
+        <g>
+          <circle cx="120" cy="250" r="13" fill="#34d399"/>      <!-- done -->
+          <circle cx="260" cy="250" r="13" fill="#60a5fa"/>      <!-- doing (depends on done) -->
+          <circle cx="320" cy="250" r="13" fill="#fbbf24"/>      <!-- blocked -->
+          <circle cx="520" cy="250" r="13" fill="#a78bfa"/>      <!-- review -->
+          <circle cx="560" cy="250" r="13" fill="#22d3ee"/>      <!-- handoff in progress -->
+        </g>
+      </svg>
+
+      <div class="legend">
+        <span><i class="dot" style="background:#60a5fa;color:#60a5fa"></i> em execução</span>
+        <span><i class="dot" style="background:#a78bfa;color:#a78bfa"></i> em revisão</span>
+        <span><i class="dot" style="background:#34d399;color:#34d399"></i> concluída</span>
+        <span><i class="dot" style="background:#fbbf24;color:#fbbf24"></i> aguardando 🔒</span>
+        <span><i class="dot" style="background:#22d3ee;color:#22d3ee"></i> passagem de trabalho</span>
+        <span><i class="dot" style="background:#fb7185;color:#fb7185"></i> rejeitada</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== A JORNADA G0-G6 ===================== -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">A jornada</p>
+    <h2>Oito entregas, uma de cada vez</h2>
+    <p class="intro">O trabalho foi fatiado em entregas pequenas e seguras — cada uma testada e publicada sozinha, sem nunca quebrar o que já existia. Esta é a sequência, do alicerce ao acabamento.</p>
+
+    <div class="timeline">
+      <div class="step done">
+        <div class="node">G0</div>
+        <h3>A chave geral <span class="chk">✓ entregue</span></h3>
+        <p>Criou o "botão" que escolhe entre o modo antigo (fila) e o novo (grafo), sem mudar nada do comportamento. A rede de segurança foi instalada antes de qualquer mudança real.</p>
+      </div>
+      <div class="step done">
+        <div class="node">G1</div>
+        <h3>O mapa de dependências <span class="chk">✓ entregue</span></h3>
+        <p>As tarefas passaram a poder dizer "depois de tal tarefa". O time só começa cada uma quando tudo de que ela precisa está pronto — e nunca conclui a missão com algo ainda travado.</p>
+      </div>
+      <div class="step done">
+        <div class="node">G2</div>
+        <h3>O cérebro de decisão <span class="chk">✓ entregue</span></h3>
+        <p>No lugar de fases fixas, o time passou a olhar o quadro e decidir, tarefa por tarefa, qual é o próximo passo certo: executar, esperar, revisar ou refazer.</p>
+      </div>
+      <div class="step done">
+        <div class="node">G3</div>
+        <h3>Várias mãos ao mesmo tempo <span class="chk">✓ entregue</span></h3>
+        <p>Tarefas independentes passaram a rodar em paralelo, com um limite ajustável de quantas acontecem juntas — útil para não estourar os modelos de IA mais econômicos.</p>
+      </div>
+      <div class="step done">
+        <div class="node">G4</div>
+        <h3>O mapa visual <span class="chk">✓ entregue</span></h3>
+        <p>O painel passou a desenhar cada tarefa como um ponto, com cor de estado e setas mostrando o que depende do quê. O que antes era uma lista virou uma constelação.</p>
+      </div>
+      <div class="step done">
+        <div class="node">G4.1</div>
+        <h3>O botão na tela <span class="chk">✓ entregue</span></h3>
+        <p>Criar ou editar um time ganhou um seletor "Linear / Grafo" — e um campo para o limite de tarefas em paralelo. Antes, o modo grafo só ligava por configuração interna.</p>
+      </div>
+      <div class="step done">
+        <div class="node">G5</div>
+        <h3>O time ganhando vida <span class="chk">✓ entregue</span></h3>
+        <p>O mapa passou a mostrar, ao vivo, o trabalho passando de um agente para outro (uma luz cyan correndo pela linha) e quem está "pensando" naquele instante.</p>
+      </div>
+      <div class="step done">
+        <div class="node">G6</div>
+        <h3>Saber perguntar <span class="chk">✓ entregue</span></h3>
+        <p>A última peça: um agente sem informação suficiente para de adivinhar e pergunta ao Líder. O Líder responde, e o agente refaz a tarefa já com a resposta em mãos.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PRINCÍPIOS ===================== -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Como o trabalho foi conduzido</p>
+    <h2>As regras que protegeram o produto</h2>
+    <p class="intro">A robustez não veio só do resultado, mas da disciplina de execução. Quatro princípios guiaram cada uma das oito entregas.</p>
+
+    <div class="principles">
+      <div class="prin">
+        <h3>Modo opcional, ligado por botão</h3>
+        <p>O grafo nunca substituiu o modo antigo: convivem lado a lado. Quem não liga o grafo roda exatamente como sempre rodou.</p>
+      </div>
+      <div class="prin">
+        <h3>Zero regressão</h3>
+        <p>O motor antigo ficou intocado do início ao fim. A cada entrega, baterias de verificações automáticas confirmaram que nada do que funcionava quebrou.</p>
+      </div>
+      <div class="prin">
+        <h3>Uma fatia por sessão</h3>
+        <p>Nada de "big bang". Cada uma das oito fatias foi planejada, testada e publicada isolada — commits limpos e reversíveis.</p>
+      </div>
+      <div class="prin">
+        <h3>Reuso acima de código novo</h3>
+        <p>O modo grafo aproveitou tudo o que já existia (armazenamento, prompts, fluxo de dados). O novo vive só onde precisava: no motor e no mapa.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== STATUS ===================== -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Onde estamos</p>
+    <h2>Status e próximos passos</h2>
+
+    <div class="status-grid">
+      <div class="status-card done">
+        <h3><span class="pill ok">CONCLUÍDO</span> Roadmap G0 → G6</h3>
+        <ul>
+          <li>As oito fatias foram entregues e publicadas.</li>
+          <li>As três capacidades novas (dependências, paralelismo, decisão na hora) estão no ar.</li>
+          <li>O mapa visual ao vivo está completo, com as cores de estado e a passagem de trabalho animada.</li>
+          <li>O modo antigo permanece idêntico — nenhuma regressão.</li>
+        </ul>
+      </div>
+      <div class="status-card next">
+        <h3><span class="pill wait">PENDENTE</span> O que falta e o futuro</h3>
+        <ul>
+          <li><strong>Validação em produção</strong>: rodar um time em modo grafo, logado, no ambiente real, e confirmar tudo ao vivo (passo com o usuário).</li>
+          <li><strong>Futuro (deferido)</strong>: o agente poder pedir esclarecimento ao <em>usuário humano</em>, não só ao Líder.</li>
+          <li><strong>Futuro (deferido)</strong>: passar uma tarefa de um time para outro.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== GLOSSÁRIO ===================== -->
+<section class="section">
+  <div class="wrap">
+    <p class="eyebrow">Para a equipe técnica</p>
+    <h2>Glossário: do jargão ao português claro</h2>
+    <p class="intro">Os mesmos conceitos, traduzidos — caso alguém precise cruzar este resumo com a documentação técnica.</p>
+
+    <div class="glos">
+      <div class="glos-item"><span class="glos-term">Grafo / DAG</span><span class="glos-def">O mapa de dependências entre tarefas.</span></div>
+      <div class="glos-item"><span class="glos-term">Linear</span><span class="glos-def">O modo antigo — a "fila" rígida.</span></div>
+      <div class="glos-item"><span class="glos-term">Topologia</span><span class="glos-def">O formato de trabalho do time: fila ou mapa.</span></div>
+      <div class="glos-item"><span class="glos-term">Lead / Worker / Reviewer</span><span class="glos-def">Líder / Trabalhador / Revisor.</span></div>
+      <div class="glos-item"><span class="glos-term">Paralelismo</span><span class="glos-def">Várias tarefas acontecendo ao mesmo tempo.</span></div>
+      <div class="glos-item"><span class="glos-term">Handoff</span><span class="glos-def">A passagem de trabalho de um agente para outro.</span></div>
+      <div class="glos-item"><span class="glos-term">@CLARIFY</span><span class="glos-def">O sinal de "tenho uma dúvida" que um agente envia ao Líder.</span></div>
+      <div class="glos-item"><span class="glos-term">Opt-in</span><span class="glos-def">Recurso que só liga se você escolher ligar.</span></div>
+      <div class="glos-item"><span class="glos-term">Regressão</span><span class="glos-def">Quando algo que funcionava passa a falhar.</span></div>
+      <div class="glos-item"><span class="glos-term">E2E</span><span class="glos-def">Teste do começo ao fim, no ambiente real.</span></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Polaris Teams · Programa "Grafo" — resumo executivo</span>
+    <span class="mono">G0–G6 completo · 8 entregas · modo opt-in, zero regressão</span>
+  </div>
+</footer>
+
+</body>
+</html>
