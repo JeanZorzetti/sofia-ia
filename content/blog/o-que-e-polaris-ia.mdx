@@ -1,150 +1,138 @@
 ---
 title: "Polaris IA: o que é e como funciona a plataforma de orquestração de agentes"
 slug: "o-que-e-polaris-ia"
-description: "Descubra o que é a Polaris IA, como funciona a orquestração de agentes sobre o motor Sofia AI, para quem é indicada e como ela se compara à automação tradicional e à LGPD."
-date: "2026-07-27"
+description: "Entenda o que é a Polaris IA, sua relação com a marca Sofia AI, como funciona a orquestração multiagente, segurança e LGPD em 2026, e como começar a usar a plataforma."
+date: "2026-07-28"
 author: "Equipe Polaris IA"
 tags: ["Polaris IA","Institucional"]
 readTime: "9 min"
 ---
 
-![Sala de controle escura com várias telas iluminadas exibindo painéis de dados.](https://images.unsplash.com/photo-1639313521811-fdfb1c040ddb?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDA1ODQ2fDB8MXxzZWFyY2h8MXx8Y29udHJvbCUyMHJvb20lMjB3aXRoJTIwZ2xvd2luZyUyMHNjcmVlbnN8ZW58MXwwfHx8MTc4NTEzNTU4OXww&ixlib=rb-4.1.0&q=80&w=1080)
+![Uma bússola de metal sobre uma mesa de madeira ao lado de um notebook aberto, simbolizando orientação e tecnologia digital.](https://images.unsplash.com/photo-1537072087284-b53024c3f332?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3wxMDA1ODQ2fDB8MXxzZWFyY2h8MXx8Y29tcGFzcyUyMGFuZCUyMGxhcHRvcCUyMG9uJTIwZGVza3xlbnwxfDB8fHwxNzg1MjE5ODgzfDA&ixlib=rb-4.1.0&q=80&w=1080)
 
-*Photo by Miha Meglic on Unsplash*
+*Photo by Colton Sturgeon on Unsplash*
 
-A Polaris IA é a plataforma brasileira de orquestração multiagente, construída sobre o motor Sofia AI, que reúne equipes de agentes de IA com memória persistente e Knowledge Base em RAG para automatizar atendimento, vendas e conteúdo pelo WhatsApp e outros canais, sem código e com dados isolados por cliente, em conformidade com a LGPD.
+A Polaris IA é a plataforma brasileira de orquestração multiagente por trás da marca Sofia AI, permitindo criar equipes de agentes de IA com Knowledge Base RAG, WhatsApp nativo e memória persistente sem código. Self-hosted, compatível com a LGPD e distinta de outras empresas homônimas, ela decide quando automação tradicional não é suficiente.
 
 ## O que é a Polaris IA e o que ela faz
 
-A **Polaris IA** é uma plataforma brasileira de inteligência artificial que permite montar equipes de agentes especializados para executar tarefas de negócio de ponta a ponta, sem depender de um único chatbot genérico. Em vez de um modelo que tenta responder tudo, cada agente recebe um papel definido — pesquisador, redator, atendente, analista — e esses papéis são conectados em sequência ou em paralelo.
+A **Polaris IA** é uma plataforma brasileira de orquestração multiagente que permite montar equipes de agentes de inteligência artificial capazes de pesquisar, atender clientes, analisar dados e escrever conteúdo em conjunto, sem exigir uma linha de código. Em vez de depender de um único modelo genérico para resolver qualquer tarefa, a plataforma conecta vários agentes especializados — cada um com papel, prompt e ferramentas próprias — em um fluxo coordenado.
 
-O motor por trás da plataforma se chama **Sofia AI**: é o sistema de orquestração, memória e execução que roda cada agente e cada fluxo. Quem acessa polarisia.com.br está usando a interface e a marca Polaris IA, mas a tecnologia de bastidores é a mesma Sofia AI usada nas integrações via API e SDK.
-
-- Atendimento automatizado no **WhatsApp** com escalonamento para humanos
-- Qualificação de leads antes de chegar ao time comercial
-- Geração de conteúdo (blog, redes sociais, email) revisado por múltiplos agentes
-- Análise de contratos e documentos com base em uma **Knowledge Base** própria
-- Relatórios agendados que cruzam dados de CRM, planilhas e sistemas internos
-
-Esse modelo de equipe de agentes acompanha uma tendência maior do mercado: a Gartner estima que **40% dos aplicativos empresariais** vão incorporar agentes de IA especializados em tarefas específicas até 2026, ante menos de 5% em 2025. A Polaris IA nasceu para dar a empresas brasileiras — que raramente têm uma equipe de engenharia de IA própria — acesso a esse tipo de arquitetura sem escrever código.
+O produto nasceu para resolver uma lacuna comum em empresas brasileiras: ferramentas de IA internacionais chegam sem suporte nativo em português, sem integração direta com **WhatsApp** e sem opção de hospedagem local para atender exigências de compliance. A Polaris IA reúne chat multicanal, base de conhecimento com busca semântica (RAG) e um editor visual de orquestrações em um único painel.
 
 ### Polaris IA e Sofia AI: a mesma tecnologia, dois nomes
 
-Isso gera uma dúvida comum entre quem pesquisa a marca: Polaris IA e Sofia AI não são concorrentes nem produtos diferentes. É a **mesma plataforma**, com Sofia AI como o nome do motor de orquestração e Polaris IA como a marca voltada ao mercado brasileiro, operada pela ROI Labs.
+A marca que aparece no produto e na documentação técnica é a **Sofia AI** — o nome comercial usado no mercado desde o lançamento da plataforma. "Polaris IA" é o nome institucional do projeto e do domínio polarisia.com.br, e as duas denominações se referem exatamente à mesma tecnologia, sem diferença de funcionalidades ou de planos entre elas.
+
+### Existem outras empresas chamadas 'Polaris AI'?
+
+Sim — o termo "Polaris AI" é usado por outras empresas de tecnologia no exterior, sem qualquer relação societária, técnica ou comercial com a Polaris IA brasileira. Antes de assinar um contrato ou testar uma integração, vale conferir o **domínio** (polarisia.com.br) e o CNPJ associado para confirmar que a conversa é de fato com a Equipe Polaris IA.
 
 ## Como funciona a plataforma: agentes, orquestração e memória
 
-Criar um agente na Polaris IA é definir um **system prompt** (o papel e as instruções do agente), escolher um modelo de linguagem e, se necessário, conectar uma Knowledge Base. Não há necessidade de programar: o editor é visual e os agentes podem ser testados antes de entrar em produção.
+Um agente na Polaris IA é a combinação de um **papel** (o que ele faz), um modelo de linguagem, um conjunto de ferramentas (tools) e, opcionalmente, uma base de conhecimento própria. Esse agente pode ser configurado em minutos por meio de um formulário visual, sem exigir conhecimento de programação.
+
+A **orquestração** é o motor que coordena vários agentes em um único fluxo de trabalho, definindo a ordem de execução, os gatilhos e como o resultado de um agente alimenta o próximo. É essa camada que transforma um conjunto de assistentes isolados em uma equipe capaz de executar tarefas de ponta a ponta.
 
 ### Os três padrões de orquestração
 
-- Sequencial: um agente passa o resultado para o próximo (pesquisa → redação → revisão)
-- Paralela: vários agentes trabalham ao mesmo tempo sobre a mesma entrada e os resultados são combinados
-- Em consenso: agentes independentes chegam a conclusões próprias e um agente final decide com base na maioria
+- **Sequencial**: cada agente recebe o resultado do anterior, como uma linha de montagem — útil em pipelines de conteúdo (pesquisa → redação → revisão).
+- **Paralelo**: vários agentes atacam a mesma tarefa ao mesmo tempo e os resultados são combinados, reduzindo o tempo total de execução.
+- **Consenso**: agentes independentes analisam o mesmo problema e um agente juiz pondera as respostas antes de decidir, o que aumenta a confiabilidade em decisões mais críticas.
 
-A **memória persistente** (Agent Memory) permite que um agente lembre de interações anteriores com o mesmo cliente ou processo, em vez de recomeçar do zero a cada conversa. Isso é o que separa um agente de um simples chatbot de FAQ: o contexto se acumula ao longo do tempo, dentro dos limites definidos pelo administrador.
-
-A Knowledge Base com **RAG** (Retrieval-Augmented Generation) indexa documentos da empresa — políticas, catálogos, contratos, manuais — e permite que os agentes respondam com base neles, em vez de improvisar uma resposta. Cada base pode ser vinculada a um ou mais agentes.
-
-O canal mais usado por empresas brasileiras é o WhatsApp, integrado nativamente à plataforma. Também há suporte a Slack, email, webhooks genéricos e uma **API REST** com SDK em JavaScript para quem quer embutir os agentes em um sistema próprio.
+A **memória persistente** permite que um agente lembre de interações anteriores com o mesmo cliente ou processo, evitando que o usuário precise repetir contexto a cada nova conversa. Esse recurso é o que diferencia um chatbot de sessão única de um agente capaz de acompanhar um relacionamento ao longo do tempo.
 
 ## Polaris IA vs. automação tradicional: qual a diferença
 
-A dúvida mais comum de quem já usa ferramentas como RPA ou fluxos de automação (Zapier, Make, n8n) é se vale a pena migrar para agentes de IA. A resposta depende do tipo de tarefa: automação tradicional segue **regras fixas**; agentes de IA interpretam linguagem natural e lidam com exceções.
+A automação tradicional, baseada em **regras fixas** (RPA, workflows condicionais), funciona bem quando o processo é previsível e estruturado: se X acontece, faça Y. O problema aparece quando o processo envolve linguagem natural, exceções ou julgamento — situações em que a regra não prevista simplesmente trava o fluxo.
 
-| Critério | Automação tradicional (RPA/regras) | Polaris IA (agentes) |
+| Critério | Automação tradicional (regras/RPA) | Polaris IA (orquestração multiagente) |
 | --- | --- | --- |
-| Lógica | Regras fixas, "se isso, então aquilo" | Interpretação de linguagem natural e contexto |
-| Exceções | Trava ou erra fora do roteiro | Adapta a resposta dentro do papel definido |
-| Manutenção | Reescrever a regra a cada mudança de processo | Ajustar o prompt ou a Knowledge Base |
-| Setup inicial | Mapear cada passo do fluxo | Descrever o papel do agente (inclusive por Magic Create) |
-| Melhor para | Tarefas repetitivas e estruturadas | Atendimento, análise de texto, geração de conteúdo |
+| Como decide | Segue regras fixas pré-programadas | Interpreta contexto e raciocina sobre a tarefa |
+| Lida com exceções | Falha ou trava fora do fluxo previsto | Adapta a resposta a variações do pedido |
+| Conteúdo não estruturado | Não interpreta texto livre, e-mail ou áudio | Lê, resume e responde em linguagem natural |
+| Manutenção | Exige reprogramar a regra a cada mudança | Ajusta-se editando o prompt do agente |
+| Melhor uso | Tarefas repetitivas e determinísticas | Tarefas que exigem julgamento e contexto |
 
-Isso não significa que uma abordagem substitui a outra. Muitas empresas usam **n8n ou Zapier** para disparar o fluxo (por exemplo, um formulário preenchido) e a Polaris IA para a parte que exige interpretação — qualificar o lead, responder a dúvida, gerar o resumo.
+Na prática, isso significa que a automação tradicional continua sendo a opção mais **barata e previsível** para tarefas puramente mecânicas, como mover um arquivo de uma pasta para outra ou disparar um e-mail em horário fixo. Já a orquestração de agentes se paga em processos onde a variação do pedido do cliente é grande demais para caber em um fluxograma.
 
-O custo também muda de perfil: automação tradicional tem custo previsível por execução, enquanto agentes de IA cobram por uso de modelo (tokens). Isso torna importante monitorar o **custo por execução** de cada orquestração, especialmente em volumes altos.
+Não é incomum que as duas abordagens **coexistam** na mesma empresa: uma ferramenta de automação por regras aciona um webhook, que por sua vez dispara uma orquestração de agentes da Polaris IA para interpretar o conteúdo e decidir o próximo passo. Essa combinação evita reescrever toda a stack de integrações já existente.
 
-Na prática, a decisão raramente é tudo IA ou tudo automação clássica — é mapear qual parte do processo exige **julgamento** e linguagem, e qual parte é puramente mecânica.
+## Para quem a Polaris IA foi criada e quando não faz sentido usar
 
-## Para quem a Polaris IA foi criada
+A plataforma foi desenhada para **pequenas e médias empresas** brasileiras que precisam escalar atendimento, produção de conteúdo ou análise de dados sem contratar uma equipe técnica dedicada a IA. Agências de marketing, escritórios de advocacia, e-commerces e equipes de RH estão entre os perfis que mais adotam orquestrações prontas.
 
-A plataforma foi desenhada para empresas brasileiras de médio porte que precisam escalar atendimento, vendas ou produção de conteúdo sem contratar uma equipe de engenharia de IA. Isso inclui **agências de marketing**, escritórios de advocacia, imobiliárias, e-commerces e times de RH.
-
-- Agências que precisam produzir conteúdo em volume sem aumentar a equipe
-- E-commerces que querem atendimento 24h no WhatsApp
-- Escritórios jurídicos que analisam contratos e petições repetitivas
-- Times de vendas que precisam qualificar leads antes de ligar
-- SaaS que buscam reduzir churn com onboarding e suporte automatizados
+- Times que já usam **WhatsApp** como canal principal de atendimento e querem automatizar o primeiro nível sem perder contexto.
+- Empresas com documentação extensa (contratos, políticas, catálogos) que se beneficiam de uma base de conhecimento com RAG.
+- Equipes que precisam de relatórios e análises recorrentes, mas não têm um analista de dados disponível todos os dias.
 
 ### Quando não faz sentido usar
 
-Se o processo é puramente mecânico e nunca muda — copiar um valor de uma planilha para outra, por exemplo — uma automação tradicional resolve com menos custo e mais previsibilidade do que um agente de IA. Agentes fazem sentido quando há **variação** no que chega (mensagens, documentos, pedidos) e é preciso interpretar antes de agir.
+Se a tarefa é **simples e determinística** — como renomear arquivos em lote ou sincronizar uma planilha em horário fixo — uma automação tradicional resolve com menos custo e complexidade do que orquestrar agentes de IA. Equivale a usar um caminhão para levar uma carta.
 
-Empresas que já têm uma equipe técnica dedicada a IA também podem preferir montar a própria stack com frameworks de código como CrewAI, AutoGen ou LangFlow — a Polaris IA compete nesse espaço oferecendo capacidade equivalente sem exigir **código**.
+Também vale cautela em decisões **regulatórias ou de alto risco** — diagnóstico médico, decisão de crédito ou sentença jurídica — que exigem responsabilidade humana final mesmo quando um agente auxilia na pesquisa ou no rascunho inicial.
 
-Agências e consultorias que atendem múltiplos clientes podem usar o modelo **white-label**, oferecendo a plataforma sob a própria marca para seus próprios clientes.
+## Segurança, LGPD e confiabilidade dos dados em 2026
 
-## Segurança, LGPD e confiabilidade dos dados
+Em dezembro de 2025, a **Autoridade Nacional de Proteção de Dados (ANPD)** publicou o Mapa de Temas Prioritários para o biênio 2026-2027 e atualizou a Agenda Regulatória, colocando inteligência artificial e decisões automatizadas no topo da lista de fiscalização para os próximos dois anos.
 
-Qualquer plataforma que processa dados de clientes brasileiros — nome, telefone, histórico de conversa — está sujeita à **LGPD** (Lei nº 13.709/2018), que exige base legal para o tratamento, transparência sobre o uso dos dados e mecanismos para atender aos direitos do titular, como exclusão e portabilidade.
+Isso significa que sistemas de IA que tratam dados pessoais passam a ser avaliados com mais rigor quanto a **transparência**, mitigação de vieses e segurança da informação — critérios que qualquer empresa brasileira usando agentes de IA para atendimento ou análise deve levar em conta ao desenhar seus fluxos.
 
-A ANPD (Autoridade Nacional de Proteção de Dados) publicou, para o biênio 2026-2027, um mapa de temas prioritários que inclui **inteligência artificial** como um dos quatro eixos de fiscalização, com foco em transparência algorítmica, mitigação de viés e segurança da informação usada para alimentar sistemas de IA.
+Na Polaris IA, cada cliente opera em um ambiente com **isolamento de dados** por organização, sem que informações de uma empresa sejam usadas para treinar modelos ou fiquem visíveis para outros clientes. Para setores regulados, existe a opção de hospedagem **self-hosted**, mantendo os dados na infraestrutura do próprio cliente.
 
-Na Polaris IA, isso se traduz em isolamento de dados por cliente (cada organização acessa apenas suas próprias Knowledge Bases e conversas), **audit log** das ações realizadas por agentes e humanos, e a opção de versão self-hosted para empresas com requisitos de compliance mais rígidos, como escritórios jurídicos e instituições financeiras.
+O painel conta ainda com **audit log** — registro detalhado de quem executou qual orquestração, quando e com qual resultado — recurso que facilita a resposta a pedidos de auditoria e ao artigo 37 da LGPD sobre registro de atividades de tratamento.
 
-Os dados enviados para alimentar um agente não são usados para treinar modelos de terceiros — o que diferencia o uso de uma **Knowledge Base privada** do simples uso de um chatbot genérico de mercado.
+Em fevereiro de 2026, a ANPD concluiu a fase de nivelamento do seu **sandbox regulatório** para IA e iniciou a fase de testes práticos com empresas participantes, sinal de que as regras específicas para agentes autônomos ainda estão em construção — o que reforça a importância de manter revisão humana em decisões sensíveis mesmo usando IA.
 
-No canal WhatsApp, a conformidade também passa pelo provedor da mensageria: a Meta documenta oficialmente as regras de uso comercial da WhatsApp Business Platform, incluindo os modelos de **cobrança por mensagem** que entraram em vigor ao longo de 2026 — algo que qualquer empresa automatizando atendimento nesse canal precisa acompanhar, independentemente da plataforma de IA usada.
+## Como começar a usar a Polaris IA e quanto custa
 
-## Como começar a usar a Polaris IA
+Começar não exige integração técnica prévia: o primeiro passo é criar uma conta gratuita e configurar um **agente** definindo seu papel em um formulário guiado, sem precisar escrever código.
 
-O primeiro passo é identificar **um único processo** com volume suficiente para justificar a automação — atendimento, qualificação de leads ou geração de conteúdo costumam ser os pontos de partida mais comuns.
+- Crie o primeiro agente e defina o system prompt em linguagem natural.
+- Conecte uma base de conhecimento (RAG) com os documentos da empresa, se necessário.
+- Ligue o agente a um canal — WhatsApp, chat do site ou API.
+- Teste a conversa no modo simulação antes de publicar.
+- Monte uma orquestração com mais de um agente quando o processo exigir etapas especializadas.
 
-- Criar uma conta em polarisia.com.br
-- Criar o primeiro agente definindo o papel e testando no modo de chat
-- Conectar uma **Knowledge Base**, se o agente precisar responder com base em documentos da empresa
-- Montar uma orquestração (manual ou via Magic Create, descrevendo o fluxo em linguagem natural)
-- Conectar o canal (WhatsApp, Slack, email ou API)
+O modelo de preços inclui um **plano gratuito** para testar a plataforma, planos pagos por volume de execuções para empresas em crescimento, e um plano self-hosted/white-label para quem precisa de controle total da infraestrutura ou quer revender a tecnologia para clientes.
 
-Depois de ativo, o acompanhamento é feito pelo painel de **analytics**, que mostra volume de execuções, custo por execução e taxa de resolução sem intervenção humana — métricas que ajudam a decidir se vale expandir o uso para outros processos.
+O momento é favorável para adotar a tecnologia agora: relatórios de mercado apontam que a receita global de plataformas de **orquestração de agentes de IA** deve saltar de poucos bilhões de dólares em 2025 para dezenas de bilhões até 2035, crescimento anual acima de 20% ao ano — reflexo direto da migração de empresas de projetos-piloto para uso em produção.
 
-### Quanto custa
-
-O plano gratuito cobre testes e volumes baixos; planos pagos escalam por volume de execuções e uso de modelo. Como o custo de IA é medido em **tokens**, o valor final depende de quanto texto cada agente processa — por isso monitorar o custo por execução desde a primeira semana evita surpresas na fatura.
-
-Para times que preferem integrar a plataforma a um sistema já existente, a API REST e o SDK em JavaScript permitem chamar agentes e orquestrações diretamente do próprio produto, sem passar pelo **painel**.
+Analistas do setor resumem 2026 como o ano em que a atenção sai da pergunta "será que agentes de IA funcionam" para "como coordenar dezenas deles com **governança**" — exatamente o problema que uma plataforma de orquestração como a Polaris IA foi construída para resolver.
 
 ## Perguntas frequentes
 
 ### O que é a Polaris IA?
 
-A Polaris IA é uma plataforma brasileira de orquestração de agentes de IA, construída sobre o motor Sofia AI, que permite criar e conectar múltiplos agentes especializados para automatizar atendimento, vendas, conteúdo e análise de documentos sem exigir código.
+É uma plataforma brasileira de orquestração multiagente que permite criar e coordenar agentes de IA para atendimento, conteúdo e análise de dados, com Knowledge Base RAG, WhatsApp nativo e memória persistente, sem exigir código.
 
 ### Polaris IA e Sofia AI são a mesma coisa?
 
-Sim. Sofia AI é o nome do motor de orquestração e execução dos agentes; Polaris IA é a marca e o domínio (polarisia.com.br) usados para operar essa tecnologia no mercado brasileiro, mantidos pela ROI Labs.
+Sim. Sofia AI é o nome comercial do produto; Polaris IA é o nome institucional do projeto e do domínio polarisia.com.br. Não há diferença de tecnologia, planos ou funcionalidades entre as duas denominações.
 
 ### Existem outras empresas chamadas 'Polaris AI'?
 
-Sim, 'Polaris' é um nome comum no mercado de tecnologia e existem outras empresas e produtos internacionais com nomes semelhantes que não têm relação com a Polaris IA brasileira operada pela ROI Labs — vale conferir o domínio polarisia.com.br para confirmar que está no site certo.
+Sim, existem empresas homônimas no exterior sem qualquer vínculo com a Polaris IA brasileira. Confirme sempre o domínio polarisia.com.br e o CNPJ antes de fechar um contrato.
 
 ### A Polaris IA é segura para dados sensíveis, considerando a LGPD?
 
-A plataforma isola os dados por cliente, mantém audit log das ações e oferece opção self-hosted para quem tem requisitos de compliance mais rígidos, mas a responsabilidade pela base legal de tratamento de dados sob a LGPD continua sendo da empresa que usa a ferramenta.
+A plataforma isola os dados por cliente, não usa informações de clientes para treinar modelos, oferece audit log e disponibiliza hospedagem self-hosted para setores regulados, acompanhando as prioridades de fiscalização definidas pela ANPD para 2026-2027.
 
 ### Quanto custa usar a Polaris IA?
 
-Existe um plano gratuito para testes e volumes baixos; os planos pagos escalam conforme o volume de execuções e o consumo de tokens dos modelos de IA usados em cada agente.
+Há um plano gratuito para testar a plataforma, planos pagos por volume de execuções para empresas em crescimento e um plano self-hosted/white-label para quem precisa de controle total da infraestrutura.
+
+### A Polaris IA está disponível em inglês ou espanhol?
+
+O produto tem páginas institucionais em outros idiomas, incluindo uma versão em espanhol voltada à América Latina, mas a documentação e o blog completos são publicados em português do Brasil.
 
 ## Fontes
 
-- [Lei nº 13.709, de 14 de agosto de 2018 (LGPD)](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm) — Presidência da República — Planalto, 2018-08-14
+- [ANPD publica Mapa de Temas Prioritários para o biênio 2026-2027 e atualiza Agenda Regulatória 2025-2026](https://www.gov.br/anpd/pt-br/assuntos/noticias/anpd-publica-mapa-de-temas-prioritarios-para-o-bienio-2026-2027-e-atualiza-agenda-regulatoria-2025-2026) — Autoridade Nacional de Proteção de Dados (ANPD), 2025-12-24
 
-- [ANPD publica Mapa de Temas Prioritários para o biênio 2026-2027](https://www.gov.br/anpd/pt-br/assuntos/noticias/anpd-publica-mapa-de-temas-prioritarios-para-o-bienio-2026-2027-e-atualiza-agenda-regulatoria-2025-2026) — ANPD — Autoridade Nacional de Proteção de Dados, 2025-12-24
+- [Progress forecasts orchestration-led AI shift in 2026](https://itbrief.com.au/story/progress-forecasts-orchestration-led-ai-shift-in-2026) — IT Brief Australia, 2026-01-14
 
-- [Gartner Predicts 40% of Enterprise Apps Will Feature Task-Specific AI Agents by 2026, Up from Less Than 5% in 2025](https://www.gartner.com/en/newsroom/press-releases/2025-08-26-gartner-predicts-40-percent-of-enterprise-apps-will-feature-task-specific-ai-agents-by-2026-up-from-less-than-5-percent-in-2025) — Gartner, 2025-08-26
-
-- [Pricing on the WhatsApp Business Platform — Conversation-based pricing (Deprecated)](https://developers.facebook.com/documentation/business-messaging/whatsapp/pricing/conversation-based-pricing) — Meta for Developers, 2026-05-21
+- [Global AI Orchestration Platform Market Size/Share Worth USD 72.45 Billion by 2035 at a 22.13% CAGR](https://www.globenewswire.com/news-release/2026/07/02/3321438/0/en/Global-AI-Orchestration-Platform-Market-Size-Share-Worth-USD-72-45-Billion-by-2035-at-a-22-13-CAGR-Custom-Market-Insights-Analysis-Outlook-Leaders-Report-Trends-Forecast-Segmentati.html) — Custom Market Insights (via GlobeNewswire), 2026-07-02
 
 ## Guias relacionados
 
@@ -152,10 +140,10 @@ Existe um plano gratuito para testes e volumes baixos; os planos pagos escalam c
 
 - [multi-agente-vs-single-agente](/blog/multi-agente-vs-single-agente)
 
-- [sofia-ai-vs-n8n-vs-zapier](/blog/sofia-ai-vs-n8n-vs-zapier)
-
 - [audit-log-compliance-ia](/blog/audit-log-compliance-ia)
 
-- [agent-memory-contexto-persistente](/blog/agent-memory-contexto-persistente)
+- [knowledge-base-com-rag](/blog/knowledge-base-com-rag)
 
-- [o-que-e-whitelabel-ia](/blog/o-que-e-whitelabel-ia)
+- [sofia-ai-espanol-latinoamerica](/blog/sofia-ai-espanol-latinoamerica)
+
+- [plataforma-multi-agente-como-escolher](/blog/plataforma-multi-agente-como-escolher)
