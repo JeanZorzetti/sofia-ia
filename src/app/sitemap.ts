@@ -16,6 +16,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     // Home
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'weekly', priority: 1 },
+    { url: `${baseUrl}/peca-seu-site`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/plataforma`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     // International — ES (Latam)
     { url: `${baseUrl}/es`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.95 },
     { url: `${baseUrl}/es/precios`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },

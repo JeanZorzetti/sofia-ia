@@ -1,4 +1,5 @@
 export const navLinks = [
+  { label: 'Plataforma', href: '/plataforma' },
   { label: 'Features', href: '/features' },
   { label: 'Marketplace', href: '/marketplace' },
   { label: 'Preço', href: '/preco' },
@@ -12,6 +13,7 @@ export const footerColumns = [
   {
     title: 'Produto',
     links: [
+      { label: 'Plataforma', href: '/plataforma' },
       { label: 'Features', href: '/features' },
       { label: 'Marketplace', href: '/marketplace' },
       { label: 'Templates', href: '/templates' },

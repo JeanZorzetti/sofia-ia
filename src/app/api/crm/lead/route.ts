@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
  * POST /api/crm/lead
  *
  * Proxy público (sem auth) que cria um contato no Sirius CRM.
- * Usado pelo formulário de contato da landing page.
+ * Usado pelo formulário de contato (/contato) e pelo brief de intake (/peca-seu-site).
  *
  * Env vars necessárias:
  *   SIRIUS_CRM_API_KEY   — API key do Sirius CRM (Bearer token)
@@ -15,7 +15,12 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, company, subject, message } = body
+    const { name, email, phone, company, subject, message, siteType, currentSite, goal, website } = body
+
+    // Honeypot: campo oculto só um bot preenche. Responde 200 sem forward ao CRM.
+    if (typeof website === 'string' && website.trim().length > 0) {
+      return NextResponse.json({ success: true })
+    }
 
     // Validação básica
     if (!name || typeof name !== 'string' || name.trim().length < 2) {
@@ -33,9 +38,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Configuração interna ausente. Tente novamente em breve.' }, { status: 500 })
     }
 
-    // Monta payload para o CRM — enriquece company com subject/message se existirem
+    // Monta payload para o CRM — enriquece company com subject/message/brief se existirem
     const noteContext = [
       subject ? `Assunto: ${subject}` : null,
+      siteType ? `Tipo de site: ${siteType}` : null,
+      currentSite ? `Site atual: ${currentSite}` : null,
+      goal ? `Objetivo: ${goal}` : null,
       message ? `Mensagem: ${message}` : null,
     ].filter(Boolean).join(' | ')
 

@@ -12,15 +12,15 @@
 
 ## Phase 1: Setup (copy tipada)
 
-- [ ] T001 Criar `src/data/home-v4.ts`: tipos + copy estruturada da home nova a partir de `docs/strategy_V4/03-home-sites.md` §2–§3 — `heroCopy`, `painCards` (3), `howItWorksSteps` (lead→workers→reviewer→deploy), `comparisonRows` (tipo com `source: {label, url}` OBRIGATÓRIO — fontes em `02-criticas-concorrentes.md`), `includedItems`, `pricingModel` (sem números — FR-010), `intakeFaq` (perguntas espelhando críticas). Copy rica, sem placeholder (regra "no lazy features")
+- [X] T001 Criar `src/data/home-v4.ts`: tipos + copy estruturada da home nova a partir de `docs/strategy_V4/03-home-sites.md` §2–§3 — `heroCopy`, `painCards` (3), `howItWorksSteps` (lead→workers→reviewer→deploy), `comparisonRows` (tipo com `source: {label, url}` OBRIGATÓRIO — fontes em `02-criticas-concorrentes.md`), `includedItems`, `pricingModel` (sem números — FR-010), `intakeFaq` (perguntas espelhando críticas). Copy rica, sem placeholder (regra "no lazy features")
 
 ---
 
 ## Phase 2: Foundational (migração sem perda)
 
-- [ ] T002 Migrar o conteúdo ATUAL de `src/app/(public)/page.tsx` para `src/app/(public)/plataforma/page.tsx` (move de JSX/imports, não reescrita): metadata própria (title "Plataforma Polaris IA...", canonical `/plataforma`), JSON-LD `SoftwareApplication` mantido; `/` continua com o conteúdo antigo até T008 (nunca há home quebrada)
-- [ ] T003 [P] Navegação: adicionar entrada "Plataforma" → `/plataforma` em `src/data/navigation.ts` (e/ou `LandingNavbar.tsx`/`Footer.tsx` se itens hardcoded); conferir que Docs/Enterprise/Whitelabel/Login continuam a 1 clique (FR-006)
-- [ ] T004 [P] `src/app/sitemap.ts`: incluir `/plataforma` (priority 0.8) e `/peca-seu-site` (priority 0.9); home mantém 1.0
+- [X] T002 Migrar o conteúdo ATUAL de `src/app/(public)/page.tsx` para `src/app/(public)/plataforma/page.tsx` (move de JSX/imports, não reescrita): metadata própria (title "Plataforma Polaris IA...", canonical `/plataforma`), JSON-LD `SoftwareApplication` mantido; `/` continua com o conteúdo antigo até T008 (nunca há home quebrada)
+- [X] T003 [P] Navegação: adicionar entrada "Plataforma" → `/plataforma` em `src/data/navigation.ts` (e/ou `LandingNavbar.tsx`/`Footer.tsx` se itens hardcoded); conferir que Docs/Enterprise/Whitelabel/Login continuam a 1 clique (FR-006)
+- [X] T004 [P] `src/app/sitemap.ts`: incluir `/plataforma` (priority 0.8) e `/peca-seu-site` (priority 0.9); home mantém 1.0
 
 **Checkpoint**: `/plataforma` no ar com o conteúdo atual; nada removido; tsc limpo
 
@@ -32,14 +32,14 @@
 
 **Independent Test**: quickstart cenários 1 e 2.
 
-- [ ] T005 [US1] Estender `src/app/api/crm/lead/route.ts` conforme `contracts/intake-lead.md`: honeypot server-side (`website` preenchido → 200 sem forward), campos opcionais `siteType`/`currentSite`/`goal` concatenados em `notes`, `subject` aceita `site-intake`; requests atuais (ContactForm) byte-idênticos
-- [ ] T006 [P] [US1] Criar `src/app/(public)/peca-seu-site/IntakeForm.tsx` (client, padrão do `ContactForm.tsx` de contato): campos nome, email, WhatsApp (opcional), negócio, tipo de site (select: landing/institucional/site+blog), URL atual (opcional), objetivo (textarea); honeypot oculto; estados idle/loading/success/error; botão desabilitado durante envio; erro NÃO limpa os campos
-- [ ] T007 [US1] Criar `src/app/(public)/peca-seu-site/page.tsx` (RSC): metadata própria, promessa do "brief de 5 minutos" (o que acontece depois: proposta com escopo e preço fechado), `IntakeForm`
-- [ ] T008 [US1] Reescrever `src/app/(public)/page.tsx` — seções 1–3 do doc §3: hero problema-primeiro (H1 "Sites de produção, não protótipos.", sub do time dev/reviewer/líder, CTA primário → `/peca-seu-site`, CTA secundário → case), 3 cartões de dor, "como funciona" com visual do run; consome `home-v4.ts`, reusa `SectionWrapper`/`AnimatedSection`/`GradientText`; NENHUM concorrente citado nessas seções (FR-007)
-- [ ] T009 [US1] Home — seções 4–9: comparativa única (tabela crítica×resposta com fonte linkada em toda linha), "o que está incluso" (SEO técnico + GEO/AEO, performance, design system próprio, repo seu, deploy no seu domínio), prova (case estetia + dogfooding), preço (modelo por entrega, "sem créditos, sem API paga", CTA → intake), FAQ anti-objeção, CTA final
-- [ ] T010 [US1] Metadata + JSON-LD da home: title/description/OG/keywords do posicionamento novo; schema `Service` (provider Organization com sameAs canônicos ROI Labs — linkedin `roi-labs-curadoria`, instagram `roilabs.curadoria`); canonical mantido `https://polarisia.com.br`
+- [X] T005 [US1] Estender `src/app/api/crm/lead/route.ts` conforme `contracts/intake-lead.md`: honeypot server-side (`website` preenchido → 200 sem forward), campos opcionais `siteType`/`currentSite`/`goal` concatenados em `notes`, `subject` aceita `site-intake`; requests atuais (ContactForm) byte-idênticos
+- [X] T006 [P] [US1] Criar `src/app/(public)/peca-seu-site/IntakeForm.tsx` (client, padrão do `ContactForm.tsx` de contato): campos nome, email, WhatsApp (opcional), negócio, tipo de site (select: landing/institucional/site+blog), URL atual (opcional), objetivo (textarea); honeypot oculto; estados idle/loading/success/error; botão desabilitado durante envio; erro NÃO limpa os campos
+- [X] T007 [US1] Criar `src/app/(public)/peca-seu-site/page.tsx` (RSC): metadata própria, promessa do "brief de 5 minutos" (o que acontece depois: proposta com escopo e preço fechado), `IntakeForm`
+- [X] T008 [US1] Reescrever `src/app/(public)/page.tsx` — seções 1–3 do doc §3: hero problema-primeiro (H1 "Sites de produção, não protótipos.", sub do time dev/reviewer/líder, CTA primário → `/peca-seu-site`, CTA secundário → case), 3 cartões de dor, "como funciona" com visual do run; consome `home-v4.ts`, reusa `SectionWrapper`/`AnimatedSection`/`GradientText`; NENHUM concorrente citado nessas seções (FR-007)
+- [X] T009 [US1] Home — seções 4–9: comparativa única (tabela crítica×resposta com fonte linkada em toda linha), "o que está incluso" (SEO técnico + GEO/AEO, performance, design system próprio, repo seu, deploy no seu domínio), prova (case estetia + dogfooding), preço (modelo por entrega, "sem créditos, sem API paga", CTA → intake), FAQ anti-objeção, CTA final
+- [X] T010 [US1] Metadata + JSON-LD da home: title/description/OG/keywords do posicionamento novo; schema `Service` (provider Organization com sameAs canônicos ROI Labs — linkedin `roi-labs-curadoria`, instagram `roilabs.curadoria`); canonical mantido `https://polarisia.com.br`
 - [ ] T011 [P] [US1] Asset de prova: capturar screenshot real da UI de TeamRun (lead→workers→reviewer) → `public/` otimizado (WebP/PNG < 200KB) e usar na seção "como funciona"
-- [ ] T012 [P] [US1] Teste jest da rota (CI): `src/__tests__/integration/crm-lead-intake.test.ts` — retrocompat (body do ContactForm atual → payload CRM idêntico), honeypot → 200 sem fetch ao CRM, notes com `site-intake`+tipo+objetivo, 400 nome/email
+- [X] T012 [P] [US1] Teste jest da rota (CI): `src/__tests__/integration/crm-lead-intake.test.ts` — retrocompat (body do ContactForm atual → payload CRM idêntico), honeypot → 200 sem fetch ao CRM, notes com `site-intake`+tipo+objetivo, 400 nome/email
 
 **Checkpoint**: US1 completa — home nova + brief → lead no CRM
 
@@ -51,7 +51,7 @@
 
 **Independent Test**: quickstart cenário 3.
 
-- [ ] T013 [US2] Verificação de funil: a partir da home nova, navegar (ou grep de hrefs) até dashboard/login, `/plataforma`, docs, enterprise, whitelabel, preço de planos — tudo 200 e a 1 clique; conferir que NADA fora de `src/app/(public)/`, `src/data/` e `api/crm/lead` foi tocado (git diff)
+- [X] T013 [US2] Verificação de funil: a partir da home nova, navegar (ou grep de hrefs) até dashboard/login, `/plataforma`, docs, enterprise, whitelabel, preço de planos — tudo 200 e a 1 clique; conferir que NADA fora de `src/app/(public)/`, `src/data/` e `api/crm/lead` foi tocado (git diff)
 
 **Checkpoint**: funil íntegro
 
@@ -63,8 +63,8 @@
 
 **Independent Test**: quickstart cenários 4 e 5.
 
-- [ ] T014 [US3] Auditoria de conteúdo da comparativa: cada linha com fonte pública abrindo 200 (Wiz/The Register/G2 conforme doc 02); tom factual sem adjetivos; concorrentes AUSENTES fora da seção (grep pelos nomes no restante da home)
-- [ ] T015 [P] [US4] Validar JSON-LD `Service` (home) e `SoftwareApplication` (/plataforma) no Rich Results Test; conferir sitemap com as rotas novas; registrar baseline PSI da home ATUAL (antes do deploy) para comparação pós-deploy (SC-005)
+- [X] T014 [US3] Auditoria de conteúdo da comparativa: cada linha com fonte pública abrindo 200 (Wiz/The Register/G2 conforme doc 02); tom factual sem adjetivos; concorrentes AUSENTES fora da seção (grep pelos nomes no restante da home)
+- [X] T015 [P] [US4] Validar JSON-LD `Service` (home) e `SoftwareApplication` (/plataforma) no Rich Results Test; conferir sitemap com as rotas novas; registrar baseline PSI da home ATUAL (antes do deploy) para comparação pós-deploy (SC-005)
 
 **Checkpoint**: todas as stories prontas para deploy
 
