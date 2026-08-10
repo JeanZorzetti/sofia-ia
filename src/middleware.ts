@@ -139,6 +139,7 @@ export async function middleware(request: NextRequest) {
       pathname === '/api/webhook' ||
       pathname.startsWith('/api/mercadopago') ||     // payment gateway callbacks
       pathname.startsWith('/api/crm') ||             // CRM leads (public form submissions)
+      pathname.startsWith('/api/contact') ||         // /contato form (public submission)
       pathname.startsWith('/api/newsletter') ||      // newsletter subscriptions
       pathname.startsWith('/api/cron') ||            // cron jobs (protected by CRON_SECRET)
       pathname.startsWith('/api/flows/cron') ||      // flow cron triggers (protected by CRON_SECRET)

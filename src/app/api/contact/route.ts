@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { sendLeadToRoihub } from '@/lib/roihub-crm'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,6 +35,14 @@ export async function POST(request: NextRequest) {
         useCase: useCase?.trim() || null,
         source: 'contato',
       },
+    })
+
+    sendLeadToRoihub({
+      nome: name.trim(),
+      email: email.trim(),
+      telefone: phone?.trim() || null,
+      origem: 'polaris:contato',
+      metadata: { company, type, employees, useCase },
     })
 
     return NextResponse.json({ success: true, data: { id: lead.id } })

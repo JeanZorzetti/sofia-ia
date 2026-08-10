@@ -9,6 +9,10 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
+  // packages/sofia-ai é um SDK standalone (não é workspace do app) cujo
+  // package.json tem BOM — quebra o jest-haste-map ao fazer crawl do projeto.
+  // .next/ é build output (duplica package.json e colide no haste naming).
+  modulePathIgnorePatterns: ['<rootDir>/packages/', '<rootDir>/.next/'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },

@@ -1,23 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { sendLeadToRoihub, type RoihubOrigem } from '@/lib/roihub-crm'
 
 export const dynamic = 'force-dynamic'
 
 /**
  * POST /api/crm/lead
  *
- * Proxy público (sem auth) que cria um contato no Sirius CRM.
- * Usado pelo formulário de contato (/contato) e pelo brief de intake (/peca-seu-site).
- *
- * Env vars necessárias:
- *   SIRIUS_CRM_API_KEY   — API key do Sirius CRM (Bearer token)
- *   SIRIUS_CRM_URL       — URL base do CRM (default: https://sirius.roilabs.com.br)
+ * Proxy público (sem auth) usado pelo intake "peça seu site" (IntakeForm.tsx)
+ * e pela inscrição de early access. Cria um lead no CRM do roihub, pipeline
+ * "polaris", best-effort (FR-006) — falha aqui nunca vira erro para o visitante.
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { name, email, phone, company, subject, message, siteType, currentSite, goal, website } = body
 
-    // Honeypot: campo oculto só um bot preenche. Responde 200 sem forward ao CRM.
+    // Honeypot: campo oculto só um bot preenche. Responde 200 sem chegar ao CRM.
     if (typeof website === 'string' && website.trim().length > 0) {
       return NextResponse.json({ success: true })
     }
@@ -30,49 +28,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email inválido.' }, { status: 400 })
     }
 
-    const apiKey = process.env.SIRIUS_CRM_API_KEY
-    const crmBase = process.env.SIRIUS_CRM_URL ?? 'https://sirius.roilabs.com.br'
+    const origem: RoihubOrigem = subject === 'early_access' ? 'polaris:early-access' : 'polaris:peca-seu-site'
+    const metadata =
+      origem === 'polaris:early-access'
+        ? { company, message }
+        : { company, siteType, currentSite, goal }
 
-    if (!apiKey) {
-      console.error('[crm/lead] SIRIUS_CRM_API_KEY não configurada')
-      return NextResponse.json({ error: 'Configuração interna ausente. Tente novamente em breve.' }, { status: 500 })
-    }
-
-    // Monta payload para o CRM — enriquece company com subject/message/brief se existirem
-    const noteContext = [
-      subject ? `Assunto: ${subject}` : null,
-      siteType ? `Tipo de site: ${siteType}` : null,
-      currentSite ? `Site atual: ${currentSite}` : null,
-      goal ? `Objetivo: ${goal}` : null,
-      message ? `Mensagem: ${message}` : null,
-    ].filter(Boolean).join(' | ')
-
-    const payload: Record<string, string> = {
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-    }
-    if (phone) payload.phone = phone.trim()
-    if (company) payload.company = company.trim()
-    // Inclui contexto adicional se o CRM aceitar — campo extra ignorado se não reconhecido
-    if (noteContext) payload.notes = noteContext
-
-    const crmRes = await fetch(`${crmBase}/api/v1/contacts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(payload),
+    sendLeadToRoihub({
+      nome: name.trim(),
+      email,
+      telefone: phone || null,
+      origem,
+      metadata,
     })
-
-    if (!crmRes.ok) {
-      const errorText = await crmRes.text().catch(() => '')
-      console.error(`[crm/lead] CRM retornou ${crmRes.status}:`, errorText)
-      return NextResponse.json(
-        { error: 'Não foi possível enviar sua mensagem. Tente novamente.' },
-        { status: 502 }
-      )
-    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

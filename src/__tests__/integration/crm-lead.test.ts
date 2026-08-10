@@ -1,12 +1,26 @@
 /**
+ * @jest-environment node
+ *
  * Integration tests for POST /api/crm/lead
  *
- * This is a public endpoint (no auth required) that validates fields and
- * proxies to the Sirius CRM. We mock the global fetch to avoid real HTTP calls.
+ * Public endpoint (no auth) that validates fields and forwards the lead to
+ * the CRM do roihub via roihub-crm.ts. sendLeadToRoihub is mocked because it
+ * schedules work with next/server's after(), which throws when called
+ * outside a real request scope — the scope Next.js sets up around a Route
+ * Handler in production, but not when the handler is invoked directly here.
+ *
+ * testEnvironment: node (em vez do jsdom default do projeto) porque
+ * `next/server` (NextRequest/NextResponse) precisa de Fetch API real
+ * (Request/Response/ReadableStream), que o jsdom não implementa.
  */
 
 import { POST } from '@/app/api/crm/lead/route'
 import { NextRequest } from 'next/server'
+import { sendLeadToRoihub } from '@/lib/roihub-crm'
+
+jest.mock('@/lib/roihub-crm', () => ({
+  sendLeadToRoihub: jest.fn(),
+}))
 
 function makeRequest(body?: object) {
   return new NextRequest('http://localhost/api/crm/lead', {
@@ -16,18 +30,8 @@ function makeRequest(body?: object) {
   })
 }
 
-// Save the original global fetch and restore after each test
-const originalFetch = global.fetch
-
-beforeEach(() => {
-  // Set the required env var so tests reach the CRM call
-  process.env.SIRIUS_CRM_API_KEY = 'test-api-key'
-  process.env.SIRIUS_CRM_URL = 'https://crm.example.com'
-})
-
 afterEach(() => {
-  global.fetch = originalFetch
-  delete process.env.SIRIUS_CRM_API_KEY
+  jest.clearAllMocks()
 })
 
 // ---------------------------------------------------------------------------
@@ -68,60 +72,34 @@ describe('POST /api/crm/lead — validation', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Happy path and CRM integration
+// roihub integration
 // ---------------------------------------------------------------------------
-describe('POST /api/crm/lead — CRM integration', () => {
-  it('should return 500 when SIRIUS_CRM_API_KEY is not configured', async () => {
-    delete process.env.SIRIUS_CRM_API_KEY
-
-    const res = await POST(makeRequest({ name: 'Joao Silva', email: 'joao@example.com' }))
-    expect(res.status).toBe(500)
-
-    const body = await res.json()
-    expect(body.error).toContain('Configuração')
-  })
-
-  it('should return 200 when CRM accepts the lead', async () => {
-    global.fetch = jest.fn().mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ id: 'crm-contact-123' }),
-    } as Response)
-
+describe('POST /api/crm/lead — roihub integration', () => {
+  it('should return success and forward the lead as polaris:peca-seu-site by default', async () => {
     const res = await POST(makeRequest({ name: 'Joao Silva', email: 'joao@example.com' }))
     expect(res.status).toBe(200)
 
     const body = await res.json()
     expect(body.success).toBe(true)
 
-    // Verify the CRM call was made with proper headers
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/v1/contacts'),
+    expect(sendLeadToRoihub).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({
-          Authorization: 'Bearer test-api-key',
-        }),
+        nome: 'Joao Silva',
+        email: 'joao@example.com',
+        origem: 'polaris:peca-seu-site',
       })
     )
   })
 
-  it('should return 502 when CRM returns a non-OK status', async () => {
-    global.fetch = jest.fn().mockResolvedValueOnce({
-      ok: false,
-      status: 503,
-      text: async () => 'Service Unavailable',
-    } as Response)
+  it('should forward subject early_access as origem polaris:early-access', async () => {
+    await POST(makeRequest({ name: 'Joao Silva', email: 'joao@example.com', subject: 'early_access' }))
 
-    const res = await POST(makeRequest({ name: 'Joao Silva', email: 'joao@example.com' }))
-    expect(res.status).toBe(502)
-
-    const body = await res.json()
-    expect(body.error).toBeDefined()
+    expect(sendLeadToRoihub).toHaveBeenCalledWith(
+      expect.objectContaining({ origem: 'polaris:early-access' })
+    )
   })
 
-  it('should forward optional fields (phone, company) to the CRM', async () => {
-    global.fetch = jest.fn().mockResolvedValueOnce({ ok: true, json: async () => ({}) } as Response)
-
+  it('should forward optional fields (phone, company) to roihub', async () => {
     await POST(makeRequest({
       name: 'Maria Souza',
       email: 'maria@example.com',
@@ -129,8 +107,11 @@ describe('POST /api/crm/lead — CRM integration', () => {
       company: 'ROI Labs',
     }))
 
-    const callBody = JSON.parse((global.fetch as jest.Mock).mock.calls[0][1].body)
-    expect(callBody.phone).toBe('11999999999')
-    expect(callBody.company).toBe('ROI Labs')
+    expect(sendLeadToRoihub).toHaveBeenCalledWith(
+      expect.objectContaining({
+        telefone: '11999999999',
+        metadata: expect.objectContaining({ company: 'ROI Labs' }),
+      })
+    )
   })
 })
