@@ -72,8 +72,8 @@
 
 ## Phase 6: Polish & Deploy
 
-- [ ] T016 `npx tsc --noEmit` limpo + build local (`prisma generate` antes de `next build`); commit + push `main` (deploy automático EasyPanel); smoke `/`, `/plataforma`, `/peca-seu-site` 200
-- [ ] T017 E2E em produção: quickstart cenários 1–5, incluindo lead real de teste no Sirius CRM; PSI pós-deploy vs. baseline; registrar evidências em `specs/012-home-sites-producao/handoff.md`
+- [X] T016 `npx tsc --noEmit` limpo + build local (`prisma generate` antes de `next build`); commit + push `main` (deploy automático EasyPanel); smoke `/`, `/plataforma`, `/peca-seu-site` 200
+- [ ] T017 E2E em produção: quickstart cenários 1–5 — 1/3/4/5 confirmados via Playwright; **cenário 2 (lead real no Sirius CRM) BLOQUEADO — `SIRIUS_CRM_API_KEY` ausente no EasyPanel**, ver `handoff.md`; PSI pós-deploy vs. baseline pendente (baseline também bloqueado, cota da PSI API); evidências registradas em `specs/012-home-sites-producao/handoff.md`
 
 ---
 
