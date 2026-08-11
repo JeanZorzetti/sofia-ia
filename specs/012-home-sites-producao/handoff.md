@@ -1,6 +1,18 @@
 # Handoff — 012 Home V4 ("Sites de produção, não protótipos")
 
-**Data:** 2026-08-10 · **Branch:** `main` (commit `8b7ee43`) · **Status:** implementado e no ar em produção. **1 bloqueio real: `SIRIUS_CRM_API_KEY` não configurada no EasyPanel** — o brief não vira lead até isso ser setado.
+**Data:** 2026-08-10 · **Branch:** `main` (commit `8b7ee43`) · **Status:** implementado e no ar em produção.
+
+## Atualização 2026-08-11 — T017 Cenário 2 confirmado
+
+O bloqueio `SIRIUS_CRM_API_KEY` abaixo foi contornado, não corrigido: o commit `858658f` (2026-08-10, depois deste handoff) trocou o destino do lead de `/peca-seu-site` — não é mais a Sirius CRM, é a CRM própria do roihub (`src/lib/roihub-crm.ts`, pipeline `polaris`, via `ROIHUB_CRM_URL`/`ROIHUB_CRM_SECRET`). Sirius CRM forwarding foi removido do código.
+
+Verificado agora em produção via Playwright: brief real enviado em `https://polarisia.com.br/peca-seu-site` → "Brief recebido!" (sem 500) → apareceu em `crm_leads` do roihub segundos depois (`id 13`, `pipeline polaris`, `origem polaris:peca-seu-site`). Lead de QA marcado `etapa perdido` para não poluir o pipeline de vendas. Cenário 2 do quickstart está **confirmado**.
+
+## Atualização 2026-08-11 — T011 confirmado
+
+Screenshot real capturado do card "Topologia" do time "Code Factory" (`/dashboard/teams/2afdd87b-5de6-47bb-866f-d914a49940bd`, login admin): grafo real lead→worker→reviewer (Arquiteto Polaris → Engenheiro Next.js → Revisor de Código). Salvo em `public/teamrun-topologia.png` (19.8KB) e renderizado na seção "Como funciona" da home, logo abaixo dos 4 cards numerados. `tsc --noEmit` limpo após a mudança.
+
+Spec 012 está com as 17 tasks fechadas. Única pendência real que sobra: baseline PSI (SC-005), bloqueada por cota da API pública do PageSpeed Insights — não bloqueia o restante.
 
 ## O que foi feito nesta sessão (`speckit-implement`, T001–T017)
 

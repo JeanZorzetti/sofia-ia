@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, ExternalLink, CheckCircle2, Sparkles } from 'lucide-react'
 import { FloatingPaths } from '@/components/ui/background-paths'
@@ -136,6 +137,18 @@ export default function LandingPage() {
             </AnimatedSection>
           ))}
         </div>
+        <AnimatedSection delay={0.2}>
+          <div className="max-w-2xl mx-auto mt-8 glass-card rounded-2xl p-4">
+            <Image
+              src="/teamrun-topologia.png"
+              alt="Topologia real de um time Polaris: Arquiteto Polaris (lead) → Engenheiro Next.js (worker) → Revisor de Código (reviewer)"
+              width={358}
+              height={434}
+              className="mx-auto rounded-lg"
+            />
+            <p className="text-xs text-foreground-tertiary text-center mt-3">Captura real do dashboard Polaris — não é mockup.</p>
+          </div>
+        </AnimatedSection>
       </SectionWrapper>
 
       {/* 4. Comparativa — única seção onde concorrentes aparecem */}

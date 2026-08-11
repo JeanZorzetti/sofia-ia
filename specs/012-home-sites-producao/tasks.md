@@ -38,7 +38,7 @@
 - [X] T008 [US1] Reescrever `src/app/(public)/page.tsx` — seções 1–3 do doc §3: hero problema-primeiro (H1 "Sites de produção, não protótipos.", sub do time dev/reviewer/líder, CTA primário → `/peca-seu-site`, CTA secundário → case), 3 cartões de dor, "como funciona" com visual do run; consome `home-v4.ts`, reusa `SectionWrapper`/`AnimatedSection`/`GradientText`; NENHUM concorrente citado nessas seções (FR-007)
 - [X] T009 [US1] Home — seções 4–9: comparativa única (tabela crítica×resposta com fonte linkada em toda linha), "o que está incluso" (SEO técnico + GEO/AEO, performance, design system próprio, repo seu, deploy no seu domínio), prova (case estetia + dogfooding), preço (modelo por entrega, "sem créditos, sem API paga", CTA → intake), FAQ anti-objeção, CTA final
 - [X] T010 [US1] Metadata + JSON-LD da home: title/description/OG/keywords do posicionamento novo; schema `Service` (provider Organization com sameAs canônicos ROI Labs — linkedin `roi-labs-curadoria`, instagram `roilabs.curadoria`); canonical mantido `https://polarisia.com.br`
-- [ ] T011 [P] [US1] Asset de prova: capturar screenshot real da UI de TeamRun (lead→workers→reviewer) → `public/` otimizado (WebP/PNG < 200KB) e usar na seção "como funciona"
+- [X] T011 [P] [US1] Asset de prova: capturar screenshot real da UI de TeamRun (lead→workers→reviewer) → `public/` otimizado (WebP/PNG < 200KB) e usar na seção "como funciona" — capturado em 2026-08-11 do card "Topologia" real (`/dashboard/teams/2afdd87b-...`, time "Code Factory": Arquiteto Polaris→Engenheiro Next.js→Revisor de Código); `public/teamrun-topologia.png` (19.8KB), renderizado abaixo dos 4 cards em `page.tsx`
 - [X] T012 [P] [US1] Teste jest da rota (CI): `src/__tests__/integration/crm-lead-intake.test.ts` — retrocompat (body do ContactForm atual → payload CRM idêntico), honeypot → 200 sem fetch ao CRM, notes com `site-intake`+tipo+objetivo, 400 nome/email
 
 **Checkpoint**: US1 completa — home nova + brief → lead no CRM
@@ -73,7 +73,7 @@
 ## Phase 6: Polish & Deploy
 
 - [X] T016 `npx tsc --noEmit` limpo + build local (`prisma generate` antes de `next build`); commit + push `main` (deploy automático EasyPanel); smoke `/`, `/plataforma`, `/peca-seu-site` 200
-- [ ] T017 E2E em produção: quickstart cenários 1–5 — 1/3/4/5 confirmados via Playwright; **cenário 2 (lead real no Sirius CRM) BLOQUEADO — `SIRIUS_CRM_API_KEY` ausente no EasyPanel**, ver `handoff.md`; PSI pós-deploy vs. baseline pendente (baseline também bloqueado, cota da PSI API); evidências registradas em `specs/012-home-sites-producao/handoff.md`
+- [X] T017 E2E em produção: quickstart cenários 1–5 — 1/3/4/5 confirmados via Playwright; **cenário 2 confirmado em 2026-08-11** — commit `858658f` trocou o destino do lead de Sirius CRM (bloqueada por `SIRIUS_CRM_API_KEY` ausente) para a CRM do roihub (`ROIHUB_CRM_URL`/`ROIHUB_CRM_SECRET`); brief real enviado via Playwright em produção apareceu em `crm_leads` (pipeline `polaris`, id 13) segundos depois, sem erro 500; PSI pós-deploy vs. baseline continua pendente (cota da PSI API); evidências registradas em `specs/012-home-sites-producao/handoff.md`
 
 ---
 
