@@ -49,7 +49,7 @@ Sem body.
 
 Sem body. Arrependimento (CDC art. 49).
 - 409 `not_eligible` se não é pagante ou `started_at` passou de 7 dias.
-- Efeitos: estorna integralmente cada fatura paga da assinatura (idempotency key por fatura); cancela a assinatura na hora; envia e-mail de confirmação. O plano muda pelo webhook.
+- Efeitos: estorna o saldo de cada cobrança paga da assinatura (repetir é seguro: o que já foi estornado é pulado); cancela a assinatura na hora; envia e-mail de confirmação. O plano muda pelo webhook.
 - 200: `{ "success": true, "data": { "refunded": 29700, "currency": "brl" } }`.
 
 ## POST /api/webhooks/stripe (nova, pública)

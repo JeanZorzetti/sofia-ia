@@ -56,7 +56,7 @@ Leitura de 2026-09-29. Fontes: skill `stripe:stripe-best-practices` (API `2026-0
 
 ## R10. Arrependimento (7 dias, CDC art. 49)
 
-- **Decision**: endpoint próprio `POST /api/billing/withdraw`. Condição: assinatura do próprio usuário, `started_at` há 7 dias ou menos. Ação: estorna **todas** as faturas pagas da assinatura desde o início (a primeira e eventual proration de upgrade), buscando o PaymentIntent de cada uma em `invoice.payments` (API basil+: `invoice.payment_intent` não existe mais), com `idempotencyKey` por fatura; depois cancela a assinatura na hora. Plano volta a Free pelo webhook `customer.subscription.deleted`. E-mail nosso de confirmação; recibo de reembolso do Stripe.
+- **Decision**: endpoint próprio `POST /api/billing/withdraw`. Condição: assinatura do próprio usuário, `started_at` há 7 dias ou menos. Ação: estorna **todas** as faturas pagas da assinatura desde o início (a primeira e eventual proration de upgrade), buscando o PaymentIntent de cada uma em `invoice.payments` (API basil+: `invoice.payment_intent` não existe mais) e estornando só o saldo de cada cobrança (`amount - amount_refunded`); depois cancela a assinatura na hora. **Sem `idempotencyKey`** (mudança de 29/09, achada no sandbox): o Stripe guarda por 24h a resposta de erro da primeira tentativa e travava a repetição; o saldo por cobrança já impede estorno em dobro, e `charge_already_refunded` conta como sucesso. Plano volta a Free pelo webhook `customer.subscription.deleted`. E-mail nosso de confirmação; recibo de reembolso do Stripe.
 - **Rationale**: o Portal não faz reembolso. O estorno é integral, sem desconto de taxa (saas-legal: consumidor-cobranca.md).
 
 ## R11. Aceite dos termos

@@ -40,12 +40,21 @@ export async function POST(request: NextRequest) {
         const pi = payment.payment.payment_intent
         const paymentIntentId = typeof pi === 'string' ? pi : pi?.id
         if (!paymentIntentId) continue
-        // Idempotency key per invoice payment: a double click never refunds twice.
-        const refund = await stripe.refunds.create(
-          { payment_intent: paymentIntentId },
-          { idempotencyKey: `withdraw-${payment.id}` },
-        )
-        refundedCents += refund.amount
+        // Refund only what is left on each charge. Stripe never refunds more than was charged, so a
+        // double click cannot refund twice. No idempotency key on purpose: Stripe replays a stored
+        // failure for 24h, which locked retries after a transient error (found in sandbox, 013).
+        for await (const charge of stripe.charges.list({ payment_intent: paymentIntentId })) {
+          if (charge.status !== 'succeeded') continue
+          const remaining = charge.amount - charge.amount_refunded
+          if (remaining > 0) {
+            try {
+              await stripe.refunds.create({ charge: charge.id, amount: remaining })
+            } catch (err) {
+              if ((err as { code?: string }).code !== 'charge_already_refunded') throw err
+            }
+          }
+          refundedCents += charge.amount
+        }
       }
     }
 
