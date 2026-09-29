@@ -113,7 +113,7 @@ No painel administrativo, receita e distribuição de planos contam só assinatu
   - A versão fica marcada como **minuta** até revisão de advogado, e a versão anterior continua publicada numa URL permanente.
 - **FR-005**: O checkout MUST coletar o CPF ou CNPJ do pagador, necessário para a nota fiscal.
 - **FR-006**: O rodapé do site MUST exibir razão social, CNPJ, endereço e e-mail de contato da empresa que vende a Polaris [LEI Decreto 7.962/2013 art. 2º].
-- **FR-007**: A empresa que vende MUST ser a mesma nas quatro telas: página de pagamento, fatura do cartão, rodapé e termos. É a **ROI Labs (CNPJ da ROI Labs)**, numa **conta Stripe nova e exclusiva da Polaris**, com nome público "Polaris IA". Não reaproveita a conta do Compass nem de outro produto.
+- **FR-007**: A empresa que vende MUST ser a mesma nas quatro telas: página de pagamento, fatura do cartão, rodapé e termos. É a empresa de **CNPJ 57.493.675/0001-37** (razão social "57.493.675 MARIA EDUARDA ROCHA ZORZETTI"), numa **conta Stripe nova e exclusiva da Polaris**, já verificada, com nome público "Polaris IA". Não reaproveita a conta do Compass nem de outro produto.
 
 **Ativação e ciclo**
 
@@ -168,6 +168,7 @@ No painel administrativo, receita e distribuição de planos contam só assinatu
 - Sem plano anual na v1. Por isso não há aviso de renovação anual.
 - Não existe nenhum cliente pagante no Mercado Pago (0 pagamentos, conferido em 29/09/2026), então não há assinatura a migrar. A única pendente é teste interno.
 - NFS-e: na v1 a equipe emite manualmente pelo Emissor Nacional a partir do registro de pagamentos (FR-020). Automatizar só quando o volume justificar. Obrigatoriedade do Emissor Nacional para empresa do Simples desde 01/09/2026 [LEI Res. CGSN 189/2026] ⏳ (conferido pela skill `saas-legal` em 26/09/2026).
-- Dependência do dono: razão social, CNPJ e endereço da ROI Labs para o rodapé (FR-006) e para os termos.
+- Dados da empresa (recebidos em 2026-09-29): razão social "57.493.675 MARIA EDUARDA ROCHA ZORZETTI", CNPJ 57.493.675/0001-37, Av. Marechal Rondon, Quadra 256, Lote 17, Jardim Buriti Sereno, Aparecida de Goiânia/GO, CEP 74943-510.
+- **Pendência fiscal que bloqueia o primeiro pagamento real (não bloqueia o código):** o CNPJ é **MEI** (cadastro público em 29/09/2026: optante pelo MEI desde 30/09/2024, CNAE principal 7319-0/02 Promoção de vendas, nenhum CNAE de software). SaaS (CNAE 6311-9/00) não está entre as ocupações permitidas ao MEI [LEI Res. CGSN 140/2018 Anexo XI] ⏳. O dono resolve com contador (desenquadrar para ME e incluir o CNAE de SaaS, ou vender por outro CNPJ) antes de cobrar o primeiro cliente real. Se só a razão social mudar, basta atualizar os dados da empresa.
 - Dependência externa: a conta no provedor precisa estar com verificação de empresa concluída antes do primeiro pagamento real. Isso é passo manual do dono.
 - Contas de teste da equipe continuam existindo em produção e não contam como cliente (FR-019).

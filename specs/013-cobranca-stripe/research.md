@@ -66,7 +66,8 @@ Leitura de 2026-09-29. Fontes: skill `stripe:stripe-best-practices` (API `2026-0
 
 ## R12. Identificação da empresa
 
-- **Decision**: constantes em `src/lib/company.ts` (razão social, CNPJ, endereço, e-mail) usadas no rodapé público e nos termos. Os valores vêm do dono; sem eles o rodapé não vai ao ar (tarefa bloqueada, não placeholder falso).
+- **Decision**: constantes em `src/lib/company.ts` usadas no rodapé público e nos termos. Valores recebidos em 29/09: razão social "57.493.675 MARIA EDUARDA ROCHA ZORZETTI", CNPJ 57.493.675/0001-37, Av. Marechal Rondon, Qd. 256, Lt. 17, Jardim Buriti Sereno, Aparecida de Goiânia/GO, 74943-510; e-mail `contato@roilabs.com.br` (o dos termos atuais).
+- **Pendência**: CNPJ é MEI com CNAE 7319-0/02; SaaS (6311-9/00) não é ocupação permitida ao MEI. Resolver com contador antes do primeiro pagamento real (spec, Assumptions).
 - **Rationale**: Decreto 7.962/2013 art. 2º; a página de pagamento, a fatura, o rodapé e os termos precisam dizer a mesma empresa (FR-007).
 
 ## R13. Saída do Mercado Pago
