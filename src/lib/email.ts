@@ -366,3 +366,63 @@ export async function sendDrip30Email(userEmail: string, userName: string) {
     html: buildDrip30Email(firstName),
   })
 }
+
+// ─── Billing emails (spec 013) ────────────────────────────
+// Stripe itself sends receipts, failed-payment and refund emails (Dashboard settings);
+// these cover what Stripe does not: scheduled cancellation, withdrawal, end of subscription, team alerts.
+
+const brl = (cents: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100)
+const dateBR = (d: Date) => d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+
+export function sendCancellationScheduledEmail(to: string, planName: string, endsAt: Date) {
+  return sendEmail({
+    to,
+    subject: 'Sua assinatura Polaris IA foi cancelada',
+    html: emailShell(`
+<h2>Assinatura cancelada</h2>
+<p>Você mantém o plano ${planName} até <strong>${dateBR(endsAt)}</strong>. Não haverá nova cobrança.</p>
+<p>Depois dessa data, a conta passa ao plano Free e seus agentes e dados continuam nela.</p>
+<div class="cta"><a href="${APP_URL}/dashboard/billing">Ver minha assinatura</a></div>
+`),
+  })
+}
+
+export function sendWithdrawalEmail(to: string, refundedCents: number) {
+  return sendEmail({
+    to,
+    subject: `Desistência confirmada: estorno de ${brl(refundedCents)}`,
+    html: emailShell(`
+<h2>Desistência confirmada</h2>
+<p>Cancelamos sua assinatura e solicitamos o estorno integral de <strong>${brl(refundedCents)}</strong> no mesmo cartão. O valor aparece na fatura conforme o prazo do seu banco.</p>
+<p>Sua conta está no plano Free e seus agentes e dados continuam nela.</p>
+<div class="cta"><a href="${APP_URL}/dashboard/billing">Ver minha assinatura</a></div>
+`),
+  })
+}
+
+export function sendSubscriptionEndedEmail(to: string, planName: string) {
+  return sendEmail({
+    to,
+    subject: 'Sua assinatura Polaris IA terminou',
+    html: emailShell(`
+<h2>Sua assinatura terminou</h2>
+<p>Sua conta passou ao plano Free. Seus agentes e dados continuam nela.</p>
+<p>Para voltar ao plano ${planName}, assine de novo quando quiser.</p>
+<div class="cta"><a href="${APP_URL}/dashboard/billing">Ver planos</a></div>
+`),
+  })
+}
+
+export function sendBillingAlertToTeam(to: string, kind: 'dispute' | 'fraud_warning', details: { customerId: string | null; amountCents: number; objectId: string }) {
+  const title = kind === 'dispute' ? 'Disputa aberta' : 'Alerta de fraude'
+  return sendEmail({
+    to,
+    subject: `[Stripe] ${title}: ${brl(details.amountCents)} — ${details.customerId ?? 'cliente desconhecido'}`,
+    html: emailShell(`
+<h2>${title}</h2>
+<p>Valor: <strong>${brl(details.amountCents)}</strong><br/>Cliente Stripe: ${details.customerId ?? '—'}<br/>Objeto: ${details.objectId}</p>
+<p>O plano do cliente não foi alterado. Responda pelo Dashboard do Stripe dentro do prazo da disputa.</p>
+`),
+  })
+}

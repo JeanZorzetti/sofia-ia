@@ -53,7 +53,7 @@ const endpoints = [
     group: 'Webhooks',
     color: 'border-pink-500/30',
     routes: [
-      { method: 'POST', path: '/api/webhooks/mercadopago', desc: 'Webhook Mercado Pago (pagamentos)' },
+      { method: 'POST', path: '/api/webhooks/stripe', desc: 'Webhook Stripe (assinaturas)' },
     ],
   },
 ]

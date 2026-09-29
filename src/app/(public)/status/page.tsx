@@ -14,7 +14,7 @@ const services = [
   { name: 'Orquestrações SSE', status: 'operational', uptime: '99.91%' },
   { name: 'Knowledge Base (pgvector)', status: 'operational', uptime: '99.97%' },
   { name: 'Banco de Dados PostgreSQL', status: 'operational', uptime: '99.99%' },
-  { name: 'Webhook Mercado Pago', status: 'operational', uptime: '99.90%' },
+  { name: 'Webhook Stripe', status: 'operational', uptime: '99.90%' },
   { name: 'Integração WhatsApp (Evolution API)', status: 'operational', uptime: '99.85%' },
   { name: 'Email (Resend)', status: 'operational', uptime: '99.93%' },
 ]

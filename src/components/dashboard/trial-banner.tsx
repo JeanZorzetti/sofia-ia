@@ -20,12 +20,12 @@ export function TrialBanner() {
       return
     }
 
-    fetch('/api/user/usage')
+    // Trial = 7 days from signup, no card (spec 013); /api/billing only sends trialEndsAt while it runs.
+    fetch('/api/billing')
       .then(r => r.json())
-      .then(data => {
-        if (data.subscription?.status === 'trialing' && data.subscription?.trialEndsAt) {
-          setTrial({ status: 'trialing', trialEndsAt: data.subscription.trialEndsAt })
-        }
+      .then(json => {
+        const endsAt = json.data?.billing?.trialEndsAt
+        if (endsAt) setTrial({ status: 'trialing', trialEndsAt: endsAt })
       })
       .catch(() => {})
   }, [])

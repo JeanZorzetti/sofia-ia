@@ -87,7 +87,7 @@ export const plans: PricingPlan[] = [
 
 export const pricingFAQ: FAQItem[] = [
   { question: 'Preciso de cartão de crédito para o plano Free?', answer: 'Não. O plano Free é gratuito e não exige cartão de crédito. Crie sua conta e comece agora.' },
-  { question: 'Como funciona o billing?', answer: 'O pagamento é processado via Mercado Pago (PIX ou cartão de crédito). A cobrança é mensal recorrente e você pode cancelar a qualquer momento.' },
+  { question: 'Como funciona o billing?', answer: 'O pagamento é feito com cartão de crédito e processado pela Stripe. A cobrança é mensal e se renova automaticamente até você cancelar, o que pode ser feito a qualquer momento pelo painel. Nos primeiros 7 dias após o pagamento, você pode desistir e receber o valor de volta.' },
   { question: 'Posso mudar de plano a qualquer momento?', answer: 'Sim. Você pode fazer upgrade ou downgrade do seu plano a qualquer momento pelo painel de billing.' },
   { question: 'O que acontece se eu atingir os limites do plano Free?', answer: 'Você receberá uma notificação e poderá fazer upgrade para o plano Pro. Não bloqueamos sua conta sem aviso.' },
   { question: 'Há desconto para pagamento anual?', answer: 'Entre em contato com nossa equipe em contato@roilabs.com.br para condições especiais de contratos anuais.' },

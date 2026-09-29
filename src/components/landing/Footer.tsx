@@ -1,6 +1,7 @@
 ﻿import Link from 'next/link'
 import Image from 'next/image'
 import { footerColumns, footerBottomLinks, footerLangLinks } from '@/data/navigation'
+import { COMPANY } from '@/lib/company'
 
 export function Footer() {
   return (
@@ -47,9 +48,15 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-foreground-tertiary text-sm">
-            &copy; 2026 ROI Labs. Polaris IA — Plataforma de Orquestração de Agentes IA.
-          </p>
+          <div>
+            <p className="text-foreground-tertiary text-sm">
+              &copy; 2026 ROI Labs. Polaris IA — Plataforma de Orquestração de Agentes IA.
+            </p>
+            {/* Seller identification required by Decreto 7.962/2013 art. 2º (spec 013 FR-006) */}
+            <p className="text-foreground-tertiary text-xs mt-1">
+              {COMPANY.legalName} · CNPJ {COMPANY.cnpj} · {COMPANY.address} · {COMPANY.email}
+            </p>
+          </div>
           <div className="flex items-center gap-6 flex-wrap justify-center">
             {footerBottomLinks.map((item) => (
               <Link

@@ -15,7 +15,7 @@ const sections = [
   },
   {
     title: '2. Dados que Coletamos',
-    content: 'Coletamos: (a) Dados de cadastro: nome, email e senha (criptografada); (b) Dados de uso: orquestrações criadas, agentes configurados, documentos enviados à Knowledge Base; (c) Dados de pagamento: processados diretamente pelo Mercado Pago — não armazenamos dados de cartão; (d) Dados técnicos: logs de acesso, endereço IP, tipo de browser, para fins de segurança e diagnóstico.',
+    content: 'Coletamos: (a) Dados de cadastro: nome, email e senha (criptografada); (b) Dados de uso: orquestrações criadas, agentes configurados, documentos enviados à Knowledge Base; (c) Dados de pagamento: processados diretamente pela Stripe — não armazenamos dados de cartão; o CPF ou CNPJ informado na assinatura fica registrado na Stripe para a emissão da nota fiscal; (d) Dados técnicos: logs de acesso, endereço IP, tipo de browser, para fins de segurança e diagnóstico.',
   },
   {
     title: '3. Como Usamos seus Dados',
@@ -27,7 +27,7 @@ const sections = [
   },
   {
     title: '5. Compartilhamento de Dados',
-    content: 'Compartilhamos dados apenas com: provedores de infraestrutura (Vercel, para hospedagem); Mercado Pago (processamento de pagamentos); Resend (envio de emails transacionais); Groq/OpenAI/Anthropic (processamento de IA — apenas o conteúdo enviado nas requisições). Todos os fornecedores estão sujeitos a obrigações de confidencialidade.',
+    content: 'Compartilhamos dados apenas com: provedores de infraestrutura (Vercel, para hospedagem); Stripe (processamento de pagamentos e dados de cobrança); Resend (envio de emails transacionais); Groq/OpenAI/Anthropic (processamento de IA — apenas o conteúdo enviado nas requisições). Todos os fornecedores estão sujeitos a obrigações de confidencialidade.',
   },
   {
     title: '6. Retenção de Dados',

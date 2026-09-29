@@ -16,6 +16,7 @@ interface Metrics {
   subscriptions: {
     active: number
     mrr: number
+    revenueMonth: number | null // paid invoices minus refunds this month, from Stripe
     breakdown: { plan: string; count: number; mrr: number }[]
   }
   apiKeys: { active: number }
@@ -89,7 +90,7 @@ export default function AdminMetricsPage() {
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'MRR Estimado', value: `R$ ${data.subscriptions.mrr.toLocaleString('pt-BR')}`, icon: TrendingUp, color: 'text-green-400', sub: `${data.subscriptions.active} pagantes` },
+            { label: 'MRR Estimado', value: `R$ ${data.subscriptions.mrr.toLocaleString('pt-BR')}`, icon: TrendingUp, color: 'text-green-400', sub: `${data.subscriptions.active} pagantes · recebido no mês: ${data.subscriptions.revenueMonth === null ? 'Stripe não configurado' : `R$ ${data.subscriptions.revenueMonth.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}` },
             { label: 'Total Usuários', value: data.users.total.toString(), icon: Users, color: 'text-blue-400', sub: `+${data.users.newLast7} últimos 7d` },
             { label: 'Conversão', value: `${conversionRate}%`, icon: CreditCard, color: 'text-purple-400', sub: `${freeUsers} no free` },
             { label: 'Leads CRM', value: data.leads.total.toString(), icon: Mail, color: 'text-yellow-400', sub: `${data.apiKeys.active} API keys ativas` },

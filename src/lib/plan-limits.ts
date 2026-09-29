@@ -7,8 +7,9 @@
  *   business — unlimited
  */
 
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { PLANS, type PlanId } from '@/lib/mercadopago'
+import { PLANS, type PlanId } from '@/lib/plans'
 
 export type LimitType = 'agents' | 'messages' | 'knowledge_bases'
 
@@ -20,40 +21,63 @@ export interface LimitCheckResult {
   message?: string
 }
 
+export const TRIAL_DAYS = 7
+// past_due keeps the plan during the 7-day grace period (spec 013 FR-013); Stripe cancels after.
+const PAID_STATUS_LIST = ['active', 'past_due']
+const PAID_STATUSES = new Set(PAID_STATUS_LIST)
+
+/** Prisma filter for "paying customer" — the same rule as isPaid(), for counts and dashboards. */
+export const PAID_SUBSCRIPTION_WHERE = {
+  stripeSubscriptionId: { not: null },
+  status: { in: PAID_STATUS_LIST },
+} satisfies Prisma.SubscriptionWhereInput
+
+type SubPlanFields = { plan: string; status: string; stripeSubscriptionId: string | null }
+
+export function trialEndsAt(userCreatedAt: Date): Date {
+  return new Date(userCreatedAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000)
+}
+
+// CDC art. 49: full refund if the customer withdraws within 7 days of the first charge.
+export const WITHDRAWAL_DAYS = 7
+
+export function withdrawalEndsAt(startedAt: Date): Date {
+  return new Date(startedAt.getTime() + WITHDRAWAL_DAYS * 24 * 60 * 60 * 1000)
+}
+
+export function isPaid(sub: SubPlanFields | null | undefined): boolean {
+  return !!sub?.stripeSubscriptionId && PAID_STATUSES.has(sub.status)
+}
+
 /**
- * Get the active plan for a user.
- * Handles trialing: returns trial plan if still active, auto-downgrades to free if expired.
- * Falls back to 'free' if no subscription exists.
+ * The single plan rule (spec 013, research R4):
+ * paid Stripe subscription → its plan; otherwise a 7-day Pro trial counted from signup
+ * (every signup path, no card); otherwise free. Legacy Mercado Pago rows are ignored.
  */
+export function resolvePlan({
+  sub,
+  userCreatedAt,
+  now = new Date(),
+}: {
+  sub: SubPlanFields | null | undefined
+  userCreatedAt: Date | null | undefined
+  now?: Date
+}): PlanId {
+  if (isPaid(sub) && sub!.plan !== 'free' && sub!.plan in PLANS) return sub!.plan as PlanId
+  if (userCreatedAt && now < trialEndsAt(userCreatedAt)) return 'pro'
+  return 'free'
+}
+
 export async function getUserPlan(userId: string): Promise<PlanId> {
   try {
-    const sub = await prisma.subscription.findUnique({
-      where: { userId },
-      select: { plan: true, status: true, trialEndsAt: true },
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        createdAt: true,
+        subscription: { select: { plan: true, status: true, stripeSubscriptionId: true } },
+      },
     })
-
-    if (!sub || sub.status === 'canceled' || sub.status === 'past_due') {
-      return 'free'
-    }
-
-    // Trialing: grant the trial plan if still active, auto-downgrade if expired
-    if (sub.status === 'trialing') {
-      if (sub.trialEndsAt && sub.trialEndsAt > new Date()) {
-        const plan = sub.plan as PlanId
-        return PLANS[plan] ? plan : 'free'
-      }
-      // Trial expired — downgrade silently (non-blocking)
-      prisma.subscription.update({
-        where: { userId },
-        data: { status: 'active', plan: 'free' },
-      }).catch(() => {})
-      return 'free'
-    }
-
-    const plan = sub.plan as PlanId
-    if (!PLANS[plan]) return 'free'
-
-    return plan
+    return resolvePlan({ sub: user?.subscription, userCreatedAt: user?.createdAt })
   } catch {
     return 'free'
   }
@@ -221,8 +245,6 @@ export async function getUsageSummary(userId: string) {
         currentPeriodEnd: true,
         usagePeriodStart: true,
         status: true,
-        trialEndsAt: true,
-        mercadoPagoPaymentId: true,
       },
     }),
   ])

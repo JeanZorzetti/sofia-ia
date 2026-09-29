@@ -48,6 +48,7 @@ model User {
   whatsappAccounts             WhatsAppAccount[]
   companies                    Company[]
   claudeToken                  UserClaudeToken?
+  termsAcceptances             TermsAcceptance[]
 
   @@map("users")
 }
@@ -665,7 +666,13 @@ model Subscription {
   currentPeriodStart        DateTime? @map("current_period_start") @db.Timestamptz()
   currentPeriodEnd          DateTime? @map("current_period_end") @db.Timestamptz()
   canceledAt                DateTime? @map("canceled_at") @db.Timestamptz()
-  trialEndsAt               DateTime? @map("trial_ends_at") @db.Timestamptz()
+  trialEndsAt               DateTime? @map("trial_ends_at") @db.Timestamptz() // unused since 013 (trial = users.created_at + 7d)
+  // Stripe (013) — mercadoPago* and trialEndsAt are kept unused; dropping them is a separate delivery
+  stripeCustomerId          String?   @unique @map("stripe_customer_id") @db.VarChar(255)
+  stripeSubscriptionId      String?   @unique @map("stripe_subscription_id") @db.VarChar(255)
+  stripePriceId             String?   @map("stripe_price_id") @db.VarChar(255)
+  startedAt                 DateTime? @map("started_at") @db.Timestamptz() // withdrawal window (CDC art. 49) starts here
+  cancelAt                  DateTime? @map("cancel_at") @db.Timestamptz()  // scheduled end when canceled at period end
   // Usage tracking (reset monthly)
   messagesUsedMonth         Int       @default(0) @map("messages_used_month")
   usagePeriodStart          DateTime  @default(now()) @map("usage_period_start") @db.Timestamptz()
@@ -679,6 +686,32 @@ model Subscription {
   @@index([status])
   @@index([mercadoPagoSubscriptionId])
   @@map("subscriptions")
+}
+
+// Stripe webhook dedupe (013): insert the event id before processing; a unique violation means
+// the event was already handled.
+model StripeEvent {
+  id        String   @id @db.VarChar(255)
+  type      String   @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("stripe_events")
+}
+
+// Versioned terms acceptance recorded before checkout (013, FR-004).
+model TermsAcceptance {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  version     String   @db.VarChar(20)
+  contentHash String   @map("content_hash") @db.Char(64)
+  ip          String?  @db.VarChar(64)
+  userAgent   String?  @map("user_agent") @db.Text
+  acceptedAt  DateTime @default(now()) @map("accepted_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("terms_acceptances")
 }
 
 // ─────────────────────────────────────────────────────────

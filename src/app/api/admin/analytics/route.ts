@@ -1,3 +1,4 @@
+import { PAID_SUBSCRIPTION_WHERE, TRIAL_DAYS } from '@/lib/plan-limits'
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthFromRequest } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -68,14 +69,23 @@ export async function GET(request: NextRequest) {
     }))
 
     // ── Plan distribution ──────────────────────────────────────
-    const planGroups = await prisma.subscription.groupBy({
-      by: ['plan'],
-      _count: { plan: true },
-    })
-    const planDistribution = planGroups.map((g) => ({
-      plan: g.plan,
-      count: g._count.plan,
-    }))
+    // Paying customers by plan, users still in the 7-day trial, everyone else on Free (spec 013 FR-019).
+    const [paidGroups, trialUsers, allUsers] = await Promise.all([
+      prisma.subscription.groupBy({ by: ['plan'], where: PAID_SUBSCRIPTION_WHERE, _count: { plan: true } }),
+      prisma.user.count({
+        where: {
+          createdAt: { gte: new Date(Date.now() - TRIAL_DAYS * 24 * 60 * 60 * 1000) },
+          NOT: { subscription: { is: PAID_SUBSCRIPTION_WHERE } },
+        },
+      }),
+      prisma.user.count(),
+    ])
+    const paidTotal = paidGroups.reduce((s, g) => s + g._count.plan, 0)
+    const planDistribution = [
+      ...paidGroups.map((g) => ({ plan: g.plan, count: g._count.plan })),
+      { plan: 'trial', count: trialUsers },
+      { plan: 'free', count: Math.max(0, allUsers - paidTotal - trialUsers) },
+    ].filter((p) => p.count > 0)
 
     // ── Events last 7 days (grouped by event + day) ────────────
     const recentEvents = await prisma.analyticsEvent.findMany({

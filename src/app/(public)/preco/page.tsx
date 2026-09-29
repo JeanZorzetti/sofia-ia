@@ -56,7 +56,7 @@ export default function PrecosPage() {
           <div className="flex flex-wrap items-center justify-center gap-6 mt-6 text-sm text-white/40">
             <div className="flex items-center gap-2"><Shield className="w-4 h-4" /> SSL e dados seguros</div>
             <div className="flex items-center gap-2"><CheckCircle className="w-4 h-4" /> Cancele quando quiser</div>
-            <div className="flex items-center gap-2"><Zap className="w-4 h-4" /> Pagamento via Mercado Pago</div>
+            <div className="flex items-center gap-2"><Zap className="w-4 h-4" /> Pagamento seguro via Stripe</div>
           </div>
           <p className="text-center mt-3">
             <Link href="/enterprise" className="text-xs text-white/40 hover:text-white/70 transition-colors">

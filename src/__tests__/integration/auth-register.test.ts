@@ -1,8 +1,11 @@
 /**
+ * @jest-environment node
+ *
  * Tests for POST /api/auth/register (Sprint 5).
  *
  * Cobre validacao zod (400, senha < 8), email ja em uso (409) e o caminho feliz
- * (201 cria o usuario + assinatura trial Pro de 7 dias). `parseJson`/
+ * (201 cria o usuario; desde a spec 013 o trial de 7 dias vem de users.created_at,
+ * entao o cadastro NAO grava linha de assinatura). `parseJson`/
  * `registerSchema` rodam de verdade; prisma, bcrypt, auth, email e analytics sao
  * mockados. Os fire-and-forget (email/analytics) precisam devolver Promise.
  */
@@ -59,10 +62,9 @@ describe('POST /api/auth/register', () => {
     expect(mockUserCreate).not.toHaveBeenCalled()
   })
 
-  it('returns 201 and creates the user plus a 7-day Pro trial', async () => {
+  it('returns 201 and creates the user without a trial subscription row (spec 013)', async () => {
     mockFindUnique.mockResolvedValueOnce(null)
     mockUserCreate.mockResolvedValueOnce({ id: 'u1', email: 'alice@example.com', name: 'Alice', role: 'user' })
-    mockSubscriptionCreate.mockResolvedValueOnce({ id: 'sub1' })
     mockSignToken.mockResolvedValueOnce('jwt-token')
 
     const res = await POST(req(VALID))
@@ -72,10 +74,6 @@ describe('POST /api/auth/register', () => {
     expect(body.data.token).toBe('jwt-token')
 
     expect(mockUserCreate).toHaveBeenCalledTimes(1)
-    expect(mockSubscriptionCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ userId: 'u1', plan: 'pro', status: 'trialing' }),
-      })
-    )
+    expect(mockSubscriptionCreate).not.toHaveBeenCalled()
   })
 })

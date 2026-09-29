@@ -38,13 +38,6 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Start Trial Pro for 7 days
-    const trialEndsAt = new Date()
-    trialEndsAt.setDate(trialEndsAt.getDate() + 7)
-    await prisma.subscription.create({
-      data: { userId: user.id, plan: 'pro', status: 'trialing', trialEndsAt },
-    })
-
     const payload = { id: user.id, email: user.email, name: user.name, role: user.role }
     const token = await signToken(payload)
     await setAuthCookie(token)

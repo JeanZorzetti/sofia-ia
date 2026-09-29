@@ -23,7 +23,7 @@ const envVars = [
   { key: 'GROQ_API_KEY', desc: 'Chave da API Groq (modelos rápidos)', example: 'gsk_...' },
   { key: 'OPENAI_API_KEY', desc: 'Chave OpenAI (opcional)', example: 'sk-...' },
   { key: 'OPENROUTER_API_KEY', desc: 'OpenRouter para 50+ modelos (opcional)', example: 'sk-or-...' },
-  { key: 'MERCADOPAGO_ACCESS_TOKEN', desc: 'Token Mercado Pago para billing', example: 'APP_USR-...' },
+  { key: 'STRIPE_SECRET_KEY', desc: 'Restricted key da Stripe para billing', example: 'rk_live_...' },
   { key: 'RESEND_API_KEY', desc: 'API Resend para emails (opcional)', example: 're_...' },
 ]
 

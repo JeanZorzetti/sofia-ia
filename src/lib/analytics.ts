@@ -1,3 +1,4 @@
+import { PAID_SUBSCRIPTION_WHERE } from '@/lib/plan-limits'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 
@@ -171,10 +172,8 @@ export async function getFunnelCounts(): Promise<{
       where: { event: Events.FIRST_ORCHESTRATION_EXECUTED, userId: { not: null } },
     }).then(rows => rows.length),
 
-    // Paid subscribers (non-free active subscriptions)
-    prisma.subscription.count({
-      where: { status: 'active', plan: { notIn: ['free'] } },
-    }),
+    // Paid subscribers: active Stripe subscriptions (spec 013 FR-019)
+    prisma.subscription.count({ where: PAID_SUBSCRIPTION_WHERE }),
   ])
 
   return { signups, withAgent, withExecution, paid }
