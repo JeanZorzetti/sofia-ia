@@ -110,8 +110,8 @@ description: "Task list for 013 — cobrança recorrente via Stripe"
 ## Phase 8: Validação e deploy
 
 - [X] T036 `npx tsc --noEmit` limpo; `npm run lint` (informativo)
-- [ ] T037 [Dono] Criar sandbox Stripe da Polaris com os dois produtos e uma restricted key; instalar a Stripe CLI (`npm i -g @stripe/cli`, `stripe login`)
-- [ ] T038 Rodar quickstart.md cenários 1–14 no sandbox, com banco de teste; registrar o resultado em `specs/013-cobranca-stripe/handoff.md`
+- [X] T037 [Dono] Criar sandbox Stripe da Polaris com os dois produtos e uma restricted key; instalar a Stripe CLI (`npm i -g @stripe/cli`, `stripe login`)
+- [ ] T038 (13/14 ok; cenário 7 bloqueado por regra de aprovação de reembolso na conta — ver handoff.md) Rodar quickstart.md cenários 1–14 no sandbox, com banco de teste; registrar o resultado em `specs/013-cobranca-stripe/handoff.md`
 - [ ] T039 Aplicar a migração no host real antes do push: `DATABASE_URL=<sofia_db@2.24.207.200:5435> npx prisma migrate deploy` e conferir as colunas em `information_schema.columns` (constituição III)
 - [ ] T040 [Dono] Live: produtos Pro (R$ 297/mês) e Business (R$ 997/mês), restricted key, endpoint de webhook `https://polarisia.com.br/api/webhooks/stripe` com os eventos da research R7; as 4 variáveis no EasyPanel
 - [ ] T041 Commit e push; conferir o deploy no EasyPanel
