@@ -112,8 +112,8 @@ description: "Task list for 013 — cobrança recorrente via Stripe"
 - [X] T036 `npx tsc --noEmit` limpo; `npm run lint` (informativo)
 - [X] T037 [Dono] Criar sandbox Stripe da Polaris com os dois produtos e uma restricted key; instalar a Stripe CLI (`npm i -g @stripe/cli`, `stripe login`)
 - [X] T038 (14/14 em 30/09 — ver handoff.md) Rodar quickstart.md cenários 1–14 no sandbox, com banco de teste; registrar o resultado em `specs/013-cobranca-stripe/handoff.md`
-- [ ] T039 Aplicar a migração no host real antes do push: `DATABASE_URL=<sofia_db@2.24.207.200:5435> npx prisma migrate deploy` e conferir as colunas em `information_schema.columns` (constituição III)
-- [ ] T040 [Dono] Live: produtos Pro (R$ 297/mês) e Business (R$ 997/mês), restricted key, endpoint de webhook `https://polarisia.com.br/api/webhooks/stripe` com os eventos da research R7; as 4 variáveis no EasyPanel
+- [X] T039 (30/09: `20260929120000_stripe_billing` aplicada; 5 colunas + 2 tabelas conferidas; 59 users/16 subscriptions intactos) Aplicar a migração no host real antes do push: `DATABASE_URL=<sofia_db@2.24.207.200:5435> npx prisma migrate deploy` e conferir as colunas em `information_schema.columns` (constituição III)
+- [ ] T040 [Dono] (30/09 feito por CLI: produtos Pro `price_1ULX3J5OsolR8EbsxIHuMDVT` e Business `price_1ULX3L5OsolR8EbsDWojLTtp`, Portal `bpc_1ULX3W5OsolR8EbscqKpo7Kv`, webhook `we_1ULX3l5OsolR8EbsPn05WUgt`; falta: restricted key live fora de Approvals + 4 variáveis no EasyPanel) Live: produtos Pro (R$ 297/mês) e Business (R$ 997/mês), restricted key, endpoint de webhook `https://polarisia.com.br/api/webhooks/stripe` com os eventos da research R7; as 4 variáveis no EasyPanel
 - [ ] T041 Commit e push; conferir o deploy no EasyPanel
 - [ ] T042 Com a skill `ui-verification`: abrir o checkout em produção com conta de teste, parar no formulário do cartão e registrar a captura com "Polaris IA" (SC-001); `/termos`, `/termos/v1` e o rodapé no ar
 - [X] T043 [Dono] Enquadramento fiscal decidido: vender como MEI, risco aceito pelo dono em 2026-09-29 (spec, Assumptions)
