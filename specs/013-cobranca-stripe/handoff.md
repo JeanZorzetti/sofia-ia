@@ -17,9 +17,9 @@ com `.env.development.local` (descartável, fora do git), Postgres 16 + pgvector
 | 4 | Pagar com 4242 | ✅ página "Assinar Polaris IA Pro R$ 297,00 por mês"; 3 webhooks 200; `pro/active`; aceite v2 gravado (hash, IP, UA); customer com `br_cpf` |
 | 5 | Reenviar evento | ✅ 200, `stripe_events` continua 3 (dedupe) |
 | 6 | Fechar a aba antes do retorno | ✅ plano ativado só pelo webhook (o navegador do teste nem tinha sessão) |
-| 7 | Desistir em 7 dias | ⛔ **bloqueado pela conta**: regra de aprovação "Refund created" (Settings → Approvals) sobre a chave "Claude" transformou o reembolso em `apreq_test_…`. Código fez o certo: sem reembolso não cancelou (assinatura segue ativa) |
+| 7 | Desistir em 7 dias | ✅ (30/09, depois de o dono remover as regras de aprovação "Refund created" e "Subscription canceled" do sandbox) 200; R$ 297,00 + R$ 699,95 estornados; assinatura `canceled` com `comment=withdrawal`; e-mail "Desistência confirmada"; sem e-mail de "terminou". A repetição pulou os estornos já feitos — confirma a correção `696b600` |
 | 8 | Cancelar no fim do ciclo | ✅ `cancel_at` 29/10 gravado, plano segue Pro, e-mail "foi cancelada" 1× (evento seguinte não repetiu) |
-| 9 | Renovação recusada (test clock) | ✅ `past_due`, plano mantido, API `status past_due`. ⚠️ Com a configuração padrão, após 8 dias segue `past_due` (próxima tentativa 09/11): a promessa "encerra em até 7 dias" depende da T029 |
+| 9 | Renovação recusada (test clock) | ✅ `past_due` com plano mantido; com Retries = 1 semana → cancelar (T029), cancelada em ~8 dias, conta paga → Free e e-mail "terminou" |
 | 10 | Pro → Business → Pro | ✅ upgrade na hora com fatura de R$ 699,95 paga; downgrade na hora com crédito de R$ 699,94 |
 | 11 | Rotas sem sessão | ✅ 401 em GET billing, POST checkout/portal/withdraw |
 | 12 | Webhook sem/inválida assinatura | ✅ 400, nada gravado |
@@ -30,6 +30,8 @@ Portal (sessão aberta pelo endpoint): mostra plano, "Atualizar assinatura", "Ca
 cartão e histórico. Configuração `bpc_1UL5967QsSJUXdmDWDMBojqe` (padrão da conta, criada por API).
 
 ## Pendências antes do live
+
+Sandbox: 14/14 ✅ (30/09). Itens 1 e 2 abaixo resolvidos no sandbox; repetir no live.
 
 1. **Regra de aprovação de reembolso**: a chave usada pelo app não pode cair na regra "Refund
    created", senão a desistência (CDC art. 49) nunca é automática. Rejeitar o pedido pendente

@@ -84,7 +84,7 @@ description: "Task list for 013 — cobrança recorrente via Stripe"
 **Independent Test**: quickstart cenários 9 e 10 (test clocks).
 
 - [X] T028 [US3] Em `src/app/dashboard/billing/page.tsx`, com status `past_due`: aviso "pagamento recusado", prazo da carência e botão para o Portal atualizar o cartão
-- [ ] T029 [US3] [Dono] No Dashboard do Stripe: Smart Retries dentro de 1 semana e depois **cancelar a assinatura**; e-mails ao cliente ligados (pagamento bem-sucedido, falha com link, reembolso); Portal com troca entre os produtos Pro e Business, proration imediata, cancelamento no fim do período, motivo ligado, sem cupom de retenção
+- [X] T029 [US3] [Dono] No Dashboard do Stripe: Smart Retries dentro de 1 semana e depois **cancelar a assinatura**; e-mails ao cliente ligados (pagamento bem-sucedido, falha com link, reembolso); Portal com troca entre os produtos Pro e Business, proration imediata, cancelamento no fim do período, motivo ligado, sem cupom de retenção
 
 ---
 
@@ -111,7 +111,7 @@ description: "Task list for 013 — cobrança recorrente via Stripe"
 
 - [X] T036 `npx tsc --noEmit` limpo; `npm run lint` (informativo)
 - [X] T037 [Dono] Criar sandbox Stripe da Polaris com os dois produtos e uma restricted key; instalar a Stripe CLI (`npm i -g @stripe/cli`, `stripe login`)
-- [ ] T038 (13/14 ok; cenário 7 bloqueado por regra de aprovação de reembolso na conta — ver handoff.md) Rodar quickstart.md cenários 1–14 no sandbox, com banco de teste; registrar o resultado em `specs/013-cobranca-stripe/handoff.md`
+- [X] T038 (14/14 em 30/09 — ver handoff.md) Rodar quickstart.md cenários 1–14 no sandbox, com banco de teste; registrar o resultado em `specs/013-cobranca-stripe/handoff.md`
 - [ ] T039 Aplicar a migração no host real antes do push: `DATABASE_URL=<sofia_db@2.24.207.200:5435> npx prisma migrate deploy` e conferir as colunas em `information_schema.columns` (constituição III)
 - [ ] T040 [Dono] Live: produtos Pro (R$ 297/mês) e Business (R$ 997/mês), restricted key, endpoint de webhook `https://polarisia.com.br/api/webhooks/stripe` com os eventos da research R7; as 4 variáveis no EasyPanel
 - [ ] T041 Commit e push; conferir o deploy no EasyPanel
