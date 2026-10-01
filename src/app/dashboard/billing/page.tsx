@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, useRef, type FormEvent } from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -87,6 +87,11 @@ export default function BillingPage() {
   const [busy, setBusy] = useState<'portal' | 'withdraw' | null>(null)
   const [subscribePlan, setSubscribePlan] = useState<PaidPlanId | null>(null)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
+  // Dialogs are opened by state, without a Radix Trigger, so Radix has no element to return focus to.
+  // Remember the opener and restore it on close (WCAG 2.4.3).
+  const openerRef = useRef<HTMLElement | null>(null)
+  const rememberOpener = () => { openerRef.current = document.activeElement as HTMLElement | null }
+  const restoreFocus = (e: Event) => { e.preventDefault(); openerRef.current?.focus() }
 
   async function load(showSpinner = true): Promise<BillingState | null> {
     try {
@@ -302,7 +307,7 @@ export default function BillingPage() {
                 </div>
                 {billing.canWithdraw && (
                   <div>
-                    <Button variant="outline" className="border-white/20 text-white/80" onClick={() => setWithdrawOpen(true)} disabled={!!busy}>
+                    <Button variant="outline" className="border-white/20 text-white/80" onClick={() => { rememberOpener(); setWithdrawOpen(true) }} disabled={!!busy}>
                       {busy === 'withdraw' && <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />}
                       Desistir e receber o valor de volta
                     </Button>
@@ -349,7 +354,7 @@ export default function BillingPage() {
               )
             } else {
               action = (
-                <Button className="w-full button-luxury" onClick={() => setSubscribePlan(id)}>
+                <Button className="w-full button-luxury" onClick={() => { rememberOpener(); setSubscribePlan(id) }}>
                   <CreditCard className="h-4 w-4 mr-2" aria-hidden="true" />
                   Assinar o plano {data.name}
                 </Button>
@@ -420,6 +425,7 @@ export default function BillingPage() {
       <SubscribeDialog
         key={subscribePlan ?? 'closed'} // remount = clean form every time it opens
         plan={subscribePlan}
+        onCloseAutoFocus={restoreFocus}
         onClose={() => setSubscribePlan(null)}
         onAlreadySubscribed={() => {
           setSubscribePlan(null)
@@ -429,7 +435,7 @@ export default function BillingPage() {
       />
 
       <AlertDialog open={withdrawOpen} onOpenChange={setWithdrawOpen}>
-        <AlertDialogContent className="bg-slate-900 border-white/10 text-white">
+        <AlertDialogContent className="bg-slate-900 border-white/10 text-white" onCloseAutoFocus={restoreFocus}>
           <AlertDialogHeader>
             <AlertDialogTitle>Desistir da assinatura?</AlertDialogTitle>
             <AlertDialogDescription className="text-white/70">
@@ -451,10 +457,12 @@ export default function BillingPage() {
 function SubscribeDialog({
   plan,
   onClose,
+  onCloseAutoFocus,
   onAlreadySubscribed,
 }: {
   plan: PaidPlanId | null
   onClose: () => void
+  onCloseAutoFocus: (e: Event) => void
   onAlreadySubscribed: () => void
 }) {
   const [taxId, setTaxId] = useState('')
@@ -499,7 +507,7 @@ function SubscribeDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-slate-900 border-white/10 text-white">
+      <DialogContent className="bg-slate-900 border-white/10 text-white" onCloseAutoFocus={onCloseAutoFocus}>
         <DialogHeader>
           <DialogTitle>Assinar o plano {data.name}</DialogTitle>
           <DialogDescription className="text-white/70">{brl(data.priceBRL)} por mês</DialogDescription>

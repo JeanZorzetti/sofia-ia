@@ -57,9 +57,9 @@ export function TrialBanner() {
         <Zap className="w-3.5 h-3.5 flex-shrink-0" />
         <span>
           {isUrgent ? (
-            <>Trial Pro expira em <strong>{daysLeft} dia{daysLeft !== 1 ? 's' : ''}</strong> — não perca o acesso</>
+            <>O teste grátis do Pro termina em <strong>{daysLeft} {daysLeft === 1 ? 'dia' : 'dias'}</strong>. Nenhuma cobrança automática.</>
           ) : (
-            <>Você está no <strong>Trial Pro</strong> — {daysLeft} dias restantes</>
+            <>Você está no <strong>teste grátis do Pro</strong>: faltam {daysLeft} {daysLeft === 1 ? 'dia' : 'dias'}.</>
           )}
         </span>
       </div>
@@ -72,9 +72,9 @@ export function TrialBanner() {
               : 'bg-violet-500/20 hover:bg-violet-500/30 text-violet-200'
           }`}
         >
-          Fazer upgrade
+          Ver planos
         </Link>
-        <button onClick={dismiss} className="opacity-50 hover:opacity-100 transition-opacity">
+        <button onClick={dismiss} aria-label="Fechar aviso do teste grátis" className="opacity-50 hover:opacity-100 transition-opacity">
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
