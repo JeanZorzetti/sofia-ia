@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, LogOut, User } from 'lucide-react'
+import { Bell, LifeBuoy, LogOut, User } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { InstallPWA } from '@/components/polaris/InstallPWA'
+import { COMPANY } from '@/lib/company'
 
 interface NavbarProps {
   user: {
@@ -58,6 +59,12 @@ export function Navbar({ user, onLogout }: NavbarProps) {
             <DropdownMenuItem className="cursor-pointer text-foreground hover:bg-background-secondary">
               <User className="mr-2 h-4 w-4" />
               <span>Perfil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="cursor-pointer text-foreground hover:bg-background-secondary">
+              <a href={COMPANY.whatsappUrl} target="_blank" rel="noopener noreferrer">
+                <LifeBuoy className="mr-2 h-4 w-4" />
+                <span>Suporte no WhatsApp</span>
+              </a>
             </DropdownMenuItem>
             <DropdownMenuItem
               className="cursor-pointer text-destructive hover:bg-background-secondary"

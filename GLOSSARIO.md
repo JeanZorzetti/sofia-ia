@@ -13,3 +13,4 @@ Um verbo por ação no produto inteiro. Leia antes de nomear botão, e-mail ou t
 | Pagamento recusado | renovação não autorizada pelo banco | "falha de pagamento", "inadimplente" | cobrança, e-mail do Stripe |
 | Atualizar cartão | trocar o cartão pelo portal | "método de pagamento" | cobrança |
 | Plano Free / Pro / Business | nomes dos planos | "gratuito" como nome de plano | tudo |
+| Suporte no WhatsApp | link para o WhatsApp de suporte (`COMPANY.whatsappUrl`) | "WhatsApp" sozinho (é o nome da integração no menu), "Fale conosco", "SAC" | rodapé, menu do usuário, /contato, erro de cobrança |

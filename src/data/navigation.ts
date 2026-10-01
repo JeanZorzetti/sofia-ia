@@ -1,3 +1,5 @@
+import { COMPANY } from '@/lib/company'
+
 export const navLinks = [
   { label: 'Plataforma', href: '/plataforma' },
   { label: 'Features', href: '/features' },
@@ -53,6 +55,7 @@ export const footerBottomLinks = [
   { label: 'Termos', href: '/termos' },
   { label: 'Privacidade', href: '/privacidade' },
   { label: 'Contato', href: '/contato' },
+  { label: 'Suporte no WhatsApp', href: COMPANY.whatsappUrl },
 ]
 
 export const footerLangLinks = [

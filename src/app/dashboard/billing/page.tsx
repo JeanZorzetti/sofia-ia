@@ -27,6 +27,7 @@ import {
 import { CreditCard, Check, Zap, Crown, Building2, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { PLANS, type PaidPlanId } from '@/lib/plans'
+import { COMPANY } from '@/lib/company'
 import { parseTaxId } from '@/lib/tax-id'
 import { CURRENT_TERMS_VERSION } from '@/lib/terms'
 
@@ -172,7 +173,7 @@ export default function BillingPage() {
       } else if (json.error === 'not_eligible') {
         toast.error('O prazo de 7 dias para desistir já passou. Para parar as próximas cobranças, cancele em Gerenciar assinatura.')
       } else {
-        toast.error('Não conseguimos concluir a desistência agora. Tente novamente em instantes; se persistir, escreva para contato@roilabs.com.br.')
+        toast.error(`Não conseguimos concluir a desistência agora. Tente novamente em instantes; se persistir, chame o suporte no WhatsApp ${COMPANY.whatsapp}.`)
       }
     } catch {
       toast.error('Sem conexão com o servidor. Confira sua internet e tente de novo.')

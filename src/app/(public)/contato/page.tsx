@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { BrainCircuit, ArrowLeft, Send, CheckCircle, Building2, Layers, MessageSquare } from 'lucide-react'
+import { COMPANY } from '@/lib/company'
 
 const types = [
   {
@@ -92,7 +93,9 @@ export default function ContatoPage() {
 
           <h1 className="text-4xl font-bold text-white mb-3">Fale com nossa equipe</h1>
           <p className="text-foreground-tertiary mb-10 text-lg">
-            Retornamos em até 1 dia útil. Para suporte técnico, acesse o <Link href="/comunidade" className="text-blue-400 hover:underline">Discord</Link>.
+            Retornamos em até 1 dia útil. Precisa de suporte? Chame no{' '}
+            <a href={COMPANY.whatsappUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">WhatsApp {COMPANY.whatsapp}</a>{' '}
+            ou acesse o <Link href="/comunidade" className="text-blue-400 hover:underline">Discord</Link>.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
