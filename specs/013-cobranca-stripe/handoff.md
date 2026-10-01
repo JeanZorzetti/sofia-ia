@@ -1,5 +1,17 @@
 # Handoff 013 — Cobrança via Stripe
 
+## NO AR em 30/09/2026 (deploy `159b54c` + `9bc06bf`)
+
+Verificação em produção (playwright-core, conta de teste depois apagada):
+- `/termos` v2 (minuta, renovação em destaque, art. 49, CNPJ), `/termos/v1` noindex, rodapé com razão social/CNPJ/endereço, `/preco` e `/privacidade` sem Mercado Pago.
+- Rotas: billing/checkout/withdraw 401 sem sessão; webhook sem assinatura 400; webhook antigo do MP 404.
+- `/dashboard/billing` 1440 e 360 sem estouro; resumo com labels, erros de CPF/termos; console sem erro.
+- Checkout live mostra **"Polaris IA" · "Assinar Polaris IA Pro" · R$ 297,00**, sem Atma, sem marca de teste (SC-001). Parado antes do cartão; sessão expirada e cliente apagado.
+- Achado e corrigido (`9bc06bf`): ESC no resumo jogava o foco no `<body>`; agora volta ao botão que abriu.
+- Live: produtos `price_1ULX3J5OsolR8EbsxIHuMDVT` (Pro) e `price_1ULX3L5OsolR8EbsDWojLTtp` (Business), Portal `bpc_1ULX3W5OsolR8EbscqKpo7Kv`, webhook `we_1ULX3l5OsolR8EbsPn05WUgt`.
+
+Não verificado: pagamento real em live (exige cartão de verdade; recomendado um R$ 297 + "Desistir" no mesmo dia pelo dono), leitor de tela real, dispositivo móvel real.
+
 Estado em 2026-09-29. Código commitado localmente em `a26fac4` (**não pushado**: push = deploy; a
 migração precisa ir antes no host real).
 
